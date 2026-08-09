@@ -1,0 +1,273 @@
+/*
+ * VENDORED from add-on-shipping-dhl/src/demo-carrier.ts — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `shipping-dhl`; its manifest, tests and README live in that repo.
+ */
+/**
+ * The demo transport — the DEFAULT one (24 D11).
+ *
+ * A live demo that posts to a real carrier on every visitor click is a defect,
+ * not a feature, so this repo ships a carrier that books nothing. Everything it
+ * returns is a pure function of the pinned clock, the parcel and a seeded
+ * counter: no `fetch`, no `Date.now()`, no `Math.random()`, no randomness of
+ * any kind anywhere in the module.
+ *
+ * It is a full `ShippingCarrier`, not a stub, and it runs the SAME conformance
+ * suite as the real transport (`demo-carrier.test.ts`). That is what makes the
+ * demo device honest: what a reviewer watches on the dispatch screen is the
+ * contract behaving, not a screen pretending.
+ *
+ * ONE SEEDED DESTINATION IS REFUSED, and it is refused by a rule rather than by
+ * a flag: the carrier checks the postcode against the destination country's
+ * format, and the seed contains one address where those disagree. Fixing the
+ * postcode in the dispatch screen therefore makes the retry genuinely work,
+ * which a hard-coded "this address always fails" could never do.
+ */
+
+import { collectionDay, isoDateTime, type Clock } from "./clock.ts";
+import {
+  CarrierError,
+  type Address,
+  type FileRef,
+  type LabelStore,
+  type OrderRef,
+  type Parcel,
+  type Rate,
+  type Shipment,
+  type ShippingCarrier,
+  type TrackEvent,
+} from "./contracts.ts";
+import { labelFilename, renderLabelPdf } from "./label.ts";
+import { COLLECTION_WINDOW, quoteAll, zoneFor } from "./rates.ts";
+import { CURRENCY, TRACKING_SEED, WORKS_ADDRESS } from "./seed.ts";
+
+/**
+ * Postcode shapes, by country.
+ *
+ * Deliberately short: a carrier's real validator knows every country and this
+ * one knows three, which is all the seed needs. An unlisted country accepts any
+ * non-empty postcode — refusing what it cannot check would be a worse lie than
+ * accepting it — and the real transport does not do this check at all, because
+ * the carrier does it and its answer is the only one that counts.
+ */
+const POSTCODE_FORMAT: Readonly<Record<string, RegExp>> = {
+  GB: /^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/,
+  IE: /^[A-Z]\d{2}\s?[A-Z0-9]{4}$/,
+  US: /^\d{5}(-\d{4})?$/,
+};
+
+/** The carrier's own words, quoted verbatim in the UI and never paraphrased. */
+export const POSTCODE_REFUSAL = "Postcode not recognised for the destination country";
+
+export function postcodeFits(postcode: string, country: string): boolean {
+  const normalised = postcode.trim().toUpperCase();
+  if (normalised.length === 0) return false;
+  const format = POSTCODE_FORMAT[country.trim().toUpperCase()];
+  return format === undefined ? true : format.test(normalised);
+}
+
+export interface DemoCarrierOptions {
+  clock: Clock;
+  /** `HH:MM`. Miss it and the van comes the next working day. */
+  cutoff: string;
+  from?: Address;
+  currency?: string;
+}
+
+/**
+ * A demo transport is a `ShippingCarrier` plus two things the contract has no
+ * business carrying (see `contracts.ts`): the bytes of the labels it made, and
+ * a memory of where each order was quoted to.
+ *
+ * `book(rate, order)` takes no address — the contract books a rate, not a
+ * destination — because a real carrier holds the address against the rate id it
+ * issued. The demo has no server to hold it in, so the client half tells it.
+ */
+export type DemoCarrier = ShippingCarrier & {
+  readonly labels: LabelStore;
+  /** Called by the client half between quoting and booking. */
+  rememberDestination(reference: string, to: Address): void;
+  /**
+   * What the host's `shipments` table would answer. The customer's order view
+   * asks "has this order gone out with a carrier?", which is a question about
+   * the shop's records rather than about the carrier — so a connected build
+   * answers it from the database and never calls out at all.
+   */
+  find(reference: string): Shipment | undefined;
+};
+
+/** `3400123456789012` → `00 3400 1234 5678 9012`. */
+function formatTracking(serial: number): string {
+  const digits = String(serial).padStart(16, "0");
+  return `00 ${digits.slice(0, 4)} ${digits.slice(4, 8)} ${digits.slice(8, 12)} ${digits.slice(12)}`;
+}
+
+interface Booked {
+  shipment: Shipment;
+  to: Address;
+  order: OrderRef;
+  collected: string;
+}
+
+/**
+ * Three events at fixed times of day.
+ *
+ * The `status` codes are stable and the UI translates them; the descriptions
+ * are the carrier's own English, which is what the UI falls back to for a
+ * status it does not recognise — the same two-source arrangement a real
+ * carrier's tracking feed forces on you.
+ */
+function eventsFor(record: Booked, origin: Address): TrackEvent[] {
+  return [
+    {
+      at: isoDateTime(record.collected, "14:32"),
+      place: origin.city,
+      status: "collected",
+      description: "Shipment picked up",
+    },
+    {
+      at: isoDateTime(record.collected, "20:14"),
+      place: "Kingsbridge depot",
+      status: "at-hub",
+      description: "Processed at the sorting depot",
+    },
+    {
+      at: isoDateTime(record.shipment.rate.estimatedDelivery, "08:05"),
+      place: record.to.city,
+      status: "out-for-delivery",
+      description: "With the delivery driver",
+    },
+  ];
+}
+
+export function createDemoCarrier(options: DemoCarrierOptions): DemoCarrier {
+  const from = options.from ?? WORKS_ADDRESS;
+  const currency = options.currency ?? CURRENCY;
+
+  // The counter, the bookings and the label bytes are the transport's whole
+  // state, and it is per-instance: two demos in one page cannot mint the same
+  // reference, and a test gets a clean carrier by constructing one.
+  let minted = 0;
+  const byOrder = new Map<string, Booked>();
+  const byShipment = new Map<string, Booked>();
+  const byTracking = new Map<string, Booked>();
+  const labelBytes = new Map<string, string>();
+  const quotedTo = new Map<string, Address>();
+
+  function refuseUnknownAddress(to: Address): void {
+    if (postcodeFits(to.postcode, to.country)) return;
+    throw new CarrierError({
+      code: "POSTCODE_NOT_FOUND",
+      carrierMessage: POSTCODE_REFUSAL,
+      // Retryable means the works can act and try again — fix the postcode —
+      // not that repeating the identical call might come out differently.
+      retryable: true,
+    });
+  }
+
+  const collected = (): string => collectionDay(options.clock, options.cutoff);
+
+  return {
+    key: "shipping-dhl",
+
+    async quote(parcel: Parcel, origin: Address, to: Address): Promise<Rate[]> {
+      refuseUnknownAddress(to);
+      return quoteAll({
+        parcel,
+        zone: zoneFor(origin.country, to.country),
+        collected: collected(),
+        currency,
+      });
+    },
+
+    async book(rate: Rate, order: OrderRef): Promise<Shipment> {
+      const existing = byOrder.get(order.reference);
+      // Idempotent for one OrderRef: a shop that double-clicks Book must not
+      // end up with two collections and two labels for one job.
+      if (existing !== undefined) return existing.shipment;
+
+      const day = collected();
+      const tracking = formatTracking(TRACKING_SEED + minted);
+      minted += 1;
+      const id = `dhl-shp-${order.reference}`;
+      const fileId = `dhl-label-${order.reference}`;
+
+      const shipment: Shipment = {
+        id,
+        tracking,
+        labelFileId: fileId,
+        collectionFrom: isoDateTime(day, COLLECTION_WINDOW.from),
+        collectionTo: isoDateTime(day, COLLECTION_WINDOW.to),
+        rate,
+      };
+
+      const to = quotedTo.get(order.reference) ?? from;
+      const record: Booked = { shipment, to, order, collected: day };
+      byOrder.set(order.reference, record);
+      byShipment.set(id, record);
+      byTracking.set(tracking, record);
+
+      labelBytes.set(
+        fileId,
+        renderLabelPdf({
+          tracking,
+          service: rate.service,
+          reference: order.reference,
+          collection: `${day} ${COLLECTION_WINDOW.from}-${COLLECTION_WINDOW.to}`,
+          delivery: rate.estimatedDelivery,
+          to,
+          from,
+        }),
+      );
+
+      return shipment;
+    },
+
+    async track(tracking: string): Promise<TrackEvent[]> {
+      const record = byTracking.get(tracking);
+      // An unknown reference is an empty list, never an exception: a works
+      // pasting a reference out of an email wants "nothing yet", not a crash.
+      if (record === undefined) return [];
+      return eventsFor(record, from);
+    },
+
+    async label(shipmentId: string): Promise<FileRef> {
+      const record = byShipment.get(shipmentId);
+      if (record === undefined) {
+        throw new CarrierError({
+          code: "SHIPMENT_NOT_FOUND",
+          carrierMessage: "No shipment with that reference",
+          retryable: false,
+        });
+      }
+      const bytes = labelBytes.get(record.shipment.labelFileId) ?? "";
+      return {
+        fileId: record.shipment.labelFileId,
+        filename: labelFilename(record.shipment.tracking),
+        mediaType: "application/pdf",
+        bytes: bytes.length,
+      };
+    },
+
+    async cancel(shipmentId: string): Promise<void> {
+      const record = byShipment.get(shipmentId);
+      // Cancelling something already gone is a success, not an error: the works
+      // wants the collection not to happen, and it is not happening.
+      if (record === undefined) return;
+      byShipment.delete(shipmentId);
+      byOrder.delete(record.order.reference);
+      byTracking.delete(record.shipment.tracking);
+      labelBytes.delete(record.shipment.labelFileId);
+    },
+
+    labels: {
+      read: (fileId) => labelBytes.get(fileId),
+    },
+
+    rememberDestination(reference, to) {
+      quotedTo.set(reference, to);
+    },
+
+    find: (reference) => byOrder.get(reference)?.shipment,
+  };
+}

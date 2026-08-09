@@ -1,0 +1,994 @@
+/*
+ * View-specific rules. Imported last, so these always win a tie with
+ * components.css.
+ *
+ * Three layouts carry real weight here and are worth reading before changing:
+ * the configurator (a two-column grid whose quote panel detaches into a fixed
+ * bar under ~900px), the works board (four columns that scroll-snap sideways
+ * rather than squashing), and the quote panel's numeric gutter.
+ */
+
+/* ── products grid ─────────────────────────────────────────────────────── */
+
+.mp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(258px, 1fr));
+  gap: 16px;
+}
+.mp-product {
+  text-align: start;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 16px;
+  overflow: hidden;
+  padding: 0;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  color: inherit;
+}
+.mp-product .mp-tile {
+  block-size: 118px;
+}
+.mp-product-body {
+  padding: 14px 15px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+.mp-product-name {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.mp-product-line {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--fg-muted);
+  text-wrap: pretty;
+  flex: 1;
+}
+.mp-sizes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.mp-size-chip {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--fg-subtle);
+  background: var(--surface-3);
+  padding: 3px 7px;
+  border-radius: 6px;
+}
+.mp-from {
+  margin-block-start: 4px;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.mp-from-price {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+}
+.mp-from-note {
+  font-size: 12px;
+  color: var(--fg-subtle);
+}
+.mp-strip {
+  margin-block-start: 30px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 18px;
+}
+.mp-strip-item {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.mp-strip-mark {
+  inline-size: 36px;
+  block-size: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* ── configurator ──────────────────────────────────────────────────────── */
+
+.mp-config {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 1023.98px) {
+  .mp-config {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.mp-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-inline-size: 0;
+}
+.mp-step {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 15px;
+  padding: 17px 18px;
+}
+.mp-step-head {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  margin-block-end: 13px;
+  flex-wrap: wrap;
+}
+.mp-step-n {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.mp-step-hint {
+  margin-inline-start: auto;
+  font-size: 12px;
+  color: var(--fg-subtle);
+}
+.mp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.mp-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 9px;
+}
+.mp-qty-chip {
+  min-inline-size: 68px;
+  align-items: center;
+}
+.mp-custom-size {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: flex-end;
+}
+.mp-mm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface-2);
+  padding-inline-end: 10px;
+}
+.mp-mm[data-invalid="true"] {
+  border-color: var(--danger);
+}
+.mp-mm input {
+  inline-size: 92px;
+  border: 0;
+  background: transparent;
+  padding: 9px 10px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: inherit;
+}
+.mp-mm-unit {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-subtle);
+}
+.mp-limits {
+  margin: 11px 0 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--fg-subtle);
+}
+/*
+ * A broken limit is a --danger row that NAMES the limit and offers the nearest
+ * size that works as a button. Never a silent clamp, never a disabled field.
+ */
+.mp-violation {
+  margin-block-start: 10px;
+  border: 1px solid var(--danger);
+  background: var(--danger-soft);
+  border-radius: 11px;
+  padding: 11px 13px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+.mp-violation-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--danger);
+  font-weight: 600;
+  max-inline-size: 48ch;
+}
+.mp-violation-fix {
+  border: 1px solid var(--danger);
+  background: var(--surface);
+  color: var(--danger);
+  font-size: 12.5px;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 7px 11px;
+  white-space: nowrap;
+}
+.mp-violation-fix:hover {
+  background: var(--danger);
+  color: #fff;
+}
+.mp-saving {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--pos);
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+}
+.mp-optrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.mp-check {
+  flex: 1;
+  min-inline-size: 200px;
+  text-align: start;
+  border: 1.5px solid var(--border-strong);
+  background: var(--surface-2);
+  border-radius: 11px;
+  padding: 11px 13px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: inherit;
+}
+.mp-check[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.mp-check-box {
+  inline-size: 20px;
+  block-size: 20px;
+  border-radius: 6px;
+  border: 1.5px solid var(--border-strong);
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--accent-fg);
+}
+.mp-check[aria-pressed="true"] .mp-check-box {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* The sticky quote panel, and its numeric gutter. */
+.mp-quote {
+  position: sticky;
+  inset-block-start: 82px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lift);
+  overflow: hidden;
+}
+@media (max-width: 1023.98px) {
+  .mp-quote {
+    position: static;
+  }
+}
+.mp-quote-head {
+  padding: 15px 18px;
+  border-block-end: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+/*
+ * ONE reserved numeric gutter for every money row on the panel. Figures
+ * right-align in a column of their own and can never collide with a long
+ * label, in any of the eight locales — which is the whole reason the width is
+ * fixed here rather than left to the content.
+ */
+.mp-qrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px;
+  gap: 10px;
+  align-items: baseline;
+  padding-block: 7px;
+  border-block-end: 1px solid var(--border);
+}
+.mp-qrow:last-of-type {
+  border-block-end: 0;
+}
+.mp-qrow-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+.mp-qrow-detail {
+  font-size: 10.5px;
+  color: var(--fg-subtle);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mp-qrow-amt {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  text-align: end;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.mp-qrow--total {
+  padding-block: 11px 4px;
+  border-block-start: 2px solid var(--border-strong);
+  border-block-end: 0;
+  margin-block-start: 5px;
+}
+.mp-qrow--total .mp-qrow-label {
+  font-size: 16px;
+  font-weight: 800;
+}
+.mp-qrow--total .mp-qrow-amt {
+  font-size: 18px;
+  font-weight: 800;
+}
+.mp-quote-body {
+  padding: 6px 18px 4px;
+}
+.mp-quote-foot {
+  padding: 0 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.mp-ready {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface-2);
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+.mp-levers {
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface-2);
+  padding: 11px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mp-lever {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--fg-muted);
+}
+.mp-lever-n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 700;
+  margin-block-start: 1px;
+}
+
+/* The mobile quote bar the panel detaches into. */
+.mp-quotebar {
+  position: fixed;
+  inset-block-end: 0;
+  inset-inline: 0;
+  z-index: 48;
+  background: var(--surface);
+  border-block-start: 1px solid var(--border-strong);
+  box-shadow: 0 -8px 28px rgb(16 16 24 / 12%);
+  padding: 11px 16px calc(11px + env(safe-area-inset-bottom));
+  align-items: center;
+  gap: 12px;
+}
+.mp-quotebar-total {
+  font-family: var(--font-mono);
+  font-size: 19px;
+  font-weight: 800;
+}
+
+/* ── artwork ───────────────────────────────────────────────────────────── */
+
+.mp-reqs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 13px;
+}
+.mp-req {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.mp-req-mark {
+  inline-size: 30px;
+  block-size: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--surface-3);
+  color: var(--fg-muted);
+  flex: 0 0 auto;
+}
+.mp-drop {
+  inline-size: 100%;
+  border: 2px dashed var(--border-strong);
+  background: var(--surface-2);
+  border-radius: 16px;
+  padding: 38px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+.mp-drop:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.mp-file {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 14px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+}
+@media (max-width: 599.98px) {
+  .mp-file {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.mp-file .mp-tile {
+  min-block-size: 118px;
+}
+.mp-file-body {
+  padding: 13px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mp-verdict {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.mp-verdict[data-level="pass"] {
+  color: var(--fg-muted);
+}
+.mp-verdict[data-level="warn"] {
+  color: var(--warn);
+}
+.mp-verdict[data-level="fail"] {
+  color: var(--danger);
+}
+.mp-verdict svg {
+  margin-block-start: 1px;
+  flex: 0 0 auto;
+}
+
+/* ── the works board ───────────────────────────────────────────────────── */
+
+.mp-kpis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-block-end: 18px;
+}
+.mp-kpi {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 11px 15px;
+  min-inline-size: 124px;
+}
+.mp-kpi[data-tone="danger"] {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+.mp-kpi[data-tone="warn"] {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+}
+.mp-kpi-value {
+  font-family: var(--font-mono);
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1;
+}
+.mp-kpi[data-tone="danger"] .mp-kpi-value {
+  color: var(--danger);
+}
+.mp-kpi[data-tone="warn"] .mp-kpi-value {
+  color: var(--warn);
+}
+.mp-kpi-label {
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  margin-block-start: 4px;
+}
+
+/*
+ * Four columns that SCROLL SIDEWAYS with scroll-snap under ~1100px rather than
+ * squashing to unreadable slivers. A works board with four 90px columns is not
+ * a board, it is a stripe.
+ */
+.mp-board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  padding-block-end: 6px;
+}
+@media (max-width: 1099.98px) {
+  .mp-board {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+  .mp-column {
+    min-inline-size: 264px;
+    scroll-snap-align: start;
+    flex: 0 0 auto;
+  }
+}
+.mp-column {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+}
+.mp-column[data-over="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.mp-column-head {
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-block-end: 1px solid var(--border);
+}
+.mp-column-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.mp-column-body {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-block-size: 72px;
+  flex: 1;
+}
+.mp-jobcard {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 11px;
+  padding: 12px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  text-align: start;
+  inline-size: 100%;
+  color: inherit;
+}
+.mp-jobcard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
+}
+.mp-jobcard[data-dragging="true"] {
+  opacity: 0.45;
+}
+.mp-jobcard-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-block-end: 8px;
+}
+.mp-famdot {
+  inline-size: 9px;
+  block-size: 9px;
+  border-radius: 999px;
+  background: var(--fam, var(--border-strong));
+  flex: 0 0 auto;
+}
+.mp-jobcard-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.mp-jobcard-spec {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-subtle);
+  margin-block: 2px 9px;
+}
+.mp-jobcard-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.mp-jobcard-cust {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  max-inline-size: 54%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mp-menu {
+  position: absolute;
+  inset-inline-end: 8px;
+  inset-block-start: 36px;
+  z-index: 12;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 11px;
+  box-shadow: var(--shadow-lift);
+  padding: 5px;
+  min-inline-size: 184px;
+  animation: mp-pop 0.14s ease-out;
+}
+.mp-menu-head {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+  padding: 6px 9px 4px;
+}
+.mp-menu-item {
+  inline-size: 100%;
+  text-align: start;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  padding: 8px 9px;
+  font-size: 12.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--fg);
+}
+.mp-menu-item:hover {
+  background: var(--surface-2);
+}
+.mp-menu-item:disabled {
+  color: var(--fg-subtle);
+  cursor: not-allowed;
+}
+
+/* ── job ticket ────────────────────────────────────────────────────────── */
+
+.mp-ticket {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 899.98px) {
+  .mp-ticket {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.mp-spec-row {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 12px;
+  padding-block: 9px;
+  border-block-end: 1px solid var(--border);
+}
+.mp-spec-row:last-child {
+  border-block-end: 0;
+}
+.mp-spec-label {
+  font-size: 12.5px;
+  color: var(--fg-muted);
+}
+.mp-spec-value {
+  font-size: 13px;
+  font-weight: 600;
+}
+/* The imposition line is the ticket's most interesting number. */
+.mp-impos {
+  border: 1.5px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+.mp-impos-line {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.mp-impos-note {
+  font-size: 12px;
+  color: var(--fg-muted);
+  margin-block-start: 5px;
+}
+.mp-matline {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  border-radius: 11px;
+  padding: 11px 12px;
+}
+.mp-matline[data-short="true"] {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+}
+.mp-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.mp-action {
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 10px 13px;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-align: start;
+  color: inherit;
+}
+.mp-action:hover {
+  background: var(--surface-2);
+  border-color: var(--accent);
+}
+/*
+ * The dispatch row. "Mark collected" stands alone here until a carrier is
+ * connected — the fourth slot renders NOTHING when empty (24 D6), and the
+ * spacer is what leaves it room to appear without the row jumping.
+ */
+.mp-dispatch-row {
+  display: flex;
+  gap: 9px;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+.mp-dispatch-spacer {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+/* ── the customer's stage strip ────────────────────────────────────────── */
+
+.mp-stages {
+  display: flex;
+  overflow-x: auto;
+  padding-block-end: 4px;
+  gap: 0;
+}
+.mp-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-inline-size: 74px;
+  flex: 1;
+  position: relative;
+  text-align: center;
+}
+.mp-stage-line {
+  position: absolute;
+  inset-block-start: 9px;
+  inset-inline-start: -50%;
+  inline-size: 100%;
+  block-size: 2px;
+  background: var(--border-strong);
+}
+.mp-stage[data-done="true"] .mp-stage-line {
+  background: var(--accent);
+}
+.mp-stage-dot {
+  inline-size: 20px;
+  block-size: 20px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 2px solid var(--border-strong);
+  display: grid;
+  place-items: center;
+  position: relative;
+  z-index: 1;
+  color: var(--accent-fg);
+}
+.mp-stage[data-done="true"] .mp-stage-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.mp-stage-label {
+  font-size: 10.5px;
+  line-height: 1.2;
+  color: var(--fg-subtle);
+}
+.mp-stage[data-current="true"] .mp-stage-label {
+  color: var(--fg);
+  font-weight: 700;
+}
+
+/* ── add-ons shelf ─────────────────────────────────────────────────────── */
+
+.mp-addons {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 899.98px) {
+  .mp-addons {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .mp-cat-rail {
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    position: static !important;
+  }
+}
+.mp-cat-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: sticky;
+  inset-block-start: 78px;
+}
+.mp-cat {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  background: transparent;
+  color: var(--fg-muted);
+  border-radius: 9px;
+  padding: 9px 11px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: start;
+}
+.mp-cat:hover {
+  background: var(--surface-3);
+}
+.mp-cat[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+}
+.mp-cat-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-subtle);
+  margin-inline-start: auto;
+}
+.mp-addon-row {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--shadow);
+}
+.mp-addon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(272px, 1fr));
+  gap: 14px;
+}
+.mp-addon-card {
+  position: relative;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 15px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  box-shadow: var(--shadow);
+}
+.mp-perm {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--fg-muted);
+  padding-block: 5px;
+}
+.mp-perm svg {
+  color: var(--pos);
+  margin-block-start: 2px;
+  flex: 0 0 auto;
+}
+
+/* ── misc screens ──────────────────────────────────────────────────────── */
+
+.mp-narrow {
+  max-inline-size: 820px;
+}
+.mp-narrower {
+  max-inline-size: 640px;
+}
+.mp-centre {
+  margin-inline: auto;
+  text-align: center;
+}
+.mp-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.mp-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.mp-empty {
+  border: 1px dashed var(--border-strong);
+  border-radius: 14px;
+  padding: 32px;
+  text-align: center;
+  color: var(--fg-subtle);
+  font-size: 14px;
+}
+.mp-swatch {
+  display: block;
+  block-size: 74px;
+  border-block-end: 1px solid var(--border);
+  background: var(--tile, var(--surface-3));
+}
+.mp-break-chart {
+  inline-size: 100%;
+  block-size: auto;
+  overflow: visible;
+}
