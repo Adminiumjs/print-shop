@@ -1,0 +1,609 @@
+/*
+ * VENDORED from add-on-import-canva/src/client/styles.css — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `import-canva`; its manifest, tests and README live in that repo.
+ */
+/*
+ * This add-on's own stylesheet.
+ *
+ * Every colour, font and gradient here is a token the HOST already defines
+ * (`styles/tokens.css`) — the one styling dependency 24 D7 allows. Nothing is
+ * a hex: an add-on that forks a colour is an add-on that stops matching the
+ * shop the day the shop is re-themed, and the light/dark switch is the host's
+ * to make.
+ *
+ * The class prefix is `cvi-` because these rules land in the same global
+ * cascade as the host's `mp-` rules and every other add-on's. No add-on may
+ * style a `mp-` class, and none of these names may collide with one.
+ *
+ * LOGICAL PROPERTIES ONLY. The host renders Arabic right-to-left with no RTL
+ * stylesheet — `inset-inline-start`, `padding-inline`, `border-block-end` — and
+ * a physical `left` here is a bug that only one of the eight locales shows.
+ */
+
+.cvi-tile-action {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  inline-size: 100%;
+  text-align: start;
+  padding: 15px;
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+  transition: transform 0.16s, box-shadow 0.16s, border-color 0.16s;
+}
+.cvi-tile-action:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--accent);
+}
+.cvi-tile-action:active {
+  transform: scale(0.97);
+}
+.cvi-tile-title {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.cvi-tile-body {
+  display: block;
+  margin-block-start: 3px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+/*
+ * The monogram (24 D12): a neutral tile with two or three letters and NO brand
+ * colour, ever. It is not a stand-in for a logo we could not obtain — it is
+ * what an add-on shelf looks like when twenty of them have to read as one
+ * system instead of twenty marks.
+ */
+.cvi-monogram {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  border-radius: 11px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.cvi-monogram--sm {
+  inline-size: 26px;
+  block-size: 26px;
+  border-radius: 7px;
+  font-size: 9px;
+}
+
+.cvi-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  /* Arabic reads right to left; its numbers do not. Without the isolation the
+     bidi algorithm turns `85 × 55` into `55 × 85` in exactly one locale. */
+  unicode-bidi: isolate;
+}
+
+/* ── the flow, as an overlay ─────────────────────────────────────────────── */
+
+.cvi-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(10, 10, 15, 0.55);
+  backdrop-filter: blur(3px);
+}
+/*
+ * The consent panel stacks ON the flow rather than replacing it, and it is
+ * `absolute` rather than `fixed` on purpose: the outer scrim's `backdrop-filter`
+ * makes it the containing block for any fixed descendant, so a second `fixed`
+ * layer would silently resolve against the outer scrim's PADDING box and sit
+ * 20px in from the viewport. Positioning against the scrim explicitly is the
+ * same result, stated rather than inherited.
+ */
+.cvi-scrim--nested {
+  position: absolute;
+  z-index: 1;
+  backdrop-filter: none;
+}
+
+.cvi-sheet {
+  inline-size: min(860px, 96vw);
+  max-block-size: 92vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  padding: 22px;
+}
+.cvi-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-block-end: 14px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cvi-back:hover {
+  color: var(--fg);
+}
+/* The arrow points back the way the reader came, which in Arabic is the other
+   way — hence the flip rather than a second icon. */
+[dir="rtl"] .cvi-back svg {
+  transform: scaleX(-1);
+}
+
+.cvi-head {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-block-end: 18px;
+}
+.cvi-h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.cvi-lede {
+  margin: 3px 0 0;
+  font-size: 13.5px;
+  color: var(--fg-muted);
+}
+.cvi-close {
+  margin-inline-start: auto;
+  display: grid;
+  place-items: center;
+  inline-size: 30px;
+  block-size: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--surface-3);
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+
+.cvi-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block-end: 18px;
+}
+.cvi-step {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 13px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+.cvi-step[data-state="current"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 800;
+}
+.cvi-step-n {
+  display: grid;
+  place-items: center;
+  inline-size: 22px;
+  block-size: 22px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--fg-subtle);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.cvi-step[data-state="done"] .cvi-step-n,
+.cvi-step[data-state="current"] .cvi-step-n {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+/* ── connect + consent ───────────────────────────────────────────────────── */
+
+.cvi-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 13px;
+  max-inline-size: 560px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: var(--surface);
+}
+.cvi-card-title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.cvi-p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+.cvi-fine {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--fg-subtle);
+}
+
+/*
+ * The simulation label (24 D11 / AC7).
+ *
+ * It appears on EVERY step that shows an answer a real account would have
+ * given — the connect card, the consent panel, the picker and the import
+ * result — because a label on only the last of them tells a customer the
+ * designs were real and only the checking was pretended. Warn tokens rather
+ * than subtle ones: this is the one line on the screen that must not read as
+ * boilerplate a reader has learned to skip.
+ */
+.cvi-demo {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 11px;
+  border: 1px solid var(--warn);
+  border-radius: 10px;
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+.cvi-demo svg {
+  flex: none;
+  margin-block-start: 1px;
+}
+
+.cvi-button {
+  border: 0;
+  border-radius: 11px;
+  padding: 12px 18px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.12s;
+}
+.cvi-button:active {
+  transform: scale(0.97);
+}
+.cvi-button--ghost {
+  background: var(--surface);
+  color: var(--fg);
+  border: 1px solid var(--border-strong);
+}
+.cvi-button--block {
+  inline-size: 100%;
+}
+.cvi-button:focus-visible,
+.cvi-tile-action:focus-visible,
+.cvi-design:focus-visible,
+.cvi-link:focus-visible,
+.cvi-search input:focus-visible {
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 1px;
+}
+
+.cvi-consent {
+  inline-size: min(420px, 94vw);
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+}
+.cvi-perms {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-block: 14px;
+}
+.cvi-perm {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.cvi-perm svg {
+  flex: 0 0 auto;
+  margin-block-start: 2px;
+  color: var(--pos);
+}
+.cvi-actions {
+  display: flex;
+  gap: 9px;
+}
+
+/* ── pick ────────────────────────────────────────────────────────────────── */
+
+.cvi-pickbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-block-end: 14px;
+}
+.cvi-search {
+  position: relative;
+  flex: 1;
+  min-inline-size: 200px;
+  max-inline-size: 340px;
+}
+.cvi-search svg {
+  position: absolute;
+  inset-inline-start: 11px;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  color: var(--fg-subtle);
+}
+.cvi-search input {
+  inline-size: 100%;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--fg);
+  font: inherit;
+  font-size: 13.5px;
+  padding-block: 9px;
+  padding-inline: 34px 12px;
+}
+
+.cvi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 14px;
+}
+.cvi-design {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  text-align: start;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: transform 0.16s, box-shadow 0.16s, border-color 0.16s;
+}
+.cvi-design:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--accent);
+}
+
+/*
+ * No photography anywhere in this app, and none invented here: a design tile is
+ * a gradient from the host's own family tints with an icon on it. A thumbnail
+ * of the customer's actual artwork would also mean fetching it, which D11
+ * forbids in the demo and the consent panel never asked for.
+ */
+.cvi-thumb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  block-size: 104px;
+  color: rgba(255, 255, 255, 0.9);
+  background: var(--surface-3);
+}
+.cvi-thumb[data-tint="card"] {
+  background: var(--tint-card);
+}
+.cvi-thumb[data-tint="paper"] {
+  background: var(--tint-paper);
+}
+.cvi-thumb-chip {
+  position: absolute;
+  inset-inline-start: 10px;
+  inset-block-end: 9px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.28);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 10px;
+}
+.cvi-design-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 13px 13px;
+}
+.cvi-design-name {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.cvi-design-edited {
+  font-size: 11px;
+  color: var(--fg-subtle);
+}
+.cvi-empty {
+  padding: 20px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--fg-subtle);
+}
+
+/* ── import ──────────────────────────────────────────────────────────────── */
+
+.cvi-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.cvi-status {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 15px;
+  border-radius: 13px;
+  border: 1px solid;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.cvi-status[data-tone="neutral"] {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+  color: var(--fg-muted);
+}
+.cvi-status[data-tone="pos"] {
+  border-color: var(--pos);
+  background: var(--pos-soft);
+  color: var(--pos);
+}
+.cvi-status[data-tone="danger"] {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.cvi-link {
+  margin-inline-start: auto;
+  border: 0;
+  background: transparent;
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.cvi-file {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.cvi-file .cvi-thumb {
+  block-size: 100%;
+  min-block-size: 130px;
+}
+.cvi-file-body {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 14px 16px;
+}
+.cvi-file-from {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fg-muted);
+}
+
+.cvi-row {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.cvi-row svg {
+  flex: 0 0 auto;
+  margin-block-start: 1px;
+}
+.cvi-row[data-level="pass"] svg {
+  color: var(--pos);
+}
+.cvi-row[data-level="warn"] svg {
+  color: var(--warn);
+}
+.cvi-row[data-level="fail"] {
+  color: var(--danger);
+}
+.cvi-row[data-level="fail"] svg {
+  color: var(--danger);
+}
+
+.cvi-fix-head {
+  font-size: 13.5px;
+  font-weight: 800;
+  margin-block-end: 9px;
+}
+.cvi-fixes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.cvi-fix {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.cvi-fix-title {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-wrap: pretty;
+}
+.cvi-fix-body {
+  margin: 0;
+  flex: 1;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+/*
+ * Below the sheet's comfortable width the flow goes one column: the file card
+ * loses its thumbnail column and the two remedies stack. They stack in the
+ * order they are read, so the scale remedy stays first — its numbers are the
+ * ones the copy above refers to.
+ */
+@media (max-width: 700px) {
+  .cvi-sheet {
+    padding: 16px;
+  }
+  .cvi-file,
+  .cvi-fixes {
+    grid-template-columns: 1fr;
+  }
+}

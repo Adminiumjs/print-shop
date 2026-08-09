@@ -1,0 +1,242 @@
+{
+  "kind": "app",
+  "manifestVersion": 1,
+  "key": "printing",
+  "name": "Print Shop",
+  "version": "1.0.0",
+  "publisher": {
+    "id": "adminium",
+    "name": "Adminium",
+    "url": "https://adminium.dev"
+  },
+  "license": "AGPL-3.0-only",
+  "description": {
+    "key": "marketplaceData.printing.description",
+    "fallback": "A print works, front and back. Customers configure a job — material, size, sides, finish, quantity, packaging, delivery — and watch the quote and the ready-by date move as they do. The works imposes it onto sheets, gates it behind an approved proof, and runs it to the counter or the carrier."
+  },
+  "categories": ["commerce"],
+
+  "compatibility": {
+    "minAdminiumVersion": "1.0.0"
+  },
+
+  "capabilities": ["payments", "file-storage", "email-delivery", "realtime"],
+
+  "requiredSchema": {
+    "tables": [
+      {
+        "ref": "customers",
+        "columns": [
+          { "ref": "id", "type": "id", "role": "pk" },
+          { "ref": "name", "type": "text", "semantic": "name" },
+          { "ref": "email", "type": "text", "semantic": "email" },
+          { "ref": "town", "type": "text" },
+          { "ref": "created_at", "type": "timestamptz", "role": "created_at" }
+        ]
+      },
+      {
+        "ref": "products",
+        "columns": [
+          { "ref": "id", "type": "id", "role": "pk" },
+          { "ref": "key", "type": "text" },
+          { "ref": "name", "type": "text", "semantic": "name" },
+          { "ref": "family", "type": "enum", "enum": ["card", "paper", "mail", "label", "large", "fabric"] },
+          { "ref": "from_quantity", "type": "int" },
+          { "ref": "sides_choice", "type": "bool" }
+        ]
+      },
+      {
+        "ref": "materials",
+        "columns": [
+          { "ref": "id", "type": "id", "role": "pk" },
+          { "ref": "key", "type": "text" },
+          { "ref": "name", "type": "text", "semantic": "name" },
+          { "ref": "kind", "type": "enum", "enum": ["sheet", "roll"] },
+          { "ref": "gsm", "type": "int", "nullable": true },
+          { "ref": "sheet_cost", "type": "money" },
+          { "ref": "on_hand", "type": "int" },
+          { "ref": "reorder_at", "type": "int" }
+        ]
+      },
+      {
+        "ref": "quotes",
+        "columns": [
+          { "ref": "id", "type": "id", "role": "pk" },
+          { "ref": "ref", "type": "text" },
+          { "ref": "customer_id", "type": "fk", "references": "customers" },
+          { "ref": "label", "type": "text", "nullable": true },
+          { "ref": "configuration", "type": "json" },
+          { "ref": "total", "type": "money" },
+          { "ref": "saved_on", "type": "date" },
+          { "ref": "created_at", "type": "timestamptz", "role": "created_at" }
+        ]
+      },
+      {
+        "ref": "jobs",
+        "columns": [
+          { "ref": "id", "type": "id", "role": "pk" },
+          { "ref": "ref", "type": "text" },
+          { "ref": "customer_id", "type": "fk", "references": "customers" },
+          { "ref": "product_id", "type": "fk", "references": "products" },
+          { "ref": "material_id", "type": "fk", "references": "materials" },
+          { "ref": "quantity", "type": "int" },
+          { "ref": "trim_width_mm", "type": "decimal" },
+          { "ref": "trim_height_mm", "type": "decimal" },
+          { "ref": "sides", "type": "int" },
+          { "ref": "finish_key", "type": "text" },
+          { "ref": "packaging_key", "type": "text" },
+          {
+            "ref": "stage",
+            "type": "enum",
+            "enum": [
+              "quoted",
+              "ordered",
+              "prepress",
+              "proofed",
+              "approved",
+              "printing",
+              "finishing",
+              "ready",
+              "dispatched",
+              "collected"
+            ]
+          },
+          { "ref": "promised_for", "type": "date" },
+          { "ref": "express", "type": "bool" },
+          { "ref": "spoiled_sheets", "type": "int" },
+          { "ref": "total", "type": "money" },
+          { "ref": "created_at", "type": "timestamptz", "role": "created_at" },
+          { "ref": "updated_at", "type": "timestamptz", "role": "updated_at" }
+        ]
+      },
+      {
+        "ref": "artwork",
+        "columns": [
+          { "ref": "id", "type": "id", "role": "pk" },
+          { "ref": "job_id", "type": "fk", "references": "jobs" },
+          { "ref": "filename", "type": "text" },
+          { "ref": "file", "type": "blob" },
+          { "ref": "width_px", "type": "int" },
+          { "ref": "height_px", "type": "int" },
+          { "ref": "width_mm", "type": "decimal" },
+          { "ref": "height_mm", "type": "decimal" },
+          { "ref": "bleed_mm", "type": "decimal" },
+          { "ref": "nearest_ink_mm", "type": "decimal" },
+          { "ref": "colour_space", "type": "enum", "enum": ["CMYK", "RGB"] },
+          { "ref": "fonts_embedded", "type": "bool" },
+          { "ref": "pages", "type": "int" },
+          { "ref": "source", "type": "text", "nullable": true },
+          { "ref": "created_at", "type": "timestamptz", "role": "created_at" }
+        ]
+      },
+      {
+        "ref": "proofs",
+        "columns": [
+          { "ref": "id", "type": "id", "role": "pk" },
+          { "ref": "job_id", "type": "fk", "references": "jobs" },
+          { "ref": "kind", "type": "enum", "enum": ["sent", "change-asked", "approved"] },
+          { "ref": "note", "type": "text", "nullable": true },
+          { "ref": "at", "type": "date" }
+        ]
+      },
+      {
+        "ref": "dispatches",
+        "columns": [
+          { "ref": "id", "type": "id", "role": "pk" },
+          { "ref": "job_id", "type": "fk", "references": "jobs" },
+          { "ref": "kind", "type": "enum", "enum": ["collected", "carrier"] },
+          { "ref": "tracking", "type": "text", "nullable": true },
+          { "ref": "at", "type": "timestamptz" }
+        ]
+      },
+      {
+        "ref": "stock_movements",
+        "columns": [
+          { "ref": "id", "type": "id", "role": "pk" },
+          { "ref": "material_id", "type": "fk", "references": "materials" },
+          { "ref": "job_id", "type": "fk", "references": "jobs", "nullable": true },
+          { "ref": "kind", "type": "enum", "enum": ["consumed", "spoilage", "delivery"] },
+          { "ref": "sheets", "type": "int" },
+          { "ref": "at", "type": "timestamptz" }
+        ]
+      }
+    ]
+  },
+
+  "pages": [
+    {
+      "ref": "jobs",
+      "template": "table",
+      "title": { "key": "marketplaceData.printing.page.jobs", "fallback": "Jobs" },
+      "nav": { "group": "Works", "icon": "printer", "order": 1 },
+      "bindings": { "jobs": "jobs" }
+    },
+    {
+      "ref": "proofs",
+      "template": "table",
+      "title": { "key": "marketplaceData.printing.page.proofs", "fallback": "Proofs" },
+      "nav": { "group": "Works", "icon": "stamp", "order": 2 },
+      "bindings": { "proofs": "proofs" }
+    },
+    {
+      "ref": "artwork",
+      "template": "table",
+      "title": { "key": "marketplaceData.printing.page.artwork", "fallback": "Artwork" },
+      "nav": { "group": "Works", "icon": "file-check-2", "order": 3 },
+      "bindings": { "artwork": "artwork" }
+    },
+    {
+      "ref": "dispatches",
+      "template": "table",
+      "title": { "key": "marketplaceData.printing.page.dispatches", "fallback": "Dispatch" },
+      "nav": { "group": "Works", "icon": "truck", "order": 4 },
+      "bindings": { "dispatches": "dispatches" }
+    },
+    {
+      "ref": "materials",
+      "template": "table",
+      "title": { "key": "marketplaceData.printing.page.materials", "fallback": "Materials" },
+      "nav": { "group": "Stock", "icon": "layers", "order": 1 },
+      "bindings": { "materials": "materials" }
+    },
+    {
+      "ref": "stock-movements",
+      "template": "table",
+      "title": {
+        "key": "marketplaceData.printing.page.stockMovements",
+        "fallback": "Stock movements"
+      },
+      "nav": { "group": "Stock", "icon": "arrow-left-right", "order": 2 },
+      "bindings": { "stock_movements": "stock_movements" }
+    },
+    {
+      "ref": "rate-card",
+      "template": "table",
+      "title": { "key": "marketplaceData.printing.page.rateCard", "fallback": "Rate card" },
+      "nav": { "group": "Catalogue", "icon": "list-ordered", "order": 1 },
+      "bindings": { "products": "products" }
+    },
+    {
+      "ref": "quotes",
+      "template": "table",
+      "title": { "key": "marketplaceData.printing.page.quotes", "fallback": "Saved quotes" },
+      "nav": { "group": "Catalogue", "icon": "file-text", "order": 2 },
+      "bindings": { "quotes": "quotes" }
+    },
+    {
+      "ref": "customers",
+      "template": "table",
+      "title": { "key": "marketplaceData.printing.page.customers", "fallback": "Customers" },
+      "nav": { "group": "Catalogue", "icon": "users", "order": 3 },
+      "bindings": { "customers": "customers" }
+    }
+  ],
+
+  "frontend": {
+    "kind": "spa",
+    "entry": "dist/index.html",
+    "env": {
+      "VITE_API_URL": { "required": false, "example": "https://marlow.example/api/v1" }
+    }
+  }
+}

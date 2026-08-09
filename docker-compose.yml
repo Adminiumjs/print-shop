@@ -1,0 +1,82 @@
+# Print Shop — full self-host stack ("the full implementation").
+#
+# `docker compose up` brings up the whole product on a real database:
+#   • the shop        → http://localhost:8080  (the React SPA, both personas)
+#   • Adminium admin  → http://localhost:4600  (auto-generated from the DB schema)
+#   • Postgres (works-db)                      (the seeded works: marlowpress)
+#
+# On first boot, works-db applies db/schema.sql then db/seed.sql, and Adminium
+# imports DATABASE_URL as its first source connection, introspects the schema,
+# and generates the office. Finish the ~1-minute first-run wizard at
+# http://localhost:4600 — it's pre-pointed at the seeded works DB. The shop and
+# the dashboard run the SAME works: a job moved on :8080 is the row an
+# administrator opens on :4600, and the rate card the SPA quotes from is edited
+# on :4600 rather than in the SPA.
+#
+# Copy .env.example to .env and set a real ADMINIUM_SECRET before any real use.
+
+services:
+  # --- PostgreSQL: the real database behind the works --------------------
+  works-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: adminium
+      POSTGRES_PASSWORD: adminium
+      POSTGRES_DB: marlowpress
+      # Load db/seed.sql on first boot? Set DEMO_DATA=0 in .env for an empty
+      # database with the same schema. `npm run demo:import` loads it later.
+      DEMO_DATA: ${DEMO_DATA:-1}
+      # One works, one market town, one zone — and the pinned Wednesday is
+      # written in it. The seed states its own offsets, so a container in
+      # another zone still lands on the same instants.
+      TZ: Europe/London
+    volumes:
+      - works-db-data:/var/lib/postgresql/data
+      # Auto-applied in name order on an empty data volume:
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./db/demo-toolkit.sql:/docker-entrypoint-initdb.d/02-demo-toolkit.sql:ro
+      - ./db/init-demo.sh:/docker-entrypoint-initdb.d/03-demo-seed.sh:ro
+      # Deliberately NOT in initdb.d: 03-demo-seed.sh decides whether to load
+      # it (DEMO_DATA) and records what it inserted, so the demo rows can be
+      # removed later without touching the schema or anything you added.
+      - ./db/seed.sql:/demo/seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U adminium -d marlowpress"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # --- Adminium: auto-generates the office from the DB schema ------------
+  adminium:
+    image: ghcr.io/mosofi/adminium:latest
+    depends_on:
+      works-db:
+        condition: service_healthy
+    environment:
+      # !!! PRODUCTION MUST SET A REAL 32-BYTE HEX SECRET: `openssl rand -hex 32`.
+      # The fallback below is a throwaway for the LOCAL DEMO ONLY — never ship it.
+      ADMINIUM_SECRET: ${ADMINIUM_SECRET:-devsecret-change-me-0000000000000000000000000000000000000000000000000000}
+      # Adminium imports this as its first source connection on boot and
+      # auto-generates the admin dashboard from the introspected schema.
+      DATABASE_URL: postgres://adminium:adminium@works-db:5432/marlowpress
+      # Embedded SQLite meta store (settings, users) lives here — fine for the demo.
+      ADMINIUM_DATA_DIR: /data
+    volumes:
+      - adminium-data:/data
+    ports:
+      - "4600:4600"
+    restart: unless-stopped
+
+  # --- The shop: the static SPA built from this repo's Dockerfile --------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+volumes:
+  works-db-data:
+  adminium-data:

@@ -1,0 +1,10 @@
+node_modules
+dist
+# Scratch output of the provenance build in src/builtOutput.test.ts — the same
+# bundle with sourcemaps on, used only to prove which chunks are 100% dependency
+# code. Never served, never shipped.
+.provenance
+*.tsbuildinfo
+.DS_Store
+*.local
+.vercel
