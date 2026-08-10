@@ -1,7 +1,7 @@
 /*
- * VENDORED from add-on-shipping-dhl/src/seed.ts — synced by scripts/sync-add-ons.sh.
- * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
- * The add-on key is `shipping-dhl`; its manifest, tests and README live in that repo.
+ * VENDORED from add-ons/packages/shipping-dhl/src/seed.ts — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `shipping-dhl`; its manifest, tests and README live in the monorepo.
  */
 /**
  * Seed data for the demo: the works' own address, the customers it posts to,
@@ -15,8 +15,8 @@
  * dispatch screen makes the retry genuinely succeed.
  */
 
-import type { Address } from "./contracts.ts";
-import type { HostJob } from "./host.ts";
+import type { Address } from "../host/contracts/index.ts";
+import type { HostJob } from "./host-payloads.ts";
 
 /** Where the van collects from. */
 export const WORKS_ADDRESS: Address = {
@@ -168,7 +168,7 @@ const BY_NAME: ReadonlyMap<string, Address> = new Map(
  * edit. But the print shop resolves its own customer keys to names before it
  * hands the job over — `Job.customer` is a display name there — so matching on
  * the name as well is what makes the contract work with the host as it actually
- * is, rather than as `host.ts` once described it. Both are checked; neither
+ * is, rather than as the payload type once described it. Both are checked; neither
  * invents an address when both miss.
  */
 export function resolveDestination(job: {

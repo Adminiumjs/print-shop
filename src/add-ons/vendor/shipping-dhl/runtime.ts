@@ -1,7 +1,7 @@
 /*
- * VENDORED from add-on-shipping-dhl/src/runtime.ts — synced by scripts/sync-add-ons.sh.
- * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
- * The add-on key is `shipping-dhl`; its manifest, tests and README live in that repo.
+ * VENDORED from add-ons/packages/shipping-dhl/src/runtime.ts — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `shipping-dhl`; its manifest, tests and README live in the monorepo.
  */
 /**
  * Which transport the client half is talking to.
@@ -21,7 +21,8 @@
  */
 
 import { PINNED_NOW } from "./clock.ts";
-import type { LabelStore, Shipment, ShippingCarrier } from "./contracts.ts";
+import type { Shipment, ShippingCarrier } from "../host/contracts/index.ts";
+import type { LabelStore } from "./label-store.ts";
 import { createDemoCarrier, type DemoCarrier } from "./demo-carrier.ts";
 import { publicSettings } from "./settings.ts";
 
@@ -53,7 +54,7 @@ export function carrier(): ShippingCarrier {
 /**
  * The bytes behind a label's `fileId`.
  *
- * Only the demo has them — see `contracts.ts`. In connected mode the host
+ * Only the demo has them — see `label-store.ts`. In connected mode the host
  * stores the file and serves it by id, so the answer here is `undefined` and
  * the UI falls back to asking the host, which is the correct division: a client
  * bundle has no business holding a shipping label in memory.

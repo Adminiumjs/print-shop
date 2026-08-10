@@ -1,7 +1,7 @@
 /*
- * VENDORED from add-on-shipping-dhl/src/ui/labels.ts — synced by scripts/sync-add-ons.sh.
- * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
- * The add-on key is `shipping-dhl`; its manifest, tests and README live in that repo.
+ * VENDORED from add-ons/packages/shipping-dhl/src/ui/labels.ts — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `shipping-dhl`; its manifest, tests and README live in the monorepo.
  */
 /**
  * Data keys → message keys.
@@ -18,7 +18,7 @@
 
 import type { StringKey } from "../i18n/strings.ts";
 import type { TFunction } from "../i18n/t.ts";
-import type { TrackEvent } from "../contracts.ts";
+import type { TrackEvent } from "../../host/contracts/index.ts";
 
 const PACKAGING: Readonly<Record<string, StringKey>> = {
   bundled: "addon.shipping-dhl.pack.bundled",

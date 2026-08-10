@@ -1,12 +1,12 @@
 /*
- * VENDORED from add-on-design-studio/src/index.ts — synced by scripts/sync-add-ons.sh.
- * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
- * The add-on key is `design-studio`; its manifest, tests and README live in that repo.
+ * VENDORED from add-ons/packages/design-studio/src/index.ts — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `design-studio`; its manifest, tests and README live in the monorepo.
  */
 /**
  * Design Studio — the add-on's registration (24 §6).
  *
- * `register()` returns the object the host's `src/add-ons/host.ts` describes,
+ * `register()` returns the object `@adminium/add-on-host` describes,
  * and that object is the whole public surface: the host's registry indexes it,
  * the dock's toggle flips it on and off, and its two fills are the only places
  * this add-on ever draws.
@@ -30,7 +30,7 @@
 
 import { createElement } from "react";
 
-import type { AddOn, AddOnSettingValues, SettingsPanelPayload } from "./host.ts";
+import type { AddOn, AddOnSettingValues, SettingsPanelPayload } from "../host/index.ts";
 import { designStudioStrings } from "./i18n/strings.ts";
 import { LAYOUT_IDS } from "./layouts.ts";
 import { ArtworkFill, SettingsFill } from "./ui/fills.tsx";
@@ -174,5 +174,5 @@ export {
 export { createArtworkSource, KEY } from "./artworkSource.ts";
 export { LAYOUTS, LAYOUT_IDS, docFromLayout, layoutForSize } from "./layouts.ts";
 export { designStudioStrings } from "./i18n/strings.ts";
-export type { AddOn } from "./host.ts";
-export type { ArtworkRef, ArtworkSource, JobSpec } from "./contracts.ts";
+export type { AddOn } from "../host/index.ts";
+export type { ArtworkRef, ArtworkSource, JobSpec } from "../host/contracts/index.ts";

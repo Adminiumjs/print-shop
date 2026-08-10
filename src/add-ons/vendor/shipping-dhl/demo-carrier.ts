@@ -1,7 +1,7 @@
 /*
- * VENDORED from add-on-shipping-dhl/src/demo-carrier.ts — synced by scripts/sync-add-ons.sh.
- * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
- * The add-on key is `shipping-dhl`; its manifest, tests and README live in that repo.
+ * VENDORED from add-ons/packages/shipping-dhl/src/demo-carrier.ts — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `shipping-dhl`; its manifest, tests and README live in the monorepo.
  */
 /**
  * The demo transport — the DEFAULT one (24 D11).
@@ -29,15 +29,15 @@ import {
   CarrierError,
   type Address,
   type FileRef,
-  type LabelStore,
   type OrderRef,
   type Parcel,
   type Rate,
   type Shipment,
   type ShippingCarrier,
   type TrackEvent,
-} from "./contracts.ts";
+} from "../host/contracts/index.ts";
 import { labelFilename, renderLabelPdf } from "./label.ts";
+import type { LabelStore } from "./label-store.ts";
 import { COLLECTION_WINDOW, quoteAll, zoneFor } from "./rates.ts";
 import { CURRENCY, TRACKING_SEED, WORKS_ADDRESS } from "./seed.ts";
 
@@ -76,7 +76,7 @@ export interface DemoCarrierOptions {
 
 /**
  * A demo transport is a `ShippingCarrier` plus two things the contract has no
- * business carrying (see `contracts.ts`): the bytes of the labels it made, and
+ * business carrying (see `label-store.ts`): the bytes of the labels it made, and
  * a memory of where each order was quoted to.
  *
  * `book(rate, order)` takes no address — the contract books a rate, not a

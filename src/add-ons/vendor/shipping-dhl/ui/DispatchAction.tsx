@@ -1,7 +1,7 @@
 /*
- * VENDORED from add-on-shipping-dhl/src/ui/DispatchAction.tsx — synced by scripts/sync-add-ons.sh.
- * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
- * The add-on key is `shipping-dhl`; its manifest, tests and README live in that repo.
+ * VENDORED from add-ons/packages/shipping-dhl/src/ui/DispatchAction.tsx — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `shipping-dhl`; its manifest, tests and README live in the monorepo.
  */
 /**
  * `order.dispatch.actions` — the works books a collection.
@@ -34,8 +34,8 @@ import {
 } from "lucide-react";
 
 import { collectionDay, isWorkingDay, minutesOfDay, parseTime, PINNED_NOW } from "../clock.ts";
-import { CarrierError, type Address, type FileRef, type Shipment, type TrackEvent } from "../contracts.ts";
-import type { DispatchPayload } from "../host.ts";
+import { CarrierError, type Address, type FileRef, type Shipment, type TrackEvent } from "../../host/contracts/index.ts";
+import type { DispatchPayload } from "../host-payloads.ts";
 import { useFormat, useT } from "../i18n/t.ts";
 import { parcelFor, type ParcelEstimate } from "../parcel.ts";
 import { cheapestCode, COLLECTION_WINDOW, type QuotedRate } from "../rates.ts";

@@ -1,7 +1,7 @@
 /*
- * VENDORED from add-on-design-studio/src/ui/fills.tsx — synced by scripts/sync-add-ons.sh.
- * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
- * The add-on key is `design-studio`; its manifest, tests and README live in that repo.
+ * VENDORED from add-ons/packages/design-studio/src/ui/fills.tsx — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `design-studio`; its manifest, tests and README live in the monorepo.
  */
 /**
  * The two slot fills, wrapped so `index.ts` can stay a plain registration
@@ -18,7 +18,7 @@
  */
 
 import { LAYOUT_IDS } from "../layouts.ts";
-import type { SettingsPanelPayload } from "../host.ts";
+import type { SettingsPanelPayload } from "../../host/index.ts";
 import type { ArtworkSlotPayload } from "../hostJob.ts";
 import { SettingsPanel, type PublicSettings } from "./SettingsPanel.tsx";
 import { ArtworkSourceTile } from "./SourceTile.tsx";

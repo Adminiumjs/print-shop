@@ -1,7 +1,7 @@
 /*
- * VENDORED from add-on-shipping-dhl/src/index.ts — synced by scripts/sync-add-ons.sh.
- * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
- * The add-on key is `shipping-dhl`; its manifest, tests and README live in that repo.
+ * VENDORED from add-ons/packages/shipping-dhl/src/index.ts — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `shipping-dhl`; its manifest, tests and README live in the monorepo.
  */
 /**
  * What the host gets when it registers this add-on.
@@ -19,12 +19,8 @@
 
 import { createElement } from "react";
 
-import type {
-  AddOn,
-  CheckoutPayload,
-  DispatchPayload,
-  SettingsPanelPayload,
-} from "./host.ts";
+import type { AddOn, SettingsPanelPayload } from "../host/index.ts";
+import type { CheckoutPayload, DispatchPayload } from "./host-payloads.ts";
 import { strings } from "./i18n/strings.ts";
 import { applySettings, DEFAULT_SETTINGS } from "./settings.ts";
 import { DeliveryMethods } from "./ui/DeliveryMethods.tsx";

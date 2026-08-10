@@ -10,7 +10,7 @@
  * `validateManifest` here is `@adminium/manifest`'s own function, vendored
  * verbatim under `testing/manifest/` because the package is not published and
  * this repo must build from a clean clone. See that directory's headers; the
- * three add-on repos vendor `@adminium/add-on-contracts`' zod validators the
+ * add-ons monorepo mirrors `@adminium/add-on-contracts`' zod validators the
  * same way and for the same reason.
  */
 
