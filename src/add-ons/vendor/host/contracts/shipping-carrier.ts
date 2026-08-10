@@ -1,14 +1,14 @@
 /*
- * VENDORED from add-on-shipping-dhl/src/contracts.ts — synced by scripts/sync-add-ons.sh.
- * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
- * The add-on key is `shipping-dhl`; its manifest, tests and README live in that repo.
+ * VENDORED from add-ons/packages/host/src/contracts/shipping-carrier.ts — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
+ * The ONE shared contract; the three add-ons here import it by relative path.
  */
 /**
  * `shipping-carrier@1` — COPIED from `@adminium/add-on-contracts`
- * (`packages/add-on-contracts/src/{shipping-carrier,common}.ts`), not imported.
+ * (`packages/add-on-contracts/src/shipping-carrier.ts`), not imported.
  *
  * The same reasoning `tokens.css` and `i18n/locales.ts` carry in the host app:
- * this is a standalone repo published to the Adminiumjs org and the package is
+ * this repo is published standalone to the Adminiumjs org and the package is
  * not yet on npm. When it is published, delete this file and import the types.
  * Until then: do NOT change a shape here to make local code compile — a
  * divergence between this copy and the package is a broken contract that the
@@ -19,16 +19,14 @@
  * part of the contract that needs a runtime dependency, they are used only by
  * the conformance suite, and an add-on's shipped bundle may take no runtime
  * dependency the host does not already have (24 D7) — so they live under
- * `src/testing/`, where `zod` is a devDependency and nothing ships.
+ * `../testing/`, where `zod` is a devDependency and nothing ships.
+ *
+ * `LabelStore` used to sit at the bottom of this file with a note saying it is
+ * not part of the contract. It now lives where its one implementation does, in
+ * the delivery add-on, which is what "not part of the contract" means.
  */
 
-/** A file the host stores: labels here, production files elsewhere, one seam. */
-export interface FileRef {
-  fileId: string;
-  filename: string;
-  mediaType: string;
-  bytes: number;
-}
+import type { FileRef } from './common.ts';
 
 export interface Parcel {
   weightKg: number;
@@ -90,7 +88,7 @@ export class CarrierError extends Error {
 
   constructor(opts: { code: string; carrierMessage: string; retryable?: boolean }) {
     super(opts.carrierMessage);
-    this.name = "CarrierError";
+    this.name = 'CarrierError';
     this.code = opts.code;
     this.carrierMessage = opts.carrierMessage;
     this.retryable = opts.retryable ?? true;
@@ -105,17 +103,4 @@ export interface ShippingCarrier {
   track(tracking: string): Promise<TrackEvent[]>;
   label(shipmentId: string): Promise<FileRef>;
   cancel(shipmentId: string): Promise<void>;
-}
-
-/**
- * Where a label's bytes live.
- *
- * NOT part of `shipping-carrier@1`, and that is the point: the contract returns
- * a `FileRef` because in connected mode the host stores the label through its
- * own file seam and serves it by id. The demo transport has no host to store
- * anything in, so it implements this alongside the contract and the client half
- * reads bytes straight out of it. A real transport leaves this to the host.
- */
-export interface LabelStore {
-  read(fileId: string): string | undefined;
 }

@@ -29,14 +29,22 @@
  * and are not here: they are catalogue copy, they name no company at all, and
  * they live in `./shelf.ts` — see that file's header for why.
  *
- * `./vendor/<key>/` IS A SYNCED COPY, NOT A FORK. Each add-on is its own repo
- * under Adminiumjs; this app is standalone too, so there is no package tying
- * them together and the demo build gets a copy — the same arrangement the
- * marketplace apps already use for the demo-data toolkit. Every vendored file
- * says so in its own header. Edit the add-on repo and re-run the sync script,
- * `scripts/sync-add-ons.sh`, which ships in this repo so a cloner and CI can
- * both run it; a hand-edit here is invisible until it is a bug in two places
- * at once.
+ * `./vendor/<key>/` IS A SYNCED COPY, NOT A FORK. The add-ons are one
+ * repository — `add-ons`, a package each — and this app is standalone, so there
+ * is no npm package tying them together and the demo build gets a copy: the
+ * same arrangement the marketplace apps already use for the demo-data toolkit.
+ * Every vendored file says so in its own header. Edit the package and re-run
+ * the sync script, `scripts/sync-add-ons.sh`, which ships in this repo so a
+ * cloner and CI can both run it; a hand-edit here is invisible until it is a
+ * bug in two places at once.
+ *
+ * `./vendor/host/` IS THE ADD-ONS' SHARED CONTRACT, vendored alongside them
+ * because their sources import it and this app has no node_modules entry that
+ * could resolve it. It is a MIRROR of `./host.ts` — the file directly below
+ * this import list — and `./host.ts` stays authoritative: the three
+ * `register()` calls return objects typed by the mirror and are assigned here
+ * into `readonly AddOn[]` typed by ours, so `tsc -b` in this repo is itself the
+ * check that the two still describe the same shape.
  */
 
 import { registerAddOnMessages } from '../i18n/messages/index.ts';

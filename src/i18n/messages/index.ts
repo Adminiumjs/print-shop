@@ -43,7 +43,7 @@
  *            unchanged.
  *
  * The three bundles are VENDORED copies (see `src/add-ons/vendor/`), synced
- * from the add-on repos by `scripts/sync-add-ons.sh` and never hand-edited.
+ * from the add-ons monorepo by `scripts/sync-add-ons.sh` and never hand-edited.
  */
 import { LOCALE_TAGS, type LocaleTag } from "../locales.ts";
 import { addOns } from "../strings/addOns.ts";

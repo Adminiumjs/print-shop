@@ -1,7 +1,7 @@
 /*
- * VENDORED from add-on-design-studio/src/ui/SourceTile.tsx — synced by scripts/sync-add-ons.sh.
- * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
- * The add-on key is `design-studio`; its manifest, tests and README live in that repo.
+ * VENDORED from add-ons/packages/design-studio/src/ui/SourceTile.tsx — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `design-studio`; its manifest, tests and README live in the monorepo.
  */
 /**
  * The `artwork.sources` fill: one action tile, and the flow behind it.
@@ -23,7 +23,7 @@ import { CheckCircle2, PenLine } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 
 import { createArtworkSource } from "../artworkSource.ts";
-import type { ArtworkRef } from "../contracts.ts";
+import type { ArtworkRef } from "../../host/contracts/index.ts";
 import type { Doc } from "../doc.ts";
 import type { T } from "../i18n/strings.ts";
 import { jobFromPayload, type ArtworkSlotPayload } from "../hostJob.ts";

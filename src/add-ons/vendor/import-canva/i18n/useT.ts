@@ -1,7 +1,7 @@
 /*
- * VENDORED from add-on-import-canva/src/i18n/useT.ts — synced by scripts/sync-add-ons.sh.
- * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
- * The add-on key is `import-canva`; its manifest, tests and README live in that repo.
+ * VENDORED from add-ons/packages/import-canva/src/i18n/useT.ts — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `import-canva`; its manifest, tests and README live in the monorepo.
  */
 /**
  * The React half of the translator, and the only module in `src/i18n/` that

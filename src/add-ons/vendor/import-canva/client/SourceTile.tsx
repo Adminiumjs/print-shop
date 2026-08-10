@@ -1,7 +1,7 @@
 /*
- * VENDORED from add-on-import-canva/src/client/SourceTile.tsx — synced by scripts/sync-add-ons.sh.
- * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
- * The add-on key is `import-canva`; its manifest, tests and README live in that repo.
+ * VENDORED from add-ons/packages/import-canva/src/client/SourceTile.tsx — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `import-canva`; its manifest, tests and README live in the monorepo.
  */
 /**
  * The `artwork.sources` fill: one action tile, and the flow behind it.

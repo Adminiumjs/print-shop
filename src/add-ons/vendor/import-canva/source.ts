@@ -1,7 +1,7 @@
 /*
- * VENDORED from add-on-import-canva/src/source.ts — synced by scripts/sync-add-ons.sh.
- * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
- * The add-on key is `import-canva`; its manifest, tests and README live in that repo.
+ * VENDORED from add-ons/packages/import-canva/src/source.ts — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `import-canva`; its manifest, tests and README live in the monorepo.
  */
 /**
  * The `artwork-source@1` implementation — the half the host talks to.
@@ -20,7 +20,7 @@
  * the numbers the works wanted to see.
  */
 
-import type { ArtworkRef, ArtworkSource, AvailabilityVerdict, JobSpec } from "./contracts.ts";
+import type { ArtworkRef, ArtworkSource, AvailabilityVerdict, JobSpec } from "../host/contracts/index.ts";
 import type { CanvaDesign, CanvaExport, CanvaTransport } from "./demo/transport.ts";
 import { t } from "./i18n/t.ts";
 

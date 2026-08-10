@@ -73,25 +73,41 @@ in `src/`, in both directions.
 
 ## The three demo add-ons, and how they get here
 
-Each add-on is **its own public repo** with its own manifest, tests and README:
+The add-ons live in **one repository**, `add-ons`, each as a package with its
+own manifest, tests and README:
 
-| Key | Repo | What it adds |
+| Key | Package | What it adds |
 |---|---|---|
-| `design-studio` | `Adminiumjs/add-on-design-studio` | a small in-browser artwork editor, on the artwork screen |
-| `shipping-dhl` | `Adminiumjs/add-on-shipping-dhl` | carrier rates at checkout, a booking action on the ticket, tracking on the order |
-| `import-canva` | `Adminiumjs/add-on-import-canva` | bring a design in from an outside design tool, with the bleed maths shown |
+| `design-studio` | `add-ons/packages/design-studio` | a small in-browser artwork editor, on the artwork screen |
+| `shipping-dhl` | `add-ons/packages/shipping-dhl` | carrier rates at checkout, a booking action on the ticket, tracking on the order |
+| `import-canva` | `add-ons/packages/import-canva` | bring a design in from an outside design tool, with the bleed maths shown |
 
-There is no npm package tying them to this repo and no monorepo to hoist them
-into, so **the client half of each is vendored** under
-`src/add-ons/vendor/<key>/`, byte-derived from its repo and synced by
-**`scripts/sync-add-ons.sh`, which ships in this repo**. Every vendored file
-carries a header saying so. Clone the three add-on repos beside this one (or
-point `ADD_ONS_DIR` at wherever they live) and the script can compare every
-vendored byte with its source; with none of them present it says so and exits
-clean, so a clone of this app alone still builds and still tests.
+They were three separate repositories for exactly one day. Each carried its own
+copy of the host contract — this app's `AddOn` interface — narrowed to the
+members that add-on happened to use, and the three copies disagreed before
+anyone had changed anything: 19 members, 18 and 18, with two the host declares
+in none of them. Nothing failed, and nothing could have, because no suite
+anywhere had two copies in front of it. There is **one** contract now,
+`add-ons/packages/host`, and a suite in that repo reads *this* app's
+`src/add-ons/host.ts` and fails when a member it declares is missing there.
 
-> **The add-on repo is the source of truth.** Never hand-edit a vendored copy —
-> edit the add-on repo and re-run `npm run add-ons:sync`. A hand-edit here is
+There is no npm package tying that repo to this one, so **the client half of
+each add-on is vendored** under `src/add-ons/vendor/<key>/`, byte-derived and
+synced by **`scripts/sync-add-ons.sh`, which ships in this repo**. The shared
+contract is vendored too, once, into `src/add-ons/vendor/host/`, and the copied
+files' `@adminium/add-on-host` imports are rewritten onto it — so the vendored
+tree compiles with nothing beside it, which is what a clean clone has.
+`src/sources.test.ts` fails if a specifier survives that this app cannot
+resolve, and if `AddOn` is ever declared under `vendor/` more than once.
+
+Every vendored file carries a header saying where it came from. Clone the
+monorepo beside this one as `../add-ons` (or point `ADD_ONS_DIR` at wherever it
+lives) and the script compares every vendored byte with its source; with it
+absent the script says so and exits clean, so a clone of this app alone still
+builds and still tests.
+
+> **The monorepo is the source of truth.** Never hand-edit a vendored copy —
+> edit the package and re-run `npm run add-ons:sync`. A hand-edit here is
 > invisible until it is a bug in two places at once.
 
 The sync deliberately does **not** copy an add-on's tests, its conformance
@@ -110,7 +126,7 @@ a suite that asserted the seam without naming what is on the far side of it
 would be asserting nothing.) An add-on's settings, its defaults, the words on
 its settings form, its eight-locale strings and its seeded activity all arrive
 inside the object `register()` returns, so replacing the delivery company is one
-import here and one repo over there.
+import here and one package over there.
 
 The four entries on the shelf that are **described but not built** live in
 `src/add-ons/shelf.ts` and name **no company at all** — "a second delivery
@@ -136,11 +152,11 @@ npm test               # vitest: engines, i18n, add-on seam, manifest, built out
 The verification order this repo is held to is **`npx tsc -b && npx vitest run
 && npx vite build`**, and all three have to pass.
 
-To re-sync the vendored add-ons after changing one of their repos:
+To re-sync the vendored add-ons after changing one of their packages:
 
 ```sh
-npm run add-ons:status   # what is vendored, and whether it drifted from its repo
-npm run add-ons:sync     # re-copy from the three add-on repos
+npm run add-ons:status   # what is vendored, and whether it drifted from source
+npm run add-ons:sync     # re-copy from ../add-ons (or $ADD_ONS_DIR)
 ```
 
 ### The full self-host stack

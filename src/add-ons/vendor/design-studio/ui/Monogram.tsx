@@ -1,7 +1,7 @@
 /*
- * VENDORED from add-on-design-studio/src/ui/Monogram.tsx — synced by scripts/sync-add-ons.sh.
- * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
- * The add-on key is `design-studio`; its manifest, tests and README live in that repo.
+ * VENDORED from add-ons/packages/design-studio/src/ui/Monogram.tsx — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `design-studio`; its manifest, tests and README live in the monorepo.
  */
 /**
  * The add-on's mark: two letters in a neutral tile (24 D12).

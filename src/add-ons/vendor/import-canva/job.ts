@@ -1,7 +1,7 @@
 /*
- * VENDORED from add-on-import-canva/src/job.ts — synced by scripts/sync-add-ons.sh.
- * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
- * The add-on key is `import-canva`; its manifest, tests and README live in that repo.
+ * VENDORED from add-ons/packages/import-canva/src/job.ts — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `import-canva`; its manifest, tests and README live in the monorepo.
  */
 /**
  * Turning what the host hands a slot fill into what this add-on needs.
@@ -9,8 +9,8 @@
  * The `artwork.sources` slot's payload is the CONFIGURED JOB — the host's own
  * `Configuration` object, which names a size by preset key rather than in
  * millimetres. Resolving that key needs the preset table, so the table is
- * copied here for the same reason `contracts.ts` and `tokens.css` are copied:
- * a standalone repo cannot import the host's `catalogue.ts`.
+ * copied here for the same reason the contracts and `tokens.css` are mirrored:
+ * a standalone repo cannot import the host app's `catalogue.ts`.
  *
  * Copied numbers are a liability, so this reads the host's own resolution FIRST
  * (`payload.size`) and only falls back to the table when the host did not send
@@ -19,7 +19,7 @@
  * there since the app shipped, not as a second source of truth.
  */
 
-import type { ArtworkRef, JobSpec } from "./contracts.ts";
+import type { ArtworkRef, JobSpec } from "../host/contracts/index.ts";
 import type { ImportJob } from "./import.ts";
 
 /** Copied from the host's `rates.ts`. The works' bleed and resolution floor. */

@@ -7,11 +7,11 @@
  * sources is the only test shape that catches them, so it lives here rather
  * than in a review checklist somebody will one day skim.
  *
- * The three add-on repos each ship this suite over their own sources. This is
- * the host's copy, and it deliberately covers `src/add-ons/vendor/` as well:
- * the vendored halves are compiled into THIS bundle, so a `fetch` that reached
- * a customer's browser would reach it from here whatever the add-on's own
- * suite said about its own repo.
+ * Each package in the add-ons monorepo ships this suite over its own sources.
+ * This is the host's copy, and it deliberately covers `src/add-ons/vendor/` as
+ * well: the vendored halves are compiled into THIS bundle, so a `fetch` that
+ * reached a customer's browser would reach it from here whatever the add-on's
+ * own suite said about its own package.
  */
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -159,30 +159,71 @@ describe('CSS logical properties only', () => {
 
 describe('the vendored halves are copies, and say so', () => {
   /*
-   * `scripts/sync-add-ons.sh` writes a four-line header onto every file it
-   * vendors and `status` compares the rest byte for byte with the add-on repo.
-   * That comparison needs the three add-on checkouts beside this one, which a
-   * clean clone of THIS repo does not have — so the part that can always be
-   * checked is checked here: every file under `vendor/` carries the header,
-   * names the repo it came from, and points at the script that ships.
+   * `scripts/sync-add-ons.sh` writes a five-line header onto every file it
+   * vendors and `status` compares the rest byte for byte with the add-ons
+   * monorepo. That comparison needs the monorepo checked out beside this one,
+   * which a clean clone of THIS repo does not have — so the part that can
+   * always be checked is checked here: every file under `vendor/` carries the
+   * header, names the package it came from, and points at the script that
+   * ships.
    *
    * A hand-edit is still invisible to this. It is not invisible to the script,
    * and the script is in the repo now, which is the whole of the fix.
    */
+  const vendored = () =>
+    walk(join(SRC, 'add-ons', 'vendor')).filter((f) => /\.(ts|tsx|css)$/.test(f));
+
   it('carries the sync header on every vendored file', () => {
-    const vendored = walk(join(SRC, 'add-ons', 'vendor')).filter((f) =>
-      /\.(ts|tsx|css)$/.test(f),
-    );
-    expect(vendored.length).toBeGreaterThan(40);
-    const offenders = vendored.filter((file) => {
+    const files = vendored();
+    expect(files.length).toBeGreaterThan(40);
+    const offenders = files.filter((file) => {
       const head = read(file).split('\n').slice(0, 5).join('\n');
       return (
-        !/^\/\*\n \* VENDORED from add-on-[a-z-]+\/src\/\S+ — synced by scripts\/sync-add-ons\.sh\.$/m.test(
+        !/^\/\*\n \* VENDORED from add-ons\/packages\/[a-z-]+\/src\/\S+ — synced by scripts\/sync-add-ons\.sh\.$/m.test(
           head,
         ) || !head.includes('Never hand-edit this copy')
       );
     });
     expect(offenders.map(relative)).toEqual([]);
+  });
+
+  /*
+   * THE VENDORED TREE HAS TO BE SELF-CONTAINED, and this is the assertion that
+   * says so from this side.
+   *
+   * The add-ons are one repository now, and they import their shared contract
+   * as `@adminium/add-on-host`. This app has no node_modules entry for that
+   * package and never will — it is built from a clean clone with no sibling
+   * checkout of anything — so the sync vendors the shared package too, into
+   * `vendor/host/`, and rewrites those specifiers onto it.
+   *
+   * `status` cannot catch a rewrite that fails to fire, because it applies the
+   * SAME rewrite to the source before comparing: two files neither of which was
+   * rewritten agree perfectly, and the build is what breaks. It happened on the
+   * first run of the rewired script (a `sed -E` backreference that matches
+   * nothing on BSD), the vendored tree came out full of unresolvable imports,
+   * and `status` reported everything green. So the check belongs here as well,
+   * where it is about the tree rather than about the copy.
+   */
+  it('resolves every vendored import inside the vendor tree', () => {
+    const bare = /(?:from|import)\s*\(?\s*['"](@[^'"]+|[a-z][^'"./]*)['"]/g;
+    /** What the host app itself already depends on (24 D7). */
+    const ALLOWED = new Set(['react', 'react-dom', 'react/jsx-runtime', 'lucide-react']);
+    const offenders = vendored().flatMap((file) =>
+      [...codeOf(file).matchAll(bare)]
+        .map((m) => m[1])
+        .filter((spec) => !ALLOWED.has(spec))
+        .map((spec) => `${relative(file)} · ${spec}`),
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it('vendors the shared contract exactly once', () => {
+    // The reason the three add-on repos became one. Each used to carry its own
+    // copy of `AddOn`, they disagreed within a day, and this app held all three
+    // of them. There is one now, under `vendor/host/`, and the three import it.
+    const declares = vendored().filter((f) => /\binterface AddOn\b/.test(read(f)));
+    expect(declares.map(relative)).toEqual(['add-ons/vendor/host/host.ts']);
   });
 });
 

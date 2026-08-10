@@ -1,7 +1,7 @@
 /*
- * VENDORED from add-on-design-studio/src/artworkSource.ts — synced by scripts/sync-add-ons.sh.
- * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
- * The add-on key is `design-studio`; its manifest, tests and README live in that repo.
+ * VENDORED from add-ons/packages/design-studio/src/artworkSource.ts — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `design-studio`; its manifest, tests and README live in the monorepo.
  */
 /**
  * The `artwork-source@1` implementation (24 §5.5).
@@ -18,7 +18,7 @@
  * on this output, which is a very different claim from asserting it here.
  */
 
-import type { ArtworkRef, ArtworkSource, AvailabilityVerdict, JobSpec } from "./contracts.ts";
+import type { ArtworkRef, ArtworkSource, AvailabilityVerdict, JobSpec } from "../host/contracts/index.ts";
 import type { Doc } from "./doc.ts";
 import { toArtworkRef } from "./doc.ts";
 import { translator, type T } from "./i18n/strings.ts";

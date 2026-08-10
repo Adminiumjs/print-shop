@@ -1,7 +1,7 @@
 /*
- * VENDORED from add-on-shipping-dhl/src/ui/DeliveryMethods.tsx — synced by scripts/sync-add-ons.sh.
- * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
- * The add-on key is `shipping-dhl`; its manifest, tests and README live in that repo.
+ * VENDORED from add-ons/packages/shipping-dhl/src/ui/DeliveryMethods.tsx — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `shipping-dhl`; its manifest, tests and README live in the monorepo.
  */
 /**
  * `checkout.delivery.methods` — the customer's half of the same rate list.
@@ -20,8 +20,9 @@
 import { useEffect, useState } from "react";
 import { Truck } from "lucide-react";
 
-import { CarrierError, type Rate } from "../contracts.ts";
-import type { CheckoutPayload, DeliveryChoice } from "../host.ts";
+import { CarrierError, type Rate } from "../../host/contracts/index.ts";
+import type { DeliveryChoice } from "../../host/index.ts";
+import type { CheckoutPayload } from "../host-payloads.ts";
 import { useFormat, useT } from "../i18n/t.ts";
 import { parcelForBasket } from "../parcel.ts";
 import { cheapestCode, type QuotedRate } from "../rates.ts";

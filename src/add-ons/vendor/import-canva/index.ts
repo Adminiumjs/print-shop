@@ -1,7 +1,7 @@
 /*
- * VENDORED from add-on-import-canva/src/index.ts — synced by scripts/sync-add-ons.sh.
- * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
- * The add-on key is `import-canva`; its manifest, tests and README live in that repo.
+ * VENDORED from add-ons/packages/import-canva/src/index.ts — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `import-canva`; its manifest, tests and README live in the monorepo.
  */
 /**
  * Canva Import — the add-on's entry point.
@@ -25,7 +25,7 @@ import { SourceTile } from "./client/SourceTile.tsx";
 import "./client/styles.css";
 import { createDemoTransport, DEMO_ACCOUNT, type Clock } from "./demo/transport.ts";
 import { importCanvaStrings } from "./i18n/strings.ts";
-import type { AddOn, AddOnFill } from "./host.ts";
+import type { AddOn, AddOnFill } from "../host/index.ts";
 import type { ArtworkSlotPayload } from "./job.ts";
 import { CONSENT_PERMISSIONS } from "./oauth.ts";
 import { ADD_ON_KEY } from "./source.ts";
@@ -33,7 +33,7 @@ import { ADD_ON_KEY } from "./source.ts";
 /**
  * The pinned demo clock: Wednesday, 5 August 2026, 10:20 — the same moment the
  * host pins (`data/demo.ts`'s `NOW`), mirrored rather than imported because
- * this is a standalone repo.
+ * this repo cannot depend on the host app.
  *
  * It is the ONLY source of time in this add-on. There is no `Date.now()`
  * anywhere here, so two visitors a month apart see the same four designs edited
@@ -140,5 +140,5 @@ export {
  * `CONSENT_PERMISSIONS` stays where it is used — the consent panel imports it
  * directly — and is not part of this file's public surface either.
  */
-export type { AddOn } from "./host.ts";
-export type { ArtworkRef, ArtworkSource, JobSpec } from "./contracts.ts";
+export type { AddOn } from "../host/index.ts";
+export type { ArtworkRef, ArtworkSource, JobSpec } from "../host/contracts/index.ts";

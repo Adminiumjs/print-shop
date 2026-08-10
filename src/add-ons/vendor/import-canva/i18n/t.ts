@@ -1,7 +1,7 @@
 /*
- * VENDORED from add-on-import-canva/src/i18n/t.ts — synced by scripts/sync-add-ons.sh.
- * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
- * The add-on key is `import-canva`; its manifest, tests and README live in that repo.
+ * VENDORED from add-ons/packages/import-canva/src/i18n/t.ts — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `import-canva`; its manifest, tests and README live in the monorepo.
  */
 /**
  * The add-on's own translator — the half with NO React in it.
@@ -29,7 +29,7 @@
 
 import { importCanvaStrings } from "./strings.ts";
 
-/** Copied from the host's `i18n/locales.ts` — see `contracts.ts` for why. */
+/** Copied from the host's `i18n/locales.ts` — see `@adminium/add-on-host` for why. */
 export const LOCALE_TAGS = [
   "en-US",
   "de-DE",

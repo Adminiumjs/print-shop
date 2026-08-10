@@ -1,7 +1,7 @@
 /*
- * VENDORED from add-on-shipping-dhl/src/ui/SettingsPanel.tsx — synced by scripts/sync-add-ons.sh.
- * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
- * The add-on key is `shipping-dhl`; its manifest, tests and README live in that repo.
+ * VENDORED from add-ons/packages/shipping-dhl/src/ui/SettingsPanel.tsx — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `shipping-dhl`; its manifest, tests and README live in the monorepo.
  */
 /**
  * The carrier's own settings form, rendered into `settings.add-on.panel`.
@@ -29,7 +29,7 @@
 
 import { useMemo } from "react";
 
-import type { SettingsPanelPayload } from "../host.ts";
+import type { SettingsPanelPayload } from "../../host/index.ts";
 import { useT } from "../i18n/t.ts";
 import { parcelFor } from "../parcel.ts";
 import { DEFAULT_SETTINGS } from "../settings.ts";
@@ -138,7 +138,7 @@ export function SettingsPanel({ payload }: { payload: SettingsPanelPayload }) {
  * The host's switch, drawn from tokens rather than borrowed from its stylesheet.
  *
  * Copied into each add-on that needs one instead of shared, for the same reason
- * `host.ts` and `contracts.ts` are copied: these repos publish standalone and
+ * the host seam and the contracts are mirrored: this repo publishes standalone and
  * there is no package between them.
  */
 function SettingsSwitch({

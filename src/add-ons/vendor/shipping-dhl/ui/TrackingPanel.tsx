@@ -1,7 +1,7 @@
 /*
- * VENDORED from add-on-shipping-dhl/src/ui/TrackingPanel.tsx — synced by scripts/sync-add-ons.sh.
- * Never hand-edit this copy: edit the add-on repo and re-run `sync-add-ons.sh sync`.
- * The add-on key is `shipping-dhl`; its manifest, tests and README live in that repo.
+ * VENDORED from add-ons/packages/shipping-dhl/src/ui/TrackingPanel.tsx — synced by scripts/sync-add-ons.sh.
+ * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
+ * The add-on key is `shipping-dhl`; its manifest, tests and README live in the monorepo.
  */
 /**
  * `order.dispatch.panel` — what the customer sees on their own order.
@@ -20,8 +20,8 @@
 import { useEffect, useState } from "react";
 import { PackageSearch } from "lucide-react";
 
-import type { Shipment, TrackEvent } from "../contracts.ts";
-import type { DispatchPayload } from "../host.ts";
+import type { Shipment, TrackEvent } from "../../host/contracts/index.ts";
+import type { DispatchPayload } from "../host-payloads.ts";
 import { useFormat, useT } from "../i18n/t.ts";
 import { carrier, findShipment, isDemo } from "../runtime.ts";
 import { Monogram, Mono, NotAffiliated, Tag } from "./atoms.tsx";
