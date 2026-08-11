@@ -45,10 +45,11 @@ export const designStudioStrings = {
     //    panel copy, what a disconnect takes and keeps, and its activity lines.
     "addon.design-studio.what": "This adds a small editor to your site. A customer makes a straightforward design at the finished size, and it arrives with the bleed already correct.",
     "addon.design-studio.set.layoutsNone": "Turn at least one on, or the editor has nothing to open.",
-    "addon.design-studio.set.proofOn": "The works checks it like any other job before it goes on a press.",
-    "addon.design-studio.set.proofOff": "Designs made here go straight to prepress. The works can still ask for a proof.",
+    "addon.design-studio.set.proofOn": "The shop checks it like any other order before anything is made.",
+    "addon.design-studio.set.proofOff": "Designs made here go straight to making. The shop can still ask for a proof.",
     "addon.design-studio.disconnect.goes": "Customers will no longer see “Design it here” on the artwork screen.",
-    "addon.design-studio.disconnect.stays": "Designs already sent with orders are kept, and so are the settings above if you connect it again.",
+    "addon.design-studio.disconnect.stays":
+      "Every design already made is kept — the ones on orders, and one a customer has not sent yet — and so are the settings above if you connect it again.",
     "addon.design-studio.act.1": "{when} · design used on an order · {ref}",
     "addon.design-studio.act.2": "{when} · design saved for later",
     "addon.design-studio.act.3": "{when} · editor opened · {ref}",
@@ -63,21 +64,21 @@ export const designStudioStrings = {
     "addon.design-studio.noAccount": "It needs no outside account at all.",
 
     // Permissions, ticked before the shop agrees
-    "addon.design-studio.perm.readJob": "Read the job a design is being made for",
+    "addon.design-studio.perm.readJob": "Read what a design is being made for",
     "addon.design-studio.perm.saveDesigns": "Save designs against your orders",
     "addon.design-studio.perm.noAccount": "Nothing else, and no outside account",
 
     // Settings the manage panel renders
     "addon.design-studio.set.layouts": "Starting layouts customers may use",
-    "addon.design-studio.set.layoutsHint": "Switch off anything the works does not make.",
+    "addon.design-studio.set.layoutsHint": "Switch off anything the shop does not make.",
     "addon.design-studio.set.proof": "A design still needs a proof",
     "addon.design-studio.set.proofHint":
-      "On by default. The works checks every job, and the site already says so.",
+      "On by default. The shop checks every order, and the site already says so.",
 
     // Why the editor may not be on offer
     "addon.design-studio.reason.tooBig":
       "This one is larger than the editor draws. Send a print-ready PDF instead.",
-    "addon.design-studio.reason.noLayouts": "The works has not made any starting layouts available.",
+    "addon.design-studio.reason.noLayouts": "The shop has not made any starting layouts available.",
 
     // The action tile in the artwork slot
     "addon.design-studio.tile.title": "Design it here",
@@ -115,6 +116,10 @@ export const designStudioStrings = {
     "addon.design-studio.legend.trim": "Trim — where it is cut",
     "addon.design-studio.legend.bleed": "Bleed",
     "addon.design-studio.legend.bleedValue": "{v} outside",
+    "addon.design-studio.dims": "{w} × {h} mm",
+    "addon.design-studio.mmValue": "{v} mm",
+    "addon.design-studio.dpiValue": "{v} dpi",
+    "addon.design-studio.zoomValue": "{v}%",
     "addon.design-studio.legend.safe": "Safe area",
     "addon.design-studio.legend.safeValue": "{v} inside",
     "addon.design-studio.safeNote": "Anything outside the safe area may be trimmed off.",
@@ -133,6 +138,11 @@ export const designStudioStrings = {
     "addon.design-studio.insp.font": "Font",
     "addon.design-studio.insp.size": "Size",
     "addon.design-studio.insp.weight": "Weight",
+    "addon.design-studio.insp.pt": "pt",
+    "addon.design-studio.insp.weight400": "Regular",
+    "addon.design-studio.insp.weight600": "Semibold",
+    "addon.design-studio.insp.weight700": "Bold",
+    "addon.design-studio.insp.weight800": "Extrabold",
     "addon.design-studio.insp.alignment": "Alignment",
     "addon.design-studio.align.start": "Align to the start",
     "addon.design-studio.align.center": "Centre",
@@ -216,15 +226,16 @@ export const designStudioStrings = {
     //    panel copy, what a disconnect takes and keeps, and its activity lines.
     "addon.design-studio.what": "Das ergänzt Ihre Website um einen kleinen Editor. Die Kundschaft baut eine schlichte Gestaltung im Endformat, und sie kommt mit korrektem Anschnitt an.",
     "addon.design-studio.set.layoutsNone": "Schalten Sie mindestens eine ein, sonst hat der Editor nichts zu öffnen.",
-    "addon.design-studio.set.proofOn": "Die Werkstatt prüft sie wie jeden anderen Auftrag, bevor sie auf eine Maschine geht.",
-    "addon.design-studio.set.proofOff": "Hier gebaute Gestaltungen gehen direkt in die Druckvorstufe. Die Werkstatt kann trotzdem einen Andruck verlangen.",
-    "addon.design-studio.disconnect.goes": "Die Kundschaft sieht „Hier gestalten“ auf der Druckdatenseite nicht mehr.",
-    "addon.design-studio.disconnect.stays": "Bereits mit Aufträgen abgeschickte Gestaltungen bleiben erhalten, und die Einstellungen oben ebenso, falls Sie wieder verbinden.",
+    "addon.design-studio.set.proofOn": "Die Werkstatt prüft sie wie jeden anderen Auftrag, bevor etwas hergestellt wird.",
+    "addon.design-studio.set.proofOff": "Hier gebaute Gestaltungen gehen direkt in die Fertigung. Die Werkstatt kann trotzdem eine Freigabe verlangen.",
+    "addon.design-studio.disconnect.goes": "Die Kundschaft sieht „Hier gestalten“ auf der Gestaltungsseite nicht mehr.",
+    "addon.design-studio.disconnect.stays":
+      "Jede bereits erstellte Gestaltung bleibt erhalten — die auf Aufträgen und auch eine, die eine Kundin noch nicht abgeschickt hat — und die Einstellungen oben ebenso, falls Sie wieder verbinden.",
     "addon.design-studio.act.1": "{when} · Gestaltung für einen Auftrag genutzt · {ref}",
     "addon.design-studio.act.2": "{when} · Gestaltung für später gesichert",
     "addon.design-studio.act.3": "{when} · Editor geöffnet · {ref}",
 
-    "addon.design-studio.line": "Ein kleiner Druckvorlagen-Editor auf Ihrer Website.",
+    "addon.design-studio.line": "Ein kleiner Gestaltungs-Editor auf Ihrer Website.",
     "addon.design-studio.desc":
       "Kundinnen und Kunden wählen ein Startformat und bearbeiten es auf einer Fläche in Endgröße, mit Anschnitt und Sicherheitsabstand darauf. Was herauskommt, hat schon durch die Bauart die richtige Größe.",
     "addon.design-studio.disconnect":
@@ -237,14 +248,14 @@ export const designStudioStrings = {
     "addon.design-studio.perm.noAccount": "Sonst nichts, und kein Konto anderswo",
 
     "addon.design-studio.set.layouts": "Startformate, die Kunden nutzen dürfen",
-    "addon.design-studio.set.layoutsHint": "Schalten Sie ab, was die Druckerei nicht herstellt.",
-    "addon.design-studio.set.proof": "Ein Entwurf braucht weiterhin einen Andruck",
+    "addon.design-studio.set.layoutsHint": "Schalten Sie ab, was die Werkstatt nicht herstellt.",
+    "addon.design-studio.set.proof": "Ein Entwurf braucht weiterhin eine Freigabe",
     "addon.design-studio.set.proofHint":
-      "Standardmäßig an. Die Druckerei prüft jeden Auftrag, und die Website sagt das bereits.",
+      "Standardmäßig an. Die Werkstatt prüft jeden Auftrag, und die Website sagt das bereits.",
 
     "addon.design-studio.reason.tooBig":
       "Das ist größer, als der Editor zeichnet. Senden Sie stattdessen eine druckfertige PDF-Datei.",
-    "addon.design-studio.reason.noLayouts": "Die Druckerei hat kein Startformat freigeschaltet.",
+    "addon.design-studio.reason.noLayouts": "Die Werkstatt hat kein Startformat freigeschaltet.",
 
     "addon.design-studio.tile.title": "Hier gestalten",
     "addon.design-studio.tile.body":
@@ -278,6 +289,10 @@ export const designStudioStrings = {
     "addon.design-studio.legend.trim": "Schnittkante — hier wird geschnitten",
     "addon.design-studio.legend.bleed": "Anschnitt",
     "addon.design-studio.legend.bleedValue": "{v} außen",
+    "addon.design-studio.dims": "{w} × {h} mm",
+    "addon.design-studio.mmValue": "{v} mm",
+    "addon.design-studio.dpiValue": "{v} dpi",
+    "addon.design-studio.zoomValue": "{v} %",
     "addon.design-studio.legend.safe": "Sicherheitsabstand",
     "addon.design-studio.legend.safeValue": "{v} innen",
     "addon.design-studio.safeNote":
@@ -296,6 +311,11 @@ export const designStudioStrings = {
     "addon.design-studio.insp.font": "Schrift",
     "addon.design-studio.insp.size": "Größe",
     "addon.design-studio.insp.weight": "Stärke",
+    "addon.design-studio.insp.pt": "pt",
+    "addon.design-studio.insp.weight400": "Normal",
+    "addon.design-studio.insp.weight600": "Halbfett",
+    "addon.design-studio.insp.weight700": "Fett",
+    "addon.design-studio.insp.weight800": "Extrafett",
     "addon.design-studio.insp.alignment": "Ausrichtung",
     "addon.design-studio.align.start": "An den Anfang ausrichten",
     "addon.design-studio.align.center": "Mittig",
@@ -375,15 +395,16 @@ export const designStudioStrings = {
     //    panel copy, what a disconnect takes and keeps, and its activity lines.
     "addon.design-studio.what": "Cela ajoute un petit éditeur à votre site. Le client compose une création simple au format fini, et elle arrive avec le fond perdu déjà correct.",
     "addon.design-studio.set.layoutsNone": "Activez-en au moins une, sinon l'éditeur n'a rien à ouvrir.",
-    "addon.design-studio.set.proofOn": "L'atelier la contrôle comme n'importe quel travail avant la mise en machine.",
-    "addon.design-studio.set.proofOff": "Les créations faites ici vont directement au prépresse. L'atelier peut quand même demander un bon à tirer.",
+    "addon.design-studio.set.proofOn": "L'atelier la contrôle comme n'importe quel travail avant toute fabrication.",
+    "addon.design-studio.set.proofOff": "Les créations faites ici partent directement en fabrication. L'atelier peut quand même demander une validation.",
     "addon.design-studio.disconnect.goes": "Les clients ne verront plus « Créez-le ici » sur l'écran des fichiers.",
-    "addon.design-studio.disconnect.stays": "Les créations déjà envoyées avec des commandes sont conservées, ainsi que les réglages ci-dessus si vous le reconnectez.",
+    "addon.design-studio.disconnect.stays":
+      "Toute création déjà réalisée est conservée — celles qui sont sur des commandes, et celle qu’un client n’a pas encore envoyée — ainsi que les réglages ci-dessus si vous le reconnectez.",
     "addon.design-studio.act.1": "{when} · création utilisée sur une commande · {ref}",
     "addon.design-studio.act.2": "{when} · création gardée pour plus tard",
     "addon.design-studio.act.3": "{when} · éditeur ouvert · {ref}",
 
-    "addon.design-studio.line": "Un petit éditeur de fichiers d’impression sur votre site.",
+    "addon.design-studio.line": "Un petit éditeur graphique sur votre site.",
     "addon.design-studio.desc":
       "Le client choisit une mise en page de départ et la modifie sur une zone tracée à la taille finie, avec le fond perdu et la zone de sécurité déjà dessinés. Ce qui en sort est à la bonne taille par construction.",
     "addon.design-studio.disconnect":
@@ -397,7 +418,7 @@ export const designStudioStrings = {
 
     "addon.design-studio.set.layouts": "Mises en page de départ ouvertes aux clients",
     "addon.design-studio.set.layoutsHint": "Désactivez ce que l’atelier ne fabrique pas.",
-    "addon.design-studio.set.proof": "Une création demande toujours un bon à tirer",
+    "addon.design-studio.set.proof": "Une création demande toujours une validation",
     "addon.design-studio.set.proofHint":
       "Activé par défaut. L’atelier vérifie chaque commande, et le site le dit déjà.",
 
@@ -438,6 +459,10 @@ export const designStudioStrings = {
     "addon.design-studio.legend.trim": "Coupe — là où c’est massicoté",
     "addon.design-studio.legend.bleed": "Fond perdu",
     "addon.design-studio.legend.bleedValue": "{v} à l’extérieur",
+    "addon.design-studio.dims": "{w} × {h} mm",
+    "addon.design-studio.mmValue": "{v} mm",
+    "addon.design-studio.dpiValue": "{v} ppp",
+    "addon.design-studio.zoomValue": "{v} %",
     "addon.design-studio.legend.safe": "Zone de sécurité",
     "addon.design-studio.legend.safeValue": "{v} à l’intérieur",
     "addon.design-studio.safeNote":
@@ -456,6 +481,11 @@ export const designStudioStrings = {
     "addon.design-studio.insp.font": "Police",
     "addon.design-studio.insp.size": "Corps",
     "addon.design-studio.insp.weight": "Graisse",
+    "addon.design-studio.insp.pt": "pt",
+    "addon.design-studio.insp.weight400": "Normal",
+    "addon.design-studio.insp.weight600": "Demi-gras",
+    "addon.design-studio.insp.weight700": "Gras",
+    "addon.design-studio.insp.weight800": "Extra-gras",
     "addon.design-studio.insp.alignment": "Alignement",
     "addon.design-studio.align.start": "Aligner au début",
     "addon.design-studio.align.center": "Centrer",
@@ -537,15 +567,16 @@ export const designStudioStrings = {
     //    panel copy, what a disconnect takes and keeps, and its activity lines.
     "addon.design-studio.what": "Přidá na váš web malý editor. Zákazník udělá jednoduchý návrh v čistém formátu a přijde už se správným spadem.",
     "addon.design-studio.set.layoutsNone": "Zapněte alespoň jednu, jinak editor nemá co otevřít.",
-    "addon.design-studio.set.proofOn": "Dílna ho zkontroluje jako každou jinou zakázku, než půjde do stroje.",
-    "addon.design-studio.set.proofOff": "Návrhy udělané tady jdou rovnou do předtiskové přípravy. Dílna si nátisk může vyžádat i tak.",
+    "addon.design-studio.set.proofOn": "Dílna ho zkontroluje jako každou jinou zakázku, než se začne vyrábět.",
+    "addon.design-studio.set.proofOff": "Návrhy udělané tady jdou rovnou do výroby. Dílna si náhled ke schválení může vyžádat i tak.",
     "addon.design-studio.disconnect.goes": "Zákazníci už na obrazovce s podklady neuvidí „Navrhněte to tady“.",
-    "addon.design-studio.disconnect.stays": "Návrhy odeslané se zakázkami zůstávají, a nastavení výše také, kdybyste doplněk zapojili znovu.",
+    "addon.design-studio.disconnect.stays":
+      "Každý už hotový návrh zůstává — ty na zakázkách i ten, který zákazník ještě neodeslal — a nastavení výše také, kdybyste doplněk zapojili znovu.",
     "addon.design-studio.act.1": "{when} · návrh použit na zakázce · {ref}",
     "addon.design-studio.act.2": "{when} · návrh uložen na později",
     "addon.design-studio.act.3": "{when} · editor otevřen · {ref}",
 
-    "addon.design-studio.line": "Malý editor tiskových podkladů přímo na vašem webu.",
+    "addon.design-studio.line": "Malý editor grafiky přímo na vašem webu.",
     "addon.design-studio.desc":
       "Zákazník si vybere výchozí předlohu a upraví ji na ploše vykreslené v čisté velikosti, se spadávkou i bezpečnou zónou. To, co z toho vyjde, má správnou velikost už svou stavbou.",
     "addon.design-studio.disconnect":
@@ -558,14 +589,14 @@ export const designStudioStrings = {
     "addon.design-studio.perm.noAccount": "Nic dalšího a žádný účet jinde",
 
     "addon.design-studio.set.layouts": "Výchozí předlohy dostupné zákazníkům",
-    "addon.design-studio.set.layoutsHint": "Vypněte to, co tiskárna nevyrábí.",
+    "addon.design-studio.set.layoutsHint": "Vypněte to, co dílna nevyrábí.",
     "addon.design-studio.set.proof": "Návrh stále potřebuje náhled ke schválení",
     "addon.design-studio.set.proofHint":
-      "Ve výchozím stavu zapnuto. Tiskárna kontroluje každou zakázku a web to už říká.",
+      "Ve výchozím stavu zapnuto. Dílna kontroluje každou zakázku a web to už říká.",
 
     "addon.design-studio.reason.tooBig":
       "Tohle je větší, než editor vykreslí. Pošlete raději PDF připravené k tisku.",
-    "addon.design-studio.reason.noLayouts": "Tiskárna nezpřístupnila žádnou výchozí předlohu.",
+    "addon.design-studio.reason.noLayouts": "Dílna nezpřístupnila žádnou výchozí předlohu.",
 
     "addon.design-studio.tile.title": "Navrhněte si to zde",
     "addon.design-studio.tile.body":
@@ -598,6 +629,10 @@ export const designStudioStrings = {
     "addon.design-studio.legend.trim": "Ořez — tady se to řeže",
     "addon.design-studio.legend.bleed": "Spadávka",
     "addon.design-studio.legend.bleedValue": "{v} vně",
+    "addon.design-studio.dims": "{w} × {h} mm",
+    "addon.design-studio.mmValue": "{v} mm",
+    "addon.design-studio.dpiValue": "{v} dpi",
+    "addon.design-studio.zoomValue": "{v} %",
     "addon.design-studio.legend.safe": "Bezpečná zóna",
     "addon.design-studio.legend.safeValue": "{v} dovnitř",
     "addon.design-studio.safeNote": "Cokoli mimo bezpečnou zónu může být odříznuto.",
@@ -615,6 +650,11 @@ export const designStudioStrings = {
     "addon.design-studio.insp.font": "Písmo",
     "addon.design-studio.insp.size": "Velikost",
     "addon.design-studio.insp.weight": "Řez",
+    "addon.design-studio.insp.pt": "pt",
+    "addon.design-studio.insp.weight400": "Obyčejné",
+    "addon.design-studio.insp.weight600": "Polotučné",
+    "addon.design-studio.insp.weight700": "Tučné",
+    "addon.design-studio.insp.weight800": "Extra tučné",
     "addon.design-studio.insp.alignment": "Zarovnání",
     "addon.design-studio.align.start": "Zarovnat na začátek",
     "addon.design-studio.align.center": "Na střed",
@@ -694,10 +734,11 @@ export const designStudioStrings = {
     //    panel copy, what a disconnect takes and keeps, and its activity lines.
     "addon.design-studio.what": "Det lægger en lille editor på jeres side. Kunden laver et enkelt design i færdigt format, og det ankommer med korrekt beskæring.",
     "addon.design-studio.set.layoutsNone": "Slå mindst én til, ellers har editoren ikke noget at åbne.",
-    "addon.design-studio.set.proofOn": "Værkstedet tjekker det som enhver anden opgave, før det går i maskinen.",
-    "addon.design-studio.set.proofOff": "Design lavet her går direkte til prepress. Værkstedet kan stadig bede om en prøve.",
+    "addon.design-studio.set.proofOn": "Værkstedet tjekker det som enhver anden opgave, før noget bliver lavet.",
+    "addon.design-studio.set.proofOff": "Design lavet her går direkte til fremstilling. Værkstedet kan stadig bede om en prøve.",
     "addon.design-studio.disconnect.goes": "Kunderne ser ikke længere “Design det her” på materialesiden.",
-    "addon.design-studio.disconnect.stays": "Design, der allerede er sendt med ordrer, bliver, og det gør indstillingerne ovenfor også, hvis I tilslutter igen.",
+    "addon.design-studio.disconnect.stays":
+      "Alt design, der allerede er lavet, bliver — både det på ordrer og det, en kunde endnu ikke har sendt — og det gør indstillingerne ovenfor også, hvis I tilslutter igen.",
     "addon.design-studio.act.1": "{when} · design brugt på en ordre · {ref}",
     "addon.design-studio.act.2": "{when} · design gemt til senere",
     "addon.design-studio.act.3": "{when} · editor åbnet · {ref}",
@@ -716,7 +757,7 @@ export const designStudioStrings = {
 
     "addon.design-studio.set.layouts": "Startskabeloner kunderne må bruge",
     "addon.design-studio.set.layoutsHint": "Slå det fra, som værkstedet ikke laver.",
-    "addon.design-studio.set.proof": "Et design skal stadig godkendes på prøvetryk",
+    "addon.design-studio.set.proof": "Et design skal stadig godkendes på en prøve",
     "addon.design-studio.set.proofHint":
       "Slået til som udgangspunkt. Værkstedet tjekker hver opgave, og sitet siger det allerede.",
 
@@ -755,6 +796,10 @@ export const designStudioStrings = {
     "addon.design-studio.legend.trim": "Snit — her bliver der skåret",
     "addon.design-studio.legend.bleed": "Beskæring",
     "addon.design-studio.legend.bleedValue": "{v} udenfor",
+    "addon.design-studio.dims": "{w} × {h} mm",
+    "addon.design-studio.mmValue": "{v} mm",
+    "addon.design-studio.dpiValue": "{v} dpi",
+    "addon.design-studio.zoomValue": "{v} %",
     "addon.design-studio.legend.safe": "Sikkerhedsmargen",
     "addon.design-studio.legend.safeValue": "{v} indenfor",
     "addon.design-studio.safeNote":
@@ -773,6 +818,11 @@ export const designStudioStrings = {
     "addon.design-studio.insp.font": "Skrift",
     "addon.design-studio.insp.size": "Størrelse",
     "addon.design-studio.insp.weight": "Vægt",
+    "addon.design-studio.insp.pt": "pt",
+    "addon.design-studio.insp.weight400": "Normal",
+    "addon.design-studio.insp.weight600": "Halvfed",
+    "addon.design-studio.insp.weight700": "Fed",
+    "addon.design-studio.insp.weight800": "Ekstrafed",
     "addon.design-studio.insp.alignment": "Justering",
     "addon.design-studio.align.start": "Justér mod begyndelsen",
     "addon.design-studio.align.center": "Midtstil",
@@ -851,15 +901,16 @@ export const designStudioStrings = {
     //    panel copy, what a disconnect takes and keeps, and its activity lines.
     "addon.design-studio.what": "这会在您的网站上加一个小编辑器。客户按成品尺寸做出朴素的稿件，交过来时出血已经正确。",
     "addon.design-studio.set.layoutsNone": "至少打开一个，否则编辑器没有可打开的东西。",
-    "addon.design-studio.set.proofOn": "上机之前，工坊会像检查其他活儿一样检查它。",
-    "addon.design-studio.set.proofOff": "在这里做的稿件直接进印前。工坊仍可要求过样。",
+    "addon.design-studio.set.proofOn": "开工之前，工坊会像检查其他活儿一样检查它。",
+    "addon.design-studio.set.proofOff": "在这里做的稿件直接进入制作。工坊仍可要求先看样。",
     "addon.design-studio.disconnect.goes": "客户在稿件页面上不会再看到“在这里设计”。",
-    "addon.design-studio.disconnect.stays": "已随订单交来的稿件都留着；若再次连接，上面的设置也还在。",
+    "addon.design-studio.disconnect.stays":
+      "已经做好的稿件都留着——随订单交来的，以及顾客还没交的那一份——若再次连接，上面的设置也还在。",
     "addon.design-studio.act.1": "{when} · 稿件用于订单 · {ref}",
     "addon.design-studio.act.2": "{when} · 稿件已存待用",
     "addon.design-studio.act.3": "{when} · 打开编辑器 · {ref}",
 
-    "addon.design-studio.line": "站内的小型印刷稿编辑器。",
+    "addon.design-studio.line": "站内的小型图稿编辑器。",
     "addon.design-studio.desc":
       "顾客选一个起始版式，在按成品尺寸绘制的画布上编辑，出血和安全区已经画好。做出来的稿件，尺寸天生就是对的。",
     "addon.design-studio.disconnect":
@@ -873,7 +924,7 @@ export const designStudioStrings = {
 
     "addon.design-studio.set.layouts": "顾客可用的起始版式",
     "addon.design-studio.set.layoutsHint": "工坊不做的，就关掉。",
-    "addon.design-studio.set.proof": "设计仍需打样确认",
+    "addon.design-studio.set.proof": "设计仍需看样确认",
     "addon.design-studio.set.proofHint": "默认开启。工坊会检查每一单，站点上也已经写明。",
 
     "addon.design-studio.reason.tooBig": "这个尺寸超出编辑器能画的范围，请改送可直接付印的 PDF。",
@@ -909,6 +960,10 @@ export const designStudioStrings = {
     "addon.design-studio.legend.trim": "裁切线 —— 从这里裁开",
     "addon.design-studio.legend.bleed": "出血",
     "addon.design-studio.legend.bleedValue": "向外 {v}",
+    "addon.design-studio.dims": "{w} × {h} 毫米",
+    "addon.design-studio.mmValue": "{v} 毫米",
+    "addon.design-studio.dpiValue": "每英寸 {v} 点",
+    "addon.design-studio.zoomValue": "{v}%",
     "addon.design-studio.legend.safe": "安全区",
     "addon.design-studio.legend.safeValue": "向内 {v}",
     "addon.design-studio.safeNote": "安全区以外的东西，可能会被裁掉。",
@@ -925,6 +980,11 @@ export const designStudioStrings = {
     "addon.design-studio.insp.font": "字体",
     "addon.design-studio.insp.size": "字号",
     "addon.design-studio.insp.weight": "字重",
+    "addon.design-studio.insp.pt": "磅",
+    "addon.design-studio.insp.weight400": "常规",
+    "addon.design-studio.insp.weight600": "半粗",
+    "addon.design-studio.insp.weight700": "粗体",
+    "addon.design-studio.insp.weight800": "特粗",
     "addon.design-studio.insp.alignment": "对齐",
     "addon.design-studio.align.start": "向起始端对齐",
     "addon.design-studio.align.center": "居中",
@@ -1002,15 +1062,16 @@ export const designStudioStrings = {
     //    panel copy, what a disconnect takes and keeps, and its activity lines.
     "addon.design-studio.what": "這會在您的網站上加一個小編輯器。客戶依成品尺寸做出樸素的稿件，交過來時出血已經正確。",
     "addon.design-studio.set.layoutsNone": "至少打開一個，否則編輯器沒有可開的東西。",
-    "addon.design-studio.set.proofOn": "上機之前，工坊會像檢查其他活兒一樣檢查它。",
-    "addon.design-studio.set.proofOff": "在這裡做的稿件直接進印前。工坊仍可要求過樣。",
+    "addon.design-studio.set.proofOn": "開工之前，工坊會像檢查其他活兒一樣檢查它。",
+    "addon.design-studio.set.proofOff": "在這裡做的稿件直接進入製作。工坊仍可要求先看樣。",
     "addon.design-studio.disconnect.goes": "客戶在稿件頁面上不會再看到「在這裡設計」。",
-    "addon.design-studio.disconnect.stays": "已隨訂單交來的稿件都留著；若再次連接，上面的設定也還在。",
+    "addon.design-studio.disconnect.stays":
+      "已經做好的稿件都留著——隨訂單交來的，以及顧客還沒交的那一份——若再次連接，上面的設定也還在。",
     "addon.design-studio.act.1": "{when} · 稿件用於訂單 · {ref}",
     "addon.design-studio.act.2": "{when} · 稿件已存待用",
     "addon.design-studio.act.3": "{when} · 開啟編輯器 · {ref}",
 
-    "addon.design-studio.line": "站內的小型印刷稿編輯器。",
+    "addon.design-studio.line": "站內的小型圖稿編輯器。",
     "addon.design-studio.desc":
       "顧客挑一個起始版型，在按成品尺寸繪製的畫布上編輯，出血與安全區已經畫好。做出來的稿件，尺寸天生就是對的。",
     "addon.design-studio.disconnect":
@@ -1024,7 +1085,7 @@ export const designStudioStrings = {
 
     "addon.design-studio.set.layouts": "顧客可用的起始版型",
     "addon.design-studio.set.layoutsHint": "工坊不做的，就關掉。",
-    "addon.design-studio.set.proof": "設計仍需打樣確認",
+    "addon.design-studio.set.proof": "設計仍需看樣確認",
     "addon.design-studio.set.proofHint": "預設開啟。工坊會檢查每一單，網站上也已經寫明。",
 
     "addon.design-studio.reason.tooBig": "這個尺寸超出編輯器能畫的範圍，請改送可直接付印的 PDF。",
@@ -1060,6 +1121,10 @@ export const designStudioStrings = {
     "addon.design-studio.legend.trim": "裁切線 —— 從這裡裁開",
     "addon.design-studio.legend.bleed": "出血",
     "addon.design-studio.legend.bleedValue": "向外 {v}",
+    "addon.design-studio.dims": "{w} × {h} 公釐",
+    "addon.design-studio.mmValue": "{v} 公釐",
+    "addon.design-studio.dpiValue": "每英寸 {v} 點",
+    "addon.design-studio.zoomValue": "{v}%",
     "addon.design-studio.legend.safe": "安全區",
     "addon.design-studio.legend.safeValue": "向內 {v}",
     "addon.design-studio.safeNote": "安全區以外的東西，可能會被裁掉。",
@@ -1076,6 +1141,11 @@ export const designStudioStrings = {
     "addon.design-studio.insp.font": "字體",
     "addon.design-studio.insp.size": "級數",
     "addon.design-studio.insp.weight": "字重",
+    "addon.design-studio.insp.pt": "點",
+    "addon.design-studio.insp.weight400": "標準",
+    "addon.design-studio.insp.weight600": "半粗",
+    "addon.design-studio.insp.weight700": "粗體",
+    "addon.design-studio.insp.weight800": "特粗",
     "addon.design-studio.insp.alignment": "對齊",
     "addon.design-studio.align.start": "向起始端對齊",
     "addon.design-studio.align.center": "置中",
@@ -1153,10 +1223,11 @@ export const designStudioStrings = {
     //    panel copy, what a disconnect takes and keeps, and its activity lines.
     "addon.design-studio.what": "يضيف محرِّرًا صغيرًا إلى موقعك. يصنع العميل تصميمًا بسيطًا بالمقاس النهائي، ويصل والهدر حوله مضبوط سلفًا.",
     "addon.design-studio.set.layoutsNone": "شغّل واحدًا على الأقل، وإلا فلن يجد المحرِّر ما يفتحه.",
-    "addon.design-studio.set.proofOn": "تفحصه المطبعة مثل أي شغلة أخرى قبل أن يذهب إلى الماكينة.",
-    "addon.design-studio.set.proofOff": "التصاميم المصنوعة هنا تذهب مباشرة إلى ما قبل الطبع. وتستطيع المطبعة طلب بروفة رغم ذلك.",
-    "addon.design-studio.disconnect.goes": "لن يرى العملاء بعد الآن «صمِّمه هنا» في شاشة ملفات الطباعة.",
-    "addon.design-studio.disconnect.stays": "التصاميم التي أُرسلت مع الطلبات تبقى، وكذلك الإعدادات أعلاه إن أعدت الوصل.",
+    "addon.design-studio.set.proofOn": "تفحصه الورشة مثل أي شغلة أخرى قبل أن يبدأ التنفيذ.",
+    "addon.design-studio.set.proofOff": "التصاميم المصنوعة هنا تذهب مباشرة إلى التنفيذ. وتستطيع الورشة طلب نموذج رغم ذلك.",
+    "addon.design-studio.disconnect.goes": "لن يرى العملاء بعد الآن «صمِّمه هنا» في شاشة ملفات التصميم.",
+    "addon.design-studio.disconnect.stays":
+      "كل تصميم أُنجز يبقى — تلك التي على الطلبات، وتلك التي لم يرسلها العميل بعد — وكذلك الإعدادات أعلاه إن أعدت الوصل.",
     "addon.design-studio.act.1": "{when} · استُخدم تصميم في طلب · {ref}",
     "addon.design-studio.act.2": "{when} · حُفظ تصميم لوقت لاحق",
     "addon.design-studio.act.3": "{when} · فُتح المحرِّر · {ref}",
@@ -1174,14 +1245,14 @@ export const designStudioStrings = {
     "addon.design-studio.perm.noAccount": "لا شيء غير ذلك، ولا حساب خارجي",
 
     "addon.design-studio.set.layouts": "تخطيطات البداية المتاحة للعملاء",
-    "addon.design-studio.set.layoutsHint": "أوقِف ما لا تنتجه المطبعة.",
+    "addon.design-studio.set.layoutsHint": "أوقِف ما لا تنتجه الورشة.",
     "addon.design-studio.set.proof": "التصميم ما زال يحتاج نموذجًا للاعتماد",
     "addon.design-studio.set.proofHint":
-      "مُفعَّل افتراضيًا. المطبعة تفحص كل طلب، والموقع يقول ذلك بالفعل.",
+      "مُفعَّل افتراضيًا. الورشة تفحص كل طلب، والموقع يقول ذلك بالفعل.",
 
     "addon.design-studio.reason.tooBig":
       "هذا المقاس أكبر مما يرسمه المحرِّر. أرسل بدلًا منه ملف PDF جاهزًا للطباعة.",
-    "addon.design-studio.reason.noLayouts": "لم تُتِح المطبعة أي تخطيط للبداية.",
+    "addon.design-studio.reason.noLayouts": "لم تُتِح الورشة أي تخطيط للبداية.",
 
     "addon.design-studio.tile.title": "صمِّمه هنا",
     "addon.design-studio.tile.body":
@@ -1214,6 +1285,10 @@ export const designStudioStrings = {
     "addon.design-studio.legend.trim": "خط القص — حيث يُقصّ",
     "addon.design-studio.legend.bleed": "هامش القص",
     "addon.design-studio.legend.bleedValue": "{v} للخارج",
+    "addon.design-studio.dims": "{w} × {h} مم",
+    "addon.design-studio.mmValue": "{v} مم",
+    "addon.design-studio.dpiValue": "{v} نقطة/بوصة",
+    "addon.design-studio.zoomValue": "{v}٪",
     "addon.design-studio.legend.safe": "المنطقة الآمنة",
     "addon.design-studio.legend.safeValue": "{v} للداخل",
     "addon.design-studio.safeNote": "أي شيء خارج المنطقة الآمنة قد يُقصّ.",
@@ -1230,6 +1305,11 @@ export const designStudioStrings = {
     "addon.design-studio.insp.font": "الخط",
     "addon.design-studio.insp.size": "المقاس",
     "addon.design-studio.insp.weight": "السماكة",
+    "addon.design-studio.insp.pt": "نقطة",
+    "addon.design-studio.insp.weight400": "عادي",
+    "addon.design-studio.insp.weight600": "نصف عريض",
+    "addon.design-studio.insp.weight700": "عريض",
+    "addon.design-studio.insp.weight800": "عريض جدًا",
     "addon.design-studio.insp.alignment": "المحاذاة",
     "addon.design-studio.align.start": "محاذاة إلى البداية",
     "addon.design-studio.align.center": "توسيط",
@@ -1331,13 +1411,63 @@ export function isLocaleTag(v: unknown): v is LocaleTag {
 export function translator(locale: LocaleTag = "en-US") {
   const bundle = designStudioStrings[locale];
   const english = designStudioStrings["en-US"];
+  const nf = new Intl.NumberFormat(locale);
   return (key: DesignStudioKey, params?: Record<string, string | number>): string => {
     const raw: string = bundle[key] ?? english[key] ?? key;
     if (params === undefined) return raw;
-    return raw.replace(/\{(\w+)\}/g, (m, name: string) =>
-      name in params ? String(params[name]) : m,
-    );
+    /*
+     * A NUMBER SUBSTITUTED INTO COPY IS FORMATTED, NEVER `String()`d — the one
+     * line that decides whether Arabic reads ٣ or 3. Every host fixed this at
+     * its own `t` seam and every add-on has a seam of its own, so every add-on
+     * had a copy of the bug waiting for the first `t("…", { count })` somebody
+     * wrote. A caller that has already formatted its value passes a STRING and
+     * is left alone.
+     */
+    return raw.replace(/\{(\w+)\}/g, (m, name: string) => {
+      if (!(name in params)) return m;
+      const value = params[name];
+      return typeof value === "number" ? nf.format(value) : String(value);
+    });
   };
 }
 
 export type T = ReturnType<typeof translator>;
+
+/**
+ * ── THE LATIN DIGITS IN THESE STRINGS THAT ARE NOT QUANTITIES ───────────────
+ *
+ * A host renders this bundle inside its own pages, and every host in this wave
+ * runs the same rule over an Arabic page: a run of Latin digits that is not
+ * inside an identifier is an unformatted number, and a defect. Some of an
+ * add-on's own strings legitimately carry one anyway, and when they do THE
+ * ADD-ON IS THE ONLY THING THAT KNOWS WHY.
+ *
+ * ── WHY THIS TRAVELS WITH THE STRINGS INSTEAD OF WITH THE HOST ──────────────
+ *
+ * It used to live in the host. Print Shop's `numerals.arabic.test.tsx` carried
+ * Design Studio's specimen telephone number in ITS exemption list, and Maker
+ * Shop did not — so wiring Design Studio into the second host, registration
+ * only, zero bytes changed in any add-on, turned that host's suite red. The
+ * fix was to edit a list in the host, which is exactly what AC20/D21 says must
+ * never be necessary: an add-on is portable when moving it needs no edit in the
+ * app that receives it.
+ *
+ * The same shape had already been fixed twice this wave (HOSTED_SLOTS, the
+ * Czech "pro" carve-out). This is the third and it is fixed the same way: the
+ * fact is declared beside the strings it is about, in the module the hosts
+ * vendor, and each host's guard reads whatever is vendored into it. A host that
+ * takes this add-on takes its allowances; a host that does not, does not.
+ *
+ * EVERY ADD-ON EXPORTS THIS, even when it is empty. A host asserts the export
+ * exists on every bundle it has vendored, so a missing declaration is a red
+ * suite rather than an allowance nobody notices is gone.
+ */
+export const NOT_A_QUANTITY: readonly { phrase: string; why: string }[] = [
+  {
+    phrase: "07700 900 000",
+    why:
+      "the specimen telephone number printed on the sample business card. It is inside the " +
+      "reserved fictional UK range on purpose, and it is placeholder content ON a card — the " +
+      "words a shop over-types with their own — rather than a figure this add-on worked out",
+  },
+];

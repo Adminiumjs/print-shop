@@ -20,23 +20,23 @@
 import { useEffect, useState } from "react";
 import { PackageSearch } from "lucide-react";
 
+import type { DispatchPayload } from "../../host/index.ts";
 import type { Shipment, TrackEvent } from "../../host/contracts/index.ts";
-import type { DispatchPayload } from "../host-payloads.ts";
 import { useFormat, useT } from "../i18n/t.ts";
 import { carrier, findShipment, isDemo } from "../runtime.ts";
-import { Monogram, Mono, NotAffiliated, Tag } from "./atoms.tsx";
+import { Code, Monogram, Mono, NotAffiliated, Tag } from "./atoms.tsx";
 import { eventText, serviceName } from "./labels.ts";
 
-export function TrackingPanel({ job }: DispatchPayload) {
+export function TrackingPanel({ order }: DispatchPayload) {
   const t = useT();
-  const { day } = useFormat();
+  const { clock, day, timeOfDay } = useFormat();
 
-  const [shipment, setShipment] = useState<Shipment | null>(() => findShipment(job.ref) ?? null);
+  const [shipment, setShipment] = useState<Shipment | null>(() => findShipment(order.ref) ?? null);
   const [events, setEvents] = useState<TrackEvent[]>([]);
   const [showNote, setShowNote] = useState(false);
 
   useEffect(() => {
-    const found = findShipment(job.ref) ?? null;
+    const found = findShipment(order.ref) ?? null;
     setShipment(found);
     if (found === null) {
       setEvents([]);
@@ -51,16 +51,30 @@ export function TrackingPanel({ job }: DispatchPayload) {
     return () => {
       live = false;
     };
-  }, [job.ref]);
+  }, [order.ref]);
 
   if (shipment === null) {
-    // Not an empty state with a dashed border and an invitation — a fact. The
-    // order simply has not gone out with a carrier, and there is nothing here
-    // for the customer to do about it.
+    /*
+     * Not an empty state with a dashed border and an invitation — a fact. The
+     * order simply has not gone out with a carrier, and there is nothing here
+     * for the customer to do about it.
+     *
+     * THE NOT-AFFILIATED LINE BELONGS HERE TOO (24 AC6). It used to sit only in
+     * the branch below, on the reasoning that a tracking timeline is where the
+     * company is named. That reading was wrong about this branch: the monogram
+     * reads "DHL", which is the company named as plainly as a word is, and a
+     * customer whose order has not shipped yet sees THIS card and no other. A
+     * page-wide grep for "affiliat" on a connected-but-not-dispatched order
+     * came back empty — the disclosure was absent from the whole screen, not
+     * merely from one corner of it.
+     */
     return (
-      <div style={{ display: "flex", alignItems: "center", gap: 11, color: "var(--fg-muted)" }}>
-        <Monogram letters="DHL" size={34} />
-        <span style={{ fontSize: 13.5 }}>{t("addon.shipping-dhl.panel.notSent")}</span>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 11, color: "var(--fg-muted)" }}>
+          <Monogram letters="DHL" size={34} />
+          <span style={{ fontSize: 13.5 }}>{t("addon.shipping-dhl.panel.notSent")}</span>
+        </div>
+        <NotAffiliated>{t("addon.shipping-dhl.notAffiliated")}</NotAffiliated>
       </div>
     );
   }
@@ -73,7 +87,7 @@ export function TrackingPanel({ job }: DispatchPayload) {
           <div style={{ fontSize: 11.5, color: "var(--fg-subtle)" }}>
             {t("addon.shipping-dhl.booked.tracking")}
           </div>
-          <Mono style={{ fontSize: 15, fontWeight: 700 }}>{shipment.tracking}</Mono>
+          <Code style={{ fontSize: 15, fontWeight: 700 }}>{shipment.tracking}</Code>
         </div>
         {isDemo() && <Tag tone="warn">{t("addon.shipping-dhl.demoChip")}</Tag>}
       </div>
@@ -91,7 +105,7 @@ export function TrackingPanel({ job }: DispatchPayload) {
           <div style={{ fontSize: 11.5, color: "var(--fg-subtle)" }}>
             {t("addon.shipping-dhl.booked.service")}
           </div>
-          <span style={{ fontSize: 13, fontWeight: 700 }}>{serviceName(t, shipment.rate)}</span>
+          <span style={{ fontSize: 13, fontWeight: 700 }}>{serviceName(t, shipment.rate, timeOfDay)}</span>
         </div>
         <div>
           <div style={{ fontSize: 11.5, color: "var(--fg-subtle)" }}>
@@ -125,7 +139,7 @@ export function TrackingPanel({ job }: DispatchPayload) {
             <div style={{ paddingBlockEnd: 14 }}>
               <div style={{ fontSize: 13, fontWeight: 700 }}>{eventText(t, event)}</div>
               <Mono style={{ fontSize: 11, color: "var(--fg-subtle)", marginBlockStart: 2 }}>
-                {`${day(event.at.slice(0, 10))} · ${event.at.slice(11, 16)} · ${event.place}`}
+                {`${day(event.at.slice(0, 10))} · ${clock(event.at)} · ${event.place}`}
               </Mono>
             </div>
           </div>

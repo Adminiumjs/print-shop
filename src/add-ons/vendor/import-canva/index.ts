@@ -26,7 +26,6 @@ import "./client/styles.css";
 import { createDemoTransport, DEMO_ACCOUNT, type Clock } from "./demo/transport.ts";
 import { importCanvaStrings } from "./i18n/strings.ts";
 import type { AddOn, AddOnFill } from "../host/index.ts";
-import type { ArtworkSlotPayload } from "./job.ts";
 import { CONSENT_PERMISSIONS } from "./oauth.ts";
 import { ADD_ON_KEY } from "./source.ts";
 
@@ -45,7 +44,14 @@ export const PINNED_CLOCK: Clock = { iso: "2026-08-05", hour: 10, minute: 20 };
 export function register(): AddOn {
   const transport = createDemoTransport(PINNED_CLOCK);
 
-  const artworkSource: AddOnFill<ArtworkSlotPayload> = {
+  /*
+   * `AddOnFill<"artwork.sources">` — parameterised by the SLOT, not by a
+   * payload type this add-on picks. It used to be `AddOnFill<ArtworkSlotPayload>`
+   * and then cast to `AddOnFill<never>` on the way into `fills`, which is the
+   * shape of the whole defect in one line: the add-on named the payload, the
+   * cast threw the name away, and nothing ever checked it against the host.
+   */
+  const artworkSource: AddOnFill<"artwork.sources"> = {
     slot: "artwork.sources",
     // Behind Design Studio's 10, on purpose: the shop's own editor leads.
     order: 20,
@@ -78,13 +84,20 @@ export function register(): AddOn {
       staysKey: "addon.import-canva.disconnect.stays",
     },
     /*
-     * The shop's seeded record of using this add-on, newest first, pinned to
-     * the demo's Wednesday 5 August 2026 — no clock is read anywhere here.
+     * The shop's seeded record of using this add-on, newest first — RELATIVE,
+     * because a day and a paperwork reference are facts about a HOST and this
+     * add-on has no way to know either. It used to name `2026-08-04` and
+     * `MP-4122`, both of them the print works' own, and both of them printed
+     * verbatim in whatever shop registered the add-on.
+     *
+     * The host dates these with `resolveActivity` and hands them its own recent
+     * references; no clock is read here, so the list is still the same list on
+     * every run.
      */
     activity: [
-      { iso: "2026-08-04", hour: 14, minute: 22, ref: "MP-4122", messageKey: "addon.import-canva.act.1" },
-      { iso: "2026-08-04", hour: 14, minute: 20, ref: "", messageKey: "addon.import-canva.act.2" },
-      { iso: "2026-08-01", hour: 11, minute: 5, ref: "", messageKey: "addon.import-canva.act.3" },
+      { minutesAgo: 1_198, refIndex: 0, messageKey: "addon.import-canva.act.1" },
+      { minutesAgo: 1_200, messageKey: "addon.import-canva.act.2" },
+      { minutesAgo: 5_715, messageKey: "addon.import-canva.act.3" },
     ],
     /*
      * The account the connect dialog shows once the consent panel has run. It
@@ -94,7 +107,7 @@ export function register(): AddOn {
     account: DEMO_ACCOUNT,
     namesCompany: true,
     fills: [
-      artworkSource as AddOnFill<never>,
+      artworkSource,
       // §5.4's `settings.add-on.panel`, filled rather than declared and left.
       // The transport goes in so the panel can say its account row is a
       // fixture — see `SettingsPanel.tsx` for why that is not optional (AC7).

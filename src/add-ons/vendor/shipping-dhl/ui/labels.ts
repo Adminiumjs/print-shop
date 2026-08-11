@@ -20,21 +20,46 @@ import type { StringKey } from "../i18n/strings.ts";
 import type { TFunction } from "../i18n/t.ts";
 import type { TrackEvent } from "../../host/contracts/index.ts";
 
-const PACKAGING: Readonly<Record<string, StringKey>> = {
-  bundled: "addon.shipping-dhl.pack.bundled",
-  "shrink-wrapped": "addon.shipping-dhl.pack.shrinkWrapped",
-  boxed: "addon.shipping-dhl.pack.boxed",
-  tube: "addon.shipping-dhl.pack.tube",
-};
-
-export function packagingKeyFor(key: string): StringKey {
-  return PACKAGING[key] ?? "addon.shipping-dhl.pack.boxed";
+/**
+ * WHAT IS IN THE BOX, in one line, for the carrier's contents field.
+ *
+ * A TABLE OF PACKAGING KEYS USED TO LIVE HERE — `bundled`, `shrink-wrapped`,
+ * `boxed` — mapped to words. Those were one print works' own keys, so in any
+ * other shop every lookup missed and every parcel was described as "boxed".
+ * The host already translates what it sells, so the contents line is built from
+ * the labels it sent: no vocabulary of the shop's is guessed at, and a shop
+ * that sells something this add-on has never heard of describes itself
+ * correctly on the first try.
+ */
+export function contentsLine(
+  t: TFunction,
+  estimate: { from: { quantity: number; lines: number; label: string } },
+): string {
+  const { quantity, lines, label } = estimate.from;
+  if (lines <= 1) {
+    return t("addon.shipping-dhl.parcel.contentsValue", { quantity, what: label });
+  }
+  return t("addon.shipping-dhl.parcel.contentsValueMore", {
+    quantity,
+    what: label,
+    more: lines - 1,
+  });
 }
 
-const SERVICE: Readonly<Record<string, StringKey>> = {
-  "EXP-1200": "addon.shipping-dhl.service.exp1200",
-  "EXP-NWD": "addon.shipping-dhl.service.expNwd",
-  "ECO-2WD": "addon.shipping-dhl.service.eco2wd",
+/**
+ * A service's message key, and the hour it promises where it names one.
+ *
+ * THE HOUR IS DATA HERE BECAUSE IT WAS PROSE IN EIGHT BUNDLES. "Express by
+ * 12:00" was written out per language, digits included, and the Arabic one read
+ * "سريع، قبل 12:00" — a Latin clock face inside an Arabic sentence, beside
+ * Arabic-Indic prices, with no number anywhere for a formatter to reach. A time
+ * a service promises is a FIGURE, so it lives here and the sentence takes a
+ * placeholder.
+ */
+const SERVICE: Readonly<Record<string, { key: StringKey; by?: readonly [number, number] }>> = {
+  "EXP-1200": { key: "addon.shipping-dhl.service.exp1200", by: [12, 0] },
+  "EXP-NWD": { key: "addon.shipping-dhl.service.expNwd" },
+  "ECO-2WD": { key: "addon.shipping-dhl.service.eco2wd" },
 };
 
 /**
@@ -44,10 +69,21 @@ const SERVICE: Readonly<Record<string, StringKey>> = {
  * list is full of products this add-on has never heard of — falls back to the
  * name the carrier itself returned, which is at least true even when it is only
  * available in one language.
+ *
+ * `clock` is the reader's own clock face, from `useFormat`. It is a parameter
+ * rather than a lookup because this module is pure and knows no locale, and
+ * because every caller already holds one.
  */
-export function serviceName(t: TFunction, rate: { code: string; service: string }): string {
-  const key = SERVICE[rate.code];
-  return key === undefined ? rate.service : t(key);
+export function serviceName(
+  t: TFunction,
+  rate: { code: string; service: string },
+  clock: (hour: number, minute: number) => string,
+): string {
+  const entry = SERVICE[rate.code];
+  if (entry === undefined) return rate.service;
+  return entry.by === undefined
+    ? t(entry.key)
+    : t(entry.key, { by: clock(entry.by[0], entry.by[1]) });
 }
 
 /**

@@ -31,7 +31,7 @@ import { useMemo } from "react";
 
 import type { SettingsPanelPayload } from "../../host/index.ts";
 import { useT } from "../i18n/t.ts";
-import { parcelFor } from "../parcel.ts";
+import { parcelForSample } from "../parcel.ts";
 import { DEFAULT_SETTINGS } from "../settings.ts";
 import { Field, Mono, inputStyle } from "./atoms.tsx";
 
@@ -59,12 +59,25 @@ export function SettingsPanel({ payload }: { payload: SettingsPanelPayload }) {
   const t = useT();
   const values = read(payload.settings);
 
+  /*
+   * THE HOST SAYS WHAT ONE WEIGHS; THIS SAYS WHAT A PARCEL OF THEM WEIGHS.
+   *
+   * `assumed` is non-empty when the shop gave no weight for a sample, and the
+   * row then says so instead of printing a number that looks measured. That is
+   * not a corner case dressed up: a host that sells something it does not weigh
+   * is an ordinary host, and the field is optional in the contract precisely so
+   * it can be honest here rather than crash there.
+   */
   const weights = useMemo(
     () =>
-      payload.samples.map((sample) => ({
-        label: sample.label,
-        weightKg: parcelFor(sample).weightKg,
-      })),
+      payload.samples.map((sample) => {
+        const parcel = parcelForSample(sample);
+        return {
+          label: sample.label,
+          weightKg: parcel.weightKg,
+          assumed: parcel.from.assumed.length > 0,
+        };
+      }),
     [payload.samples],
   );
 
@@ -122,7 +135,16 @@ export function SettingsPanel({ payload }: { payload: SettingsPanelPayload }) {
               }}
             >
               <span style={{ fontSize: 12.5 }}>{row.label}</span>
-              <Mono style={{ fontSize: 12, color: "var(--fg-muted)" }}>{row.weightKg} kg</Mono>
+              <Mono
+                style={{
+                  fontSize: 12,
+                  color: row.assumed ? "var(--fg-subtle)" : "var(--fg-muted)",
+                }}
+              >
+                {row.assumed
+                  ? t("addon.shipping-dhl.set.weightAssumed", { kg: row.weightKg })
+                  : t("addon.shipping-dhl.set.weightKg", { kg: row.weightKg })}
+              </Mono>
             </div>
           ))}
         </div>

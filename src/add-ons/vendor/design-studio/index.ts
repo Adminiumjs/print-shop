@@ -30,11 +30,10 @@
 
 import { createElement } from "react";
 
-import type { AddOn, AddOnSettingValues, SettingsPanelPayload } from "../host/index.ts";
+import type { AddOn, AddOnSettingValues } from "../host/index.ts";
 import { designStudioStrings } from "./i18n/strings.ts";
 import { LAYOUT_IDS } from "./layouts.ts";
 import { ArtworkFill, SettingsFill } from "./ui/fills.tsx";
-import type { ArtworkSlotPayload } from "./hostJob.ts";
 import "./styles/design-studio.css";
 
 export function register(): AddOn {
@@ -90,14 +89,22 @@ export function register(): AddOn {
     },
 
     /*
-     * The shop's seeded record of using this add-on, newest first, pinned to
-     * the demo's Wednesday 5 August 2026 — no clock is read anywhere here, so a
-     * screenshot taken today still matches the app in a year.
+     * The shop's seeded record of using this add-on, newest first — RELATIVE,
+     * so it is still deterministic (a screenshot taken today matches the app in
+     * a year) without being about one particular shop's Wednesday.
+     *
+     * It used to hard-code `2026-08-05`, `09:41` and `MP-4124`, which are a
+     * day, a time and a job reference belonging to the print works this add-on
+     * happened to be built in. Registered anywhere else they were simply
+     * another shop's history, printed verbatim under this add-on's name.
+     *
+     * The middle line carries no `refIndex` on purpose: saving a design for
+     * later is not about an order, and its message takes no `{ref}`.
      */
     activity: [
-      { iso: "2026-08-05", hour: 9, minute: 41, ref: "MP-4124", messageKey: "addon.design-studio.act.1" },
-      { iso: "2026-08-04", hour: 16, minute: 8, ref: "", messageKey: "addon.design-studio.act.2" },
-      { iso: "2026-08-04", hour: 11, minute: 52, ref: "MP-4121", messageKey: "addon.design-studio.act.3" },
+      { minutesAgo: 39, refIndex: 0, messageKey: "addon.design-studio.act.1" },
+      { minutesAgo: 1_092, messageKey: "addon.design-studio.act.2" },
+      { minutesAgo: 1_348, refIndex: 1, messageKey: "addon.design-studio.act.3" },
     ],
 
     /*
@@ -134,12 +141,23 @@ export function register(): AddOn {
      */
     noCompanyKeys: ["addon.design-studio.noCompany", "addon.design-studio.noAccount"],
 
+    /*
+     * NO CASTS HERE, AND THE ABSENCE IS THE POINT.
+     *
+     * These two used to read `payload as ArtworkSlotPayload` and
+     * `payload as SettingsPanelPayload`. Written when `AddOnFill<never>` erased
+     * the payload type and a cast was the only way to get a usable one, they
+     * survived the repair that made the erasure impossible — and a cast that
+     * outlives its reason is worse than the erasure it replaced, because it
+     * silences the ONE check the repair added. `AnyAddOnFill` pairs each `slot`
+     * literal with its own payload, so `payload` is inferred here and a
+     * component reading a field the surface does not carry is red in this repo.
+     */
     fills: [
       {
         slot: "artwork.sources",
         order: 10,
-        render: (payload) =>
-          createElement(ArtworkFill, { payload: payload as ArtworkSlotPayload }),
+        render: (payload) => createElement(ArtworkFill, { payload }),
       },
       /*
        * §5.4 declares `settings.add-on.panel` a real slot, and this is what
@@ -150,8 +168,7 @@ export function register(): AddOn {
       {
         slot: "settings.add-on.panel",
         order: 10,
-        render: (payload) =>
-          createElement(SettingsFill, { payload: payload as SettingsPanelPayload }),
+        render: (payload) => createElement(SettingsFill, { payload }),
       },
     ],
   };

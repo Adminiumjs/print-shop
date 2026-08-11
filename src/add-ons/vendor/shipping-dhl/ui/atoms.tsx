@@ -47,6 +47,96 @@ export function Mono({ children, style }: { children: ReactNode; style?: CSSProp
 }
 
 /**
+ * SOMEBODY ELSE'S WORDS — a person's name, a street, a town.
+ *
+ * ── WHY THIS IS NOT `Mono`, WHICH IS WHERE IT WAS ───────────────────────────
+ *
+ * The destination panel drew every line of the recipient's address through
+ * `Mono`, and a host's Arabic-digit guard reported "21 Westgate" as a Latin
+ * quantity on an Arabic page. It is not one — a house number is part of an
+ * address and transliterating it would misdeliver the parcel — but nothing in
+ * the markup said so, and there was no honest way for the host to know.
+ *
+ * `Mono` DECLARES ITS ISOLATION IN CSS (`direction: ltr; unicode-bidi:
+ * isolate`) and not in the `dir` attribute. That is enough for the bidi
+ * algorithm and invisible to everything else: a host reads the attribute,
+ * because the attribute is the semantic statement and the CSS is a
+ * presentational consequence of it. So this is not a new idea, it is the same
+ * idea written where a reader — human or otherwise — can see it.
+ *
+ * ── AND WHY `Mono` DOES NOT SIMPLY GAIN A `dir` ─────────────────────────────
+ *
+ * Because `Mono` is where every price, weight and dimension in this add-on
+ * goes, and those ARE quantities: a host's guard is supposed to report them
+ * when they are unformatted, and this add-on shipped exactly that defect once
+ * already ("8.5 مم" beside the host's own "٣ مم"). Marking them all as islands
+ * would quiet the guard by lying to it, which is the failure mode the hosts'
+ * own note about `dir` warns against.
+ *
+ * `dir="auto"` rather than `"ltr"`: an Arabic customer's address is Arabic, and
+ * "auto" is a statement about whose text it is rather than a guess at which way
+ * it runs.
+ */
+export function Typed({ children, style }: { children: ReactNode; style?: CSSProperties }) {
+  return (
+    <span
+      dir="auto"
+      style={{
+        fontFamily: MONO,
+        fontVariantNumeric: "tabular-nums",
+        unicodeBidi: "isolate",
+        ...style,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+/**
+ * A CODE — a consignment number, a reference, something a machine issued.
+ *
+ * ── WHY IT IS NOT `Mono`, WHICH IS ALSO WHERE THIS WAS ──────────────────────
+ *
+ * `Mono` isolates its run in CSS. That is correct typography and it is not a
+ * DECLARATION: a host's Arabic-page guard reads `dir`, because `dir` is the only
+ * marker that costs something to apply — it moves the run on the page, so it
+ * cannot be sprinkled on a weight to quiet a guard without the weight visibly
+ * moving. Everything drawn through `Mono` therefore reads to a host as the app's
+ * own prose, which is exactly what makes the guard worth having: every price and
+ * every weight in this add-on goes through `Mono` and must stay visible to it.
+ *
+ * A consignment number is the other thing. `00 3400 1234 5678 9012` is an
+ * identifier the carrier issued, its digits are not a quantity anybody computed,
+ * and transliterating them into ٠٠ ٣٤٠٠ … would be the worse bug — it is copied
+ * into a carrier's own tracking box. So it declares itself with `dir`, and the
+ * host guard reads the declaration and leaves it alone.
+ *
+ * It was in `Mono`, so the maker's dispatch panel and the tracking list both
+ * showed four bare Latin runs on an Arabic page with nothing saying why. Neither
+ * host's tour had ever booked a collection, so neither host had ever seen it.
+ *
+ * `Typed` is not this: `Typed` is `dir="auto"`, for somebody else's WORDS, whose
+ * direction depends on what they wrote. A code is always LTR.
+ */
+export function Code({ children, style }: { children: ReactNode; style?: CSSProperties }) {
+  return (
+    <span
+      dir="ltr"
+      style={{
+        fontFamily: MONO,
+        fontVariantNumeric: "tabular-nums",
+        unicodeBidi: "isolate",
+        whiteSpace: "nowrap",
+        ...style,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+/**
  * The monogram tile (24 D12).
  *
  * Two or three letters on `--surface-3` with a 1px border, in `--fg-muted`. It
@@ -80,6 +170,22 @@ export function Monogram({ letters, size = 44 }: { letters: string; size?: numbe
 
 export type Tone = "neutral" | "pos" | "warn" | "danger" | "info";
 
+/**
+ * A pill. IT WRAPS, and the reason is a bug rather than a preference.
+ *
+ * It used to be `whiteSpace: "nowrap"`, which is right for `cheapest` and for a
+ * tracking status and wrong for the longest thing this component is ever asked
+ * to hold: the D11 label, "These services, prices and dates come from a demo
+ * carrier. Nothing is sent to a real one." In the print works' wide dispatch
+ * column that sentence fitted. In Birch Row's narrower one it was 483px of
+ * unbreakable text in a 415px row — it overflowed the panel, ran off the
+ * viewport, and the words a reader most needed ("Nothing is sent to a real
+ * one") were the ones cut off. A label whose whole job is to say a result is
+ * simulated is not allowed to be the label that does not fit.
+ *
+ * `minInlineSize: 0` is the other half: without it the pill refuses to shrink
+ * below its content in a flex row and wrapping never gets a chance.
+ */
 export function Tag({ tone = "neutral", children }: { tone?: Tone; children: ReactNode }) {
   const fg = tone === "neutral" ? "var(--fg-muted)" : `var(--${tone})`;
   const bg = tone === "neutral" ? "var(--surface-3)" : `var(--${tone}-soft)`;
@@ -92,7 +198,9 @@ export function Tag({ tone = "neutral", children }: { tone?: Tone; children: Rea
         background: bg,
         padding: "3px 9px",
         borderRadius: 99,
-        whiteSpace: "nowrap",
+        lineHeight: 1.45,
+        minInlineSize: 0,
+        overflowWrap: "anywhere",
       }}
     >
       {children}

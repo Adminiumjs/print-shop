@@ -27,7 +27,7 @@ import { DemoNote, Mono, useDateFormat } from "./bits.tsx";
  *
  * The account row prints `DEMO_ACCOUNT` and `DEMO_AUTHORIZED_ON` — a name and a
  * date only a real OAuth connection could hand back, and in the demo a fixture.
- * A shop owner opening the manage drawer would read "studio@marlowpress.test ·
+ * A shop owner opening the manage drawer would read "demo-account@example.test ·
  * authorized 1 Aug" as a connection that exists. So the panel carries the same
  * label the four flow steps carry, driven by the same `transport.simulated`
  * flag: a self-host build that swaps in the host's authorized client removes

@@ -128,8 +128,20 @@ const SEED: readonly {
  * add-on's account is a host that knows which add-ons exist. `.test` is a
  * reserved TLD (RFC 2606): a demo address that could never be someone's real
  * mailbox.
+ *
+ * AND IT NAMES NO SHOP. It read `studio@marlowpress.test` until wave 4b round
+ * 3 — the FIRST host's shop, hard-coded in an add-on, and this add-on runs in
+ * whichever host installs it. A second host's manage drawer printed another
+ * shop's address as its own authorized account, in eight languages, in exactly
+ * the quiet grey card a genuine connection uses. It is the same defect class as
+ * the `BR-2284` activity references this wave already repaired, in the one
+ * place nothing was looking: not a translated sentence, so no copy gate read
+ * it, and not a host fact, so no payload guard did either.
+ *
+ * A demo account belongs to nobody, so it says so. `example.test` is reserved
+ * twice over and cannot be mistaken for a shop that exists.
  */
-export const DEMO_ACCOUNT = "studio@marlowpress.test";
+export const DEMO_ACCOUNT = "demo-account@example.test";
 export const DEMO_AUTHORIZED_ON = "2026-08-01";
 
 /**

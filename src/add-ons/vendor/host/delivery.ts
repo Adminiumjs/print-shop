@@ -4,17 +4,39 @@
  * The ONE shared contract; the three add-ons here import it by relative path.
  */
 /**
- * The one slot payload type that is SHARED, and the reason it is the only one.
+ * THE ONE SHAPE THAT TRAVELS BOTH WAYS.
  *
- * Everything else the host passes into a slot is read by the add-on and never
- * handed back, so each add-on narrows it to the fields it reads and keeps the
- * narrowing next to the engine that does the reading. `DeliveryChoice` is
- * different: a `checkout.delivery.methods` fill CONSTRUCTS one and hands it to
- * the host through `onChoose`, the host STORES it (`deliveryChoice` in the
- * Print Shop's store), and the host hands the same object back down as `chosen`
- * so the fill can draw which row is selected. A narrowing that dropped a field
- * here would not be a narrowing, it would be a delivery option the host cannot
- * record.
+ * ── WHAT THIS HEADER USED TO SAY, AND WHY IT IS GONE ────────────────────────
+ *
+ * [Rewritten 2026-08-10, wave 4b.] It used to open "the one slot payload type
+ * that is SHARED, and the reason it is the only one", and go on to state the
+ * rule that everything else a host passes into a slot "is read by the add-on
+ * and never handed back, so each add-on narrows it to the fields it reads".
+ *
+ * That rule is the CAUSE of the 24 D21 failure, not a description of the seam,
+ * and it had been superseded for a day by the time anyone read this file again.
+ * `payloads.ts` documents the whole account: each add-on duly wrote down "the
+ * fields I read", which in practice was "the fields the one host I was built
+ * against happened to send", and the second host's first screen threw three
+ * times. Every payload now lives in the shared mirror, one per slot id, keyed
+ * by `SlotId` and reached through `PayloadFor<S>`. NOTHING is narrowed on the
+ * add-on's side of the wire; an add-on narrows what it READS, against a shape
+ * both hosts promise.
+ *
+ * A stale header is not a cosmetic problem here. This file and `payloads.ts`
+ * are the two places an add-on author looks to learn where a shape belongs, and
+ * they were giving opposite answers — one of them the answer that broke the
+ * thing.
+ *
+ * ── WHY `DeliveryChoice` IS STILL FILED ON ITS OWN ──────────────────────────
+ *
+ * Because it is the only shape in the seam that is not a payload at all. Every
+ * type in `payloads.ts` travels host → add-on. This one travels BOTH ways: a
+ * `checkout.delivery.methods` fill CONSTRUCTS one and hands it over through
+ * `onChoose`, the host STORES it, and the host hands the same object back down
+ * as `chosen` so the fill can draw which row is selected. `CheckoutPayload`
+ * imports it from here rather than declaring it, so the type the host records
+ * and the type the add-on builds cannot come apart.
  *
  * NEUTRAL BY CONSTRUCTION, which is the point of it. There is no carrier in
  * this shape, no service code the host understands and no tracking: it is a

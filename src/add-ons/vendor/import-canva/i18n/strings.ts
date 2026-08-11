@@ -45,12 +45,12 @@ export const importCanvaStrings = {
   "en-US": {
     // ── Host chrome this add-on owns: the connect sentence, its own settings
     //    panel copy, what a disconnect takes and keeps, and its activity lines.
-    "addon.import-canva.what": "This lets a customer bring a design they already made in their own account. The works runs the same checks on it as on an uploaded file.",
+    "addon.import-canva.what": "This lets a customer bring a design they already made in their own account. The shop runs the same checks on it as on an uploaded file.",
     "addon.import-canva.set.account": "Account",
     "addon.import-canva.set.accountWhen": "{account} · authorized {when}",
     "addon.import-canva.set.nothingElse": "There is nothing else to set. The account is the whole of it.",
-    "addon.import-canva.disconnect.goes": "Customers will no longer see “Bring it from Canva” on the artwork screen.",
-    "addon.import-canva.disconnect.stays": "Designs already brought onto orders are kept. The authorization is revoked and the token deleted.",
+    "addon.import-canva.disconnect.goes": "Customers will no longer see “Bring it from Canva” on the artwork screen. The authorization is revoked and the token deleted.",
+    "addon.import-canva.disconnect.stays": "Designs already brought onto orders are kept.",
     "addon.import-canva.act.1": "{when} · design brought in · {ref}",
     "addon.import-canva.act.2": "{when} · list of designs read",
     "addon.import-canva.act.3": "{when} · account authorized",
@@ -70,6 +70,7 @@ export const importCanvaStrings = {
     "addon.import-canva.step.connect": "Connect",
     "addon.import-canva.step.pick": "Pick a design",
     "addon.import-canva.step.import": "Import and check",
+    "addon.import-canva.dims": "{w} × {h} mm",
 
     "addon.import-canva.connect.title": "Connect your Canva account",
     "addon.import-canva.connect.body":
@@ -96,7 +97,7 @@ export const importCanvaStrings = {
     "addon.import-canva.import.pickAnother": "Pick another design",
     "addon.import-canva.import.blocked": "This one can't print as it is — two ways out below.",
     "addon.import-canva.import.ok":
-      "Everything checks out. A person will still look before it prints.",
+      "Everything checks out. A person will still look before anything is made.",
     "addon.import-canva.import.okAgain": "Checked again. It is right now.",
     "addon.import-canva.import.use": "Use this design",
 
@@ -159,8 +160,8 @@ export const importCanvaStrings = {
     "addon.import-canva.set.account": "Konto",
     "addon.import-canva.set.accountWhen": "{account} · bestätigt am {when}",
     "addon.import-canva.set.nothingElse": "Mehr gibt es nicht einzustellen. Das Konto ist alles.",
-    "addon.import-canva.disconnect.goes": "Die Kundschaft sieht „Aus Canva holen“ auf der Druckdatenseite nicht mehr.",
-    "addon.import-canva.disconnect.stays": "Bereits übernommene Gestaltungen bleiben auf ihren Aufträgen. Die Berechtigung wird entzogen und das Token gelöscht.",
+    "addon.import-canva.disconnect.goes": "Die Kundschaft sieht „Aus Canva holen“ auf der Gestaltungsseite nicht mehr. Die Berechtigung wird entzogen und das Token gelöscht.",
+    "addon.import-canva.disconnect.stays": "Bereits übernommene Gestaltungen bleiben auf ihren Aufträgen.",
     "addon.import-canva.act.1": "{when} · Gestaltung übernommen · {ref}",
     "addon.import-canva.act.2": "{when} · Liste der Gestaltungen gelesen",
     "addon.import-canva.act.3": "{when} · Konto bestätigt",
@@ -174,7 +175,7 @@ export const importCanvaStrings = {
 
     "addon.import-canva.flow.title": "Aus Canva übernehmen",
     "addon.import-canva.flow.lede": "Wir prüfen es genauso wie einen Upload.",
-    "addon.import-canva.flow.back": "Zurück zu den Druckdaten",
+    "addon.import-canva.flow.back": "Zurück zur Gestaltungsseite",
     "addon.import-canva.flow.close": "Schließen",
 
     "addon.import-canva.step.connect": "Verbinden",
@@ -184,6 +185,7 @@ export const importCanvaStrings = {
     // The bare noun says the same thing and carries neither. See
     // `strings.test.ts` for the run itself.
     "addon.import-canva.step.import": "Import und Prüfung",
+    "addon.import-canva.dims": "{w} × {h} mm",
 
     "addon.import-canva.connect.title": "Canva-Konto verbinden",
     "addon.import-canva.connect.body":
@@ -211,7 +213,7 @@ export const importCanvaStrings = {
     "addon.import-canva.import.blocked":
       "So lässt sich das nicht drucken — unten stehen zwei Wege heraus.",
     "addon.import-canva.import.ok":
-      "Alles in Ordnung. Vor dem Druck schaut trotzdem noch ein Mensch darauf.",
+      "Alles in Ordnung. Bevor etwas hergestellt wird, schaut trotzdem noch ein Mensch darauf.",
     "addon.import-canva.import.okAgain": "Nochmal geprüft. Jetzt stimmt es.",
     "addon.import-canva.import.use": "Dieses Design verwenden",
 
@@ -268,8 +270,8 @@ export const importCanvaStrings = {
     "addon.import-canva.set.account": "Compte",
     "addon.import-canva.set.accountWhen": "{account} · autorisé le {when}",
     "addon.import-canva.set.nothingElse": "Il n'y a rien d'autre à régler. Le compte, c'est tout.",
-    "addon.import-canva.disconnect.goes": "Les clients ne verront plus « Apportez-le depuis Canva » sur l'écran des fichiers.",
-    "addon.import-canva.disconnect.stays": "Les créations déjà reprises sur des commandes sont conservées. L'autorisation est révoquée et le jeton supprimé.",
+    "addon.import-canva.disconnect.goes": "Les clients ne verront plus « Apportez-le depuis Canva » sur l'écran des fichiers. L'autorisation est révoquée et le jeton supprimé.",
+    "addon.import-canva.disconnect.stays": "Les créations déjà reprises sur des commandes sont conservées.",
     "addon.import-canva.act.1": "{when} · création reprise · {ref}",
     "addon.import-canva.act.2": "{when} · liste des créations lue",
     "addon.import-canva.act.3": "{when} · compte autorisé",
@@ -284,12 +286,13 @@ export const importCanvaStrings = {
     "addon.import-canva.flow.title": "Le reprendre depuis Canva",
     "addon.import-canva.flow.lede":
       "Nous lui faisons passer les mêmes contrôles qu'à un fichier envoyé.",
-    "addon.import-canva.flow.back": "Retour aux fichiers d'impression",
+    "addon.import-canva.flow.back": "Retour à l’écran des fichiers",
     "addon.import-canva.flow.close": "Fermer",
 
     "addon.import-canva.step.connect": "Connexion",
     "addon.import-canva.step.pick": "Choisir un visuel",
     "addon.import-canva.step.import": "Importer et contrôler",
+    "addon.import-canva.dims": "{w} × {h} mm",
 
     "addon.import-canva.connect.title": "Connecter votre compte Canva",
     "addon.import-canva.connect.body":
@@ -318,7 +321,7 @@ export const importCanvaStrings = {
     "addon.import-canva.import.blocked":
       "En l'état, cela ne peut pas être imprimé — deux solutions ci-dessous.",
     "addon.import-canva.import.ok":
-      "Tout est correct. Une personne y jettera quand même un œil avant l'impression.",
+      "Tout est correct. Une personne y jettera quand même un œil avant toute fabrication.",
     "addon.import-canva.import.okAgain": "Contrôlé à nouveau. C'est bon maintenant.",
     "addon.import-canva.import.use": "Utiliser ce visuel",
 
@@ -375,8 +378,8 @@ export const importCanvaStrings = {
     "addon.import-canva.set.account": "Účet",
     "addon.import-canva.set.accountWhen": "{account} · potvrzeno {when}",
     "addon.import-canva.set.nothingElse": "Nic dalšího se nenastavuje. Účet je všechno.",
-    "addon.import-canva.disconnect.goes": "Zákazníci už na obrazovce s podklady neuvidí „Přineste to z Canvy“.",
-    "addon.import-canva.disconnect.stays": "Návrhy převzaté na zakázky zůstávají. Oprávnění se odvolá a token smaže.",
+    "addon.import-canva.disconnect.goes": "Zákazníci už na obrazovce s podklady neuvidí „Přineste to z Canvy“. Oprávnění se odvolá a token smaže.",
+    "addon.import-canva.disconnect.stays": "Návrhy převzaté na zakázky zůstávají.",
     "addon.import-canva.act.1": "{when} · návrh převzat · {ref}",
     "addon.import-canva.act.2": "{when} · seznam návrhů přečten",
     "addon.import-canva.act.3": "{when} · účet potvrzen",
@@ -390,12 +393,13 @@ export const importCanvaStrings = {
 
     "addon.import-canva.flow.title": "Převzít z Canvy",
     "addon.import-canva.flow.lede": "Projde stejnou kontrolou jako nahraný soubor.",
-    "addon.import-canva.flow.back": "Zpět na tisková data",
+    "addon.import-canva.flow.back": "Zpět na obrazovku s podklady",
     "addon.import-canva.flow.close": "Zavřít",
 
     "addon.import-canva.step.connect": "Připojit",
     "addon.import-canva.step.pick": "Vybrat návrh",
     "addon.import-canva.step.import": "Import a kontrola",
+    "addon.import-canva.dims": "{w} × {h} mm",
 
     "addon.import-canva.connect.title": "Připojte svůj účet Canva",
     "addon.import-canva.connect.body":
@@ -422,7 +426,7 @@ export const importCanvaStrings = {
     "addon.import-canva.import.pickAnother": "Vybrat jiný návrh",
     "addon.import-canva.import.blocked": "Takto to vytisknout nejde — níže jsou dvě řešení.",
     "addon.import-canva.import.ok":
-      "Vše je v pořádku. Před tiskem se na to stejně podívá člověk.",
+      "Vše je v pořádku. Než se to začne vyrábět, stejně se na to podívá člověk.",
     "addon.import-canva.import.okAgain": "Zkontrolováno znovu. Teď je to správně.",
     "addon.import-canva.import.use": "Použít tento návrh",
 
@@ -478,8 +482,8 @@ export const importCanvaStrings = {
     "addon.import-canva.set.account": "Konto",
     "addon.import-canva.set.accountWhen": "{account} · godkendt {when}",
     "addon.import-canva.set.nothingElse": "Der er ikke mere at indstille. Kontoen er det hele.",
-    "addon.import-canva.disconnect.goes": "Kunderne ser ikke længere “Hent det fra Canva” på materialesiden.",
-    "addon.import-canva.disconnect.stays": "Design, der allerede er hentet ind på ordrer, bliver. Adgangen tilbagekaldes, og token slettes.",
+    "addon.import-canva.disconnect.goes": "Kunderne ser ikke længere “Hent det fra Canva” på materialesiden. Adgangen tilbagekaldes, og token slettes.",
+    "addon.import-canva.disconnect.stays": "Design, der allerede er hentet ind på ordrer, bliver.",
     "addon.import-canva.act.1": "{when} · design hentet ind · {ref}",
     "addon.import-canva.act.2": "{when} · liste over design læst",
     "addon.import-canva.act.3": "{when} · konto godkendt",
@@ -493,12 +497,13 @@ export const importCanvaStrings = {
 
     "addon.import-canva.flow.title": "Hent det fra Canva",
     "addon.import-canva.flow.lede": "Vi kører de samme tjek på det som på en upload.",
-    "addon.import-canva.flow.back": "Tilbage til trykfilerne",
+    "addon.import-canva.flow.back": "Tilbage til materialesiden",
     "addon.import-canva.flow.close": "Luk",
 
     "addon.import-canva.step.connect": "Forbind",
     "addon.import-canva.step.pick": "Vælg et design",
     "addon.import-canva.step.import": "Importér og tjek",
+    "addon.import-canva.dims": "{w} × {h} mm",
 
     "addon.import-canva.connect.title": "Forbind din Canva-konto",
     "addon.import-canva.connect.body":
@@ -525,7 +530,7 @@ export const importCanvaStrings = {
     "addon.import-canva.import.pickAnother": "Vælg et andet design",
     "addon.import-canva.import.blocked": "Sådan kan det ikke trykkes — to veje ud herunder.",
     "addon.import-canva.import.ok":
-      "Alt ser rigtigt ud. Et menneske kigger stadig på det, før vi trykker.",
+      "Alt ser rigtigt ud. Et menneske kigger stadig på det, før noget bliver lavet.",
     "addon.import-canva.import.okAgain": "Tjekket igen. Nu er det rigtigt.",
     "addon.import-canva.import.use": "Brug dette design",
 
@@ -581,8 +586,8 @@ export const importCanvaStrings = {
     "addon.import-canva.set.account": "账号",
     "addon.import-canva.set.accountWhen": "{account} · 授权于 {when}",
     "addon.import-canva.set.nothingElse": "没有别的可设。账号就是全部。",
-    "addon.import-canva.disconnect.goes": "客户在稿件页面上不会再看到“从 Canva 带过来”。",
-    "addon.import-canva.disconnect.stays": "已带进订单的稿件都留着。授权会被撤销，令牌会被删除。",
+    "addon.import-canva.disconnect.goes": "客户在稿件页面上不会再看到“从 Canva 带过来”。授权会被撤销，令牌会被删除。",
+    "addon.import-canva.disconnect.stays": "已带进订单的稿件都留着。",
     "addon.import-canva.act.1": "{when} · 稿件已带入 · {ref}",
     "addon.import-canva.act.2": "{when} · 已读取稿件列表",
     "addon.import-canva.act.3": "{when} · 账号已授权",
@@ -596,12 +601,13 @@ export const importCanvaStrings = {
 
     "addon.import-canva.flow.title": "从 Canva 带进来",
     "addon.import-canva.flow.lede": "我们会对它做与上传文件相同的检查。",
-    "addon.import-canva.flow.back": "返回印刷文件",
+    "addon.import-canva.flow.back": "返回稿件页面",
     "addon.import-canva.flow.close": "关闭",
 
     "addon.import-canva.step.connect": "连接",
     "addon.import-canva.step.pick": "挑选设计",
     "addon.import-canva.step.import": "导入并检查",
+    "addon.import-canva.dims": "{w} × {h} 毫米",
 
     "addon.import-canva.connect.title": "连接你的 Canva 账户",
     "addon.import-canva.connect.body":
@@ -626,7 +632,7 @@ export const importCanvaStrings = {
     "addon.import-canva.import.from": "{name} · 从你的账户导入",
     "addon.import-canva.import.pickAnother": "换一个设计",
     "addon.import-canva.import.blocked": "这一份照原样印不了——下面有两条出路。",
-    "addon.import-canva.import.ok": "各项检查都通过了。付印前仍会有人再看一遍。",
+    "addon.import-canva.import.ok": "各项检查都通过了。开工前仍会有人再看一遍。",
     "addon.import-canva.import.okAgain": "重新检查过了。现在没问题。",
     "addon.import-canva.import.use": "使用这个设计",
 
@@ -680,8 +686,8 @@ export const importCanvaStrings = {
     "addon.import-canva.set.account": "帳號",
     "addon.import-canva.set.accountWhen": "{account} · 授權於 {when}",
     "addon.import-canva.set.nothingElse": "沒有別的可設。帳號就是全部。",
-    "addon.import-canva.disconnect.goes": "客戶在稿件頁面上不會再看到「從 Canva 帶過來」。",
-    "addon.import-canva.disconnect.stays": "已帶進訂單的稿件都留著。授權會被撤銷，權杖會被刪除。",
+    "addon.import-canva.disconnect.goes": "客戶在稿件頁面上不會再看到「從 Canva 帶過來」。授權會被撤銷，權杖會被刪除。",
+    "addon.import-canva.disconnect.stays": "已帶進訂單的稿件都留著。",
     "addon.import-canva.act.1": "{when} · 稿件已帶入 · {ref}",
     "addon.import-canva.act.2": "{when} · 已讀取稿件清單",
     "addon.import-canva.act.3": "{when} · 帳號已授權",
@@ -695,12 +701,13 @@ export const importCanvaStrings = {
 
     "addon.import-canva.flow.title": "從 Canva 帶進來",
     "addon.import-canva.flow.lede": "我們會對它做與上傳檔案相同的檢查。",
-    "addon.import-canva.flow.back": "返回印刷檔案",
+    "addon.import-canva.flow.back": "返回稿件頁面",
     "addon.import-canva.flow.close": "關閉",
 
     "addon.import-canva.step.connect": "連接",
     "addon.import-canva.step.pick": "挑選設計",
     "addon.import-canva.step.import": "匯入並檢查",
+    "addon.import-canva.dims": "{w} × {h} 公釐",
 
     "addon.import-canva.connect.title": "連接你的 Canva 帳戶",
     "addon.import-canva.connect.body":
@@ -725,7 +732,7 @@ export const importCanvaStrings = {
     "addon.import-canva.import.from": "{name} · 從你的帳戶匯入",
     "addon.import-canva.import.pickAnother": "換一個設計",
     "addon.import-canva.import.blocked": "這一份照原樣印不了——下面有兩條出路。",
-    "addon.import-canva.import.ok": "各項檢查都通過了。付印前仍會有人再看一遍。",
+    "addon.import-canva.import.ok": "各項檢查都通過了。開工前仍會有人再看一遍。",
     "addon.import-canva.import.okAgain": "重新檢查過了。現在沒問題。",
     "addon.import-canva.import.use": "使用這個設計",
 
@@ -775,12 +782,12 @@ export const importCanvaStrings = {
   "ar-EG": {
     // ── Host chrome this add-on owns: the connect sentence, its own settings
     //    panel copy, what a disconnect takes and keeps, and its activity lines.
-    "addon.import-canva.what": "يتيح للعميل إحضار تصميم صنعه في حسابه. تجري عليه المطبعة الفحوص نفسها التي تجريها على ملف مرفوع.",
+    "addon.import-canva.what": "يتيح للعميل إحضار تصميم صنعه في حسابه. تجري عليه الورشة الفحوص نفسها التي تجريها على ملف مرفوع.",
     "addon.import-canva.set.account": "الحساب",
     "addon.import-canva.set.accountWhen": "{account} · اعتُمد في {when}",
     "addon.import-canva.set.nothingElse": "لا شيء آخر يُضبط. الحساب هو كل الأمر.",
-    "addon.import-canva.disconnect.goes": "لن يرى العملاء بعد الآن «أحضِره من Canva» في شاشة ملفات الطباعة.",
-    "addon.import-canva.disconnect.stays": "التصاميم التي دخلت على الطلبات تبقى. ويُسحب التفويض ويُحذف الرمز.",
+    "addon.import-canva.disconnect.goes": "لن يرى العملاء بعد الآن «أحضِره من Canva» في شاشة ملفات التصميم. ويُسحب التفويض ويُحذف الرمز.",
+    "addon.import-canva.disconnect.stays": "التصاميم التي دخلت على الطلبات تبقى.",
     "addon.import-canva.act.1": "{when} · أُحضر تصميم · {ref}",
     "addon.import-canva.act.2": "{when} · قُرئت قائمة التصاميم",
     "addon.import-canva.act.3": "{when} · اعتُمد الحساب",
@@ -794,12 +801,13 @@ export const importCanvaStrings = {
 
     "addon.import-canva.flow.title": "أحضره من Canva",
     "addon.import-canva.flow.lede": "نجري عليه نفس الفحوص التي نجريها على ملف مرفوع.",
-    "addon.import-canva.flow.back": "العودة إلى ملفات الطباعة",
+    "addon.import-canva.flow.back": "العودة إلى شاشة ملفات التصميم",
     "addon.import-canva.flow.close": "إغلاق",
 
     "addon.import-canva.step.connect": "الربط",
     "addon.import-canva.step.pick": "اختر تصميمًا",
     "addon.import-canva.step.import": "الاستيراد والفحص",
+    "addon.import-canva.dims": "{w} × {h} مم",
 
     "addon.import-canva.connect.title": "اربط حسابك على Canva",
     "addon.import-canva.connect.body":
@@ -825,7 +833,7 @@ export const importCanvaStrings = {
     "addon.import-canva.import.from": "{name} · مستورد من حسابك",
     "addon.import-canva.import.pickAnother": "اختر تصميمًا آخر",
     "addon.import-canva.import.blocked": "هذا لا يمكن طبعه بحالته — بالأسفل مخرجان.",
-    "addon.import-canva.import.ok": "كل شيء سليم. سيراجعه إنسان قبل الطباعة على أي حال.",
+    "addon.import-canva.import.ok": "كل شيء سليم. سيراجعه إنسان قبل بدء التنفيذ على أي حال.",
     "addon.import-canva.import.okAgain": "فُحص مرة أخرى. صار سليمًا الآن.",
     "addon.import-canva.import.use": "استخدم هذا التصميم",
 
@@ -877,3 +885,35 @@ export const importCanvaStrings = {
 
 /** The English keys are the source of truth; the other seven mirror them. */
 export type ImportCanvaKey = keyof (typeof importCanvaStrings)["en-US"];
+
+/**
+ * ── THE LATIN DIGITS IN THESE STRINGS THAT ARE NOT QUANTITIES ───────────────
+ *
+ * A host renders this bundle inside its own pages, and every host in this wave
+ * runs the same rule over an Arabic page: a run of Latin digits that is not
+ * inside an identifier is an unformatted number, and a defect. Some of an
+ * add-on's own strings legitimately carry one anyway, and when they do THE
+ * ADD-ON IS THE ONLY THING THAT KNOWS WHY.
+ *
+ * ── WHY THIS TRAVELS WITH THE STRINGS INSTEAD OF WITH THE HOST ──────────────
+ *
+ * It used to live in the host. Print Shop's `numerals.arabic.test.tsx` carried
+ * Design Studio's specimen telephone number in ITS exemption list, and Maker
+ * Shop did not — so wiring Design Studio into the second host, registration
+ * only, zero bytes changed in any add-on, turned that host's suite red. The
+ * fix was to edit a list in the host, which is exactly what AC20/D21 says must
+ * never be necessary: an add-on is portable when moving it needs no edit in the
+ * app that receives it.
+ *
+ * The same shape had already been fixed twice this wave (HOSTED_SLOTS, the
+ * Czech "pro" carve-out). This is the third and it is fixed the same way: the
+ * fact is declared beside the strings it is about, in the module the hosts
+ * vendor, and each host's guard reads whatever is vendored into it. A host that
+ * takes this add-on takes its allowances; a host that does not, does not.
+ *
+ * EVERY ADD-ON EXPORTS THIS, even when it is empty. A host asserts the export
+ * exists on every bundle it has vendored, so a missing declaration is a red
+ * suite rather than an allowance nobody notices is gone.
+ */
+export const NOT_A_QUANTITY: readonly { phrase: string; why: string }[] = [];
+

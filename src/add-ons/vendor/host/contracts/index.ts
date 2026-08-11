@@ -26,6 +26,17 @@ export type {
   AvailabilityVerdict,
   JobSpec,
 } from './artwork-source.ts';
+export type {
+  Personalization,
+  PreviewRef,
+  ProductPersonalizer,
+  ProductRef,
+  Template,
+  Verdict,
+  Zone,
+  ZoneFinish,
+  ZoneKind,
+} from './product-personalizer.ts';
 export { CarrierError } from './shipping-carrier.ts';
 export type {
   Address,

@@ -109,9 +109,10 @@ TARGETS=(host design-studio shipping-dhl import-canva)
 
 # The shared contract, vendored ONCE. `testing/` is not here and must not be.
 FILES_host=(
-  index.ts host.ts slots.ts delivery.ts
+  index.ts host.ts payloads.ts slots.ts delivery.ts
   contracts/index.ts contracts/common.ts
   contracts/artwork-source.ts contracts/shipping-carrier.ts
+  contracts/product-personalizer.ts
 )
 
 # Reachable from each client entry point, and nothing else. Kept as an explicit
@@ -119,6 +120,7 @@ FILES_host=(
 # too — a new module appearing in the demo bundle without anyone naming it is
 # how a server half ends up in a browser.
 FILES_design_studio=(
+  add-on-facts.ts
   doc.ts layouts.ts artworkSource.ts hostJob.ts index.ts
   i18n/strings.ts
   styles/design-studio.css
@@ -127,13 +129,15 @@ FILES_design_studio=(
   ui/tint.ts ui/useHostLocale.ts ui/useViewport.ts
 )
 FILES_shipping_dhl=(
-  host-payloads.ts label-store.ts clock.ts parcel.ts rates.ts label.ts seed.ts
+  add-on-facts.ts
+  label-store.ts clock.ts parcel.ts rates.ts label.ts seed.ts
   demo-carrier.ts settings.ts runtime.ts index.ts
   i18n/strings.ts i18n/t.ts
   ui/atoms.tsx ui/labels.ts ui/DispatchAction.tsx ui/DeliveryMethods.tsx
   ui/SettingsPanel.tsx ui/TrackingPanel.tsx
 )
 FILES_import_canva=(
+  add-on-facts.ts
   import.ts job.ts oauth.ts source.ts index.ts
   demo/transport.ts
   i18n/strings.ts i18n/t.ts i18n/useT.ts

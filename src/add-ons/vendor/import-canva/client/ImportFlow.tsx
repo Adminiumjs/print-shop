@@ -257,7 +257,7 @@ export function ImportFlow({
                   <span className="cvi-thumb" data-tint={design.tint}>
                     <ImageIcon size={30} aria-hidden="true" />
                     <Mono className="cvi-thumb-chip">
-                      {sizeChip(design.size.widthMm, design.size.heightMm)}
+                      {sizeChip(t, design.size.widthMm, design.size.heightMm)}
                     </Mono>
                   </span>
                   <span className="cvi-design-meta">
