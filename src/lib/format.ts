@@ -122,11 +122,22 @@ export function shortDay(iso: string): string {
   return day(iso, { day: "numeric", month: "short" });
 }
 
+/**
+ * Two digits of a clock face, in the reader's numerals.
+ *
+ * `String(hour).padStart(2, "0")` is what this used to be, and it is the same
+ * defect `t()` had: the dock read an Arabic date beside a Latin time in one
+ * chip. `minimumIntegerDigits` does the padding, so the leading zero is the
+ * locale's own zero and not a Latin one.
+ */
+export function twoDigits(value: number): string {
+  return ambientNumber(value, { minimumIntegerDigits: 2, useGrouping: false });
+}
+
 /** The dock's clock readout: pinned date and time, never a real one. */
 export function clock(iso: string, hour: number, minute: number): string {
-  const hh = String(hour).padStart(2, "0");
-  const mm_ = String(minute).padStart(2, "0");
-  return `${day(iso, { weekday: "short", day: "numeric", month: "short" })} ${hh}:${mm_}`;
+  const face = `${twoDigits(hour)}:${twoDigits(minute)}`;
+  return `${day(iso, { weekday: "short", day: "numeric", month: "short" })} ${face}`;
 }
 
 /** Percentages in the reader's numerals. */

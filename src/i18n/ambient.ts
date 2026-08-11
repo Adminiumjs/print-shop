@@ -32,9 +32,16 @@ const fallbackT: TFunction = (key, params, count) => {
   }
   const all = count === undefined ? params : { count, ...params };
   if (!all) return raw;
-  return raw.replace(/\{(\w+)\}/g, (m: string, name: string) =>
-    name in all ? String(all[name as keyof typeof all]) : m,
-  );
+  // Numbers are formatted, not stringified — the same rule the provider's `t`
+  // holds, kept here too so a value that renders before the provider mounts
+  // does not render differently after it.
+  return raw.replace(/\{(\w+)\}/g, (m: string, name: string) => {
+    if (!(name in all)) return m;
+    const value = all[name as keyof typeof all];
+    return typeof value === "number"
+      ? new Intl.NumberFormat(DEFAULT_LOCALE).format(value)
+      : String(value);
+  });
 };
 
 const fallbackMoney: MoneyFn = (value, currency = "USD") =>

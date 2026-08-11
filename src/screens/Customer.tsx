@@ -39,9 +39,9 @@ import { useState } from "react";
 import { fileFromRef, jobSpecFor } from "../add-ons/artwork.ts";
 import { AddOnSlot } from "../components/AddOnSlot.tsx";
 import { Chip, EmptyState, Field, Mono, Tile } from "../components/Primitives.tsx";
-import { useT } from "../i18n/index.tsx";
+import { useT, type TFunction } from "../i18n/index.tsx";
 import { PRODUCTS, PRODUCT_BY_KEY, SIZE_BY_KEY, type Product } from "../lib/catalogue.ts";
-import { cents, day, mm, packagingHint, shortDay, sqm, trim, unitPrice } from "../lib/format.ts";
+import { cents, day, mm, multiplier, num, packagingHint, shortDay, sqm, trim, unitPrice } from "../lib/format.ts";
 import {
   artworkBlocked,
   artworkNeedsTick,
@@ -94,7 +94,7 @@ export function Products() {
             <Tile
               family={product.family}
               icon={<ProductIcon product={product} size={46} />}
-              chip={sizeChipFor(product)}
+              chip={sizeChipFor(t, product)}
               badge={t(`data.product.${product.key}` as never).split(" ")[0]}
             />
             <div className="mp-product-body">
@@ -143,11 +143,20 @@ export function Products() {
   );
 }
 
-function sizeChipFor(product: Product): string {
+/**
+ * The size written on a product tile.
+ *
+ * IT TAKES `t` NOW, and both halves of that are repairs. The millimetres were
+ * a template literal — raw Latin digits on an Arabic page, beside a price the
+ * same tile had formatted — and the custom option answered with the English
+ * word "custom" in all eight languages. `mm()` formats the one and the bundle
+ * already had a phrase for the other.
+ */
+function sizeChipFor(t: TFunction, product: Product): string {
   const first = product.sizes[0]!;
-  if (first === "custom") return "custom";
+  if (first === "custom") return t("data.size.custom");
   const size = SIZE_BY_KEY[first]!;
-  return `${size.widthMm} × ${size.heightMm}`;
+  return mm(size.widthMm, size.heightMm);
 }
 
 /* ── 2 · CONFIGURATOR ────────────────────────────────────────────────────── */
@@ -250,7 +259,7 @@ function Step({
   return (
     <div className="mp-step">
       <div className="mp-step-head">
-        <span className="mp-step-n">{String(n).padStart(2, "0")}</span>
+        <span className="mp-step-n">{num(n, { minimumIntegerDigits: 2, useGrouping: false })}</span>
         <h2 className="mp-h2">{title}</h2>
         {hint !== undefined && <span className="mp-step-hint">{hint}</span>}
       </div>
@@ -816,7 +825,7 @@ function lineDetail(
       return `${t("lineDetail.print", { sheets: d.sheets, rate: cents(Number(d.rate)) })} · ${t("lineDetail.break", { qty: "" })}`.replace(
         / · .*$/,
         typeof d.multiplier === "number" && d.multiplier < 1
-          ? ` · ×${d.multiplier}`
+          ? ` · ${multiplier(d.multiplier)}`
           : "",
       );
     }

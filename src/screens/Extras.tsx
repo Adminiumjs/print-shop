@@ -33,7 +33,7 @@ import { Affiliation } from "../components/Affiliation.tsx";
 import { EmptyState, Field, Monogram, Mono, Tag, Tile } from "../components/Primitives.tsx";
 import { useT } from "../i18n/index.tsx";
 import { PRODUCTS, PRODUCT_BY_KEY, SIZE_BY_KEY, type ProductKey } from "../lib/catalogue.ts";
-import { cents, clock, day, mm, shortDay } from "../lib/format.ts";
+import { cents, clock, day, mm, num, shortDay } from "../lib/format.ts";
 import { imposition, proofApproved } from "../lib/jobs.ts";
 import { priceQuote, resolveSize } from "../lib/quote.ts";
 import { BLEED_MM, DELIVERY_BANDS, MATERIALS, SAFE_MM } from "../lib/rates.ts";
@@ -129,7 +129,7 @@ export function Reorder() {
                   <Mono style={{ fontSize: 11.5, color: "var(--fg-subtle)" }}>{job.ref}</Mono>
                 </div>
                 <div style={{ fontSize: 12.5, color: "var(--fg-muted)", marginBlockStart: 2 }}>
-                  {t(`data.material.${job.materialKey}` as never)} · {job.quantity}
+                  {t(`data.material.${job.materialKey}` as never)} · {num(job.quantity)}
                 </div>
                 <div style={{ fontSize: 11.5, color: "var(--fg-subtle)", marginBlockStart: 2 }}>
                   {t("cust.reorder.when", { date: shortDay(job.promisedFor) })}
@@ -386,7 +386,7 @@ export function Proofs() {
                       <Mono style={{ fontSize: 11.5, color: "var(--fg-subtle)" }}>{job.ref}</Mono>
                     </div>
                     <div style={{ fontSize: 12.5, color: "var(--fg-muted)", marginBlockStart: 2 }}>
-                      {job.quantity} · {mm(job.trimWidthMm, job.trimHeightMm)}
+                      {num(job.quantity)} · {mm(job.trimWidthMm, job.trimHeightMm)}
                     </div>
                   </div>
                   <Tag tone={done ? "pos" : "warn"}>
@@ -469,7 +469,7 @@ export function SavedQuotes() {
                   </Mono>
                 </div>
                 <div style={{ fontSize: 12.5, color: "var(--fg-muted)" }}>
-                  {quote.config.quantity} · {mm(size.widthMm, size.heightMm)} ·{" "}
+                  {num(quote.config.quantity)} · {mm(size.widthMm, size.heightMm)} ·{" "}
                   {t(`data.material.${quote.config.material}` as never)}
                 </div>
                 <div className="mp-row" style={{ gap: 9, flexWrap: "nowrap" }}>

@@ -123,9 +123,25 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
       const all = count === undefined ? params : { count, ...params };
       if (!all) return raw;
-      return raw.replace(/\{(\w+)\}/g, (m: string, name: string) =>
-        name in all ? String(all[name as keyof typeof all]) : m,
-      );
+      /*
+       * A NUMBER SUBSTITUTED INTO COPY IS FORMATTED, NEVER `String()`d.
+       *
+       * This is the one line that decides whether Arabic reads ٣ or 3. Every
+       * `t("…", { days: 3 })` in the works used to land a Latin numeral in the
+       * middle of Arabic-Indic prices on the same screen, and so did every
+       * `{count}` on every plural in the bundle, because `count` arrives as a
+       * number by definition. Fixing it at each call site would have fixed the
+       * call sites somebody remembered; fixing it here fixes the ones nobody
+       * has written yet. A caller that has already formatted its value passes a
+       * STRING and is left alone, which is what keeps money, percentages and
+       * dates — all of which have their own formatters in `lib/format.ts` —
+       * coming out right.
+       */
+      return raw.replace(/\{(\w+)\}/g, (m: string, name: string) => {
+        if (!(name in all)) return m;
+        const value = all[name as keyof typeof all];
+        return typeof value === "number" ? nf.format(value) : String(value);
+      });
     };
 
     return {
