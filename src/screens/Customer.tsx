@@ -41,7 +41,7 @@ import { AddOnSlot } from "../components/AddOnSlot.tsx";
 import { Chip, EmptyState, Field, Mono, Tile } from "../components/Primitives.tsx";
 import { useT } from "../i18n/index.tsx";
 import { PRODUCTS, PRODUCT_BY_KEY, SIZE_BY_KEY, type Product } from "../lib/catalogue.ts";
-import { cents, day, mm, shortDay, sqm, trim, unitPrice } from "../lib/format.ts";
+import { cents, day, mm, packagingHint, shortDay, sqm, trim, unitPrice } from "../lib/format.ts";
 import {
   artworkBlocked,
   artworkNeedsTick,
@@ -62,6 +62,7 @@ import {
   BLEED_MM,
   EXPRESS_UPLIFT,
   MATERIAL_BY_KEY,
+  PACKAGING_BY_KEY,
   PROOF_BY_POST_CENTS,
   QUANTITY_BREAKS,
   SIZE_LIMITS,
@@ -615,7 +616,7 @@ function OptionsStep({
                   key={key}
                   selected={config.packaging === key}
                   label={t(`data.packaging.${key}` as never)}
-                  sub={t(`data.packagingHint.${key}` as never)}
+                  sub={packagingHint(t as never, PACKAGING_BY_KEY[key])}
                   onClick={() => onChange({ packaging: key })}
                 />
               ))}

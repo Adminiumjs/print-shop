@@ -29,7 +29,7 @@ import { outboundOrderFor, shopClock } from "../add-ons/records.ts";
 import { EmptyState, Mono, Tag, Tile } from "../components/Primitives.tsx";
 import { useT } from "../i18n/index.tsx";
 import { PRODUCT_BY_KEY, type ProductKey } from "../lib/catalogue.ts";
-import { cents, day, dueLabel, flatTint, mm, multiplier, shortDay } from "../lib/format.ts";
+import { cents, day, dueLabel, flatTint, mm, multiplier, packagingHint, shortDay } from "../lib/format.ts";
 import {
   BOARD_COLUMNS,
   boardKpis,
@@ -740,7 +740,7 @@ export function Prices() {
             <PriceRow
               key={p.key}
               label={t(`data.packaging.${p.key}` as never)}
-              value={t(`data.packagingHint.${p.key}` as never)}
+              value={packagingHint(t as never, p)}
             />
           ))}
           {DELIVERY_BANDS.filter((b) => b.rateCents > 0).map((b) => (
