@@ -24,6 +24,7 @@
 
 import type { ReactNode } from 'react';
 
+import type { PayloadFor, ShopClock } from './payloads.ts';
 import { SLOT_FILL, type SlotId } from './slots.ts';
 
 /** Add-on categories — the closed vocabulary of 24 D2. */
@@ -57,55 +58,86 @@ export interface AddOnSetting {
 /** One add-on's saved values, under its own machine keys. Opaque to the host. */
 export type AddOnSettingValues = Readonly<Record<string, unknown>>;
 
-/**
- * Every fill is handed the shop's saved values FOR ITS OWN ADD-ON under
- * `settings`, injected by `<AddOnSlot>`. A screen therefore never looks a
- * settings document up by add-on key to pass it along — which is how
- * `settings['design-studio']` used to appear in a customer-facing screen.
- */
-export interface SlotPayload {
-  settings?: AddOnSettingValues;
-}
-
-/**
- * One representative job per product family, already labelled in the reader's
- * language, handed to `settings.add-on.panel`.
+/*
+ * `SlotPayload`, and every per-slot payload, MOVED TO `./payloads.ts`.
  *
- * It exists so an add-on that has something to say about the shop's catalogue
- * can say it without the host guessing what that is. The carrier turns these
- * into default parcel weights with its own engine; an add-on that has no
- * opinion about them ignores the field. THE HOST DOES NOT COMPUTE A WEIGHT —
- * it does not know what a job weighs, and a weight table here that disagreed
- * with the one the dispatch screen quotes would be worse than no table at all.
+ * They were here, beside the seam, and `SampleJob` in particular showed why
+ * that was not enough: it declared `trimWidthMm`, `packagingKey`, `productKey`
+ * and `materialKey` under a general-sounding name — this app's own job record
+ * with `Job` filed off the front. A payload is a CONTRACT BETWEEN HOSTS rather
+ * than a member of this app's seam, so it lives in a file whose header says so.
  */
-export interface SampleJob {
-  /** The product family's name, already translated by the host. */
-  label: string;
-  productKey: string;
-  materialKey: string;
-  quantity: number;
-  trimWidthMm: number;
-  trimHeightMm: number;
-  packagingKey: string;
+
+/**
+ * WHAT THIS SHOP TELLS AN ADD-ON ABOUT ITS OWN PAST, so a seeded line can be
+ * true in the shop that renders it.
+ *
+ * Both members are HOST FACTS and neither has an honest add-on-side answer.
+ * `now` is the same `ShopClock` every dated surface already takes, for the same
+ * reason (see `payloads.ts`). `refs` is the works' OWN job references, newest
+ * first — `MP-4119`, `MP-4116` — because a reference is the string BOTH sides
+ * already use to find the same record, and an add-on that made one up would be
+ * naming a job that does not exist.
+ *
+ * `refs` may be empty and that is ordinary: a host with no records to point at
+ * seeds nothing, and an entry naming a reference it has not got is dropped
+ * rather than rendered against a blank.
+ */
+export interface ActivityContext {
+  now: ShopClock;
+  /** The works' own job references, newest first. May be empty. */
+  refs: readonly string[];
 }
 
-/** What `settings.add-on.panel` is handed. */
-export interface SettingsPanelPayload extends SlotPayload {
-  /** Save a partial change to this add-on's own values. */
-  patch: (values: Record<string, unknown>) => void;
-  samples: readonly SampleJob[];
+/**
+ * A SEEDED LINE, AS THE ADD-ON DECLARES IT — relative, and referring rather
+ * than naming.
+ *
+ * [Amended 2026-08-10, wave 4b.] This used to be the shape `ActivityEntry`
+ * below still is — `iso`, `hour`, `minute`, `ref` — AUTHORED BY THE ADD-ON.
+ * That is precisely the defect `ShopClock` was added to kill, surviving in the
+ * one place nothing had looked at: the members read like neutral data, and
+ * every one of them is a fact about a HOST. An add-on picked an instant and a
+ * job reference out of the air, the host printed both verbatim, and nothing
+ * anywhere compared them with the shop doing the printing.
+ *
+ * It was not theoretical. With the personalizer registered here — Marlow Press,
+ * pinned to Wednesday 5 August, 10:20 — the Add-ons drawer listed Birch Row's
+ * Thursday the 6th against Birch Row's `BR-2284`, in a works that has never
+ * issued a reference beginning `BR` and does not think it is Thursday. Nothing
+ * threw. It was simply somebody else's history, on this shop's screen.
+ *
+ * So an add-on says WHEN RELATIVE TO NOW and WHICH OF YOUR REFERENCES, and the
+ * host turns that into an instant and a string it can stand behind.
+ */
+export interface SeededActivityEntry {
+  /** How long before this shop's `now` this happened. */
+  minutesAgo: number;
+  /**
+   * Which of `ActivityContext.refs` this line names, newest first — 0 is the
+   * most recent. Leave it undefined for a line about nothing in particular
+   * ("design saved for later"), and the resolved `ref` is empty.
+   *
+   * An index the host has no reference for DROPS the line. That is deliberate:
+   * a works with two jobs should not be shown a third line pointing at a blank,
+   * and an add-on cannot know how much history a host has.
+   */
+  refIndex?: number;
+  /** i18n key in the add-on's own bundle, taking `{when}` and `{ref}`. */
+  messageKey: string;
 }
 
 /**
  * A seeded line in the manage drawer's activity list, and the shelf's
- * "last used".
+ * "last used" — AS THIS HOST RENDERS IT, after `resolveActivity` has dated it
+ * against the works' own clock and paperwork.
  *
- * The add-on supplies these rather than the host: they are what THIS add-on
- * did, phrased in its own words (`messageKey` resolves in its own bundle). A
- * real install reads the same list out of `adminium_audit_log` (24 §5.7,
- * category `add-on`) and this demo has no server to read; what a host must
- * never do is keep a hand-written history of one particular add-on, because
- * that is a host that knows which add-ons exist.
+ * The words are still the add-on's: they are what THIS add-on did, phrased in
+ * its own words (`messageKey` resolves in its own bundle). A real install reads
+ * the same list out of `adminium_audit_log` (24 §5.7, category `add-on`) and
+ * this demo has no server to read; what a host must never do is keep a
+ * hand-written history of one particular add-on, because that is a host that
+ * knows which add-ons exist.
  */
 export interface ActivityEntry {
   iso: string;
@@ -134,12 +166,42 @@ export interface DemoSwitch {
   noteOffKey: string;
 }
 
-export interface AddOnFill<P = unknown> {
-  slot: SlotId;
+/**
+ * ONE REGISTERED FILL, AND ITS PAYLOAD IS DECIDED BY THE SLOT IT NAMES.
+ *
+ * This used to read `AddOnFill<P = unknown>` with `AddOn.fills` typed
+ * `readonly AddOnFill<never>[]`, and that pair of declarations is the whole
+ * architectural defect 24 D21 tripped over. `never` ERASED the payload: a fill
+ * could declare `render: (p: anything) => …` and still be assignable, so
+ * nothing anywhere compared what a SCREEN passes with what a FILL reads. The
+ * seam type-checked perfectly and threw three times on the first screen of the
+ * second host.
+ *
+ * Now the parameter is the slot id and the payload is derived from it. An
+ * add-on may still NARROW what it reads — `render` is contravariant in its
+ * parameter, so a component asking for fewer fields is assignable and one
+ * asking for a field the payload does not carry is not — which is the guarantee
+ * wanted in both directions:
+ *
+ *   a screen passes a shape the slot does not declare → red HERE
+ *   an add-on reads a field no host promises          → red in the ADD-ON's repo
+ */
+export interface AddOnFill<S extends SlotId = SlotId> {
+  slot: S;
   /** Ties are broken by `order` then by add-on key, so the result is stable. */
   order: number;
-  render: (payload: P) => ReactNode;
+  render: (payload: PayloadFor<S>) => ReactNode;
 }
+
+/**
+ * A fill for SOME slot — the union over the registry, never `AddOnFill<SlotId>`.
+ *
+ * The difference is the point. `AddOnFill<SlotId>` would type `render` as
+ * taking the UNION of every payload, which no real component accepts, so every
+ * add-on would have to cast and the guarantee would be back where it started.
+ * The distributed union pairs each `slot` literal with its own payload.
+ */
+export type AnyAddOnFill = { [S in SlotId]: AddOnFill<S> }[SlotId];
 
 export interface AddOn {
   key: string;
@@ -202,8 +264,12 @@ export interface AddOn {
   messages?: Readonly<Record<string, Readonly<Record<string, string>>>>;
   /** i18n keys naming exactly what a disconnect removes and what it keeps (24 D16). */
   disconnect?: { goesKey: string; staysKey: string };
-  /** Seeded "what it last did", newest first. */
-  activity?: readonly ActivityEntry[];
+  /**
+   * Seeded "what it last did", newest first — DECLARED relative and referring.
+   * The host dates it with `resolveActivity` and its own clock and job refs; an
+   * add-on never names a day or a reference. See `SeededActivityEntry`.
+   */
+  activity?: readonly SeededActivityEntry[];
   /** For a credentialled add-on: the setting that means "use the demo transport". */
   demoSwitch?: DemoSwitch;
   /** The account an `oauth2` add-on is signed in to, for the dialog's confirmation row. */
@@ -246,7 +312,7 @@ export interface AddOn {
    * in a demo — the three real ones omit it and are right to.
    */
   inDemo?: boolean;
-  fills: readonly AddOnFill<never>[];
+  fills: readonly AnyAddOnFill[];
 }
 
 /** Whether an add-on can actually be switched on here. */
@@ -254,10 +320,16 @@ export function isConnectable(addOn: AddOn): boolean {
   return addOn.inDemo !== false;
 }
 
-/** A fill with the key of the add-on that supplied it, so a caller can scope. */
-export interface ResolvedFill {
+/**
+ * A fill with the key of the add-on that supplied it, so a caller can scope.
+ *
+ * Parameterised by the slot it was resolved FOR, so a mount site gets a
+ * `render` it can call with that slot's payload rather than a union it would
+ * have to cast its way out of.
+ */
+export interface ResolvedFill<S extends SlotId = SlotId> {
   addOn: string;
-  fill: AddOnFill<never>;
+  fill: AddOnFill<S>;
 }
 
 export interface AddOnRegistry {
@@ -273,7 +345,11 @@ export interface AddOnRegistry {
    * slot means: the manage drawer asks for the panel of the add-on it is
    * managing and gets that one or nothing.
    */
-  fillsFor: (slot: SlotId, enabled: ReadonlySet<string>, forAddOn?: string) => ResolvedFill[];
+  fillsFor: <S extends SlotId>(
+    slot: S,
+    enabled: ReadonlySet<string>,
+    forAddOn?: string,
+  ) => ResolvedFill<S>[];
 }
 
 /**
@@ -288,12 +364,22 @@ export function createRegistry(addOns: readonly AddOn[]): AddOnRegistry {
   return {
     all,
     byKey: (key) => index.get(key),
-    fillsFor(slot, enabled, forAddOn) {
+    fillsFor<S extends SlotId>(slot: S, enabled: ReadonlySet<string>, forAddOn?: string) {
       const fills = all
         .filter((addOn) => enabled.has(addOn.key))
         .filter((addOn) => forAddOn === undefined || addOn.key === forAddOn)
         .flatMap((addOn) =>
-          addOn.fills.filter((f) => f.slot === slot).map((f) => ({ addOn: addOn.key, fill: f })),
+          addOn.fills
+            .filter((f) => f.slot === slot)
+            /*
+             * THE ONE CAST IN THE SEAM, and the runtime check on the line above
+             * is what earns it: a `.filter()` predicate does not narrow a
+             * generic `S` for the compiler however obvious it is to a reader.
+             * Both ends stay checked — the add-on declared `slot` and `render`
+             * together, and the caller asked for one id and gets that id's
+             * payload type back.
+             */
+            .map((f) => ({ addOn: addOn.key, fill: f as unknown as AddOnFill<S> })),
         )
         .sort((a, b) => a.fill.order - b.fill.order || a.addOn.localeCompare(b.addOn));
 
@@ -331,3 +417,109 @@ export function applyAddOnSettings(addOns: readonly AddOn[], settings: AddOnSett
 
 /** An empty registry — what a build with no add-ons compiled in gets. */
 export const EMPTY_REGISTRY: AddOnRegistry = createRegistry([]);
+// ── seeded activity, dated by the host ──────────────────────────────────────
+
+/*
+ * CIVIL DATES WITHOUT A `Date`.
+ *
+ * The monorepo's `purity.test.ts` bans `new Date(` in everything the add-ons
+ * ship, and it is right to: a bare `new Date('2026-08-05')` is UTC midnight,
+ * the same literal with a time is LOCAL, and a seeded line that slid a day
+ * depending on which side of Greenwich the shop's laptop was standing would be
+ * the same class of bug this whole section exists to close. So the two
+ * conversions are the days-from-civil pair — integer arithmetic, no timezone
+ * anywhere near it. This copy holds itself to the same rule.
+ */
+
+function daysFromCivil(y: number, m: number, d: number): number {
+  const shifted = y - (m <= 2 ? 1 : 0);
+  const era = Math.floor(shifted / 400);
+  const yearOfEra = shifted - era * 400;
+  const dayOfYear = Math.floor((153 * (m + (m > 2 ? -3 : 9)) + 2) / 5) + d - 1;
+  const dayOfEra =
+    yearOfEra * 365 + Math.floor(yearOfEra / 4) - Math.floor(yearOfEra / 100) + dayOfYear;
+  return era * 146097 + dayOfEra - 719468;
+}
+
+function civilFromDays(days: number): { y: number; m: number; d: number } {
+  const shifted = days + 719468;
+  const era = Math.floor(shifted / 146097);
+  const dayOfEra = shifted - era * 146097;
+  const yearOfEra = Math.floor(
+    (dayOfEra -
+      Math.floor(dayOfEra / 1460) +
+      Math.floor(dayOfEra / 36524) -
+      Math.floor(dayOfEra / 146096)) /
+      365,
+  );
+  const year = yearOfEra + era * 400;
+  const dayOfYear =
+    dayOfEra - (365 * yearOfEra + Math.floor(yearOfEra / 4) - Math.floor(yearOfEra / 100));
+  const mp = Math.floor((5 * dayOfYear + 2) / 153);
+  const d = dayOfYear - Math.floor((153 * mp + 2) / 5) + 1;
+  const m = mp + (mp < 10 ? 3 : -9);
+  return { y: year + (m <= 2 ? 1 : 0), m, d };
+}
+
+const pad = (n: number): string => String(n).padStart(2, '0');
+
+/** `2026-08-05` shifted by whole days, both directions. */
+function shiftIso(iso: string, days: number): string {
+  const [y, m, d] = iso.split('-').map((part) => Number.parseInt(part, 10));
+  const { y: yy, m: mm, d: dd } = civilFromDays(daysFromCivil(y!, m!, d!) + days);
+  return `${String(yy).padStart(4, '0')}-${pad(mm)}-${pad(dd)}`;
+}
+
+/**
+ * TURN AN ADD-ON'S "FORTY MINUTES AGO" INTO A DAY AND A TIME THIS SHOP AGREES
+ * WITH.
+ *
+ * The host calls this everywhere it used to read `entry.iso` — the manage
+ * drawer's list and the shelf's "last used" are the two — passing its own
+ * pinned clock and its own recent references. It is the mirror of what
+ * `<AddOnSlot>` already does with `now`: the add-on says what it wants
+ * expressed, the host says what it is true of.
+ *
+ * PURE, and deterministic to the minute: no clock is read here either. A demo
+ * whose seeded history moved would be a demo nobody can screenshot, which is
+ * the whole reason `ShopClock` crosses the seam rather than being sampled.
+ *
+ * Entries naming a reference the host has not got are DROPPED (see
+ * `SeededActivityEntry.refIndex`), so the resolved list can be shorter than the
+ * declared one and callers must read its length rather than the add-on's.
+ */
+export function resolveActivity(
+  entries: readonly SeededActivityEntry[] | undefined,
+  context: ActivityContext,
+): readonly ActivityEntry[] {
+  if (entries === undefined) return [];
+  const dayMinutes = 1440;
+  const out: ActivityEntry[] = [];
+
+  for (const entry of entries) {
+    let ref = '';
+    if (entry.refIndex !== undefined) {
+      const found = context.refs[entry.refIndex];
+      // The host has fewer records than this add-on assumed. A line pointing at
+      // a blank is worse than no line.
+      if (found === undefined) continue;
+      ref = found;
+    }
+
+    const total = context.now.hour * 60 + context.now.minute - entry.minutesAgo;
+    // `Math.floor` and not a truncation: going back past midnight has to move
+    // the date to the day BEFORE, and `-1 / 1440 | 0` is zero.
+    const dayShift = Math.floor(total / dayMinutes);
+    const inDay = total - dayShift * dayMinutes;
+
+    out.push({
+      iso: shiftIso(context.now.iso, dayShift),
+      hour: Math.floor(inDay / 60),
+      minute: inDay % 60,
+      ref,
+      messageKey: entry.messageKey,
+    });
+  }
+
+  return out;
+}

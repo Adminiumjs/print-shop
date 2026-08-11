@@ -19,14 +19,86 @@ export const NOW: Now = { iso: '2026-08-05', hour: 10, minute: 20 };
 /** The reference the next order takes. The seed deliberately stops one short. */
 export const NEXT_REF = 'MP-4127';
 
+/**
+ * The seven, each with somewhere the van can actually deliver.
+ *
+ * TWO RIVERS IS THE SEEDED REFUSAL, and it is one wrong field rather than a
+ * flag that says "fail here": the shop is posting to the customer's new branch
+ * across the water and typed the old GB postcode onto an IE address. A carrier
+ * refuses that on its own postcode check, so the dispatch screen's failure path
+ * is real, and fixing the postcode there makes the retry genuinely succeed.
+ */
 export const CUSTOMERS: readonly Customer[] = [
-  { key: 'harbour', name: 'Harbour Bakery', email: 'orders@harbourbakery.example', town: 'Marlow' },
-  { key: 'fenwick', name: 'Fenwick & Sons', email: 'office@fenwickandsons.example', town: 'Marlow' },
-  { key: 'bramble', name: 'Bramble Yoga', email: 'hello@brambleyoga.example', town: 'Nether Wold' },
-  { key: 'tworivers', name: 'Two Rivers Cycles', email: 'shop@tworiverscycles.example', town: 'Marlow' },
-  { key: 'ostara', name: 'Ostara Flowers', email: 'post@ostaraflowers.example', town: 'Kingsbridge' },
-  { key: 'kestrel', name: 'Kestrel Joinery', email: 'workshop@kestreljoinery.example', town: 'Nether Wold' },
-  { key: 'gallery', name: 'The Little Gallery', email: 'front@thelittlegallery.example', town: 'Marlow' },
+  {
+    key: 'harbour',
+    name: 'Harbour Bakery',
+    email: 'orders@harbourbakery.example',
+    town: 'Marlow',
+    address: { lines: ['12 Quay Street'], city: 'Marlow', postcode: 'ML7 1AA', country: 'GB' },
+  },
+  {
+    key: 'fenwick',
+    name: 'Fenwick & Sons',
+    email: 'office@fenwickandsons.example',
+    town: 'Marlow',
+    address: {
+      lines: ['Fenwick Yard', 'Bell Street'],
+      city: 'Marlow',
+      postcode: 'ML7 3RH',
+      country: 'GB',
+    },
+  },
+  {
+    key: 'bramble',
+    name: 'Bramble Yoga',
+    email: 'hello@brambleyoga.example',
+    town: 'Nether Wold',
+    address: {
+      lines: ['The Old Chapel', 'Wold Lane'],
+      city: 'Nether Wold',
+      postcode: 'NW3 5QP',
+      country: 'GB',
+    },
+  },
+  {
+    key: 'tworivers',
+    name: 'Two Rivers Cycles',
+    email: 'shop@tworiverscycles.example',
+    town: 'Marlow',
+    address: {
+      lines: ['Unit 4, Canal Wharf'],
+      city: 'Dún Laoghaire',
+      // A GB postcode on an IE address — the seeded refusal. See above.
+      postcode: 'ML9 4TT',
+      country: 'IE',
+    },
+  },
+  {
+    key: 'ostara',
+    name: 'Ostara Flowers',
+    email: 'post@ostaraflowers.example',
+    town: 'Kingsbridge',
+    address: { lines: ['7 Fore Street'], city: 'Kingsbridge', postcode: 'KB2 8LN', country: 'GB' },
+  },
+  {
+    key: 'kestrel',
+    name: 'Kestrel Joinery',
+    email: 'workshop@kestreljoinery.example',
+    town: 'Nether Wold',
+    address: {
+      lines: ['The Joinery Shop', 'Wold Lane'],
+      city: 'Nether Wold',
+      postcode: 'NW3 6BD',
+      country: 'GB',
+    },
+  },
+  {
+    key: 'gallery',
+    name: 'The Little Gallery',
+    email: 'front@thelittlegallery.example',
+    town: 'Marlow',
+    address: { lines: ['2a Market Square'], city: 'Marlow', postcode: 'ML7 1DE', country: 'GB' },
+  },
 ];
 
 export const CUSTOMER_BY_KEY: Readonly<Record<string, Customer>> = Object.fromEntries(
@@ -536,6 +608,14 @@ export const WORKS = {
   city: 'Marlow',
   postcode: 'ML1 2QT',
   country: 'United Kingdom',
+  /**
+   * ISO 3166-1 alpha-2, beside the name a reader sees.
+   *
+   * A carrier checks a postcode against a COUNTRY CODE, and "United Kingdom" is
+   * display text — so the works' own address carries both rather than making
+   * whoever needs the code translate the name back into one.
+   */
+  countryCode: 'GB',
   established: 1994,
   people: 9,
 } as const;

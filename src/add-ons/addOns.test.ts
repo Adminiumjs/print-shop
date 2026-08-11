@@ -13,7 +13,8 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { applyAddOnSettings, createRegistry, isConnectable } from './host.ts';
+import { applyAddOnSettings, createRegistry, isConnectable, resolveActivity } from './host.ts';
+import { activityRefs } from './useActivityContext.ts';
 import { SLOT_EMPTY_BEHAVIOUR, SLOT_FILL, HOSTED_SLOTS } from './slots.ts';
 import { DEFAULT_ADD_ON_SETTINGS, demoAddOns, DEMO_KEYS } from './registry.ts';
 import {
@@ -23,8 +24,9 @@ import {
   REF_UNMEASURED_VALUES,
   type ArtworkRef,
 } from './artwork.ts';
-import { sampleJobs } from './samples.ts';
-import { NOW } from '../data/demo.ts';
+import { outboundOrderFor, sampleCatalogue, SHOP_ORIGIN } from './records.ts';
+import { JOBS, NOW } from '../data/demo.ts';
+import { source } from '../data/source.ts';
 import { checkArtwork, type Configuration } from '../lib/quote.ts';
 
 // The two `artwork-source` implementations, driven for real below.
@@ -536,20 +538,102 @@ describe('settings and seeded facts', () => {
     expect(told).toEqual(['listener']);
   });
 
-  it('seeds activity only against add-ons that exist, newest first', () => {
+  /*
+   * REWRITTEN, wave 4b. This used to read `entry.iso`, `entry.hour` and
+   * `entry.ref` off the DECLARED entries and assert `iso <= '2026-08-05'` —
+   * which is to say it checked that an add-on had guessed this works' clock
+   * correctly, and passed happily when a bundle shared with a second shop
+   * guessed the other one's. An add-on no longer names a day or a reference at
+   * all (`SeededActivityEntry`), so there is nothing there to check; what is
+   * checkable is that the declaration is well formed and that the HOST's
+   * resolution of it lands in this works' own day and paperwork.
+   */
+  it('declares activity relatively, newest first, in its own namespace', () => {
     for (const addOn of ALL) {
       const entries = addOn.activity ?? [];
-      const stamps = entries.map(
-        (e) => `${e.iso} ${String(e.hour).padStart(2, '0')}:${String(e.minute).padStart(2, '0')}`,
-      );
-      expect(stamps, addOn.key).toEqual([...stamps].sort().reverse());
+      const ago = entries.map((e) => e.minutesAgo);
+      // Newest first, and "newest" is now a smaller number rather than a later
+      // stamp — a list sorted the other way would read backwards on screen.
+      expect(ago, addOn.key).toEqual([...ago].sort((a, b) => a - b));
       for (const entry of entries) {
-        // Pinned clock only — nothing here may drift past the demo's Wednesday.
-        expect(entry.iso <= '2026-08-05', addOn.key).toBe(true);
+        expect(Number.isInteger(entry.minutesAgo) && entry.minutesAgo >= 0, addOn.key).toBe(true);
+        if (entry.refIndex !== undefined) {
+          expect(Number.isInteger(entry.refIndex) && entry.refIndex >= 0, addOn.key).toBe(true);
+        }
         // Its own words, in its own namespace.
         expect(entry.messageKey.startsWith(`addon.${addOn.key}.`), entry.messageKey).toBe(true);
       }
     }
+  });
+
+  /**
+   * THE CASE THAT COULD NOT PREVIOUSLY BE WRITTEN, and the defect it closes.
+   *
+   * These bundles are shared: the same `shipping-dhl` object is registered here
+   * and in Birch Row. It used to ship `{ iso: '2026-08-05', hour: 9, minute: 58,
+   * ref: 'MP-4119' }` — this works' Wednesday and this works' paperwork — so in
+   * Birch Row the drawer listed Marlow Press's references, in a studio that has
+   * never issued one beginning `MP`, on a day it does not think it is. Nothing
+   * threw, because nothing compared the two.
+   *
+   * One declared seed, resolved twice, must give each shop its own answer.
+   */
+  it('resolves one declared seed into whichever shop is doing the showing', () => {
+    const seeded = ALL.filter((a) => (a.activity ?? []).length > 0);
+    expect(seeded.length).toBeGreaterThan(0);
+
+    const here = { now: NOW, refs: activityRefs(JOBS) };
+    const elsewhere = { now: { iso: '2026-08-06', hour: 16, minute: 40 }, refs: ['BR-2284', 'BR-2281'] };
+
+    for (const addOn of seeded) {
+      const mine = resolveActivity(addOn.activity, here);
+      const theirs = resolveActivity(addOn.activity, elsewhere);
+
+      for (const entry of mine) {
+        // This works' own paperwork, or nothing at all.
+        if (entry.ref !== '') expect(JOBS.some((j) => j.ref === entry.ref), entry.ref).toBe(true);
+        // Never later than the pinned clock: a seeded line is history.
+        expect(entry.iso <= NOW.iso, addOn.key).toBe(true);
+      }
+      for (const entry of theirs) {
+        if (entry.ref !== '') expect(entry.ref.startsWith('BR-'), entry.ref).toBe(true);
+        expect(entry.iso <= '2026-08-06', addOn.key).toBe(true);
+      }
+      // Same words either side; only the facts the host owns differ.
+      expect(theirs.map((e) => e.messageKey)).toEqual(mine.map((e) => e.messageKey));
+    }
+  });
+
+  /**
+   * The list on screen is the RESOLVED one, so a shop with less history than an
+   * add-on assumed shows fewer lines rather than a timestamp against a blank.
+   * `Overlays.tsx` and `Extras.tsx` both read the resolved length for exactly
+   * this reason.
+   */
+  it('drops a seeded line naming a reference this works has not got', () => {
+    const seed = [
+      { minutesAgo: 22, refIndex: 0, messageKey: 'addon.x.act.1' },
+      { minutesAgo: 25, messageKey: 'addon.x.act.2' },
+      { minutesAgo: 1_158, refIndex: 1, messageKey: 'addon.x.act.3' },
+    ];
+    const one = resolveActivity(seed, { now: NOW, refs: ['MP-4126'] });
+    expect(one.map((e) => e.messageKey)).toEqual(['addon.x.act.1', 'addon.x.act.2']);
+    expect(resolveActivity(seed, { now: NOW, refs: [] })).toHaveLength(1);
+  });
+
+  /**
+   * The references the two screens hand `resolveActivity` are the works' own,
+   * newest first — derived from the job board rather than written down beside
+   * it. A hand-kept list is a second copy of the paperwork that nothing
+   * compares with the first.
+   */
+  it('offers the works own job references, newest first', () => {
+    const refs = activityRefs(JOBS);
+    expect(refs).toHaveLength(JOBS.length);
+    expect(new Set(refs).size).toBe(refs.length);
+    expect(refs[0]).toBe('MP-4126');
+    expect(refs).toEqual([...refs].sort().reverse());
+    for (const ref of refs) expect(JOBS.some((j) => j.ref === ref), ref).toBe(true);
   });
 
   it('names what a disconnect takes and keeps, per add-on (D16)', () => {
@@ -560,26 +644,75 @@ describe('settings and seeded facts', () => {
   });
 });
 
-describe('what the host passes into a settings panel', () => {
-  it('sends one representative job per product family and no estimate of any kind', () => {
-    // The host's catalogue is host knowledge; what a job WEIGHS is not, and the
-    // manage drawer used to compute it by importing an add-on's own engine.
-    const samples = sampleJobs((key) => `label:${key}`);
+describe('what this app hands across the seam', () => {
+  it('sends one representative record per family, and no parcel of any kind', () => {
+    /*
+     * THE DIVISION, ASSERTED. The catalogue is this app's knowledge and what a
+     * PARCEL of something weighs is not: there is no box here, no dimensions in
+     * centimetres and no rate. What did change is that the shop now states what
+     * ONE of a thing weighs — a fact about its own goods that the delivery
+     * add-on used to derive from a copy of this app's grammage table.
+     */
+    const samples = sampleCatalogue((key) => `label:${key}`);
     expect(samples.length).toBeGreaterThan(2);
-    expect(new Set(samples.map((s) => s.productKey)).size).toBe(samples.length);
+    expect(new Set(samples.map((s) => s.key)).size).toBe(samples.length);
     for (const sample of samples) {
-      expect(sample.label).toBe(`label:${sample.productKey}`);
+      expect(sample.label).toBe(`label:${sample.key}`);
       expect(sample.quantity).toBeGreaterThan(0);
-      expect(sample.trimWidthMm).toBeGreaterThan(0);
+      expect(sample.unitWeightGrams).toBeGreaterThan(0);
+      expect(sample.unitSize?.widthMm).toBeGreaterThan(0);
+      // Named for the surface, not for this app: no `trimWidthMm`, no
+      // `packagingKey`, no `materialKey` — the three that made `SampleJob` a
+      // print works' job record with the name filed off.
       expect(Object.keys(sample).sort()).toEqual([
+        'key',
         'label',
-        'materialKey',
-        'packagingKey',
-        'productKey',
         'quantity',
-        'trimHeightMm',
-        'trimWidthMm',
+        'unitSize',
+        'unitWeightGrams',
       ]);
+    }
+  });
+
+  it('maps a job on the board into an order any shop could have produced', () => {
+    const job = source.jobs()[0]!;
+    const order = outboundOrderFor(job, (key) => `label:${key}`);
+
+    expect(order.ref).toBe(job.ref);
+    expect(order.recipient.name).toBe(job.customer);
+    expect(order.origin).toEqual(SHOP_ORIGIN);
+    expect(order.items).toHaveLength(1);
+
+    const [item] = order.items;
+    expect(item!.label).toBe(`label:${job.productKey}`);
+    expect(item!.quantity).toBe(job.quantity);
+    expect(item!.unitWeightGrams).toBeGreaterThan(0);
+
+    // NOT ONE FIELD OF THIS APP'S VOCABULARY CROSSES. `trimWidthMm`,
+    // `materialKey`, `packagingKey`, `stage` and `express` all stay at home;
+    // an add-on that could read them would be an add-on that only runs here.
+    const wire = JSON.stringify(order);
+    for (const field of ['trimWidthMm', 'materialKey', 'packagingKey', 'stage', 'express']) {
+      expect(wire, field).not.toContain(field);
+    }
+  });
+
+  it('says nothing rather than guessing when a customer has no address on file', () => {
+    // The regression that made this suite: a lookup that missed used to fall
+    // through to a seeded address, and a dispatch screen pre-filled a DIFFERENT
+    // customer's street in the same quiet grey box a correct one uses.
+    const job = { ...source.jobs()[0]!, customer: 'Ashcombe Bindery' };
+    const order = outboundOrderFor(job, (key) => key);
+    expect(order.destination).toBeUndefined();
+  });
+
+  it('gives every seeded customer somewhere the van can actually go', () => {
+    for (const job of source.jobs()) {
+      const order = outboundOrderFor(job, (key) => key);
+      expect(order.destination, job.ref).toBeDefined();
+      expect(order.destination!.postcode, job.ref).not.toBe('');
+      // A country CODE, because a carrier checks a postcode against one.
+      expect(order.destination!.country, job.ref).toMatch(/^[A-Z]{2}$/);
     }
   });
 });

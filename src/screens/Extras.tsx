@@ -27,7 +27,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-import { isConnectable, type AddOn } from "../add-ons/host.ts";
+import { isConnectable, resolveActivity, type AddOn } from "../add-ons/host.ts";
+import { useActivityContext } from "../add-ons/useActivityContext.ts";
 import { EmptyState, Field, Monogram, Mono, Tag, Tile } from "../components/Primitives.tsx";
 import { useT } from "../i18n/index.tsx";
 import { PRODUCTS, PRODUCT_BY_KEY, SIZE_BY_KEY, type ProductKey } from "../lib/catalogue.ts";
@@ -574,6 +575,12 @@ export function AddOns() {
   const [tip, setTip] = useState<string | null>(null);
 
   const connected = registry.all.filter((a) => enabled.has(a.key));
+  /*
+   * The same context the manage drawer uses (`useActivityContext`), so "last
+   * used" on the shelf and the first line inside the drawer are the same
+   * instant rather than two independent guesses.
+   */
+  const activityContext = useActivityContext();
   const available = registry.all
     .filter((a) => !enabled.has(a.key))
     .filter((a) => category === "all" || a.category === category);
@@ -627,7 +634,14 @@ export function AddOns() {
             ) : (
               <div className="mp-stack" style={{ gap: 10 }}>
                 {connected.map((addOn) => {
-                  const last = addOn.activity?.[0];
+                  /*
+                   * Resolved, not declared. `resolveActivity` drops any seeded
+                   * line naming a reference this works has not got, so the
+                   * "never used" branch below now also covers "every seeded
+                   * line was about somebody else's paperwork" — which is the
+                   * honest thing to say when there is nothing left to date.
+                   */
+                  const last = resolveActivity(addOn.activity, activityContext)[0];
                   return (
                     <div key={addOn.key} className="mp-addon-row">
                       <Monogram letters={addOn.monogram} />
