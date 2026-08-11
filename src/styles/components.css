@@ -644,6 +644,38 @@
   color: var(--fg-subtle);
 }
 
+/*
+ * THE HOST'S OWN CONTENT AT A FILLED SLOT, AND THE ONE QUESTION ONLY CSS CAN
+ * ANSWER (see `components/AddOnSlot.tsx`).
+ *
+ * "Nothing fills this slot" and "the fill had nothing to draw for this record"
+ * are two different states, and only the first is visible at render time. An
+ * add-on can register a fill and correctly draw nothing for a particular job —
+ * and the panel then lost the works' own words to an empty div, because a fill
+ * existed. Connecting an add-on took a picture away.
+ *
+ * `AddOnSlot` therefore renders the fallback after the fills every time, and
+ * these two rules decide which one a person sees. `display: contents` keeps the
+ * fallback in its parent's layout, so an empty slot looks exactly as it did.
+ *
+ * ORDER MATTERS: the spare is always last, so a plain sibling combinator
+ * reaches it and no `:has()` is needed. Do not reorder them in the component.
+ *
+ * TWO CONDITIONS, NOT ONE (round 6). `:empty` is a question about child nodes
+ * and this is a question about paint: a fill returning a bare `<div/>`, or a
+ * wrapper whose only child is `display: none`, is not empty and drew nothing,
+ * and this rule used to hide the works' own content on its behalf. `SlotFill`
+ * asks the DOM afterwards and marks the wrapper `data-drew="none"`; the
+ * `:empty` half stays because it needs no measurement and is right from the
+ * first paint.
+ */
+.mp-slot-spare {
+  display: contents;
+}
+.mp-slot-fill:not(:empty):not([data-drew="none"]) ~ .mp-slot-spare {
+  display: none;
+}
+
 /* Add-on monogram: neutral by design (24 D12) — never a company's colours. */
 .mp-monogram {
   inline-size: 44px;
