@@ -30,24 +30,49 @@ import type { StockRow } from "../lib/jobs.ts";
 
 export type Persona = "customer" | "shop";
 
-export type CustomerView =
-  | "products"
-  | "configure"
-  | "artwork"
-  | "basket"
-  | "confirm"
-  | "order"
-  | "findus"
-  | "reorder"
-  | "samples"
-  | "templates"
-  | "proofs"
-  | "saved"
-  | "delivery";
+/**
+ * ── THE VIEW LISTS ARE THE SOURCE, AND THE TYPES COME OFF THEM ──────────────
+ *
+ * These used to be two hand-written unions with a separate `CUSTOMER_VIEWS`
+ * array further down repeating the first one. A suite that wants to visit EVERY
+ * view — `a11y.test.tsx` and `i18n/numerals.arabic.test.tsx` both do — could
+ * then only be handed a third copy, and a third copy goes stale the day
+ * somebody adds a screen. The array is the fact now and the union is derived
+ * from it, so a new view is covered without anybody remembering.
+ */
+export const CUSTOMER_VIEWS = [
+  "products",
+  "configure",
+  "artwork",
+  "basket",
+  "confirm",
+  "order",
+  "findus",
+  "reorder",
+  "samples",
+  "templates",
+  "proofs",
+  "saved",
+  "delivery",
+] as const;
 
-export type ShopView = "today" | "ticket" | "jobs" | "materials" | "prices" | "addons";
+export type CustomerView = (typeof CUSTOMER_VIEWS)[number];
+
+export const SHOP_VIEWS = [
+  "today",
+  "ticket",
+  "jobs",
+  "materials",
+  "prices",
+  "addons",
+] as const;
+
+export type ShopView = (typeof SHOP_VIEWS)[number];
 
 export type View = CustomerView | ShopView | "404";
+
+/** Every view the app can show, the 404 included. */
+export const ALL_VIEWS: readonly View[] = [...CUSTOMER_VIEWS, ...SHOP_VIEWS, "404"];
 
 export interface BasketLine {
   id: string;
@@ -248,22 +273,6 @@ interface Actions {
   supplyArtwork: (file: ArtworkFile, addOnKey: string) => void;
   clearSuppliedArtwork: () => void;
 }
-
-const CUSTOMER_VIEWS: CustomerView[] = [
-  "products",
-  "configure",
-  "artwork",
-  "basket",
-  "confirm",
-  "order",
-  "findus",
-  "reorder",
-  "samples",
-  "templates",
-  "proofs",
-  "saved",
-  "delivery",
-];
 
 function defaultConfig(product: ProductKey): Configuration {
   const p = PRODUCT_BY_KEY[product];
@@ -737,7 +746,7 @@ export const useStore = create<State & Actions>((set, get) => ({
 
 /** Whether a view belongs to the customer's site or the works floor. */
 export function personaFor(view: View): Persona {
-  return (CUSTOMER_VIEWS as string[]).includes(view) ? "customer" : "shop";
+  return (CUSTOMER_VIEWS as readonly string[]).includes(view) ? "customer" : "shop";
 }
 
 /** The live quote for whatever is currently in the configurator. */
