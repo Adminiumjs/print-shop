@@ -11,4 +11,7 @@ npm-debug.log
 .env.*
 docker-compose.yml
 db
-manifest.json
+# manifest.json is NOT excluded, though it looks like it belongs here: since
+# wave 4 `src/manifest.test.ts` imports it, so `npm run build` (tsc -b && vite
+# build) fails inside the image without it. The thirteen wave-3 apps can
+# exclude it because none of them reads it from src/.
