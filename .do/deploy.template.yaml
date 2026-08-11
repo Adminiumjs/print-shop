@@ -1,9 +1,9 @@
 spec:
-  name: hotel-reservations
+  name: print-shop
   static_sites:
     - name: web
       github:
-        repo: Adminiumjs/hotel-reservations
+        repo: Adminiumjs/print-shop
         branch: main
         deploy_on_push: true
       build_command: npm run build
