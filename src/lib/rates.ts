@@ -209,6 +209,9 @@ export const PACKAGING_BY_KEY: Readonly<Record<PackagingKey, Packaging>> = Objec
   PACKAGING.map((p) => [p.key, p]),
 ) as Record<PackagingKey, Packaging>;
 
+/** How many units a `per-500` line covers. Named, so the copy can say it. */
+export const PACKAGING_BATCH = 500;
+
 // ── proof, turnaround, delivery ──────────────────────────────────────────────
 
 export const PROOF_BY_POST_CENTS = 1200;

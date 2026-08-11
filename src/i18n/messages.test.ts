@@ -205,3 +205,55 @@ describe('the add-ons’ own strings arrived', () => {
     }
   });
 });
+
+/**
+ * NO PRICE IS TYPED INTO A TRANSLATED STRING.
+ *
+ * [Added 2026-08-11, wave 4b round 5.] Three packaging hints were finished
+ * sentences carrying their own money: `"$4.50 per 500"` in English and
+ * `"٤٫٥٠ $ لكل ٥٠٠"` in Arabic. The digits were correct for their locale, so the
+ * numerals guard was satisfied, and two things were still wrong:
+ *
+ *   THE CURRENCY WAS A BARE `$`, where every price on the same screen renders
+ *   `US$` / `$US` through `Intl.NumberFormat`. A bare `$` names a dozen
+ *   currencies.
+ *
+ *   AND A TYPED PRICE CANNOT FOLLOW THE ENGINE. The rate lives in `rates.ts`;
+ *   change it and eight bundles go on quoting the old figure on two screens
+ *   while the basket charges the new one.
+ *
+ * ── WHY A SYMBOL AND NOT A NUMBER ───────────────────────────────────────────
+ *
+ * "No number in a message" is unenforceable — bundles legitimately carry years,
+ * limits and step counts, and a rule with a list of allowed numbers is a rule
+ * that gets one added to it whenever it fails. A CURRENCY SIGIL has no such
+ * excuse: money is formatted, always, by one function, and a sigil in a message
+ * means somebody wrote a price by hand. There is nothing to allow.
+ *
+ * It reads the sigils, not the amounts, so `{price} a unit` — the repaired
+ * shape, where the figure is substituted — passes and must.
+ */
+describe("money is formatted, never typed", () => {
+  /** Sigils, not amounts: what a hand-written price cannot avoid carrying. */
+  const CURRENCY = /[$€£¥₹₽₩]|\bUSD\b|\bEUR\b|\bGBP\b/;
+
+  it("carries no currency symbol in any locale's messages", () => {
+    const bad: string[] = [];
+    for (const [tag, bundle] of Object.entries(MESSAGES)) {
+      for (const [key, value] of Object.entries(bundle as Record<string, string>)) {
+        if (CURRENCY.test(value)) bad.push(`${tag} · ${key} = “${value}”`);
+      }
+    }
+    expect(bad, `\n${bad.join("\n")}\n`).toEqual([]);
+  });
+
+  it("knows a typed price from a substituted one", () => {
+    // The guard on the guard: a matcher that matched nothing would keep the
+    // case above green through anything.
+    expect(CURRENCY.test("$4.50 per 500")).toBe(true);
+    expect(CURRENCY.test("٤٫٥٠ $ لكل ٥٠٠")).toBe(true);
+    expect(CURRENCY.test("0,04 $ l'unité")).toBe(true);
+    expect(CURRENCY.test("{price} a unit")).toBe(false);
+    expect(CURRENCY.test("每 {n} 件 {price}")).toBe(false);
+  });
+});
