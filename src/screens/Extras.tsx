@@ -65,7 +65,13 @@ export function FindUs() {
         {(["where", "when", "talk"] as const).map((key) => (
           <div key={key} className="mp-panel mp-panel-pad">
             <span className="mp-strip-mark" style={{ marginBlockEnd: 9 }}>
-              {key === "where" ? <MapPin size={17} /> : key === "when" ? <Clock size={17} /> : <Mail size={17} />}
+              {key === "where" ? (
+                <MapPin size={17} aria-hidden="true" />
+              ) : key === "when" ? (
+                <Clock size={17} aria-hidden="true" />
+              ) : (
+                <Mail size={17} aria-hidden="true" />
+              )}
             </span>
             <div style={{ fontSize: 14, fontWeight: 700, marginBlockEnd: 4 }}>
               {t(`cust.find.${key}.title` as never)}
@@ -513,7 +519,7 @@ export function DeliveryInfo() {
         {(["collect", "courier"] as const).map((key) => (
           <div key={key} className="mp-panel mp-panel-pad">
             <span className="mp-strip-mark" style={{ marginBlockEnd: 12 }}>
-              {key === "collect" ? <Store size={20} /> : <Truck size={20} />}
+              {key === "collect" ? <Store size={20} aria-hidden="true" /> : <Truck size={20} aria-hidden="true" />}
             </span>
             <div style={{ fontSize: 16, fontWeight: 800, marginBlockEnd: 6 }}>
               {t(`cust.delivery.${key}.title` as never)}

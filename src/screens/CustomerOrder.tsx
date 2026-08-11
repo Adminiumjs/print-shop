@@ -795,9 +795,17 @@ export function OrderLookup() {
 
           {/* SLOT 3 of 4 — the dispatch panel, speaking when empty. */}
           <div className="mp-panel" style={{ padding: 18 }}>
-            <div style={{ fontSize: 14, fontWeight: 800, marginBlockEnd: 10 }}>
+            {/*
+              * A HEADING, WRITTEN AS ONE. This was a `<div>` at 800 weight —
+              * a heading to a reader and a bare line of prose to anything that
+              * reads markup, sitting directly above a slot mount. D19's rule is
+              * that nothing the host draws captions a slot, and the only thing
+              * that distinguishes "Dispatch" (the name of the panel) from a
+              * caption is that it is a heading. So it says so.
+              */}
+            <h3 style={{ fontSize: 14, fontWeight: 800, margin: "0 0 10px" }}>
               {t("cust.order.dispatch")}
-            </div>
+            </h3>
             <AddOnSlot
               slot="order.dispatch.panel"
               payload={{
