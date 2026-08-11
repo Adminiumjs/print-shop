@@ -642,15 +642,37 @@ export const useStore = create<State & Actions>((set, get) => ({
    * DISCONNECT REMOVES SURFACES, NEVER DATA (24 D16).
    *
    * What goes: the add-on's fills stop rendering, so its tiles, its rate rows
-   * and its tracking panel are gone from the moment the set changes, and any
-   * half-finished flow it had put on a host screen goes with them — an artwork
-   * item whose source no longer exists is a leftover, and leftovers are the one
-   * thing switching an add-on off is not allowed to produce.
+   * and its tracking panel are gone from the moment the set changes.
    *
-   * What stays: everything already committed. A design that reached an order is
-   * on that order, a booked shipment is still booked, and the settings the shop
-   * chose are still here if it reconnects. The confirm dialog says all of this
-   * in words before anything happens.
+   * What stays: everything the customer or the shop has made. A design that
+   * reached an order is on that order, a booked shipment is still booked, and
+   * the settings the shop chose are still here if it reconnects. The confirm
+   * dialog says all of this in words before anything happens.
+   *
+   * ── THE DESIGN THAT USED TO GO WITH IT ──────────────────────────────────
+   *
+   * [Repaired 2026-08-11, wave 4b round 4.] This used to null `suppliedArtwork`
+   * when its source was the add-on being disconnected, reasoned as "an artwork
+   * item whose source no longer exists is a leftover". Driven live, that reads
+   * differently: a customer makes a design in the editor, walks away from the
+   * artwork screen and comes back to find it still there — then the shop toggles
+   * the add-on off and on in the dock and the design is gone for good. It is not
+   * a leftover. It is a finished file, produced, named and measured, and by the
+   * time it is sitting on the artwork screen it is indistinguishable from one
+   * the customer uploaded. D16 says a disconnect keeps the data and deletes the
+   * credentials, and a customer's artwork is data by any reading of the word.
+   *
+   * Nothing on the screen needs the add-on to render it. `checkArtwork` never
+   * knew where a file came from (§5.5), and `registry.byKey` answers for a
+   * REGISTERED add-on whether or not it is enabled — registering and enabling
+   * being different things is the whole of D6 — so "From Design Studio" and the
+   * unmeasured-checks note still resolve, and still say something true about
+   * where the file came from.
+   *
+   * The DELIVERY QUOTE below is the genuine leftover and stays deleted, and the
+   * difference is worth naming: a rate row is a PRICE A DISCONNECTED COMPANY
+   * QUOTED, still sitting on a basket nobody has paid for. It is not a thing the
+   * customer made; it is a promise the shop can no longer keep.
    */
   disconnectAddOn: (key) =>
     set((s) => {
@@ -673,7 +695,6 @@ export const useStore = create<State & Actions>((set, get) => ({
         enabled: next,
         authorizedAddOns,
         overlay: { kind: "none" },
-        suppliedArtwork: s.suppliedArtwork?.source === key ? null : s.suppliedArtwork,
         ...(droppedQuote
           ? {
               deliveryChoice: null,

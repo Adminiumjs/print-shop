@@ -13,6 +13,7 @@
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { fileFromRef } from '../add-ons/artwork.ts';
 import { useStore, worksBandFor, type DeliveryChoice } from './store.ts';
 
 /*
@@ -127,5 +128,78 @@ describe('switching the add-on off takes its quote with it (D6)', () => {
     useStore.getState().disconnectAddOn('design-studio');
 
     expect(useStore.getState().deliveryChoice).toEqual(CHOICE);
+  });
+});
+
+/**
+ * ── A QUOTE IS A LEFTOVER; A DESIGN IS THE CUSTOMER'S (24 D16) ──────────────
+ *
+ * [Added 2026-08-11, wave 4b round 4.] `disconnectAddOn` used to null
+ * `suppliedArtwork` alongside the delivery quote, on the reasoning that both
+ * were half-finished flows the add-on had left on a host screen. Driven live,
+ * the two behave nothing alike: a design made in the editor survives navigating
+ * away and back, and then a disconnect-and-reconnect in the dock loses it for
+ * good.
+ *
+ * D16 is one sentence — a disconnect keeps the data and deletes the credentials
+ * — and a file a customer made, named and had measured is data. The rate row is
+ * not: it is a PRICE A DISCONNECTED COMPANY QUOTED, on a basket nobody has paid
+ * for, and the shop can no longer honour it.
+ *
+ * The two cases are asserted together, in one suite, because the interesting
+ * thing is the DIFFERENCE and a reader has to be able to see both rules at once.
+ */
+describe('what a disconnect keeps, and what it cannot (D16)', () => {
+  /*
+   * Built the way the app builds one — `fileFromRef` on an `artwork-source@1`
+   * reference — rather than typed out here, so the fixture cannot describe a
+   * file the contract could not produce.
+   */
+  const FILE = fileFromRef({
+    fileId: 'ds-1ca8ee4a.pdf',
+    source: 'design-studio',
+    widthMm: 97,
+    heightMm: 67,
+    bleedMm: 3,
+    dpi: 300,
+    pages: 1,
+  });
+
+  it('keeps a design the add-on made, after the add-on is switched off', () => {
+    useStore.setState({ enabled: new Set(['design-studio']) });
+    useStore.getState().supplyArtwork(FILE, 'design-studio');
+
+    useStore.getState().disconnectAddOn('design-studio');
+
+    const supplied = useStore.getState().suppliedArtwork;
+    expect(supplied, 'the customer’s own design was deleted by a disconnect').not.toBeNull();
+    expect(supplied!.file.filename).toBe(FILE.filename);
+    // And it still remembers WHERE it came from, which is what lets the artwork
+    // screen keep saying "From …" honestly. `registry.byKey` answers for a
+    // registered add-on whether or not it is enabled (D6).
+    expect(supplied!.source).toBe('design-studio');
+  });
+
+  it('keeps it when a DIFFERENT add-on is switched off, too', () => {
+    useStore.setState({ enabled: new Set(['design-studio', CHOICE.addOn]) });
+    useStore.getState().supplyArtwork(FILE, 'design-studio');
+
+    useStore.getState().disconnectAddOn(CHOICE.addOn);
+
+    expect(useStore.getState().suppliedArtwork?.file.filename).toBe(FILE.filename);
+  });
+
+  it('still drops the rate a disconnected company quoted', () => {
+    // The other half of the rule, restated here so deleting the line above
+    // cannot be made to pass by deleting the distinction.
+    seedBasket();
+    useStore.setState({ enabled: new Set([CHOICE.addOn]) });
+    useStore.getState().supplyArtwork(FILE, 'design-studio');
+    useStore.getState().chooseAddOnDelivery(CHOICE);
+
+    useStore.getState().disconnectAddOn(CHOICE.addOn);
+
+    expect(useStore.getState().deliveryChoice).toBeNull();
+    expect(useStore.getState().suppliedArtwork).not.toBeNull();
   });
 });
