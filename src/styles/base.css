@@ -136,7 +136,7 @@ svg {
   background: color-mix(in srgb, var(--accent) 22%, transparent);
 }
 :focus-visible {
-  outline: 3px solid var(--accent-soft);
+  outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -279,6 +279,18 @@ svg {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
   outline: none;
+}
+/*
+ * AND THE KEYBOARD RING BACK ON TOP, which `outline: none` above had taken
+ * away from fields specifically. The rule above is the resting look for a
+ * focused field — a coloured border and a soft glow — and it is fine for a
+ * pointer, which put the caret there on purpose. Somebody tabbing needs to
+ * SEE where they landed, and the glow is 1.16:1. Same specificity as the rule
+ * above, declared after it, so it wins for keyboard focus only.
+ */
+.mp-fld:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 .mp-skel {
   height: 44px;
