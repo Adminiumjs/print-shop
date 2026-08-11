@@ -277,7 +277,25 @@ function MaterialStep({
             key={key}
             selected={config.material === key}
             label={t(`data.material.${key}` as never)}
-            sub={`${MATERIAL_BY_KEY[key].gsm > 0 ? `${MATERIAL_BY_KEY[key].gsm}gsm` : "vinyl"}`}
+            /*
+             * THROUGH `t()`, BECAUSE `gsm` IS ENGLISH AND THE FIGURE IS LATIN.
+             *
+             * This read `${gsm}gsm`, built in JSX: an untranslated unit that
+             * eight locales all rendered as "gsm", and a raw JavaScript number,
+             * which is Latin digits on an Arabic page beside an Arabic material
+             * name. "vinyl" was the same defect with the number left out.
+             *
+             * `numerals.arabic.test.tsx` could not see it, because its rule
+             * exempted any token carrying a Latin letter and `350gsm` carries
+             * three. Substituting through `t()` formats the figure in the
+             * reader's own numerals and lets each locale write its own unit —
+             * `g/m²` in most of Europe, `克/平方米` in Chinese.
+             */
+            sub={
+              MATERIAL_BY_KEY[key].gsm > 0
+                ? t("cust.config.material.weight", { gsm: MATERIAL_BY_KEY[key].gsm })
+                : t("cust.config.material.vinyl")
+            }
             onClick={() => onChange({ material: key })}
           />
         ))}

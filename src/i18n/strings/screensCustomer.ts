@@ -29,6 +29,8 @@ export const screensCustomer = {
 
     // ── Configurator ──────────────────────────────────────────────────────
     "cust.config.step.material": "Material",
+    "cust.config.material.weight": "{gsm} gsm",
+    "cust.config.material.vinyl": "vinyl",
     "cust.config.step.size": "Size",
     "cust.config.step.sides": "Sides",
     "cust.config.step.finish": "Finish",
@@ -272,6 +274,8 @@ export const screensCustomer = {
       "Standard drei Arbeitstage, Express am nächsten Arbeitstag. Mo–Fr.",
 
     "cust.config.step.material": "Material",
+    "cust.config.material.weight": "{gsm} g/m²",
+    "cust.config.material.vinyl": "Vinyl",
     "cust.config.step.size": "Format",
     "cust.config.step.sides": "Seiten",
     "cust.config.step.finish": "Veredelung",
@@ -506,6 +510,8 @@ export const screensCustomer = {
       "Trois jours ouvrés en standard, le lendemain ouvré en express. Lun–ven.",
 
     "cust.config.step.material": "Matière",
+    "cust.config.material.weight": "{gsm} g/m²",
+    "cust.config.material.vinyl": "vinyle",
     "cust.config.step.size": "Format",
     "cust.config.step.sides": "Faces",
     "cust.config.step.finish": "Finition",
@@ -741,6 +747,8 @@ export const screensCustomer = {
       "Standardně tři pracovní dny, expres následující pracovní den. Po–pá.",
 
     "cust.config.step.material": "Materiál",
+    "cust.config.material.weight": "{gsm} g/m²",
+    "cust.config.material.vinyl": "vinyl",
     "cust.config.step.size": "Rozměr",
     "cust.config.step.sides": "Strany",
     "cust.config.step.finish": "Úprava",
@@ -973,6 +981,8 @@ export const screensCustomer = {
       "Tre arbejdsdage som standard, næste arbejdsdag ved ekspres. Man–fre.",
 
     "cust.config.step.material": "Materiale",
+    "cust.config.material.weight": "{gsm} g/m²",
+    "cust.config.material.vinyl": "vinyl",
     "cust.config.step.size": "Format",
     "cust.config.step.sides": "Sider",
     "cust.config.step.finish": "Finish",
@@ -1201,6 +1211,8 @@ export const screensCustomer = {
     "cust.products.strip.days.body": "标准三个工作日，加急为次个工作日。周一至周五。",
 
     "cust.config.step.material": "材料",
+    "cust.config.material.weight": "{gsm} 克/平方米",
+    "cust.config.material.vinyl": "乙烯基",
     "cust.config.step.size": "尺寸",
     "cust.config.step.sides": "印面",
     "cust.config.step.finish": "表面处理",
@@ -1422,6 +1434,8 @@ export const screensCustomer = {
     "cust.products.strip.days.body": "標準三個工作天，加急為次個工作天。週一至週五。",
 
     "cust.config.step.material": "材料",
+    "cust.config.material.weight": "{gsm} 克/平方米",
+    "cust.config.material.vinyl": "乙烯基",
     "cust.config.step.size": "尺寸",
     "cust.config.step.sides": "印面",
     "cust.config.step.finish": "表面處理",
@@ -1647,6 +1661,8 @@ export const screensCustomer = {
       "ثلاثة أيام عمل كالمعتاد، ويوم العمل التالي للمستعجل. الاثنين–الجمعة.",
 
     "cust.config.step.material": "الخامة",
+    "cust.config.material.weight": "{gsm} جم/م²",
+    "cust.config.material.vinyl": "فينيل",
     "cust.config.step.size": "المقاس",
     "cust.config.step.sides": "الأوجه",
     "cust.config.step.finish": "التشطيب",
