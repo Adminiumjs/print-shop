@@ -181,24 +181,42 @@ describe('the demo registry', () => {
    * all three surfaces. The keys belong to the ADD-ON (AC5) — the host holds no
    * sentence claiming an add-on connects to nothing.
    */
-  it('leaves no detail surface silent about who else is involved (AC6)', () => {
-    // SCOPED TO THE BUILT ONES, because they are the ones with a detail surface
-    // at all: a described-but-not-built shelf entry has no Connect button, no
-    // consent panel and no manage drawer, so there is no place the sentence
-    // could go and nothing for a reader to misread.
-    const silent = ALL.filter(isConnectable)
-      .filter((addOn) => !addOn.namesCompany && (addOn.noCompanyKeys ?? []).length === 0)
-      .map((addOn) => addOn.key);
+  it('leaves no shelf entry silent about who else is involved (AC6)', () => {
+    /*
+     * EVERY ENTRY, NOT ONLY THE CONNECTABLE ONES — widened 2026-08-11, round 6.
+     *
+     * It used to be `ALL.filter(isConnectable)`, on the reasoning that a
+     * described-but-not-built entry "has no detail surface, so there is nowhere
+     * the sentence could go". That was true of the DIALOGS and false of the
+     * screen: all seven entries are cards on the Add-ons shelf, and the shelf
+     * renders `Affiliation` on each of them now. A scope written around where
+     * the line happened to be mounted stopped being a rule the moment it was
+     * mounted somewhere else.
+     */
+    const silent = ALL.filter(
+      (addOn) => !addOn.namesCompany && (addOn.noCompanyKeys ?? []).length === 0,
+    ).map((addOn) => addOn.key);
     expect(silent).toEqual([]);
     for (const addOn of ALL) {
       // One or the other, never both: an add-on that names a company gets the
       // disclaimer, and a second sentence saying it names none would contradict
       // it on the same line.
       if (addOn.namesCompany) expect(addOn.noCompanyKeys ?? []).toEqual([]);
-      // The add-on's own namespace. A host key here would be the host holding
-      // an add-on's copy, which is the thing AC5 took away.
+      /*
+       * THE ADD-ON'S OWN NAMESPACE — for the add-ons, which is what the rule
+       * was ever about. A host key on a REGISTERED add-on would be the host
+       * holding an add-on's copy, which is the thing AC5 took away.
+       *
+       * The four described-but-not-built entries are the other case and are
+       * checked the other way: they have no repo behind them, their name, their
+       * line and now their AC6 sentence are all `addon.stub.*` because they are
+       * the HOST's own catalogue copy (`add-ons/shelf.ts` says why), and a key
+       * in their own `addon.delivery-second-carrier.*` namespace would be a
+       * namespace with nothing in it.
+       */
+      const own = isConnectable(addOn) ? `addon.${addOn.key}.` : 'addon.stub.';
       for (const key of addOn.noCompanyKeys ?? []) {
-        expect(key.startsWith(`addon.${addOn.key}.`), `${addOn.key} · ${key}`).toBe(true);
+        expect(key.startsWith(own), `${addOn.key} · ${key} (expected ${own}…)`).toBe(true);
       }
     }
   });

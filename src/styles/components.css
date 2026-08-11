@@ -415,6 +415,17 @@
   text-wrap: pretty;
   max-inline-size: 68ch;
 }
+/* The fine line at the foot of anything that names a company (24 AC6) — see
+   `components/Affiliation.tsx`. Quiet, never hidden: it is smaller than the
+   copy around it and it still sits on the same contrast token every other
+   subtle line in this app uses. */
+.mp-fine {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--fg-subtle);
+  text-wrap: pretty;
+}
 .mp-eyebrow {
   font-size: 11px;
   font-weight: 800;

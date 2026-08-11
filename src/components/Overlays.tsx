@@ -12,6 +12,7 @@ import { resolveActivity, type AddOn } from "../add-ons/host.ts";
 import { sampleCatalogue } from "../add-ons/records.ts";
 import { useActivityContext } from "../add-ons/useActivityContext.ts";
 import { AddOnSlot } from "./AddOnSlot.tsx";
+import { Affiliation } from "./Affiliation.tsx";
 import { useT, type TFunction } from "../i18n/index.tsx";
 import { cents, clock } from "../lib/format.ts";
 import { priceQuote } from "../lib/quote.ts";
@@ -310,35 +311,6 @@ function Permissions({ addOn, t, muted = false }: { addOn: AddOn; t: TFunction; 
 }
 
 /**
- * WHO ELSE IS INVOLVED — the one line every add-on detail surface ends on.
- *
- * An add-on that names a company carries "Adminium is not affiliated with this
- * company" (24 AC6). An add-on that names none used to carry NOTHING, and an
- * absent line is indistinguishable from a forgotten one: the reader cannot tell
- * whether this add-on talks to nobody or whether somebody skipped the notice.
- * So the surface says the positive fact instead, in the add-on's own words and
- * its own eight-locale bundle — `noCompanyKeys` on the add-on object.
- *
- * THE HOST STILL NAMES NO ADD-ON (AC5). It renders whichever sentence the
- * add-on supplied; it does not know that Design Studio connects to nothing, and
- * it does not carry a generic "this one is self-contained" string of its own,
- * because that would be the host asserting a fact about an add-on it is not
- * supposed to know.
- */
-function Affiliation({ addOn, t }: { addOn: AddOn; t: TFunction }) {
-  const line = addOn.namesCompany
-    ? t("shop.notAffiliated")
-    : (addOn.noCompanyKeys ?? []).map((key) => t(key as never)).join(" ");
-  // NOTHING AT ALL when there is nothing to say — not an empty paragraph. Two
-  // of the three surfaces lay their children out with a gap, and a childless
-  // element still takes one.
-  if (line.trim().length === 0) return null;
-  return (
-    <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: "var(--fg-subtle)" }}>{line}</p>
-  );
-}
-
-/**
  * One dialog, three shapes (24 §5.6).
  *
  * The three `connect` kinds differ only in the credential step, and the parts
@@ -498,7 +470,7 @@ function ConnectDialog({ addOnKey }: { addOnKey: string }) {
             <span style={{ fontSize: 12.5, color: "var(--fg-muted)" }}>
               {t("shop.connect.disconnectAny")}
             </span>
-            <Affiliation addOn={addOn} t={t} />
+            <Affiliation addOn={addOn} />
           </div>
         </div>
 
@@ -557,7 +529,7 @@ function ConsentPanel({ addOnKey }: { addOnKey: string }) {
           <p style={{ margin: 0, fontSize: 12, color: "var(--fg-subtle)" }}>
             {t("addon.host.connect.simulated")}
           </p>
-          <Affiliation addOn={addOn} t={t} />
+          <Affiliation addOn={addOn} />
         </div>
         <div className="mp-modal-foot">
           <button
@@ -715,7 +687,7 @@ function ManageDrawer({ addOnKey }: { addOnKey: string }) {
             </div>
           </section>
 
-          <Affiliation addOn={addOn} t={t} />
+          <Affiliation addOn={addOn} />
         </div>
 
         <div className="mp-drawer-foot">
@@ -782,6 +754,18 @@ function DisconnectConfirm({ addOnKey }: { addOnKey: string }) {
               {t(addOn.disconnect?.staysKey as never)}
             </p>
           </div>
+
+          {/*
+           * 24 AC6 — THE FOURTH SURFACE, AND THE ONE IT WAS MISSING FROM.
+           *
+           * Connect, consent and manage all carried the line; this confirm puts
+           * the company's name in its own heading twice (the visible title and
+           * the dialog's accessible name) and said nothing. The maker's bench
+           * has carried it here since round 4, which is the whole of why it was
+           * worth re-reading every surface in this app rather than the one that
+           * was reported.
+           */}
+          <Affiliation addOn={addOn} />
         </div>
 
         <div className="mp-modal-foot">

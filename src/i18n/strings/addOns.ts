@@ -49,6 +49,18 @@ export const addOns = {
       "Add customers who opt in to a mailing list, so the works can tell them when a run is on.",
     "addon.stub.sheets.line":
       "Write each finished job to a spreadsheet overnight, for the accounts.",
+    // 24 AC6, on the SHELF CARD: each of the four says, in its own key,
+    // that it names no company. See `add-ons/shelf.ts` — these entries are
+    // the host’s own catalogue copy, so the sentence is the host’s too;
+    // the three BUILT add-ons carry theirs in their own repos.
+    "addon.stub.secondCarrier.noCompany":
+      "Described here, not built — and it names no company, only what one would do.",
+    "addon.stub.cardPayments.noCompany":
+      "Described here, not built — and it names no company, only what one would do.",
+    "addon.stub.mailingList.noCompany":
+      "Described here, not built — and it names no company, only what one would do.",
+    "addon.stub.sheets.noCompany":
+      "Described here, not built — and it names no company, only what one would do.",
 
     // ── What the connect dialog says each one will be able to do ───────────
 
@@ -93,6 +105,14 @@ export const addOns = {
       "Kundschaft, die zustimmt, in eine Verteilerliste aufnehmen, damit die Werkstatt von einer Auflage erzählen kann.",
     "addon.stub.sheets.line":
       "Jeden fertigen Auftrag über Nacht in eine Tabelle schreiben, für die Buchhaltung.",
+    "addon.stub.secondCarrier.noCompany":
+      "Hier nur beschrieben, nicht gebaut — und es nennt keine Firma, nur das, was so etwas täte.",
+    "addon.stub.cardPayments.noCompany":
+      "Hier nur beschrieben, nicht gebaut — und es nennt keine Firma, nur das, was so etwas täte.",
+    "addon.stub.mailingList.noCompany":
+      "Hier nur beschrieben, nicht gebaut — und es nennt keine Firma, nur das, was so etwas täte.",
+    "addon.stub.sheets.noCompany":
+      "Hier nur beschrieben, nicht gebaut — und es nennt keine Firma, nur das, was so etwas täte.",
 
 
     "addon.host.connect.authNote":
@@ -131,6 +151,14 @@ export const addOns = {
       "Ajouter à une liste de diffusion les clients qui l'acceptent, pour annoncer un tirage.",
     "addon.stub.sheets.line":
       "Écrire chaque travail terminé dans un tableur pendant la nuit, pour la comptabilité.",
+    "addon.stub.secondCarrier.noCompany":
+      "Décrit ici, pas construit — et il ne nomme aucune société, seulement ce qu’un tel module ferait.",
+    "addon.stub.cardPayments.noCompany":
+      "Décrit ici, pas construit — et il ne nomme aucune société, seulement ce qu’un tel module ferait.",
+    "addon.stub.mailingList.noCompany":
+      "Décrit ici, pas construit — et il ne nomme aucune société, seulement ce qu’un tel module ferait.",
+    "addon.stub.sheets.noCompany":
+      "Décrit ici, pas construit — et il ne nomme aucune société, seulement ce qu’un tel module ferait.",
 
 
     "addon.host.connect.authNote":
@@ -169,6 +197,14 @@ export const addOns = {
       "Přidávejte zákazníky, kteří souhlasí, do rozesílky, aby dílna mohla dát vědět o nákladu.",
     "addon.stub.sheets.line":
       "Zapisujte každou hotovou zakázku přes noc do tabulky, pro účetnictví.",
+    "addon.stub.secondCarrier.noCompany":
+      "Tady jen popsané, ne postavené — a nejmenuje žádnou firmu, jen to, co by takové rozšíření dělalo.",
+    "addon.stub.cardPayments.noCompany":
+      "Tady jen popsané, ne postavené — a nejmenuje žádnou firmu, jen to, co by takové rozšíření dělalo.",
+    "addon.stub.mailingList.noCompany":
+      "Tady jen popsané, ne postavené — a nejmenuje žádnou firmu, jen to, co by takové rozšíření dělalo.",
+    "addon.stub.sheets.noCompany":
+      "Tady jen popsané, ne postavené — a nejmenuje žádnou firmu, jen to, co by takové rozšíření dělalo.",
 
 
     "addon.host.connect.authNote":
@@ -207,6 +243,14 @@ export const addOns = {
       "Skriv kunder, der siger ja, på en maileliste, så værkstedet kan fortælle om et oplag.",
     "addon.stub.sheets.line":
       "Skriv hver færdig opgave til et regneark om natten, til bogholderiet.",
+    "addon.stub.secondCarrier.noCompany":
+      "Kun beskrevet her, ikke bygget — og den nævner intet firma, kun hvad sådan en ville gøre.",
+    "addon.stub.cardPayments.noCompany":
+      "Kun beskrevet her, ikke bygget — og den nævner intet firma, kun hvad sådan en ville gøre.",
+    "addon.stub.mailingList.noCompany":
+      "Kun beskrevet her, ikke bygget — og den nævner intet firma, kun hvad sådan en ville gøre.",
+    "addon.stub.sheets.noCompany":
+      "Kun beskrevet her, ikke bygget — og den nævner intet firma, kun hvad sådan en ville gøre.",
 
 
     "addon.host.connect.authNote":
@@ -243,6 +287,14 @@ export const addOns = {
     "addon.stub.mailingList.line":
       "把同意的客户加入邮件名单，工坊开印时就能通知他们。",
     "addon.stub.sheets.line": "每晚把当天完工的活儿写进一份表格，供账房查阅。",
+    "addon.stub.secondCarrier.noCompany":
+      "这里只是描述，并没有做出来；它没有点名任何公司，只说这样一个扩展会做什么。",
+    "addon.stub.cardPayments.noCompany":
+      "这里只是描述，并没有做出来；它没有点名任何公司，只说这样一个扩展会做什么。",
+    "addon.stub.mailingList.noCompany":
+      "这里只是描述，并没有做出来；它没有点名任何公司，只说这样一个扩展会做什么。",
+    "addon.stub.sheets.noCompany":
+      "这里只是描述，并没有做出来；它没有点名任何公司，只说这样一个扩展会做什么。",
 
 
     "addon.host.connect.authNote": "您将登录并确认上面这份清单。在此之前不会读取任何内容。",
@@ -276,6 +328,14 @@ export const addOns = {
     "addon.stub.mailingList.line":
       "把同意的客戶加入郵件名單，工坊開印時就能通知他們。",
     "addon.stub.sheets.line": "每晚把當天完工的活兒寫進一份試算表，供帳房查閱。",
+    "addon.stub.secondCarrier.noCompany":
+      "這裡只是描述，並沒有做出來；它沒有點名任何公司，只說這樣一個擴充會做什麼。",
+    "addon.stub.cardPayments.noCompany":
+      "這裡只是描述，並沒有做出來；它沒有點名任何公司，只說這樣一個擴充會做什麼。",
+    "addon.stub.mailingList.noCompany":
+      "這裡只是描述，並沒有做出來；它沒有點名任何公司，只說這樣一個擴充會做什麼。",
+    "addon.stub.sheets.noCompany":
+      "這裡只是描述，並沒有做出來；它沒有點名任何公司，只說這樣一個擴充會做什麼。",
 
 
     "addon.host.connect.authNote": "您將登入並確認上面這份清單。在此之前不會讀取任何內容。",
@@ -311,6 +371,14 @@ export const addOns = {
       "أضف العملاء الموافقين إلى قائمة بريدية، حتى تخبرهم المطبعة عند تشغيل طبعة.",
     "addon.stub.sheets.line":
       "اكتب كل شغلة منتهية في جدول بيانات أثناء الليل، لأجل الحسابات.",
+    "addon.stub.secondCarrier.noCompany":
+      "موصوف هنا فقط وغير مبني، ولا يذكر أي شركة، بل ما قد يفعله شيء كهذا.",
+    "addon.stub.cardPayments.noCompany":
+      "موصوف هنا فقط وغير مبني، ولا يذكر أي شركة، بل ما قد يفعله شيء كهذا.",
+    "addon.stub.mailingList.noCompany":
+      "موصوف هنا فقط وغير مبني، ولا يذكر أي شركة، بل ما قد يفعله شيء كهذا.",
+    "addon.stub.sheets.noCompany":
+      "موصوف هنا فقط وغير مبني، ولا يذكر أي شركة، بل ما قد يفعله شيء كهذا.",
 
 
     "addon.host.connect.authNote":
