@@ -39,6 +39,7 @@ import {
   SUBSTRING_BANNED,
   TIERING_PATTERNS,
   bundleOffences,
+  readableText,
 } from './testing/lexicon.ts';
 
 const ROOT = join(new URL('.', import.meta.url).pathname, '..');
@@ -135,6 +136,80 @@ function thirdPartyChunks(): Map<string, number> {
 
 const rel = (file: string) => file.slice(DIST.length + 1);
 
+/**
+ * A built file as a READER would meet it.
+ *
+ * Scripts are minified, so their identifiers are a tool's invention and their
+ * words are all in string literals — `readableText` keeps the second and drops
+ * the first. Everything else (`index.html`, the stylesheet) this repo wrote by
+ * hand, so it is read whole: there is no minifier between the author and the
+ * bytes, and nothing to excuse.
+ */
+function readable(file: string): string {
+  const text = readFileSync(file, 'utf8');
+  return file.endsWith('.js') ? readableText(text) : text;
+}
+
+/**
+ * ── NOTHING ELSE IN THIS REPO READS A `dist/` IT DID NOT BUILD ──────────────
+ *
+ * [Added 2026-08-11, round 6, after a verifier watched a build register an
+ * add-on that exists nowhere in the other host's source — a `dist/` left behind
+ * by an earlier cross-app experiment.]
+ *
+ * `dist/` is gitignored and is written by whatever ran last, which may be a
+ * different app, a different branch or a hand-vendored experiment. That is
+ * perfectly safe for exactly one suite — this one, which shells out to `vite
+ * build` in `beforeAll` and therefore greps bytes it produced itself — and is a
+ * silent hole in any other.
+ *
+ * A guard that only said "this suite builds first" would be a comment. This is
+ * the rule stated over every suite in the repo: reading `<root>/dist` is
+ * allowed here and nowhere else. Reading somebody ELSE's `dist` (the manifest
+ * validator's published package, for instance) is a different thing and is not
+ * caught by it — the pattern is a `dist` joined directly onto a repo root.
+ */
+describe('no other gate reads a dist/ it did not build', () => {
+  const OWN_DIST = [
+    /join\(\s*[A-Za-z_$][\w$]*\s*,\s*['"`]dist['"`]/,
+    /join\(\s*process\.cwd\(\)\s*,\s*['"`]dist['"`]/,
+  ];
+
+  function suites(dir: string): string[] {
+    return readdirSync(dir).flatMap((entry) => {
+      const full = join(dir, entry);
+      if (statSync(full).isDirectory()) return entry === 'vendor' ? [] : suites(full);
+      return /\.test\.tsx?$/.test(full) ? [full] : [];
+    });
+  }
+
+  it('is the only suite that opens this app’s own build output', () => {
+    const here = join(ROOT, 'src', 'builtOutput.test.ts');
+    const offenders = suites(join(ROOT, 'src'))
+      .filter((file) => file !== here)
+      .filter((file) => {
+        const code = readFileSync(file, 'utf8');
+        return OWN_DIST.some((pattern) => pattern.test(code));
+      })
+      .map((file) => file.slice(ROOT.length + 1));
+    expect(
+      offenders,
+      '\nThese suites read `dist/` without building it, so they grep whatever was ' +
+        'written there last — possibly by another app:\n' +
+        offenders.join('\n') +
+        '\n',
+    ).toEqual([]);
+  });
+
+  it('builds it here rather than finding it, which is what makes that safe', () => {
+    // The pairing, asserted: the exemption above is only honest while this file
+    // actually runs the build. Delete the `execFileSync` and the exemption
+    // becomes the hole it was written to close.
+    const code = readFileSync(join(ROOT, 'src', 'builtOutput.test.ts'), 'utf8');
+    expect(code).toMatch(/beforeAll\([\s\S]*execFileSync\(vite, \['build'\]/);
+  });
+});
+
 describe('the built artefact carries no source maps', () => {
   /*
    * Paired with the `.map` exemption above: the gate may skip maps only because
@@ -214,11 +289,69 @@ describe('the vocabulary ban, over built output', () => {
     const thirdParty = thirdPartyChunks();
     const offenders: string[] = [];
     for (const file of built().filter((f) => !thirdParty.has(chunkName(f)))) {
-      for (const hit of bundleOffences(readFileSync(file, 'utf8'))) {
+      for (const hit of bundleOffences(readable(file))) {
         offenders.push(`${rel(file)} · "${hit.word}" in "${hit.token}" · …${hit.context}…`);
       }
     }
     expect(offenders).toEqual([]);
+  });
+
+  /**
+   * THE SCANNER THAT DECIDES WHAT "READABLE" MEANS, DRIVEN OVER ALL SEVEN OF
+   * ITS STATES — because everything above rests on it and a silent
+   * desynchronisation would read the rest of a file as one long string, or as
+   * none at all, and either way go green.
+   */
+  it('reads a script’s words and not its code', () => {
+    const fixture = [
+      'const a="a plan for the week";',
+      'let mo=3,b=6,E=b/mo;', //          division, not a "/mo" in anybody's copy
+      'const re=/["\'`]/g;', //           a regex holding all three quotes
+      '// a line comment mentioning a free upgrade',
+      '/* a block comment mentioning premium pricing */',
+      'const t=`a ${b} tier of ${{x:"nested"}.x} thing`;',
+      'const esc="he said \\"billing\\" out loud";',
+    ].join('\n');
+
+    const words = readableText(fixture);
+    // Every literal, in order, and nothing else.
+    expect(words.split('\n')).toEqual([
+      'a plan for the week',
+      'a ',
+      ' tier of ',
+      'nested',
+      ' thing',
+      'he said "billing" out loud',
+    ]);
+
+    // What the reader can read is caught; what only the minifier can see is not.
+    const words_ = bundleOffences(words).map((o) => o.word);
+    expect(words_).toContain('plan');
+    expect(words_).toContain('tier');
+    expect(words_).toContain('billing');
+    expect(words_).not.toContain('/mo'); //     `E=b/mo` — the false positive
+    expect(words_).not.toContain('free'); //    the line comment
+    expect(words_).not.toContain('premium'); // the block comment
+
+    // And the raw bytes DO carry all of those, so the difference is this
+    // function and not a weaker word list.
+    const raw = bundleOffences(fixture).map((o) => o.word);
+    expect(raw).toContain('/mo');
+    expect(raw).toContain('free');
+  });
+
+  it('finds the app’s own copy in the bundle it just scanned', () => {
+    /*
+     * The scanner earns the exemption only if it is still reading the copy. An
+     * `index` chunk whose readable text had collapsed to nothing would make
+     * every check above pass by scanning an empty string.
+     */
+    const app = built().filter((f) => f.endsWith('.js') && !thirdPartyChunks().has(chunkName(f)));
+    const words = app.map(readable).join('\n');
+    expect(words.length).toBeGreaterThan(20_000);
+    for (const needle of ['cust.artwork.', 'addon.host.', 'Marlow Press']) {
+      expect(words.includes(needle), needle).toBe(true);
+    }
   });
 
   it('keeps the entry document clear of the FULL list', () => {
