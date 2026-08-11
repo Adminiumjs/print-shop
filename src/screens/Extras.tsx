@@ -29,6 +29,7 @@ import { useState } from "react";
 
 import { isConnectable, resolveActivity, type AddOn } from "../add-ons/host.ts";
 import { useActivityContext } from "../add-ons/useActivityContext.ts";
+import { Affiliation } from "../components/Affiliation.tsx";
 import { EmptyState, Field, Monogram, Mono, Tag, Tile } from "../components/Primitives.tsx";
 import { useT } from "../i18n/index.tsx";
 import { PRODUCTS, PRODUCT_BY_KEY, SIZE_BY_KEY, type ProductKey } from "../lib/catalogue.ts";
@@ -663,6 +664,13 @@ export function AddOns() {
                                 when: clock(last.iso, last.hour, last.minute),
                               })}
                         </Mono>
+                        {/*
+                         * 24 AC6, on the ROW and not only on the card. A shop
+                         * that has connected the carrier sees it here and never
+                         * again on this screen — the available grid it used to
+                         * sit in no longer holds that add-on at all.
+                         */}
+                        <Affiliation addOn={addOn} style={{ marginBlockStart: 4 }} />
                       </div>
                       <div className="mp-row" style={{ marginInlineStart: "auto", flexWrap: "nowrap" }}>
                         {/*
@@ -711,6 +719,13 @@ export function AddOns() {
                     <div style={{ fontSize: 13, lineHeight: 1.5, color: "var(--fg-muted)", flex: 1 }}>
                       {t(addOn.lineKey as never)}
                     </div>
+                    {/*
+                     * 24 AC6, ON THE CARD. This used to be one footnote under
+                     * the whole shelf — see `components/Affiliation.tsx` for
+                     * why that is not the criterion, and why a page-wide grep
+                     * for it went green on a page where no card said it.
+                     */}
+                    <Affiliation addOn={addOn} />
                     <div className="mp-row" style={{ gap: 5 }}>
                       <span className="mp-size-chip mp-mono">
                         {t(
@@ -761,9 +776,23 @@ export function AddOns() {
             )}
           </div>
 
-          <p style={{ margin: 0, fontSize: 11.5, color: "var(--fg-subtle)" }}>
-            {t("shop.notAffiliated")}
-          </p>
+          {/*
+           * THE FOOTNOTE THAT USED TO BE HERE IS GONE, AND ITS ABSENCE IS THE
+           * REPAIR (24 AC6).
+           *
+           * It printed `shop.notAffiliated` once, under both lists, on behalf
+           * of seven cards — five of which name no company and had nothing to
+           * disclaim. A reader filtering the shelf to `delivery` got the
+           * carrier's card at the top and the sentence three sections below it,
+           * past an empty Connected state. Meanwhile a page-wide grep for
+           * "affiliat" passed, which is why it survived four rounds.
+           *
+           * The line is on the card that needs it now, and every card says
+           * something about who else is involved. Do not restore this: a
+           * blanket footnote makes the per-card assertions in
+           * `add-ons/shelfClaims.test.tsx` unnecessary and the page-wide one
+           * true again.
+           */}
         </div>
       </div>
     </section>
