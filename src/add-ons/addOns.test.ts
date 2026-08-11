@@ -9,8 +9,6 @@
  * "leave" is complete, and "complete" is not something a screenshot proves.
  */
 
-import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { applyAddOnSettings, createRegistry, isConnectable, resolveActivity } from './host.ts';
@@ -295,34 +293,18 @@ describe('slot fills', () => {
     expect(SLOT_EMPTY_BEHAVIOUR['order.dispatch.panel']).toBe('speaks');
   });
 
-  it('mounts every slot it declares it hosts', () => {
-    /*
-     * THE CHECK THAT `nav.add-on.routes` FAILED. It was in `HOSTED_SLOTS` for a
-     * release, Design Studio shipped a real fill for it, and no screen ever
-     * rendered `<AddOnSlot slot="nav.add-on.routes">` — so the fill could not
-     * draw and no link could reach it. A declared-but-unmounted slot is worse
-     * than an absent one: an add-on author reads the list and writes code
-     * against it.
-     *
-     * A grep over the sources rather than a render, because the failure is an
-     * ABSENCE and no amount of mounting one screen proves the other four. The
-     * vendored add-ons are excluded on purpose — an add-on FILLS a slot, and a
-     * fill naming a slot is not the host mounting it.
-     */
-    const SRC = join(new URL('.', import.meta.url).pathname, '..');
-    const walk = (dir: string): string[] =>
-      readdirSync(dir).flatMap((entry) => {
-        const full = join(dir, entry);
-        return statSync(full).isDirectory() ? walk(full) : [full];
-      });
-    const host = walk(SRC).filter(
-      (f) => /\.tsx?$/.test(f) && !f.includes('/vendor/') && !f.includes('.test.'),
-    );
-    const sources = host.map((f) => readFileSync(f, 'utf8')).join('\n');
-
-    const unmounted = HOSTED_SLOTS.filter((slot) => !sources.includes(`slot="${slot}"`));
-    expect(unmounted).toEqual([]);
-  });
+  /*
+   * MOVED to `slotRender.test.tsx`: `it('mounts every slot it declares it
+   * hosts')` walked `src/` and searched the text for `slot="…"`.
+   *
+   * It was written for a real defect — `nav.add-on.routes` sat in
+   * `HOSTED_SLOTS` for a release, Design Studio shipped a fill for it, and no
+   * screen ever drew it — and it could not have caught that defect, because a
+   * mount inside a comment is text that matches. The maker studio proved
+   * exactly that with a mutant. The check is now a render: a slot is recorded
+   * when React CALLS the component, so a mount in a comment, behind a condition
+   * that is never true, or in a file nothing renders, records nothing.
+   */
 
   it('goes back to exactly nothing when everything is switched off again', () => {
     const before = HOSTED_SLOTS.map((s) => registry.fillsFor(s, new Set()).length);
