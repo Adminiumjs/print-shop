@@ -133,6 +133,27 @@
   --accent-soft: color-mix(in srgb, var(--accent) 10%, transparent);
   --accent-hover: color-mix(in srgb, var(--accent) 84%, #000);
   --accent-border: color-mix(in srgb, var(--accent) 26%, transparent);
+
+  /*
+   * THE FOCUS RING, AND WHY IT IS NOT `--accent-soft`.
+   *
+   * [Added 2026-08-11, wave 4b round 5.] `:focus-visible` drew a 3px outline in
+   * `--accent-soft`, which is the accent at 10% (20% in dark) over whatever is
+   * behind it. Measured against the surfaces it actually lands on, that ring is
+   * 1.15–1.18:1 in light and 1.44–1.56:1 in dark. WCAG 2.2 asks a focus
+   * indicator for 3:1 (SC 1.4.11), and below about 1.2:1 the question is not
+   * conformance — a keyboard user simply cannot see where they are.
+   *
+   * `--accent-soft` is a FILL: it is behind selected rows, chips and hover
+   * states, where being nearly invisible is the point. It was reached for here
+   * because it had "soft" in the name and it was to hand.
+   *
+   * The ring is the accent at full strength, which measures 4.08:1 at its worst
+   * across both themes and all four surface tokens — and `focus.test.ts` in this
+   * repo resolves this token chain, composites it over each surface, and fails
+   * under 3:1 rather than trusting this comment.
+   */
+  --focus-ring: var(--accent);
 }
 
 @media (prefers-color-scheme: dark) {
