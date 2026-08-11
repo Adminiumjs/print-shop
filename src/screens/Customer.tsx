@@ -940,7 +940,20 @@ export function Artwork() {
               padding: "12px 15px",
             }}
           >
-            {blocked ? <CircleAlert size={19} /> : <Check size={19} />}
+            {/*
+             * DECORATIVE, AND NOW SAYING SO. The sentence beside it is the
+             * status — "we can print this", "have a look at this first" — so a
+             * screen reader announcing the icon as well would read the state
+             * twice, and announcing it as an unnamed graphic reads it as
+             * nothing at all. Every other icon in this app already carried
+             * `aria-hidden`; this banner did not, because it only appears once
+             * artwork is actually attached and no tour had ever attached any.
+             */}
+            {blocked ? (
+              <CircleAlert size={19} aria-hidden="true" />
+            ) : (
+              <Check size={19} aria-hidden="true" />
+            )}
             <span style={{ fontSize: 13.5, fontWeight: 700, flex: 1 }}>
               {blocked
                 ? t("cust.artwork.statusFail")
