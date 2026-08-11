@@ -257,6 +257,14 @@
   line-height: 1.5;
   color: var(--fg-subtle);
 }
+/*
+ * The same line under the action tile, where the company is first named (AC6).
+ * A little air above it so it reads as a footnote to the tile rather than as a
+ * second line of the tile's own body.
+ */
+.cvi-tile-fine {
+  margin-block-start: 6px;
+}
 
 /*
  * The simulation label (24 D11 / AC7).
@@ -311,13 +319,30 @@
 .cvi-button--block {
   inline-size: 100%;
 }
+/*
+ * THE FOCUS RING COMES FROM THE HOST, AND IT IS SOLID.
+ *
+ * [Corrected 2026-08-11, wave 4b round 5.] This drew `3px solid
+ * var(--accent-soft)` — the host's accent at 10% (20% in dark) over whatever is
+ * behind it, which measures 1.15-1.56:1 against the surfaces it lands on. A
+ * keyboard user could not see where they were. `--accent-soft` is a FILL token,
+ * for selected rows and hover states; it was reached for here because it had
+ * "soft" in its name and it was to hand.
+ *
+ * `--focus-ring` is the host's accent at full strength (4.08:1 at worst, across
+ * both shops, both themes and every surface token; both hosts measure it in
+ * their own `focus.test.ts`). The FALLBACK matters: an add-on must not go blind
+ * in a host that has not defined the token, and `currentColor` is the text
+ * colour of the very thing being focused, which contrasts with its own
+ * background by construction.
+ */
 .cvi-button:focus-visible,
 .cvi-tile-action:focus-visible,
 .cvi-design:focus-visible,
 .cvi-link:focus-visible,
 .cvi-search input:focus-visible {
-  outline: 3px solid var(--accent-soft);
-  outline-offset: 1px;
+  outline: 3px solid var(--focus-ring, currentColor);
+  outline-offset: 2px;
 }
 
 .cvi-consent {

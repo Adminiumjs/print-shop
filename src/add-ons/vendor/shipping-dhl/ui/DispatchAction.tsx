@@ -19,7 +19,7 @@
  * this screen was designed against.
  */
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CircleX,
   CornerDownRight,
@@ -33,51 +33,59 @@ import {
   Truck,
 } from "lucide-react";
 
-import { collectionDay, isWorkingDay, minutesOfDay, parseTime, PINNED_NOW } from "../clock.ts";
+import { collectionDay, isWorkingDay, minutesOfDay, parseTime } from "../clock.ts";
 import { CarrierError, type Address, type FileRef, type Shipment, type TrackEvent } from "../../host/contracts/index.ts";
-import type { DispatchPayload } from "../host-payloads.ts";
-import { useFormat, useT } from "../i18n/t.ts";
+import type { DispatchPayload } from "../../host/index.ts";
+import { parseNumber, useFormat, useT } from "../i18n/t.ts";
 import { parcelFor, type ParcelEstimate } from "../parcel.ts";
 import { cheapestCode, COLLECTION_WINDOW, type QuotedRate } from "../rates.ts";
-import { carrier, isDemo, labels, rememberDestination } from "../runtime.ts";
+import { carrier, findShipment, isDemo, labels, rememberRoute, setHostClock } from "../runtime.ts";
 import {
   addressIsUsable,
   blankAddress,
+  originOf,
   POSTCODE_HINT,
   resolveDestination,
-  WORKS_ADDRESS,
 } from "../seed.ts";
 import { publicSettings } from "../settings.ts";
 import {
   Button,
+  Code,
   Field,
   inputStyle,
   Mono,
+  Typed,
   monoInputStyle,
   NotAffiliated,
   Panel,
   PanelTitle,
   Tag,
 } from "./atoms.tsx";
-import { eventText, packagingKeyFor, serviceName } from "./labels.ts";
+import { contentsLine, eventText, serviceName } from "./labels.ts";
 
 /** `34 × 26 × 12` in any of the shapes a shop floor actually types it. */
+/*
+ * ── THE TWO EDITABLE FIGURES READ AND WRITE IN THE READER'S OWN DIGITS ──────
+ *
+ * These three functions used to hand `String()` and `Number.parseFloat` to each
+ * other, which is a pair that only works in one language: the box read
+ * "30 × 20 × 5" and "0.45" in Latin digits on an Arabic page whose every other
+ * figure was Arabic-Indic. Localising only the DISPLAY would have been worse
+ * than leaving it — `parseFloat("٣٠")` is `NaN`, so an Arabic shop could read
+ * its parcel but never correct it — so both halves moved together, and
+ * `parseNumber` in `i18n/t.ts` folds whatever digits a keyboard produced.
+ */
 function parseDims(text: string): { lengthCm: number; widthCm: number; heightCm: number } | null {
   const parts = text
     .split(/[×x*/,]/)
-    .map((p) => Number.parseFloat(p.trim()))
+    .map((p) => parseNumber(p.trim()))
     .filter((n) => Number.isFinite(n) && n > 0);
   if (parts.length !== 3) return null;
   return { lengthCm: parts[0]!, widthCm: parts[1]!, heightCm: parts[2]! };
 }
 
-function formatDims(estimate: ParcelEstimate): string {
-  return `${estimate.lengthCm} × ${estimate.widthCm} × ${estimate.heightCm}`;
-}
-
-/** `10:20` from the pinned clock, never from a real one. */
-function clockText(): string {
-  return `${String(PINNED_NOW.hour).padStart(2, "0")}:${String(PINNED_NOW.minute).padStart(2, "0")}`;
+function formatDims(estimate: ParcelEstimate, number: (value: number) => string): string {
+  return `${number(estimate.lengthCm)} × ${number(estimate.widthCm)} × ${number(estimate.heightCm)}`;
 }
 
 /**
@@ -194,20 +202,40 @@ export function UnresolvedDestination({
   );
 }
 
-export function DispatchAction({ job }: DispatchPayload) {
+export function DispatchAction({ order, now }: DispatchPayload) {
   const t = useT();
-  const { money, day } = useFormat();
+  const { clock: clockOf, money, day, number, timeOfDay } = useFormat();
 
-  const estimate = useMemo(() => parcelFor(job), [job]);
+  /*
+   * THE SHOP'S CLOCK, BEFORE ANYTHING IS DATED AGAINST IT.
+   *
+   * Pushed rather than threaded because the demo transport mints dates too —
+   * the collection window and every tracking scan — and it is built lazily on
+   * the first `carrier()` call, which is inside the callbacks below. Doing it
+   * before those run means the transport is built knowing what day the shop
+   * thinks it is. `setHostClock` is a no-op unless the clock actually changed,
+   * so a re-render never discards a booking.
+   *
+   * IN AN EFFECT, NOT IN THE RENDER. It sat in the render body and never
+   * misbehaved — it is guarded and idempotent — but a module-level write during
+   * render is a side effect in the one place React promises there is none, and
+   * a concurrent render would do it for a tree that is then thrown away. An
+   * effect is honest about what it is, and it still lands long before anything
+   * here can call `carrier()`: nothing calls it until somebody presses a
+   * button. The clock is depended on BY ITS PARTS because the host builds a
+   * fresh object every render.
+   */
+  const { iso: nowIso, hour: nowHour, minute: nowMinute } = now;
+  useEffect(() => {
+    setHostClock({ iso: nowIso, hour: nowHour, minute: nowMinute });
+  }, [nowIso, nowHour, nowMinute]);
+
+  const estimate = useMemo(() => parcelFor(order.items), [order.items]);
+  const from = useMemo(() => originOf(order), [order]);
   const [open, setOpen] = useState(false);
-  const [contents, setContents] = useState(() =>
-    t("addon.shipping-dhl.parcel.contentsValue", {
-      gsm: estimate.from.gsm,
-      packaging: t(packagingKeyFor(estimate.from.packagingKey)),
-    }),
-  );
-  const [weight, setWeight] = useState(() => String(estimate.weightKg));
-  const [dims, setDims] = useState(() => formatDims(estimate));
+  const [contents, setContents] = useState(() => contentsLine(t, estimate));
+  const [weight, setWeight] = useState(() => number(estimate.weightKg));
+  const [dims, setDims] = useState(() => formatDims(estimate, number));
 
   /*
    * WHERE IT IS GOING, or the honest admission that the add-on does not know.
@@ -216,9 +244,11 @@ export function DispatchAction({ job }: DispatchPayload) {
    * customer renders an empty form the works fills in, never another
    * customer's postcode dressed up as this one's.
    */
-  const destination = useMemo(() => resolveDestination(job), [job]);
+  const destination = useMemo(() => resolveDestination(order), [order]);
   const [to, setTo] = useState<Address>(() =>
-    destination.status === "resolved" ? destination.address : blankAddress(job.customer),
+    destination.status === "resolved"
+      ? destination.address
+      : blankAddress(order.recipient.name, from.country),
   );
   const unresolved = destination.status === "unresolved";
 
@@ -228,6 +258,64 @@ export function DispatchAction({ job }: DispatchPayload) {
   const [failure, setFailure] = useState<CarrierError | null>(null);
   const [busy, setBusy] = useState(false);
 
+  /**
+   * A BOOKING OUTLIVES THE COMPONENT THAT MADE IT.
+   *
+   * ── THE DEFECT ────────────────────────────────────────────────────────────
+   *
+   * `booked` was component state and nothing else. A collection booked on an
+   * order — tracking number minted, label PDF rendered, three scans on the
+   * timeline — was GONE the moment the works navigated to another screen and
+   * back: this panel came up offering "Book a collection" for a parcel that
+   * was already booked, and pressing it again is a second collection for one
+   * box. (The demo transport is idempotent per order reference, so the second
+   * press returns the first shipment; a real carrier is under no such
+   * obligation, and the screen was telling the works it had none either way.)
+   *
+   * It also made D16 untestable. "A disconnect keeps the data" is a claim
+   * about data that survives — and there was no data, only a React state that
+   * a route change threw away, so the promise had nothing to be true of.
+   *
+   * ── WHERE THE BOOKING ACTUALLY LIVES ──────────────────────────────────────
+   *
+   * In the transport, which is the same place the customer's own order page
+   * has always read it from: `TrackingPanel` rehydrates through
+   * `findShipment(order.ref)`, and got this right from the start. In a
+   * connected build that is the shop's `shipments` table behind the add-on's
+   * server half; in a demo build it is the seeded carrier, which keeps one
+   * record per order reference for the life of the page. Either way it is not
+   * this component's, and this component now asks rather than remembers.
+   *
+   * The panel also OPENS itself when it finds one. Coming back to a dispatched
+   * order and being shown a collapsed "Book a collection" is the same untruth
+   * in a smaller font.
+   *
+   * `label` and `track` are lookups on an existing shipment, not bookings, so
+   * re-asking is free and nothing is minted by rendering this screen.
+   */
+  useEffect(() => {
+    const existing = findShipment(order.ref);
+    if (existing === undefined) {
+      setBooked(null);
+      return;
+    }
+    let live = true;
+    void Promise.all([carrier().label(existing.id), carrier().track(existing.tracking)]).then(
+      ([file, events]) => {
+        if (!live) return;
+        setBooked({ shipment: existing, file, events });
+        setOpen(true);
+      },
+      () => {
+        /* A transport that cannot answer for its own shipment leaves the panel
+           in its un-booked state rather than throwing at the works. */
+      },
+    );
+    return () => {
+      live = false;
+    };
+  }, [order.ref]);
+
   const getRates = useCallback(async () => {
     setBusy(true);
     setFailure(null);
@@ -235,13 +323,13 @@ export function DispatchAction({ job }: DispatchPayload) {
     try {
       const quoted = (await carrier().quote(
         {
-          weightKg: Number.parseFloat(weight) || estimate.weightKg,
+          weightKg: parseNumber(weight) || estimate.weightKg,
           lengthCm: size.lengthCm,
           widthCm: size.widthCm,
           heightCm: size.heightCm,
           contents,
         },
-        WORKS_ADDRESS,
+        from,
         to,
       )) as QuotedRate[];
       setRates(quoted);
@@ -257,15 +345,15 @@ export function DispatchAction({ job }: DispatchPayload) {
     } finally {
       setBusy(false);
     }
-  }, [contents, dims, estimate, to, weight]);
+  }, [contents, dims, estimate, from, to, weight]);
 
   const book = useCallback(async () => {
     const rate = rates?.find((r) => r.code === selected) ?? rates?.[0];
     if (rate === undefined) return;
     setBusy(true);
     try {
-      rememberDestination(job.ref, to);
-      const shipment = await carrier().book(rate, { reference: job.ref });
+      rememberRoute(order.ref, from, to);
+      const shipment = await carrier().book(rate, { reference: order.ref });
       const [file, events] = await Promise.all([
         carrier().label(shipment.id),
         carrier().track(shipment.tracking),
@@ -281,7 +369,7 @@ export function DispatchAction({ job }: DispatchPayload) {
     } finally {
       setBusy(false);
     }
-  }, [job.ref, rates, selected, to]);
+  }, [from, order.ref, rates, selected, to]);
 
   const labelBytes = booked === null ? undefined : labels()?.read(booked.file.fileId);
 
@@ -295,16 +383,27 @@ export function DispatchAction({ job }: DispatchPayload) {
   }
 
   const cutoff = publicSettings().collection_cutoff;
-  const now = clockText();
+  /*
+   * The cut-off is STORED as `HH:MM` — a machine format, and the right one for
+   * a setting — and READ as a clock face. Those are two different things and
+   * only one of them belongs on a screen: printing the stored string put a
+   * Latin "16:00" inside an Arabic sentence.
+   */
+  const cutoffMinutes = parseTime(cutoff);
+  const cutoffText =
+    cutoffMinutes === null
+      ? cutoff
+      : timeOfDay(Math.floor(cutoffMinutes / 60), cutoffMinutes % 60);
+  const clock = timeOfDay(now.hour, now.minute);
   const cheapest = rates === null ? null : cheapestCode(rates);
 
   // Whether today's van is still catchable. A works booking at 16:00 needs to
   // be told the parcel goes tomorrow BEFORE it books, not after it has printed
-  // a label and put the box by the door.
-  const limit = parseTime(cutoff);
-  const madeTheVan =
-    limit !== null && isWorkingDay(PINNED_NOW.iso) && minutesOfDay(PINNED_NOW) < limit;
-  const vanDay = day(collectionDay(PINNED_NOW, cutoff));
+  // a label and put the box by the door — and "16:00" has to be the SHOP's
+  // sixteen hundred, which is why `now` comes off the payload.
+  const limit = cutoffMinutes;
+  const madeTheVan = limit !== null && isWorkingDay(now.iso) && minutesOfDay(now) < limit;
+  const vanDay = day(collectionDay(now, cutoff));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14, inlineSize: "100%", minInlineSize: 0 }}>
@@ -324,7 +423,7 @@ export function DispatchAction({ job }: DispatchPayload) {
           <Field
             label={t("addon.shipping-dhl.parcel.contents")}
             hint={t("addon.shipping-dhl.parcel.contentsFrom", {
-              ref: job.ref,
+              ref: order.ref,
               quantity: estimate.from.quantity,
             })}
           >
@@ -338,18 +437,25 @@ export function DispatchAction({ job }: DispatchPayload) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 12 }}>
             <Field
               label={t("addon.shipping-dhl.parcel.weight")}
+              /*
+               * WHERE THE NUMBER CAME FROM, and when it came from nowhere.
+               *
+               * The shop says what one of a thing weighs and this says what a
+               * parcel of them weighs. When the shop said nothing, the hint
+               * NAMES THE LINES IT GUESSED FOR rather than printing a figure
+               * that reads exactly like a measured one — the works corrects it
+               * in the field beside the sentence.
+               */
               hint={
-                estimate.from.sheets === undefined
-                  ? t("addon.shipping-dhl.parcel.weightFromRoll", {
+                estimate.from.assumed.length > 0
+                  ? t("addon.shipping-dhl.parcel.weightAssumed", {
                       kg: estimate.weightKg,
-                      quantity: estimate.from.quantity,
-                      gsm: estimate.from.gsm,
+                      what: estimate.from.assumed.join(", "),
                     })
                   : t("addon.shipping-dhl.parcel.weightFrom", {
                       kg: estimate.weightKg,
-                      sheets: estimate.from.sheets,
-                      gsm: estimate.from.gsm,
-                      packaging: t(packagingKeyFor(estimate.from.packagingKey)),
+                      quantity: estimate.from.quantity,
+                      each: estimate.from.unitGrams,
                     })
               }
             >
@@ -366,9 +472,11 @@ export function DispatchAction({ job }: DispatchPayload) {
 
             <Field
               label={t("addon.shipping-dhl.parcel.dims")}
-              hint={t("addon.shipping-dhl.parcel.dimsFrom", {
-                packaging: t(packagingKeyFor(estimate.from.packagingKey)),
-              })}
+              hint={t(
+                estimate.from.rolled
+                  ? "addon.shipping-dhl.parcel.dimsFromTube"
+                  : "addon.shipping-dhl.parcel.dimsFrom",
+              )}
             >
               <span style={{ display: "flex", alignItems: "center", ...inputStyle, padding: 0 }}>
                 <input
@@ -399,10 +507,18 @@ export function DispatchAction({ job }: DispatchPayload) {
                   gap: 1,
                 }}
               >
+                {/*
+                  * `Typed`, NOT `Mono` — see `atoms.tsx`. Every line here is
+                  * the recipient's own: a name, a street with a number in it, a
+                  * town, a postcode. `Mono` isolates in CSS alone, so a host's
+                  * Arabic-digit guard read "21 Westgate" as an unformatted
+                  * quantity this add-on had worked out. It is not one, and the
+                  * `dir` attribute is how that gets said out loud.
+                  */}
                 {[to.name, ...to.lines, to.city, to.postcode, to.country].map((line, i) => (
-                  <Mono key={`${line}-${i}`} style={{ fontSize: 12, color: "var(--fg-muted)" }}>
+                  <Typed key={`${line}-${i}`} style={{ fontSize: 12, color: "var(--fg-muted)" }}>
                     {line}
-                  </Mono>
+                  </Typed>
                 ))}
               </div>
             )}
@@ -563,7 +679,7 @@ export function DispatchAction({ job }: DispatchPayload) {
                   </span>
                   <span style={{ flex: 1, minInlineSize: 0 }}>
                     <span style={{ fontSize: 13.5, fontWeight: 700, display: "block" }}>
-                      {serviceName(t, rate)}
+                      {serviceName(t, rate, timeOfDay)}
                     </span>
                     <Mono style={{ fontSize: 11.5, color: "var(--fg-subtle)", whiteSpace: "normal" }}>
                       {t("addon.shipping-dhl.rates.arrives", { date: day(rate.estimatedDelivery) })}
@@ -594,8 +710,12 @@ export function DispatchAction({ job }: DispatchPayload) {
             </Button>
             <span style={{ fontSize: 12.5, color: "var(--fg-muted)" }}>
               {madeTheVan
-                ? t("addon.shipping-dhl.rates.cutoffLine", { cutoff, now })
-                : t("addon.shipping-dhl.rates.cutoffMissed", { cutoff, now, day: vanDay })}
+                ? t("addon.shipping-dhl.rates.cutoffLine", { cutoff: cutoffText, now: clock })
+                : t("addon.shipping-dhl.rates.cutoffMissed", {
+                    cutoff: cutoffText,
+                    now: clock,
+                    day: vanDay,
+                  })}
             </span>
           </div>
         </Panel>
@@ -637,7 +757,7 @@ export function DispatchAction({ job }: DispatchPayload) {
                   <div style={{ fontSize: 11.5, color: "var(--fg-subtle)", marginBlockEnd: 3 }}>
                     {t("addon.shipping-dhl.booked.tracking")}
                   </div>
-                  <Mono style={{ fontSize: 19, fontWeight: 700 }}>{booked.shipment.tracking}</Mono>
+                  <Code style={{ fontSize: 19, fontWeight: 700 }}>{booked.shipment.tracking}</Code>
                 </div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 18 }}>
                   <div>
@@ -645,7 +765,7 @@ export function DispatchAction({ job }: DispatchPayload) {
                       {t("addon.shipping-dhl.booked.window")}
                     </div>
                     <Mono style={{ fontSize: 12.5, fontWeight: 600 }}>
-                      {`${day(booked.shipment.collectionFrom.slice(0, 10))} ${COLLECTION_WINDOW.from}–${COLLECTION_WINDOW.to}`}
+                      {`${day(booked.shipment.collectionFrom.slice(0, 10))} ${clockOf(COLLECTION_WINDOW.from)}–${clockOf(COLLECTION_WINDOW.to)}`}
                     </Mono>
                   </div>
                   <div>
@@ -653,7 +773,7 @@ export function DispatchAction({ job }: DispatchPayload) {
                       {t("addon.shipping-dhl.booked.service")}
                     </div>
                     <span style={{ fontSize: 13, fontWeight: 700 }}>
-                      {serviceName(t, booked.shipment.rate)}
+                      {serviceName(t, booked.shipment.rate, timeOfDay)}
                     </span>
                   </div>
                 </div>
@@ -773,7 +893,7 @@ export function DispatchAction({ job }: DispatchPayload) {
                   <div style={{ paddingBlockEnd: 14 }}>
                     <div style={{ fontSize: 13, fontWeight: 700 }}>{eventText(t, event)}</div>
                     <Mono style={{ fontSize: 11, color: "var(--fg-subtle)", marginBlockStart: 2 }}>
-                      {`${day(event.at.slice(0, 10))} · ${event.at.slice(11, 16)} · ${event.place}`}
+                      {`${day(event.at.slice(0, 10))} · ${clockOf(event.at)} · ${event.place}`}
                     </Mono>
                   </div>
                 </div>

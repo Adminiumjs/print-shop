@@ -14,6 +14,10 @@
  * same way and for the same reason.
  */
 
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
 import manifest from '../manifest.json';
@@ -151,5 +155,92 @@ describe('what an app manifest may not do', () => {
     // fails if the key is ever renamed here.
     expect(ATTACHED_ADD_ONS.length).toBe(3);
     expect(manifest.key).toBe('printing');
+  });
+});
+
+/**
+ * AND THE VENDORED VALIDATOR ITSELF, HELD TO THE ONE THE PRODUCT RUNS.
+ *
+ * [Added 2026-08-11, wave 4b round 2.] Everything above runs `testing/manifest/`
+ * — a verbatim COPY, taken because `@adminium/manifest` is on no registry — and
+ * nothing anywhere compared the copy with its original. That is exactly the
+ * argument `scripts/sync-add-ons.sh` makes about the vendored add-ons, one
+ * directory over, and it had no equivalent here: the copy could drift a schema
+ * behind the product and this whole file would stay green, validating a
+ * manifest against rules the product no longer enforces.
+ *
+ * It is not hypothetical. The add-ons monorepo shipped an INVALID manifest with
+ * a green suite for exactly this reason — its gate restated the rules by hand
+ * instead of running them — and the fix there was to load the real validator
+ * from a sibling product checkout. This does the same, and then asks the
+ * sharper question a copy makes possible: do the two AGREE?
+ *
+ * Loaded by path rather than installed because the package cannot be installed:
+ * its own package.json declares `zod: "catalog:"` and
+ * `@adminium/add-on-contracts: "workspace:*"`, two pnpm protocols npm does not
+ * resolve. `ADMINIUM_REPO` overrides the location; a clean clone of this app
+ * alone prints what it looked for and skips, and the vendored validator above
+ * still holds this document to the schema as it stood when it was copied.
+ */
+const PRODUCT_ROOT =
+  process.env.ADMINIUM_REPO ?? fileURLToPath(new URL('../../adminium', import.meta.url));
+
+const REAL_VALIDATOR = join(PRODUCT_ROOT, 'packages', 'manifest', 'dist', 'index.js');
+
+interface RealValidator {
+  validateManifest: (value: unknown) => { ok: boolean; issues?: readonly { path: string }[] };
+}
+
+const realAvailable = existsSync(REAL_VALIDATOR);
+
+if (!realAvailable) {
+  console.info(
+    `[print-shop] the vendored validator was not compared with the real one: nothing at ` +
+      `${REAL_VALIDATOR}. Clone the Adminium product beside this repo (or point ADMINIUM_REPO ` +
+      'at it) and build packages/manifest, and src/testing/manifest/ is checked for drift.',
+  );
+}
+
+const loadReal = async (): Promise<RealValidator['validateManifest']> => {
+  const mod = (await import(/* @vite-ignore */ pathToFileURL(REAL_VALIDATOR).href)) as RealValidator;
+  return mod.validateManifest;
+};
+
+/**
+ * The documents both validators are asked about: the real one, and four with a
+ * specific, realistic mistake in each. A copy that had drifted would answer at
+ * least one of these differently — which is the whole point of asking about
+ * FAILURES as well as the pass. Comparing only "both say yes" would be
+ * satisfied by a validator that says yes to everything.
+ */
+const CASES: readonly (readonly [string, unknown])[] = [
+  ['the manifest as it ships', manifest],
+  ['a publisher that is not first-party', { ...manifest, publisher: { ...manifest.publisher, id: 'somebody-else' } }],
+  ['an add-on block on an app', { ...manifest, addOn: { attaches: [], provides: [] } }],
+  ['a facet outside the closed vocabulary', { ...manifest, categories: ['printing'] }],
+  ['a capability nobody implements', { ...manifest, capabilities: [...manifest.capabilities, 'telepathy'] }],
+];
+
+describe.skipIf(!realAvailable)('the vendored validator has not drifted from @adminium/manifest', () => {
+  it.each(CASES)('agrees with the real one about %s', async (_what, document) => {
+    const real = await loadReal();
+    const theirs = real(document);
+    const ours = validateManifest(document);
+
+    // The verdict first, because that is what every caller reads.
+    expect({ ok: ours.ok }, 'the two validators disagree').toEqual({ ok: theirs.ok });
+    // And the PATHS, so a copy that refuses the same document for a different
+    // reason is a drift too. Sorted: neither promises an issue order.
+    const paths = (r: { ok: boolean; issues?: readonly { path: string }[] }) =>
+      [...(r.issues ?? [])].map((i) => i.path).sort();
+    expect(paths(ours)).toEqual(paths(theirs));
+  });
+
+  it('is asked about at least one document each validator refuses', () => {
+    // A drift check whose cases all PASS proves nothing: two validators that
+    // accept everything agree perfectly. This is the case that keeps the list
+    // above honest if somebody ever prunes it.
+    const refused = CASES.filter(([, document]) => !validateManifest(document).ok);
+    expect(refused.length).toBeGreaterThanOrEqual(4);
   });
 });

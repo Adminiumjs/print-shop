@@ -95,13 +95,25 @@ export function makeT(locale: LocaleTag): TFunction {
   const bundle: Record<string, string> = STRINGS[locale];
   const fallback: Record<string, string> = STRINGS[DEFAULT_LOCALE];
 
+  const nf = new Intl.NumberFormat(locale);
+
   return (key, params) => {
     const full = `${PREFIX}${key}`;
     const raw = bundle[full] ?? fallback[full] ?? full;
     if (params === undefined) return raw;
-    return raw.replace(/\{(\w+)\}/g, (whole: string, name: string) =>
-      name in params ? String(params[name]) : whole,
-    );
+    /*
+     * A NUMBER SUBSTITUTED INTO COPY IS FORMATTED, NEVER `String()`d — the one
+     * line that decides whether Arabic reads ٣ or 3. Every host fixed this at
+     * its own `t` seam and every add-on has a seam of its own, so every add-on
+     * had a copy of the bug waiting for the first `t("…", { count })` somebody
+     * wrote. A caller that has already formatted its value passes a STRING and
+     * is left alone.
+     */
+    return raw.replace(/\{(\w+)\}/g, (whole: string, name: string) => {
+      if (!(name in params)) return whole;
+      const value = params[name];
+      return typeof value === "number" ? nf.format(value) : String(value);
+    });
   };
 }
 

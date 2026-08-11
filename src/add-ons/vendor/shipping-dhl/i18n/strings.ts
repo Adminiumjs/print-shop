@@ -39,23 +39,25 @@ export const strings = {
   "en-US": {
     // ── Host chrome this add-on owns: the connect sentence, its own settings
     //    panel copy, what a disconnect takes and keeps, and its activity lines.
-    "addon.shipping-dhl.what": "This lets the works book a parcel collection from the job ticket, get rates back and print a label, instead of typing tracking numbers into an email.",
+    "addon.shipping-dhl.what": "This lets the shop book a parcel collection from an order that is ready, get rates back and print a label, instead of typing tracking numbers into an email.",
     "addon.shipping-dhl.set.demo": "Use the demo carrier",
     "addon.shipping-dhl.set.demoOn": "Rates, labels and tracking come back from a seeded stand-in. Nothing reaches a real carrier.",
-    "addon.shipping-dhl.set.demoOff": "Calls go to the carrier with the account details you entered. Switch this back on to stop that.",
+    "addon.shipping-dhl.set.demoOff":
+      "In a real shop the calls would go to the carrier with the account details you entered. Nothing is sent from this demo either way — rates, labels and tracking still come back from the seeded stand-in.",
     "addon.shipping-dhl.set.cutoffLabel": "Collection cut-off",
     "addon.shipping-dhl.set.cutoffNote": "Book before this and the driver comes the same afternoon.",
     "addon.shipping-dhl.set.weights": "Default parcel weights",
-    "addon.shipping-dhl.set.weightsNote": "Worked out from the material and the quantity on the job. The rate card behind them is edited in your Adminium dashboard.",
-    "addon.shipping-dhl.disconnect.goes": "The job ticket loses “Book a collection”, checkout loses the carrier's rates, and a customer's order page goes back to collection from the works.",
-    "addon.shipping-dhl.disconnect.stays": "Collections already booked keep their labels and tracking numbers. The account details are deleted.",
+    "addon.shipping-dhl.set.weightsNote": "Worked out from what the shop says one of each weighs, plus the box. The rate card behind them is edited in your Adminium dashboard.",
+    "addon.shipping-dhl.set.weightAssumed": "{kg} kg — assumed",
+    "addon.shipping-dhl.set.weightKg": "{kg} kg",
+    "addon.shipping-dhl.disconnect.goes": "The order loses “Book a collection”, checkout loses the carrier's rates, and a customer's order page goes back to collection from the shop. The account details are deleted.",
+    "addon.shipping-dhl.disconnect.stays": "Collections already booked keep their labels and tracking numbers.",
     "addon.shipping-dhl.act.1": "{when} · collection booked · {ref}",
     "addon.shipping-dhl.act.2": "{when} · rates fetched · {ref}",
     "addon.shipping-dhl.act.3": "{when} · label downloaded · {ref}",
 
     // ── the add-on itself ──────────────────────────────────────────────────
-    "addon.shipping-dhl.line":
-      "Books a parcel collection from a job that is ready, and brings back a label and a tracking reference.",
+    "addon.shipping-dhl.line": "Books a parcel collection from an order that is ready, and brings back a label and a tracking reference.",
     "addon.shipping-dhl.notAffiliated": "Adminium is not affiliated with this company.",
     "addon.shipping-dhl.demoChip": "Demo carrier — no real shipment was booked",
     "addon.shipping-dhl.onlyCarrier": "DHL is the only delivery company connected.",
@@ -88,28 +90,26 @@ export const strings = {
     // ── the parcel ─────────────────────────────────────────────────────────
     "addon.shipping-dhl.action.book": "Book a collection",
     "addon.shipping-dhl.parcel.title": "The parcel",
-    "addon.shipping-dhl.parcel.sub": "Filled in from the job. Change anything wrong.",
+    "addon.shipping-dhl.parcel.sub": "Filled in from the order. Change anything wrong.",
     "addon.shipping-dhl.parcel.contents": "Contents",
     "addon.shipping-dhl.parcel.weight": "Weight",
     "addon.shipping-dhl.parcel.dims": "Dimensions",
     "addon.shipping-dhl.parcel.goingTo": "Going to",
 
     // ── a customer this add-on cannot place ────────────────────────────────
-    "addon.shipping-dhl.dest.unknownTitle": "No address on file for this customer",
-    "addon.shipping-dhl.dest.unknownBody": "{customer} is not in this carrier's address book, so nothing has been filled in. Type where the parcel is going — no other customer's address is used in its place.",
+    "addon.shipping-dhl.dest.unknownTitle": "No address for this parcel",
+    "addon.shipping-dhl.dest.unknownBody": "The shop has not said where {customer}'s parcel is going, so nothing has been filled in. Type the address — no other customer's is used in its place.",
     "addon.shipping-dhl.dest.name": "Send to",
     "addon.shipping-dhl.dest.street": "Street",
     "addon.shipping-dhl.dest.city": "Town or city",
     "addon.shipping-dhl.dest.needAddress": "Add a town and a postcode before you get rates.",
-    "addon.shipping-dhl.parcel.contentsValue": "Printed work at {gsm}gsm, {packaging}",
-    "addon.shipping-dhl.parcel.contentsFrom": "From job {ref}, quantity {quantity}",
-    "addon.shipping-dhl.parcel.weightFrom": "{kg}kg — {sheets} × SRA3 at {gsm}gsm, {packaging}",
-    "addon.shipping-dhl.parcel.weightFromRoll": "{kg}kg — {quantity} × roll media at {gsm}gsm, in a tube",
-    "addon.shipping-dhl.parcel.dimsFrom": "The parcel this job goes in, {packaging}",
-    "addon.shipping-dhl.pack.bundled": "bundled",
-    "addon.shipping-dhl.pack.shrinkWrapped": "shrink-wrapped",
-    "addon.shipping-dhl.pack.boxed": "boxed",
-    "addon.shipping-dhl.pack.tube": "in a tube",
+    "addon.shipping-dhl.parcel.contentsValue": "{quantity} × {what}",
+    "addon.shipping-dhl.parcel.contentsValueMore": "{quantity} × {what} and {more} more",
+    "addon.shipping-dhl.parcel.contentsFrom": "From order {ref}, quantity {quantity}",
+    "addon.shipping-dhl.parcel.weightFrom": "{kg}kg — {quantity} at {each}g each, plus the box",
+    "addon.shipping-dhl.parcel.weightAssumed": "{kg}kg — the shop has not said what these weigh: {what}. Type the real weight here.",
+    "addon.shipping-dhl.parcel.dimsFrom": "A box sized for what is in it",
+    "addon.shipping-dhl.parcel.dimsFromTube": "Rolled in a tube — the longest piece is over 60cm",
 
     // ── rates and booking ──────────────────────────────────────────────────
     "addon.shipping-dhl.rates.get": "Get rates",
@@ -122,7 +122,7 @@ export const strings = {
       "Book before {cutoff} and the driver comes this afternoon. It is {now} now.",
     "addon.shipping-dhl.rates.cutoffMissed":
       "It is {now}, past the {cutoff} cut-off, so the van calls on {day}.",
-    "addon.shipping-dhl.service.exp1200": "Express by 12:00",
+    "addon.shipping-dhl.service.exp1200": "Express by {by}",
     "addon.shipping-dhl.service.expNwd": "Express, next working day",
     "addon.shipping-dhl.service.eco2wd": "Economy, second working day",
 
@@ -135,7 +135,7 @@ export const strings = {
     "addon.shipping-dhl.label.print": "Print",
     "addon.shipping-dhl.tracking.title": "Tracking",
     "addon.shipping-dhl.tracking.simulated": "Demo carrier — these scans are simulated",
-    "addon.shipping-dhl.event.collected": "Picked up from the works",
+    "addon.shipping-dhl.event.collected": "Picked up from the shop",
     "addon.shipping-dhl.event.atHub": "Sorted at the depot",
     "addon.shipping-dhl.event.outForDelivery": "Out with the driver",
 
@@ -144,8 +144,7 @@ export const strings = {
     "addon.shipping-dhl.error.simulated": "Demo carrier — this refusal is simulated",
     "addon.shipping-dhl.error.remedy1":
       "Check the postcode against the country it is going to. For {country} it looks like {example}.",
-    "addon.shipping-dhl.error.remedy2":
-      "If the address is right as it stands, hand the job over the counter and mark it collected.",
+    "addon.shipping-dhl.error.remedy2": "If the address is right as it stands, hand the parcel over the counter and mark it collected.",
     "addon.shipping-dhl.error.retry": "Try again",
     "addon.shipping-dhl.error.postcode": "Postcode",
     "addon.shipping-dhl.error.country": "Country",
@@ -153,6 +152,8 @@ export const strings = {
     // ── the customer's two surfaces ────────────────────────────────────────
     "addon.shipping-dhl.checkout.title": "Delivery by DHL",
     "addon.shipping-dhl.checkout.sub": "Worked out from what is in your basket.",
+    "addon.shipping-dhl.checkout.fromReady":
+      "Counted from {day}, the first day the shop can hand this over.",
     "addon.shipping-dhl.checkout.simulated":
       "These rates come from a demo carrier. Nothing is sent to a real one.",
     "addon.shipping-dhl.panel.carrier": "Carrier",
@@ -166,22 +167,24 @@ export const strings = {
   "de-DE": {
     // ── Host chrome this add-on owns: the connect sentence, its own settings
     //    panel copy, what a disconnect takes and keeps, and its activity lines.
-    "addon.shipping-dhl.what": "Damit bucht die Werkstatt die Paketabholung direkt vom Laufzettel aus, bekommt Preise zurück und druckt ein Etikett — statt Sendungsnummern in eine E-Mail zu tippen.",
+    "addon.shipping-dhl.what": "Damit bucht der Betrieb eine Paketabholung direkt aus einem versandfertigen Auftrag, bekommt Preise zurück und druckt ein Label, statt Sendungsnummern in eine E-Mail zu tippen.",
     "addon.shipping-dhl.set.demo": "Den Demo-Versanddienst nutzen",
     "addon.shipping-dhl.set.demoOn": "Preise, Etiketten und Sendungsverfolgung kommen aus einem hinterlegten Ersatz. Nichts erreicht einen echten Versanddienst.",
-    "addon.shipping-dhl.set.demoOff": "Anfragen gehen mit den eingegebenen Kontodaten an den Versanddienst. Schalten Sie das wieder ein, um das zu beenden.",
+    "addon.shipping-dhl.set.demoOff":
+      "In einem echten Betrieb gingen die Anfragen mit den eingegebenen Kontodaten an den Versanddienst. Aus dieser Demo wird so oder so nichts gesendet — Preise, Etiketten und Sendungsverfolgung kommen weiterhin aus dem hinterlegten Ersatz.",
     "addon.shipping-dhl.set.cutoffLabel": "Annahmeschluss für die Abholung",
     "addon.shipping-dhl.set.cutoffNote": "Vorher gebucht, und der Fahrer kommt noch am selben Nachmittag.",
     "addon.shipping-dhl.set.weights": "Voreingestellte Paketgewichte",
-    "addon.shipping-dhl.set.weightsNote": "Errechnet aus Material und Menge des Auftrags. Die Preisliste dahinter wird in Ihrem Adminium-Dashboard gepflegt.",
-    "addon.shipping-dhl.disconnect.goes": "Dem Laufzettel fehlt „Abholung buchen“, der Kasse fehlen die Preise des Dienstes, und die Auftragsseite der Kundschaft zeigt wieder Abholung in der Werkstatt.",
-    "addon.shipping-dhl.disconnect.stays": "Bereits gebuchte Abholungen behalten Etikett und Sendungsnummer. Die Kontodaten werden gelöscht.",
+    "addon.shipping-dhl.set.weightsNote": "Errechnet aus dem Stückgewicht, das der Betrieb angibt, plus Karton. Die Preisliste dahinter wird in Ihrem Adminium-Dashboard gepflegt.",
+    "addon.shipping-dhl.set.weightAssumed": "{kg} kg — angenommen",
+    "addon.shipping-dhl.set.weightKg": "{kg} kg",
+    "addon.shipping-dhl.disconnect.goes": "Der Auftrag verliert „Abholung buchen“, die Kasse verliert die Preise des Dienstleisters, und die Bestellseite der Kundschaft zeigt wieder Abholung im Betrieb. Die Kontodaten werden gelöscht.",
+    "addon.shipping-dhl.disconnect.stays": "Bereits gebuchte Abholungen behalten Etikett und Sendungsnummer.",
     "addon.shipping-dhl.act.1": "{when} · Abholung gebucht · {ref}",
     "addon.shipping-dhl.act.2": "{when} · Preise abgerufen · {ref}",
     "addon.shipping-dhl.act.3": "{when} · Etikett geladen · {ref}",
 
-    "addon.shipping-dhl.line":
-      "Bucht eine Paketabholung zu einem fertigen Auftrag und liefert Etikett und Sendungsnummer zurück.",
+    "addon.shipping-dhl.line": "Bucht eine Paketabholung zu einem versandfertigen Auftrag und liefert Label und Sendungsnummer zurück.",
     "addon.shipping-dhl.notAffiliated": "Adminium steht in keiner Verbindung zu diesem Unternehmen.",
     "addon.shipping-dhl.demoChip": "Demo-Versender — es wurde keine echte Sendung gebucht",
     "addon.shipping-dhl.onlyCarrier": "DHL ist der einzige verbundene Lieferdienst.",
@@ -209,22 +212,19 @@ export const strings = {
     "addon.shipping-dhl.parcel.goingTo": "Geht an",
 
     // ── a customer this add-on cannot place ────────────────────────────────
-    "addon.shipping-dhl.dest.unknownTitle": "Für diesen Kunden ist keine Adresse hinterlegt",
-    "addon.shipping-dhl.dest.unknownBody": "{customer} steht nicht im Adressbuch dieses Versenders, deshalb ist nichts vorausgefüllt. Tragen Sie ein, wohin das Paket geht — es wird keine andere Adresse eingesetzt.",
+    "addon.shipping-dhl.dest.unknownTitle": "Keine Adresse für dieses Paket",
+    "addon.shipping-dhl.dest.unknownBody": "Der Betrieb hat nicht angegeben, wohin das Paket für {customer} geht, deshalb ist nichts vorausgefüllt. Tragen Sie die Adresse ein — es wird keine andere Adresse ersatzweise verwendet.",
     "addon.shipping-dhl.dest.name": "Empfänger",
     "addon.shipping-dhl.dest.street": "Straße",
     "addon.shipping-dhl.dest.city": "Ort",
     "addon.shipping-dhl.dest.needAddress": "Ort und Postleitzahl eintragen, dann Preise abrufen.",
-    "addon.shipping-dhl.parcel.contentsValue": "Drucksachen, {gsm}g/m², {packaging}",
+    "addon.shipping-dhl.parcel.contentsValue": "{quantity} × {what}",
+    "addon.shipping-dhl.parcel.contentsValueMore": "{quantity} × {what} und {more} weitere",
     "addon.shipping-dhl.parcel.contentsFrom": "Aus Auftrag {ref}, Menge {quantity}",
-    "addon.shipping-dhl.parcel.weightFrom": "{kg}kg — {sheets} × SRA3 mit {gsm}g/m², {packaging}",
-    "addon.shipping-dhl.parcel.weightFromRoll":
-      "{kg}kg — {quantity} × Rollenmaterial mit {gsm}g/m², in einer Hülse",
-    "addon.shipping-dhl.parcel.dimsFrom": "Das Paket für diesen Auftrag, {packaging}",
-    "addon.shipping-dhl.pack.bundled": "gebündelt",
-    "addon.shipping-dhl.pack.shrinkWrapped": "eingeschweißt",
-    "addon.shipping-dhl.pack.boxed": "im Karton",
-    "addon.shipping-dhl.pack.tube": "in einer Hülse",
+    "addon.shipping-dhl.parcel.weightFrom": "{kg}kg — {quantity} à {each}g, plus Karton",
+    "addon.shipping-dhl.parcel.weightAssumed": "{kg}kg — der Betrieb hat kein Gewicht angegeben für: {what}. Tragen Sie hier das echte Gewicht ein.",
+    "addon.shipping-dhl.parcel.dimsFrom": "Ein Karton, passend zum Inhalt",
+    "addon.shipping-dhl.parcel.dimsFromTube": "Gerollt in einer Hülse — das längste Stück misst über 60cm",
 
     "addon.shipping-dhl.rates.get": "Preise abrufen",
     "addon.shipping-dhl.rates.title": "Preise für dieses Paket",
@@ -236,7 +236,7 @@ export const strings = {
       "Bis {cutoff} gebucht, kommt der Fahrer heute Nachmittag. Es ist jetzt {now}.",
     "addon.shipping-dhl.rates.cutoffMissed":
       "Es ist {now} und damit nach dem Annahmeschluss um {cutoff} — der Wagen kommt am {day}.",
-    "addon.shipping-dhl.service.exp1200": "Express bis 12:00",
+    "addon.shipping-dhl.service.exp1200": "Express bis {by}",
     "addon.shipping-dhl.service.expNwd": "Express, nächster Werktag",
     "addon.shipping-dhl.service.eco2wd": "Sparversand, zweiter Werktag",
 
@@ -248,7 +248,7 @@ export const strings = {
     "addon.shipping-dhl.label.print": "Drucken",
     "addon.shipping-dhl.tracking.title": "Sendungsverfolgung",
     "addon.shipping-dhl.tracking.simulated": "Demo-Versender — diese Scans sind simuliert",
-    "addon.shipping-dhl.event.collected": "In der Werkstatt abgeholt",
+    "addon.shipping-dhl.event.collected": "Im Betrieb abgeholt",
     "addon.shipping-dhl.event.atHub": "Im Verteilzentrum bearbeitet",
     "addon.shipping-dhl.event.outForDelivery": "Beim Fahrer zur Zustellung",
 
@@ -256,14 +256,15 @@ export const strings = {
     "addon.shipping-dhl.error.simulated": "Demo-Versender — diese Ablehnung ist simuliert",
     "addon.shipping-dhl.error.remedy1":
       "Prüfen Sie die Postleitzahl gegen das Zielland. Eine aus {country} sieht aus wie {example}.",
-    "addon.shipping-dhl.error.remedy2":
-      "Stimmt die Adresse so, geben Sie den Auftrag über den Tresen aus und setzen ihn auf abgeholt.",
+    "addon.shipping-dhl.error.remedy2": "Stimmt die Adresse so, geben Sie das Paket über den Tresen und markieren Sie es als abgeholt.",
     "addon.shipping-dhl.error.retry": "Erneut versuchen",
     "addon.shipping-dhl.error.postcode": "Postleitzahl",
     "addon.shipping-dhl.error.country": "Land",
 
     "addon.shipping-dhl.checkout.title": "Zustellung mit DHL",
     "addon.shipping-dhl.checkout.sub": "Aus dem Inhalt Ihres Warenkorbs ermittelt.",
+    "addon.shipping-dhl.checkout.fromReady":
+      "Gerechnet ab {day}, dem ersten Tag, an dem der Laden das Paket abgeben kann.",
     "addon.shipping-dhl.checkout.simulated":
       "Diese Preise kommen von einem Demo-Versender. Es geht nichts an einen echten.",
     "addon.shipping-dhl.panel.carrier": "Versender",
@@ -277,22 +278,24 @@ export const strings = {
   "fr-FR": {
     // ── Host chrome this add-on owns: the connect sentence, its own settings
     //    panel copy, what a disconnect takes and keeps, and its activity lines.
-    "addon.shipping-dhl.what": "Cela permet à l'atelier de réserver un enlèvement depuis la fiche de travail, de recevoir des tarifs et d'imprimer une étiquette, au lieu de recopier des numéros de suivi dans un courriel.",
+    "addon.shipping-dhl.what": "L'atelier réserve un enlèvement de colis depuis une commande prête, récupère les tarifs et imprime une étiquette, au lieu de recopier des numéros de suivi dans un e-mail.",
     "addon.shipping-dhl.set.demo": "Utiliser le transporteur de démonstration",
     "addon.shipping-dhl.set.demoOn": "Tarifs, étiquettes et suivi viennent d'un substitut pré-rempli. Rien n'atteint un vrai transporteur.",
-    "addon.shipping-dhl.set.demoOff": "Les appels partent chez le transporteur avec les identifiants saisis. Réactivez ceci pour y mettre fin.",
+    "addon.shipping-dhl.set.demoOff":
+      "Dans une boutique réelle, les appels partiraient chez le transporteur avec les identifiants saisis. Rien ne quitte cette démo dans un cas comme dans l’autre : les tarifs, les étiquettes et le suivi viennent toujours du remplaçant intégré.",
     "addon.shipping-dhl.set.cutoffLabel": "Heure limite d'enlèvement",
     "addon.shipping-dhl.set.cutoffNote": "Réservez avant, et le chauffeur passe le même après-midi.",
     "addon.shipping-dhl.set.weights": "Poids de colis par défaut",
-    "addon.shipping-dhl.set.weightsNote": "Calculés d'après le support et la quantité du travail. Les tarifs derrière eux se modifient dans votre tableau de bord Adminium.",
-    "addon.shipping-dhl.disconnect.goes": "La fiche de travail perd « Réserver un enlèvement », la caisse perd les tarifs du transporteur, et la page de commande du client revient au retrait à l'atelier.",
-    "addon.shipping-dhl.disconnect.stays": "Les enlèvements déjà réservés gardent leur étiquette et leur numéro de suivi. Les identifiants sont supprimés.",
+    "addon.shipping-dhl.set.weightsNote": "Calculés d'après le poids unitaire indiqué par l'atelier, plus le carton. Les tarifs derrière eux se modifient dans votre tableau de bord Adminium.",
+    "addon.shipping-dhl.set.weightAssumed": "{kg} kg — estimé",
+    "addon.shipping-dhl.set.weightKg": "{kg} kg",
+    "addon.shipping-dhl.disconnect.goes": "La commande perd « Réserver un enlèvement », la caisse perd les tarifs du transporteur, et la page de commande du client revient au retrait à l'atelier. Les identifiants sont supprimés.",
+    "addon.shipping-dhl.disconnect.stays": "Les enlèvements déjà réservés gardent leur étiquette et leur numéro de suivi.",
     "addon.shipping-dhl.act.1": "{when} · enlèvement réservé · {ref}",
     "addon.shipping-dhl.act.2": "{when} · tarifs demandés · {ref}",
     "addon.shipping-dhl.act.3": "{when} · étiquette téléchargée · {ref}",
 
-    "addon.shipping-dhl.line":
-      "Réserve un enlèvement de colis pour une commande prête, et renvoie une étiquette et un numéro de suivi.",
+    "addon.shipping-dhl.line": "Réserve un enlèvement de colis pour une commande prête et renvoie une étiquette et un numéro de suivi.",
     "addon.shipping-dhl.notAffiliated": "Adminium n'est affilié à aucune de ces sociétés.",
     "addon.shipping-dhl.demoChip": "Transporteur de démonstration — aucun envoi réel n'a été créé",
     "addon.shipping-dhl.onlyCarrier": "DHL est la seule société de livraison connectée.",
@@ -320,22 +323,19 @@ export const strings = {
     "addon.shipping-dhl.parcel.goingTo": "Destinataire",
 
     // ── a customer this add-on cannot place ────────────────────────────────
-    "addon.shipping-dhl.dest.unknownTitle": "Aucune adresse enregistrée pour ce client",
-    "addon.shipping-dhl.dest.unknownBody": "{customer} ne figure pas dans le carnet d'adresses de ce transporteur ; rien n'a été prérempli. Saisissez la destination du colis — aucune adresse d'un autre client n'est utilisée à sa place.",
+    "addon.shipping-dhl.dest.unknownTitle": "Aucune adresse pour ce colis",
+    "addon.shipping-dhl.dest.unknownBody": "L'atelier n'a pas indiqué où va le colis de {customer} ; rien n'a été prérempli. Saisissez l'adresse — aucune autre adresse client n'est utilisée à la place.",
     "addon.shipping-dhl.dest.name": "Nom du destinataire",
     "addon.shipping-dhl.dest.street": "Rue",
     "addon.shipping-dhl.dest.city": "Ville",
     "addon.shipping-dhl.dest.needAddress": "Indiquez une ville et un code postal avant d'obtenir les tarifs.",
-    "addon.shipping-dhl.parcel.contentsValue": "Imprimés en {gsm}g/m², {packaging}",
+    "addon.shipping-dhl.parcel.contentsValue": "{quantity} × {what}",
+    "addon.shipping-dhl.parcel.contentsValueMore": "{quantity} × {what} et {more} de plus",
     "addon.shipping-dhl.parcel.contentsFrom": "Depuis la commande {ref}, quantité {quantity}",
-    "addon.shipping-dhl.parcel.weightFrom": "{kg}kg — {sheets} × SRA3 en {gsm}g/m², {packaging}",
-    "addon.shipping-dhl.parcel.weightFromRoll":
-      "{kg}kg — {quantity} × support en rouleau de {gsm}g/m², en tube",
-    "addon.shipping-dhl.parcel.dimsFrom": "Le colis de cette commande, {packaging}",
-    "addon.shipping-dhl.pack.bundled": "en paquets",
-    "addon.shipping-dhl.pack.shrinkWrapped": "sous film",
-    "addon.shipping-dhl.pack.boxed": "en carton",
-    "addon.shipping-dhl.pack.tube": "en tube",
+    "addon.shipping-dhl.parcel.weightFrom": "{kg}kg — {quantity} à {each}g pièce, plus le carton",
+    "addon.shipping-dhl.parcel.weightAssumed": "{kg}kg — l'atelier n'a pas donné de poids pour : {what}. Saisissez ici le poids réel.",
+    "addon.shipping-dhl.parcel.dimsFrom": "Un carton à la taille du contenu",
+    "addon.shipping-dhl.parcel.dimsFromTube": "Roulé en tube — la pièce la plus longue dépasse 60cm",
 
     "addon.shipping-dhl.rates.get": "Obtenir les tarifs",
     "addon.shipping-dhl.rates.title": "Tarifs de ce colis",
@@ -347,7 +347,7 @@ export const strings = {
       "Réservez avant {cutoff} et le chauffeur passe cet après-midi. Il est {now}.",
     "addon.shipping-dhl.rates.cutoffMissed":
       "Il est {now}, après l'heure limite de {cutoff} : la camionnette passera le {day}.",
-    "addon.shipping-dhl.service.exp1200": "Express avant 12:00",
+    "addon.shipping-dhl.service.exp1200": "Express avant {by}",
     "addon.shipping-dhl.service.expNwd": "Express, jour ouvré suivant",
     "addon.shipping-dhl.service.eco2wd": "Économique, deuxième jour ouvré",
 
@@ -367,14 +367,15 @@ export const strings = {
     "addon.shipping-dhl.error.simulated": "Transporteur de démonstration — refus simulé",
     "addon.shipping-dhl.error.remedy1":
       "Vérifiez le code postal par rapport au pays de destination. Un code {country} ressemble à {example}.",
-    "addon.shipping-dhl.error.remedy2":
-      "Si l'adresse est correcte telle quelle, remettez la commande au comptoir et marquez-la retirée.",
+    "addon.shipping-dhl.error.remedy2": "Si l'adresse est correcte telle quelle, remettez le colis au comptoir et marquez-le comme retiré.",
     "addon.shipping-dhl.error.retry": "Réessayer",
     "addon.shipping-dhl.error.postcode": "Code postal",
     "addon.shipping-dhl.error.country": "Pays",
 
     "addon.shipping-dhl.checkout.title": "Livraison par DHL",
     "addon.shipping-dhl.checkout.sub": "Calculé d'après le contenu de votre panier.",
+    "addon.shipping-dhl.checkout.fromReady":
+      "Compté à partir du {day}, premier jour où la boutique peut le remettre.",
     "addon.shipping-dhl.checkout.simulated":
       "Ces tarifs viennent d'un transporteur de démonstration. Rien n'est envoyé à un vrai.",
     "addon.shipping-dhl.panel.carrier": "Transporteur",
@@ -388,22 +389,24 @@ export const strings = {
   "cs-CZ": {
     // ── Host chrome this add-on owns: the connect sentence, its own settings
     //    panel copy, what a disconnect takes and keeps, and its activity lines.
-    "addon.shipping-dhl.what": "Dílna objedná svoz balíku přímo z průvodky, dostane zpět ceny a vytiskne štítek — místo přepisování čísel zásilek do e-mailu.",
+    "addon.shipping-dhl.what": "Dílna si tím objedná svoz balíku přímo z připravené objednávky, dostane zpět ceny a vytiskne štítek, místo přepisování čísel zásilek do e-mailu.",
     "addon.shipping-dhl.set.demo": "Použít ukázkového dopravce",
     "addon.shipping-dhl.set.demoOn": "Ceny, štítky i sledování se vracejí z připravené náhrady. K opravdovému dopravci se nedostane nic.",
-    "addon.shipping-dhl.set.demoOff": "Dotazy jdou k dopravci se zadanými údaji účtu. Zapněte to zpět a přestane to.",
+    "addon.shipping-dhl.set.demoOff":
+      "Ve skutečném obchodě by dotazy šly k dopravci se zadanými údaji účtu. Z této ukázky se tak jako tak nic neodesílá — ceny, štítky i sledování stále vrací zabudovaná náhrada.",
     "addon.shipping-dhl.set.cutoffLabel": "Uzávěrka svozu",
     "addon.shipping-dhl.set.cutoffNote": "Objednejte dřív a řidič přijede ještě odpoledne.",
     "addon.shipping-dhl.set.weights": "Výchozí hmotnosti balíků",
-    "addon.shipping-dhl.set.weightsNote": "Spočítané z materiálu a množství na zakázce. Ceník za nimi se upravuje ve vašem panelu Adminium.",
-    "addon.shipping-dhl.disconnect.goes": "Průvodce zmizí „Objednat svoz“, pokladně ceny dopravce a stránka zakázky se zákazníkovi vrátí k vyzvednutí v dílně.",
-    "addon.shipping-dhl.disconnect.stays": "Už objednané svozy si nechají štítek i číslo zásilky. Údaje účtu se smažou.",
+    "addon.shipping-dhl.set.weightsNote": "Spočítané z hmotnosti jednoho kusu, kterou uvádí dílna, plus krabice. Ceník za nimi se upravuje ve vašem panelu Adminium.",
+    "addon.shipping-dhl.set.weightAssumed": "{kg} kg — odhad",
+    "addon.shipping-dhl.set.weightKg": "{kg} kg",
+    "addon.shipping-dhl.disconnect.goes": "Objednávka přijde o „Objednat svoz“, pokladna o ceny dopravce a stránka objednávky zákazníka se vrátí k vyzvednutí v dílně. Údaje účtu se smažou.",
+    "addon.shipping-dhl.disconnect.stays": "Už objednané svozy si nechají štítek i číslo zásilky.",
     "addon.shipping-dhl.act.1": "{when} · svoz objednán · {ref}",
     "addon.shipping-dhl.act.2": "{when} · ceny načteny · {ref}",
     "addon.shipping-dhl.act.3": "{when} · štítek stažen · {ref}",
 
-    "addon.shipping-dhl.line":
-      "Objedná svoz zásilky k hotové zakázce a vrátí štítek se sledovacím číslem.",
+    "addon.shipping-dhl.line": "Objedná svoz balíku k připravené objednávce a vrátí štítek a číslo zásilky.",
     "addon.shipping-dhl.notAffiliated": "Adminium není nijak spojeno s touto společností.",
     "addon.shipping-dhl.demoChip": "Demo dopravce — žádná skutečná zásilka nevznikla",
     "addon.shipping-dhl.onlyCarrier": "DHL je jediný připojený dopravce.",
@@ -424,29 +427,26 @@ export const strings = {
 
     "addon.shipping-dhl.action.book": "Objednat svoz",
     "addon.shipping-dhl.parcel.title": "Zásilka",
-    "addon.shipping-dhl.parcel.sub": "Vyplněno ze zakázky. Co nesedí, přepište.",
+    "addon.shipping-dhl.parcel.sub": "Vyplněno z objednávky. Co nesedí, přepište.",
     "addon.shipping-dhl.parcel.contents": "Obsah",
     "addon.shipping-dhl.parcel.weight": "Hmotnost",
     "addon.shipping-dhl.parcel.dims": "Rozměry",
     "addon.shipping-dhl.parcel.goingTo": "Adresát",
 
     // ── a customer this add-on cannot place ────────────────────────────────
-    "addon.shipping-dhl.dest.unknownTitle": "U tohoto zákazníka není uložená adresa",
-    "addon.shipping-dhl.dest.unknownBody": "{customer} není v adresáři tohoto dopravce, proto se nic nepředvyplnilo. Napište, kam zásilka jde — žádná cizí adresa se nedosazuje.",
+    "addon.shipping-dhl.dest.unknownTitle": "K této zásilce není adresa",
+    "addon.shipping-dhl.dest.unknownBody": "Dílna neuvedla, kam má zásilka {customer} jít, takže není nic předvyplněno. Napište adresu — žádná jiná adresa se místo ní nepoužije.",
     "addon.shipping-dhl.dest.name": "Příjemce",
     "addon.shipping-dhl.dest.street": "Ulice",
     "addon.shipping-dhl.dest.city": "Město",
     "addon.shipping-dhl.dest.needAddress": "Doplňte město a PSČ, teprve pak zjistíte sazby.",
-    "addon.shipping-dhl.parcel.contentsValue": "Tiskoviny, {gsm}g/m², {packaging}",
-    "addon.shipping-dhl.parcel.contentsFrom": "Ze zakázky {ref}, množství {quantity}",
-    "addon.shipping-dhl.parcel.weightFrom": "{kg}kg — {sheets} × SRA3 v {gsm}g/m², {packaging}",
-    "addon.shipping-dhl.parcel.weightFromRoll":
-      "{kg}kg — {quantity} × rolový materiál {gsm}g/m², v tubusu",
-    "addon.shipping-dhl.parcel.dimsFrom": "Zásilka k této zakázce, {packaging}",
-    "addon.shipping-dhl.pack.bundled": "svázané",
-    "addon.shipping-dhl.pack.shrinkWrapped": "zafóliované",
-    "addon.shipping-dhl.pack.boxed": "v krabici",
-    "addon.shipping-dhl.pack.tube": "v tubusu",
+    "addon.shipping-dhl.parcel.contentsValue": "{quantity} × {what}",
+    "addon.shipping-dhl.parcel.contentsValueMore": "{quantity} × {what} a {more} dalších",
+    "addon.shipping-dhl.parcel.contentsFrom": "Z objednávky {ref}, množství {quantity}",
+    "addon.shipping-dhl.parcel.weightFrom": "{kg}kg — {quantity} po {each}g, plus krabice",
+    "addon.shipping-dhl.parcel.weightAssumed": "{kg}kg — dílna neuvedla hmotnost u: {what}. Napište sem skutečnou hmotnost.",
+    "addon.shipping-dhl.parcel.dimsFrom": "Krabice na míru obsahu",
+    "addon.shipping-dhl.parcel.dimsFromTube": "Sroluje se do tubusu — nejdelší kus přesahuje 60cm",
 
     "addon.shipping-dhl.rates.get": "Zjistit sazby",
     "addon.shipping-dhl.rates.title": "Sazby této zásilky",
@@ -458,7 +458,7 @@ export const strings = {
       "Objednejte do {cutoff} a řidič přijede dnes odpoledne. Teď je {now}.",
     "addon.shipping-dhl.rates.cutoffMissed":
       "Je {now}, tedy po uzávěrce v {cutoff} — vůz přijede {day}.",
-    "addon.shipping-dhl.service.exp1200": "Expres do 12:00",
+    "addon.shipping-dhl.service.exp1200": "Expres do {by}",
     "addon.shipping-dhl.service.expNwd": "Expres, následující pracovní den",
     "addon.shipping-dhl.service.eco2wd": "Úsporně, druhý pracovní den",
 
@@ -478,14 +478,15 @@ export const strings = {
     "addon.shipping-dhl.error.simulated": "Demo dopravce — toto odmítnutí je simulované",
     "addon.shipping-dhl.error.remedy1":
       "Zkontrolujte PSČ oproti cílové zemi. Zápis země {country} vypadá takto: {example}.",
-    "addon.shipping-dhl.error.remedy2":
-      "Je-li adresa v pořádku, vydejte zakázku na pultu a označte ji jako vyzvednutou.",
+    "addon.shipping-dhl.error.remedy2": "Pokud je adresa správně, předejte zásilku přes pult a označte ji jako vyzvednutou.",
     "addon.shipping-dhl.error.retry": "Zkusit znovu",
     "addon.shipping-dhl.error.postcode": "PSČ",
     "addon.shipping-dhl.error.country": "Země",
 
     "addon.shipping-dhl.checkout.title": "Doručení s DHL",
     "addon.shipping-dhl.checkout.sub": "Spočítáno z obsahu vašeho košíku.",
+    "addon.shipping-dhl.checkout.fromReady":
+      "Počítáno od {day}, což je nejbližší den, kdy to obchod může předat.",
     "addon.shipping-dhl.checkout.simulated":
       "Tyto sazby vrací demo dopravce. Skutečnému se neodesílá nic.",
     "addon.shipping-dhl.panel.carrier": "Dopravce",
@@ -499,22 +500,24 @@ export const strings = {
   "da-DK": {
     // ── Host chrome this add-on owns: the connect sentence, its own settings
     //    panel copy, what a disconnect takes and keeps, and its activity lines.
-    "addon.shipping-dhl.what": "Det lader værkstedet bestille en pakkeafhentning direkte fra følgesedlen, få priser tilbage og printe en label — i stedet for at taste sporingsnumre ind i en mail.",
+    "addon.shipping-dhl.what": "Med den kan værkstedet bestille afhentning af en pakke direkte fra en ordre, der er klar, få priser retur og printe en label i stedet for at taste sporingsnumre ind i en mail.",
     "addon.shipping-dhl.set.demo": "Brug demo-fragtfirmaet",
     "addon.shipping-dhl.set.demoOn": "Priser, labels og sporing kommer fra en indlagt stedfortræder. Intet når et rigtigt fragtfirma.",
-    "addon.shipping-dhl.set.demoOff": "Kald går til fragtfirmaet med de kontooplysninger, du indtastede. Slå dette til igen for at standse det.",
+    "addon.shipping-dhl.set.demoOff":
+      "I en rigtig butik ville kaldene gå til fragtfirmaet med de kontooplysninger, du indtastede. Der sendes ikke noget fra denne demo under nogen omstændigheder — priser, labels og sporing kommer stadig fra den indbyggede stedfortræder.",
     "addon.shipping-dhl.set.cutoffLabel": "Sidste frist for afhentning",
     "addon.shipping-dhl.set.cutoffNote": "Bestil før den, og chaufføren kommer samme eftermiddag.",
     "addon.shipping-dhl.set.weights": "Standardvægte for pakker",
-    "addon.shipping-dhl.set.weightsNote": "Regnet ud fra materialet og antallet på opgaven. Prislisten bag dem redigeres i jeres Adminium-dashboard.",
-    "addon.shipping-dhl.disconnect.goes": "Følgesedlen mister “Bestil afhentning”, kassen mister fragtfirmaets priser, og kundens ordreside går tilbage til afhentning på værkstedet.",
-    "addon.shipping-dhl.disconnect.stays": "Allerede bestilte afhentninger beholder label og sporingsnummer. Kontooplysningerne slettes.",
+    "addon.shipping-dhl.set.weightsNote": "Regnet ud fra den stykvægt, værkstedet oplyser, plus kassen. Prislisten bag dem redigeres i jeres Adminium-dashboard.",
+    "addon.shipping-dhl.set.weightAssumed": "{kg} kg — anslået",
+    "addon.shipping-dhl.set.weightKg": "{kg} kg",
+    "addon.shipping-dhl.disconnect.goes": "Ordren mister “Bestil afhentning”, kassen mister transportørens priser, og kundens ordreside går tilbage til afhentning på værkstedet. Kontooplysningerne slettes.",
+    "addon.shipping-dhl.disconnect.stays": "Allerede bestilte afhentninger beholder label og sporingsnummer.",
     "addon.shipping-dhl.act.1": "{when} · afhentning bestilt · {ref}",
     "addon.shipping-dhl.act.2": "{when} · priser hentet · {ref}",
     "addon.shipping-dhl.act.3": "{when} · label hentet · {ref}",
 
-    "addon.shipping-dhl.line":
-      "Bestiller afhentning af en pakke til en færdig opgave og henter en label og et sporingsnummer.",
+    "addon.shipping-dhl.line": "Bestiller afhentning af en pakke til en ordre, der er klar, og henter label og sporingsnummer tilbage.",
     "addon.shipping-dhl.notAffiliated": "Adminium er ikke tilknyttet dette selskab.",
     "addon.shipping-dhl.demoChip": "Demo-fragtfirma — der blev ikke oprettet en rigtig forsendelse",
     "addon.shipping-dhl.onlyCarrier": "DHL er det eneste tilsluttede fragtfirma.",
@@ -535,29 +538,26 @@ export const strings = {
 
     "addon.shipping-dhl.action.book": "Bestil afhentning",
     "addon.shipping-dhl.parcel.title": "Pakken",
-    "addon.shipping-dhl.parcel.sub": "Udfyldt fra opgaven. Ret det, der ikke passer.",
+    "addon.shipping-dhl.parcel.sub": "Udfyldt fra ordren. Ret det, der ikke passer.",
     "addon.shipping-dhl.parcel.contents": "Indhold",
     "addon.shipping-dhl.parcel.weight": "Vægt",
     "addon.shipping-dhl.parcel.dims": "Mål",
     "addon.shipping-dhl.parcel.goingTo": "Sendes til",
 
     // ── a customer this add-on cannot place ────────────────────────────────
-    "addon.shipping-dhl.dest.unknownTitle": "Der er ingen adresse på denne kunde",
-    "addon.shipping-dhl.dest.unknownBody": "{customer} står ikke i fragtfirmaets adressebog, så intet er udfyldt på forhånd. Skriv, hvor pakken skal hen — der bruges ikke en anden kundes adresse i stedet.",
+    "addon.shipping-dhl.dest.unknownTitle": "Ingen adresse til denne pakke",
+    "addon.shipping-dhl.dest.unknownBody": "Værkstedet har ikke oplyst, hvor pakken til {customer} skal hen, så intet er udfyldt. Skriv adressen — ingen anden kundes adresse bruges i stedet.",
     "addon.shipping-dhl.dest.name": "Modtager",
     "addon.shipping-dhl.dest.street": "Vej og nummer",
     "addon.shipping-dhl.dest.city": "By",
     "addon.shipping-dhl.dest.needAddress": "Udfyld by og postnummer, før du henter priser.",
-    "addon.shipping-dhl.parcel.contentsValue": "Tryksager på {gsm}g/m², {packaging}",
-    "addon.shipping-dhl.parcel.contentsFrom": "Fra opgave {ref}, antal {quantity}",
-    "addon.shipping-dhl.parcel.weightFrom": "{kg}kg — {sheets} × SRA3 på {gsm}g/m², {packaging}",
-    "addon.shipping-dhl.parcel.weightFromRoll":
-      "{kg}kg — {quantity} × rullemateriale på {gsm}g/m², i et rør",
-    "addon.shipping-dhl.parcel.dimsFrom": "Pakken til denne opgave, {packaging}",
-    "addon.shipping-dhl.pack.bundled": "i bundter",
-    "addon.shipping-dhl.pack.shrinkWrapped": "i krympefolie",
-    "addon.shipping-dhl.pack.boxed": "i kasse",
-    "addon.shipping-dhl.pack.tube": "i et rør",
+    "addon.shipping-dhl.parcel.contentsValue": "{quantity} × {what}",
+    "addon.shipping-dhl.parcel.contentsValueMore": "{quantity} × {what} og {more} mere",
+    "addon.shipping-dhl.parcel.contentsFrom": "Fra ordre {ref}, antal {quantity}",
+    "addon.shipping-dhl.parcel.weightFrom": "{kg}kg — {quantity} à {each}g stykket, plus kassen",
+    "addon.shipping-dhl.parcel.weightAssumed": "{kg}kg — værkstedet har ikke oplyst vægten på: {what}. Skriv den rigtige vægt her.",
+    "addon.shipping-dhl.parcel.dimsFrom": "En kasse i størrelsen efter indholdet",
+    "addon.shipping-dhl.parcel.dimsFromTube": "Rullet i et rør — det længste stykke er over 60cm",
 
     "addon.shipping-dhl.rates.get": "Hent priser",
     "addon.shipping-dhl.rates.title": "Priser for denne pakke",
@@ -569,7 +569,7 @@ export const strings = {
       "Bestil inden {cutoff}, så kommer chaufføren i eftermiddag. Klokken er {now}.",
     "addon.shipping-dhl.rates.cutoffMissed":
       "Klokken er {now} og dermed efter fristen {cutoff} — bilen kommer {day}.",
-    "addon.shipping-dhl.service.exp1200": "Ekspres inden kl. 12:00",
+    "addon.shipping-dhl.service.exp1200": "Ekspres inden kl. {by}",
     "addon.shipping-dhl.service.expNwd": "Ekspres, næste hverdag",
     "addon.shipping-dhl.service.eco2wd": "Økonomi, anden hverdag",
 
@@ -589,14 +589,15 @@ export const strings = {
     "addon.shipping-dhl.error.simulated": "Demo-fragtfirma — dette afslag er simuleret",
     "addon.shipping-dhl.error.remedy1":
       "Tjek postnummeret mod modtagerlandet. Et {country}-postnummer ser sådan ud: {example}.",
-    "addon.shipping-dhl.error.remedy2":
-      "Er adressen rigtig, som den står, så udlevér opgaven over disken og markér den som afhentet.",
+    "addon.shipping-dhl.error.remedy2": "Er adressen rigtig, som den står, så udlevér pakken over disken og markér den som afhentet.",
     "addon.shipping-dhl.error.retry": "Prøv igen",
     "addon.shipping-dhl.error.postcode": "Postnummer",
     "addon.shipping-dhl.error.country": "Land",
 
     "addon.shipping-dhl.checkout.title": "Levering med DHL",
     "addon.shipping-dhl.checkout.sub": "Regnet ud fra indholdet af din kurv.",
+    "addon.shipping-dhl.checkout.fromReady":
+      "Regnet fra {day}, den første dag butikken kan aflevere pakken.",
     "addon.shipping-dhl.checkout.simulated":
       "Priserne her kommer fra et demo-fragtfirma. Der sendes intet til et rigtigt.",
     "addon.shipping-dhl.panel.carrier": "Fragtfirma",
@@ -610,21 +611,24 @@ export const strings = {
   "zh-CN": {
     // ── Host chrome this add-on owns: the connect sentence, its own settings
     //    panel copy, what a disconnect takes and keeps, and its activity lines.
-    "addon.shipping-dhl.what": "工坊可以直接从工单预约取件、拿回运价并打印面单，不必再把运单号抄进邮件。",
+    "addon.shipping-dhl.what": "让店里直接从已备好的订单预约包裹取件，取回运费并打印面单，不必再把单号敲进邮件里。",
     "addon.shipping-dhl.set.demo": "使用演示快递",
     "addon.shipping-dhl.set.demoOn": "运价、面单和轨迹都来自预置的替身。没有任何内容送到真实快递公司。",
-    "addon.shipping-dhl.set.demoOff": "请求会带着您填的账号信息发往快递公司。重新打开这一项即可停止。",
+    "addon.shipping-dhl.set.demoOff":
+      "在真实的店铺里，请求会带着您填的账号信息发往快递公司。但这个演示无论如何都不会向外发送任何东西——价格、面单和物流轨迹仍旧来自内置的替身。",
     "addon.shipping-dhl.set.cutoffLabel": "取件截止时间",
     "addon.shipping-dhl.set.cutoffNote": "在此之前预约，司机当天下午就来。",
     "addon.shipping-dhl.set.weights": "默认包裹重量",
-    "addon.shipping-dhl.set.weightsNote": "按工单上的材料与数量算出。背后的价目表在您的 Adminium 面板里维护。",
-    "addon.shipping-dhl.disconnect.goes": "工单少了“预约取件”，结算页少了快递运价，客户的订单页也回到工坊自取。",
-    "addon.shipping-dhl.disconnect.stays": "已预约的取件保留面单与运单号。账号信息会被删除。",
+    "addon.shipping-dhl.set.weightsNote": "按店里给出的单件重量加上包装箱算出。其后的价目表在 Adminium 控制台里修改。",
+    "addon.shipping-dhl.set.weightAssumed": "{kg} 公斤 — 估算",
+    "addon.shipping-dhl.set.weightKg": "{kg} 公斤",
+    "addon.shipping-dhl.disconnect.goes": "订单上不再有“预约取件”，收银台不再显示承运商运费，客户的订单页恢复为到店自取。账号信息会被删除。",
+    "addon.shipping-dhl.disconnect.stays": "已预约的取件保留面单与运单号。",
     "addon.shipping-dhl.act.1": "{when} · 已预约取件 · {ref}",
     "addon.shipping-dhl.act.2": "{when} · 已取运价 · {ref}",
     "addon.shipping-dhl.act.3": "{when} · 已下载面单 · {ref}",
 
-    "addon.shipping-dhl.line": "为已就绪的工单预约包裹取件，并取回面单与运单号。",
+    "addon.shipping-dhl.line": "为已备好的订单预约包裹取件，并取回面单和运单号。",
     "addon.shipping-dhl.notAffiliated": "Adminium 与该公司没有任何关联。",
     "addon.shipping-dhl.demoChip": "演示承运商 — 未创建任何真实运单",
     "addon.shipping-dhl.onlyCarrier": "目前只连接了 DHL 一家快递公司。",
@@ -644,28 +648,26 @@ export const strings = {
 
     "addon.shipping-dhl.action.book": "预约取件",
     "addon.shipping-dhl.parcel.title": "包裹",
-    "addon.shipping-dhl.parcel.sub": "根据工单填好。有不对的地方直接改。",
+    "addon.shipping-dhl.parcel.sub": "根据订单填好。有不对的地方请改。",
     "addon.shipping-dhl.parcel.contents": "内容物",
     "addon.shipping-dhl.parcel.weight": "重量",
     "addon.shipping-dhl.parcel.dims": "尺寸",
     "addon.shipping-dhl.parcel.goingTo": "寄往",
 
     // ── a customer this add-on cannot place ────────────────────────────────
-    "addon.shipping-dhl.dest.unknownTitle": "这位客户没有存过地址",
-    "addon.shipping-dhl.dest.unknownBody": "{customer} 不在本承运商的地址簿里，所以没有预填任何内容。请填写包裹寄往何处 —— 不会拿别的客户的地址来顶替。",
+    "addon.shipping-dhl.dest.unknownTitle": "这件包裹没有地址",
+    "addon.shipping-dhl.dest.unknownBody": "店里没有说明 {customer} 的包裹寄往何处，因此没有预填任何内容。请填写地址——不会用其他客户的地址顶替。",
     "addon.shipping-dhl.dest.name": "收件人",
     "addon.shipping-dhl.dest.street": "街道",
     "addon.shipping-dhl.dest.city": "城市",
     "addon.shipping-dhl.dest.needAddress": "先填城市和邮编，再查询运费。",
-    "addon.shipping-dhl.parcel.contentsValue": "{gsm}克纸印品，{packaging}",
-    "addon.shipping-dhl.parcel.contentsFrom": "来自工单 {ref}，数量 {quantity}",
-    "addon.shipping-dhl.parcel.weightFrom": "{kg}公斤 — {sheets} 张 SRA3，{gsm}克纸，{packaging}",
-    "addon.shipping-dhl.parcel.weightFromRoll": "{kg}公斤 — {quantity} 份 {gsm}克卷材，装筒",
-    "addon.shipping-dhl.parcel.dimsFrom": "该工单的包裹，{packaging}",
-    "addon.shipping-dhl.pack.bundled": "打捆",
-    "addon.shipping-dhl.pack.shrinkWrapped": "热缩膜包",
-    "addon.shipping-dhl.pack.boxed": "装箱",
-    "addon.shipping-dhl.pack.tube": "装筒",
+    "addon.shipping-dhl.parcel.contentsValue": "{quantity} × {what}",
+    "addon.shipping-dhl.parcel.contentsValueMore": "{quantity} × {what}，另有 {more} 项",
+    "addon.shipping-dhl.parcel.contentsFrom": "来自订单 {ref}，数量 {quantity}",
+    "addon.shipping-dhl.parcel.weightFrom": "{kg} 公斤 — {quantity} 件，每件 {each} 克，加包装箱",
+    "addon.shipping-dhl.parcel.weightAssumed": "{kg} 公斤 — 店里没有给出这些的重量：{what}。请在此填写实际重量。",
+    "addon.shipping-dhl.parcel.dimsFrom": "按内容物大小配的箱子",
+    "addon.shipping-dhl.parcel.dimsFromTube": "卷成筒装——最长的一件超过 60 厘米",
 
     "addon.shipping-dhl.rates.get": "查询运费",
     "addon.shipping-dhl.rates.title": "这件包裹的运费",
@@ -675,7 +677,7 @@ export const strings = {
     "addon.shipping-dhl.rates.book": "预约取件",
     "addon.shipping-dhl.rates.cutoffLine": "{cutoff} 前预约，司机今天下午就来。现在是 {now}。",
     "addon.shipping-dhl.rates.cutoffMissed": "现在是 {now}，已过 {cutoff} 的截止时间，车 {day} 来。",
-    "addon.shipping-dhl.service.exp1200": "特快，12:00 前送达",
+    "addon.shipping-dhl.service.exp1200": "特快，{by} 前送达",
     "addon.shipping-dhl.service.expNwd": "特快，次个工作日",
     "addon.shipping-dhl.service.eco2wd": "经济，第二个工作日",
 
@@ -687,20 +689,21 @@ export const strings = {
     "addon.shipping-dhl.label.print": "打印",
     "addon.shipping-dhl.tracking.title": "物流轨迹",
     "addon.shipping-dhl.tracking.simulated": "演示承运商 — 这些轨迹为模拟结果",
-    "addon.shipping-dhl.event.collected": "已在车间取件",
+    "addon.shipping-dhl.event.collected": "已从店里取件",
     "addon.shipping-dhl.event.atHub": "已在转运中心分拣",
     "addon.shipping-dhl.event.outForDelivery": "派送员已带出",
 
     "addon.shipping-dhl.error.title": "承运商不接受这个地址",
     "addon.shipping-dhl.error.simulated": "演示承运商 — 此次拒收为模拟结果",
     "addon.shipping-dhl.error.remedy1": "对照收件国家核对邮编。{country} 的邮编形如 {example}。",
-    "addon.shipping-dhl.error.remedy2": "地址本身没错的话，就在柜台把这批活交给客户，并标记为已自取。",
+    "addon.shipping-dhl.error.remedy2": "如果地址本来就没错，请把包裹在柜台交付，并标记为已取走。",
     "addon.shipping-dhl.error.retry": "再试一次",
     "addon.shipping-dhl.error.postcode": "邮编",
     "addon.shipping-dhl.error.country": "国家/地区",
 
     "addon.shipping-dhl.checkout.title": "由 DHL 送达",
     "addon.shipping-dhl.checkout.sub": "根据购物车里的东西算出来的。",
+    "addon.shipping-dhl.checkout.fromReady": "从 {day} 算起，那是店里最早能把它交出去的一天。",
     "addon.shipping-dhl.checkout.simulated": "这些运费来自演示承运商，不会发给真实承运商。",
     "addon.shipping-dhl.panel.carrier": "承运商",
     "addon.shipping-dhl.panel.due": "预计",
@@ -712,21 +715,24 @@ export const strings = {
   "zh-TW": {
     // ── Host chrome this add-on owns: the connect sentence, its own settings
     //    panel copy, what a disconnect takes and keeps, and its activity lines.
-    "addon.shipping-dhl.what": "工坊可以直接從工單預約取件、拿回運價並列印面單，不必再把貨運單號抄進郵件。",
+    "addon.shipping-dhl.what": "讓店裡直接從已備妥的訂單預約包裹取件，取回運費並列印面單，不必再把單號敲進郵件裡。",
     "addon.shipping-dhl.set.demo": "使用示範快遞",
     "addon.shipping-dhl.set.demoOn": "運價、面單和軌跡都來自預置的替身。沒有任何內容送到真實快遞公司。",
-    "addon.shipping-dhl.set.demoOff": "請求會帶著您填的帳號資訊送往快遞公司。重新打開這一項即可停止。",
+    "addon.shipping-dhl.set.demoOff":
+      "在真實的店鋪裡，請求會帶著您填的帳號資訊送往快遞公司。但這個示範無論如何都不會向外送出任何東西——價格、面單和物流軌跡仍舊來自內建的替身。",
     "addon.shipping-dhl.set.cutoffLabel": "取件截止時間",
     "addon.shipping-dhl.set.cutoffNote": "在此之前預約，司機當天下午就來。",
     "addon.shipping-dhl.set.weights": "預設包裹重量",
-    "addon.shipping-dhl.set.weightsNote": "依工單上的材料與數量算出。背後的價目表在您的 Adminium 面板裡維護。",
-    "addon.shipping-dhl.disconnect.goes": "工單少了「預約取件」，結帳頁少了快遞運價，客戶的訂單頁也回到工坊自取。",
-    "addon.shipping-dhl.disconnect.stays": "已預約的取件保留面單與貨運單號。帳號資訊會被刪除。",
+    "addon.shipping-dhl.set.weightsNote": "依店裡提供的單件重量加上包裝箱算出。其後的價目表在 Adminium 控制台裡修改。",
+    "addon.shipping-dhl.set.weightAssumed": "{kg} 公斤 — 估算",
+    "addon.shipping-dhl.set.weightKg": "{kg} 公斤",
+    "addon.shipping-dhl.disconnect.goes": "訂單上不再有「預約取件」，結帳不再顯示承運商運費，顧客的訂單頁回到到店自取。帳號資訊會被刪除。",
+    "addon.shipping-dhl.disconnect.stays": "已預約的取件保留面單與貨運單號。",
     "addon.shipping-dhl.act.1": "{when} · 已預約取件 · {ref}",
     "addon.shipping-dhl.act.2": "{when} · 已取運價 · {ref}",
     "addon.shipping-dhl.act.3": "{when} · 已下載面單 · {ref}",
 
-    "addon.shipping-dhl.line": "為已就緒的工單預約包裹取件，並取回託運單與追蹤號碼。",
+    "addon.shipping-dhl.line": "為已備妥的訂單預約包裹取件，並取回面單與追蹤號碼。",
     "addon.shipping-dhl.notAffiliated": "Adminium 與該公司並無任何關聯。",
     "addon.shipping-dhl.demoChip": "示範業者 — 未建立任何真實託運",
     "addon.shipping-dhl.onlyCarrier": "目前只連接了 DHL 一家貨運公司。",
@@ -746,28 +752,26 @@ export const strings = {
 
     "addon.shipping-dhl.action.book": "預約取件",
     "addon.shipping-dhl.parcel.title": "包裹",
-    "addon.shipping-dhl.parcel.sub": "依工單填好。有不對的地方直接改。",
+    "addon.shipping-dhl.parcel.sub": "依訂單填好。有不對的地方請改。",
     "addon.shipping-dhl.parcel.contents": "內容物",
     "addon.shipping-dhl.parcel.weight": "重量",
     "addon.shipping-dhl.parcel.dims": "尺寸",
     "addon.shipping-dhl.parcel.goingTo": "寄往",
 
     // ── a customer this add-on cannot place ────────────────────────────────
-    "addon.shipping-dhl.dest.unknownTitle": "這位客戶沒有存過地址",
-    "addon.shipping-dhl.dest.unknownBody": "{customer} 不在本業者的地址簿裡，因此沒有預先填入任何內容。請填寫包裹要寄到哪裡 —— 不會拿別的客戶的地址來頂替。",
+    "addon.shipping-dhl.dest.unknownTitle": "這件包裹沒有地址",
+    "addon.shipping-dhl.dest.unknownBody": "店裡沒有說明 {customer} 的包裹要寄到哪裡，因此沒有預先填入任何內容。請填寫地址——不會用其他顧客的地址頂替。",
     "addon.shipping-dhl.dest.name": "收件人",
     "addon.shipping-dhl.dest.street": "街道",
     "addon.shipping-dhl.dest.city": "城市",
     "addon.shipping-dhl.dest.needAddress": "先填城市和郵遞區號，再查詢運費。",
-    "addon.shipping-dhl.parcel.contentsValue": "{gsm}磅紙印刷品，{packaging}",
-    "addon.shipping-dhl.parcel.contentsFrom": "來自工單 {ref}，數量 {quantity}",
-    "addon.shipping-dhl.parcel.weightFrom": "{kg}公斤 — {sheets} 張 SRA3，{gsm}磅紙，{packaging}",
-    "addon.shipping-dhl.parcel.weightFromRoll": "{kg}公斤 — {quantity} 份 {gsm}磅捲材，裝筒",
-    "addon.shipping-dhl.parcel.dimsFrom": "這張工單的包裹，{packaging}",
-    "addon.shipping-dhl.pack.bundled": "綁捆",
-    "addon.shipping-dhl.pack.shrinkWrapped": "收縮膜包",
-    "addon.shipping-dhl.pack.boxed": "裝箱",
-    "addon.shipping-dhl.pack.tube": "裝筒",
+    "addon.shipping-dhl.parcel.contentsValue": "{quantity} × {what}",
+    "addon.shipping-dhl.parcel.contentsValueMore": "{quantity} × {what}，另有 {more} 項",
+    "addon.shipping-dhl.parcel.contentsFrom": "來自訂單 {ref}，數量 {quantity}",
+    "addon.shipping-dhl.parcel.weightFrom": "{kg} 公斤 — {quantity} 件，每件 {each} 公克，加包裝箱",
+    "addon.shipping-dhl.parcel.weightAssumed": "{kg} 公斤 — 店裡沒有提供這些的重量：{what}。請在此填入實際重量。",
+    "addon.shipping-dhl.parcel.dimsFrom": "依內容物大小配的箱子",
+    "addon.shipping-dhl.parcel.dimsFromTube": "捲成筒裝——最長的一件超過 60 公分",
 
     "addon.shipping-dhl.rates.get": "查詢運費",
     "addon.shipping-dhl.rates.title": "這件包裹的運費",
@@ -777,7 +781,7 @@ export const strings = {
     "addon.shipping-dhl.rates.book": "預約取件",
     "addon.shipping-dhl.rates.cutoffLine": "{cutoff} 前預約，司機今天下午就到。現在是 {now}。",
     "addon.shipping-dhl.rates.cutoffMissed": "現在是 {now}，已過 {cutoff} 的截止時間，車 {day} 才來。",
-    "addon.shipping-dhl.service.exp1200": "快捷，12:00 前送達",
+    "addon.shipping-dhl.service.exp1200": "快捷，{by} 前送達",
     "addon.shipping-dhl.service.expNwd": "快捷，次一個工作天",
     "addon.shipping-dhl.service.eco2wd": "經濟，第二個工作天",
 
@@ -789,20 +793,21 @@ export const strings = {
     "addon.shipping-dhl.label.print": "列印",
     "addon.shipping-dhl.tracking.title": "追蹤紀錄",
     "addon.shipping-dhl.tracking.simulated": "示範業者 — 這些紀錄為模擬結果",
-    "addon.shipping-dhl.event.collected": "已在工坊取件",
+    "addon.shipping-dhl.event.collected": "已從店裡取件",
     "addon.shipping-dhl.event.atHub": "已在轉運站分揀",
     "addon.shipping-dhl.event.outForDelivery": "外務員已帶出",
 
     "addon.shipping-dhl.error.title": "貨運業者不收這個地址",
     "addon.shipping-dhl.error.simulated": "示範業者 — 此次拒收為模擬結果",
     "addon.shipping-dhl.error.remedy1": "對照收件國家核對郵遞區號。{country} 的寫法像 {example}。",
-    "addon.shipping-dhl.error.remedy2": "地址本身沒錯的話，就在櫃檯把這批件交給客戶，並標記為已自取。",
+    "addon.shipping-dhl.error.remedy2": "若地址本來就正確，請將包裹在櫃檯交付，並標記為已取走。",
     "addon.shipping-dhl.error.retry": "再試一次",
     "addon.shipping-dhl.error.postcode": "郵遞區號",
     "addon.shipping-dhl.error.country": "國家/地區",
 
     "addon.shipping-dhl.checkout.title": "由 DHL 配送",
     "addon.shipping-dhl.checkout.sub": "依購物車裡的東西算出來的。",
+    "addon.shipping-dhl.checkout.fromReady": "從 {day} 算起，那是店裡最早能把它交出去的一天。",
     "addon.shipping-dhl.checkout.simulated": "這些運費來自示範業者，不會送給真實業者。",
     "addon.shipping-dhl.panel.carrier": "貨運業者",
     "addon.shipping-dhl.panel.due": "預計",
@@ -814,29 +819,31 @@ export const strings = {
   "ar-EG": {
     // ── Host chrome this add-on owns: the connect sentence, its own settings
     //    panel copy, what a disconnect takes and keeps, and its activity lines.
-    "addon.shipping-dhl.what": "يتيح للمطبعة حجز استلام طرد من بطاقة الشغل نفسها، واستعادة الأسعار وطباعة ملصق — بدل كتابة أرقام التتبّع في رسالة بريد.",
+    "addon.shipping-dhl.what": "يتيح للمحل حجز استلام طرد من طلب جاهز، واسترجاع الأسعار وطباعة بطاقة الشحن، بدل كتابة أرقام التتبع في رسالة بريد.",
     "addon.shipping-dhl.set.demo": "استخدم شركة الشحن التجريبية",
     "addon.shipping-dhl.set.demoOn": "الأسعار والملصقات والتتبّع تأتي من بديل مُعدّ سلفًا. لا يصل شيء إلى شركة شحن حقيقية.",
-    "addon.shipping-dhl.set.demoOff": "تذهب الطلبات إلى شركة الشحن ببيانات الحساب التي أدخلتها. أعد تشغيل هذا لإيقاف ذلك.",
+    "addon.shipping-dhl.set.demoOff":
+      "في متجر حقيقي كانت الطلبات ستذهب إلى شركة الشحن ببيانات الحساب التي أدخلتها. لا يُرسَل شيء من هذا العرض التوضيحي في الحالتين — الأسعار والملصقات والتتبّع تأتي دائمًا من البديل المضمَّن.",
     "addon.shipping-dhl.set.cutoffLabel": "آخر موعد للاستلام",
     "addon.shipping-dhl.set.cutoffNote": "احجز قبله ويأتي السائق بعد ظهر اليوم نفسه.",
     "addon.shipping-dhl.set.weights": "أوزان الطرود الافتراضية",
-    "addon.shipping-dhl.set.weightsNote": "محسوبة من الخامة والكمية في الشغلة. أما قائمة الأسعار خلفها فتُحرَّر في لوحة Adminium.",
-    "addon.shipping-dhl.disconnect.goes": "تفقد بطاقة الشغل «احجز استلامًا»، وتفقد صفحة الدفع أسعار شركة الشحن، وتعود صفحة طلب العميل إلى الاستلام من المطبعة.",
-    "addon.shipping-dhl.disconnect.stays": "عمليات الاستلام المحجوزة تحتفظ بملصقاتها وأرقام تتبّعها. وتُحذف بيانات الحساب.",
+    "addon.shipping-dhl.set.weightsNote": "محسوبة من وزن القطعة الواحدة الذي يذكره المحل، زائد الصندوق. أما قائمة الأسعار خلفها فتُعدَّل من لوحة Adminium.",
+    "addon.shipping-dhl.set.weightAssumed": "{kg} كجم — تقديري",
+    "addon.shipping-dhl.set.weightKg": "{kg} كجم",
+    "addon.shipping-dhl.disconnect.goes": "يفقد الطلب زر «احجز استلامًا»، وتفقد صفحة الدفع أسعار شركة الشحن، وتعود صفحة طلب العميل إلى الاستلام من المحل. وتُحذف بيانات الحساب.",
+    "addon.shipping-dhl.disconnect.stays": "عمليات الاستلام المحجوزة تحتفظ بملصقاتها وأرقام تتبّعها.",
     "addon.shipping-dhl.act.1": "{when} · حُجز استلام · {ref}",
     "addon.shipping-dhl.act.2": "{when} · جُلبت الأسعار · {ref}",
     "addon.shipping-dhl.act.3": "{when} · نُزّل الملصق · {ref}",
 
-    "addon.shipping-dhl.line":
-      "يحجز موعد استلام طرد لأمر شغل جاهز، ويرجّع ملصق الشحن ورقم التتبّع.",
+    "addon.shipping-dhl.line": "يحجز استلام طرد لطلب جاهز، ويعيد بطاقة شحن ورقم تتبع.",
     "addon.shipping-dhl.notAffiliated": "لا توجد أي علاقة بين Adminium وهذه الشركة.",
     "addon.shipping-dhl.demoChip": "شركة شحن تجريبية — لم تُنشأ أي شحنة حقيقية",
     "addon.shipping-dhl.onlyCarrier": "‏DHL هي شركة التوصيل الوحيدة الموصولة.",
     "addon.shipping-dhl.connectAnother": "أضف غيرها من صفحة الإضافات.",
 
     "addon.shipping-dhl.perm.rates": "جلب أسعار طرد أنت بصدد إرساله",
-    "addon.shipping-dhl.perm.shipments": "إنشاء شحنات للطلبات التي تُخرجها من المطبعة",
+    "addon.shipping-dhl.perm.shipments": "إنشاء شحنات للطلبات التي ترسلها",
     "addon.shipping-dhl.perm.labels": "تنزيل ملصقات تلك الشحنات",
 
     "addon.shipping-dhl.setting.apiKey": "مفتاح الـ API",
@@ -849,29 +856,26 @@ export const strings = {
 
     "addon.shipping-dhl.action.book": "احجز موعد استلام",
     "addon.shipping-dhl.parcel.title": "الطرد",
-    "addon.shipping-dhl.parcel.sub": "مملوء من أمر الشغل. عدّل ما لا يطابق.",
+    "addon.shipping-dhl.parcel.sub": "مملوء من الطلب. غيّر ما هو غير صحيح.",
     "addon.shipping-dhl.parcel.contents": "المحتويات",
     "addon.shipping-dhl.parcel.weight": "الوزن",
     "addon.shipping-dhl.parcel.dims": "الأبعاد",
     "addon.shipping-dhl.parcel.goingTo": "إلى",
 
     // ── a customer this add-on cannot place ────────────────────────────────
-    "addon.shipping-dhl.dest.unknownTitle": "لا يوجد عنوان محفوظ لهذا العميل",
-    "addon.shipping-dhl.dest.unknownBody": "{customer} غير مسجَّل في دفتر عناوين شركة الشحن، لذلك لم يُملأ شيء. اكتب وجهة الطرد — لن يُستخدم عنوان عميل آخر بدلًا منه.",
+    "addon.shipping-dhl.dest.unknownTitle": "لا يوجد عنوان لهذا الطرد",
+    "addon.shipping-dhl.dest.unknownBody": "لم يذكر المحل إلى أين يذهب طرد {customer}، لذلك لم يُملأ شيء. اكتب العنوان — ولن يُستخدم عنوان عميل آخر بدلًا منه.",
     "addon.shipping-dhl.dest.name": "المرسَل إليه",
     "addon.shipping-dhl.dest.street": "الشارع",
     "addon.shipping-dhl.dest.city": "المدينة",
     "addon.shipping-dhl.dest.needAddress": "اكتب المدينة والرمز البريدي قبل جلب الأسعار.",
-    "addon.shipping-dhl.parcel.contentsValue": "مطبوعات على ورق {gsm} جم/م²، {packaging}",
-    "addon.shipping-dhl.parcel.contentsFrom": "من أمر الشغل {ref}، الكمية {quantity}",
-    "addon.shipping-dhl.parcel.weightFrom": "{kg} كجم — {sheets} × SRA3 من ورق {gsm} جم/م²، {packaging}",
-    "addon.shipping-dhl.parcel.weightFromRoll":
-      "{kg} كجم — {quantity} × خامة لفّة {gsm} جم/م²، في أسطوانة",
-    "addon.shipping-dhl.parcel.dimsFrom": "طرد أمر الشغل هذا، {packaging}",
-    "addon.shipping-dhl.pack.bundled": "مربوط في رزم",
-    "addon.shipping-dhl.pack.shrinkWrapped": "مغلّف بالحرارة",
-    "addon.shipping-dhl.pack.boxed": "في كرتونة",
-    "addon.shipping-dhl.pack.tube": "في أسطوانة",
+    "addon.shipping-dhl.parcel.contentsValue": "{quantity} × {what}",
+    "addon.shipping-dhl.parcel.contentsValueMore": "{quantity} × {what} و{more} غيرها",
+    "addon.shipping-dhl.parcel.contentsFrom": "من الطلب {ref}، الكمية {quantity}",
+    "addon.shipping-dhl.parcel.weightFrom": "{kg} كجم — {quantity} بوزن {each} جم للقطعة، زائد الصندوق",
+    "addon.shipping-dhl.parcel.weightAssumed": "{kg} كجم — لم يذكر المحل وزن: {what}. اكتب الوزن الحقيقي هنا.",
+    "addon.shipping-dhl.parcel.dimsFrom": "صندوق بمقاس ما بداخله",
+    "addon.shipping-dhl.parcel.dimsFromTube": "ملفوف في أسطوانة — أطول قطعة تتجاوز ٦٠ سم",
 
     "addon.shipping-dhl.rates.get": "اجلب الأسعار",
     "addon.shipping-dhl.rates.title": "أسعار هذا الطرد",
@@ -883,7 +887,7 @@ export const strings = {
       "احجز قبل {cutoff} يمر السائق بعد ظهر اليوم. الساعة الآن {now}.",
     "addon.shipping-dhl.rates.cutoffMissed":
       "الساعة {now}، أي بعد آخر موعد {cutoff} — ستمر السيارة يوم {day}.",
-    "addon.shipping-dhl.service.exp1200": "سريع، قبل 12:00",
+    "addon.shipping-dhl.service.exp1200": "سريع، قبل {by}",
     "addon.shipping-dhl.service.expNwd": "سريع، يوم العمل التالي",
     "addon.shipping-dhl.service.eco2wd": "اقتصادي، ثاني يوم عمل",
 
@@ -895,7 +899,7 @@ export const strings = {
     "addon.shipping-dhl.label.print": "طباعة",
     "addon.shipping-dhl.tracking.title": "التتبّع",
     "addon.shipping-dhl.tracking.simulated": "شركة شحن تجريبية — هذه الحركات محاكاة",
-    "addon.shipping-dhl.event.collected": "استُلم من المطبعة",
+    "addon.shipping-dhl.event.collected": "تم الاستلام من المحل",
     "addon.shipping-dhl.event.atHub": "فُرز في المستودع",
     "addon.shipping-dhl.event.outForDelivery": "مع مندوب التوصيل",
 
@@ -903,14 +907,15 @@ export const strings = {
     "addon.shipping-dhl.error.simulated": "شركة شحن تجريبية — هذا الرفض محاكاة",
     "addon.shipping-dhl.error.remedy1":
       "راجع الرمز البريدي مقابل بلد الوصول. رمز {country} يبدو هكذا: {example}.",
-    "addon.shipping-dhl.error.remedy2":
-      "إن كان العنوان صحيحًا كما هو، سلّم الشغل من على المكتب وسجّله مُستلمًا.",
+    "addon.shipping-dhl.error.remedy2": "إذا كان العنوان صحيحًا كما هو، فسلّم الطرد على الطاولة وعلّمه كمستلَم.",
     "addon.shipping-dhl.error.retry": "حاول مرة أخرى",
     "addon.shipping-dhl.error.postcode": "الرمز البريدي",
     "addon.shipping-dhl.error.country": "البلد",
 
     "addon.shipping-dhl.checkout.title": "التوصيل عبر DHL",
     "addon.shipping-dhl.checkout.sub": "محسوبة مما في سلّتك.",
+    "addon.shipping-dhl.checkout.fromReady":
+      "محسوبة من {day}، وهو أول يوم يستطيع فيه المحل تسليم الطرد.",
     "addon.shipping-dhl.checkout.simulated":
       "هذه الأسعار من شركة شحن تجريبية. ولا يُرسَل شيء إلى شركة حقيقية.",
     "addon.shipping-dhl.panel.carrier": "شركة الشحن",
@@ -939,3 +944,35 @@ export const LOCALE_TAGS = Object.keys(strings) as LocaleTag[];
  */
 const _parity: { [L in LocaleTag]: Record<StringKey, string> } = strings;
 void _parity;
+
+/**
+ * ── THE LATIN DIGITS IN THESE STRINGS THAT ARE NOT QUANTITIES ───────────────
+ *
+ * A host renders this bundle inside its own pages, and every host in this wave
+ * runs the same rule over an Arabic page: a run of Latin digits that is not
+ * inside an identifier is an unformatted number, and a defect. Some of an
+ * add-on's own strings legitimately carry one anyway, and when they do THE
+ * ADD-ON IS THE ONLY THING THAT KNOWS WHY.
+ *
+ * ── WHY THIS TRAVELS WITH THE STRINGS INSTEAD OF WITH THE HOST ──────────────
+ *
+ * It used to live in the host. Print Shop's `numerals.arabic.test.tsx` carried
+ * Design Studio's specimen telephone number in ITS exemption list, and Maker
+ * Shop did not — so wiring Design Studio into the second host, registration
+ * only, zero bytes changed in any add-on, turned that host's suite red. The
+ * fix was to edit a list in the host, which is exactly what AC20/D21 says must
+ * never be necessary: an add-on is portable when moving it needs no edit in the
+ * app that receives it.
+ *
+ * The same shape had already been fixed twice this wave (HOSTED_SLOTS, the
+ * Czech "pro" carve-out). This is the third and it is fixed the same way: the
+ * fact is declared beside the strings it is about, in the module the hosts
+ * vendor, and each host's guard reads whatever is vendored into it. A host that
+ * takes this add-on takes its allowances; a host that does not, does not.
+ *
+ * EVERY ADD-ON EXPORTS THIS, even when it is empty. A host asserts the export
+ * exists on every bundle it has vendored, so a missing declaration is a red
+ * suite rather than an allowance nobody notices is gone.
+ */
+export const NOT_A_QUANTITY: readonly { phrase: string; why: string }[] = [];
+

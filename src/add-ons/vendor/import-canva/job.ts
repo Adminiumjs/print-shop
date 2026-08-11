@@ -4,94 +4,41 @@
  * The add-on key is `import-canva`; its manifest, tests and README live in the monorepo.
  */
 /**
- * Turning what the host hands a slot fill into what this add-on needs.
+ * What the host hands `artwork.sources`, and how this add-on reads it.
  *
- * The `artwork.sources` slot's payload is the CONFIGURED JOB — the host's own
- * `Configuration` object, which names a size by preset key rather than in
- * millimetres. Resolving that key needs the preset table, so the table is
- * copied here for the same reason the contracts and `tokens.css` are mirrored:
- * a standalone repo cannot import the host app's `catalogue.ts`.
+ * ── A SIZE TABLE USED TO LIVE HERE, AND IT WAS A LIABILITY ──────────────────
  *
- * Copied numbers are a liability, so this reads the host's own resolution FIRST
- * (`payload.size`) and only falls back to the table when the host did not send
- * one. A host that grows a new preset therefore keeps working here without this
- * file being touched — the fallback exists for the six sizes that have been
- * there since the app shipped, not as a second source of truth.
+ * The payload used to be the host's own CONFIGURATION record, naming a size by
+ * PRESET KEY, so this file carried a copy of one print works' size table to
+ * resolve it. Two things were wrong with that, and only the second was ever
+ * going to be noticed: the copy drifts the day the host adds a size, and in any
+ * OTHER host every key misses — so every import silently resolved to a size of
+ * zero by zero, which is not an error and not an empty state, just wrong.
+ *
+ * `ArtworkSlotPayload` is the shared registry's now and carries `job` in
+ * MILLIMETRES, resolved by the host that owns the catalogue. What is left here
+ * is the conversion into this add-on's own import job.
  */
 
-import type { ArtworkRef, JobSpec } from "../host/contracts/index.ts";
+import type { ArtworkSlotPayload } from "../host/index.ts";
+import type { JobSpec } from "../host/contracts/index.ts";
 import type { ImportJob } from "./import.ts";
+
+export type { ArtworkSlotPayload };
 
 /** Copied from the host's `rates.ts`. The works' bleed and resolution floor. */
 export const BLEED_MM = 3;
 export const MIN_DPI = 150;
 
-/** Copied from the host's `catalogue.ts`, in millimetres. */
-const PRESET_SIZES: Readonly<Record<string, { widthMm: number; heightMm: number }>> = {
-  "business-card": { widthMm: 85, heightMm: 55 },
-  a6: { widthMm: 105, heightMm: 148 },
-  a5: { widthMm: 148, heightMm: 210 },
-  a4: { widthMm: 210, heightMm: 297 },
-  a3: { widthMm: 297, heightMm: 420 },
-  dl: { widthMm: 210, heightMm: 99 },
-  "us-letter": { widthMm: 216, heightMm: 279 },
-  "dl-envelope": { widthMm: 220, heightMm: 110 },
-  c5: { widthMm: 229, heightMm: 162 },
-};
-
-/** The subset of the host's `Configuration` this add-on reads. */
-export interface HostConfiguration {
-  product: string;
-  /** A preset key, or `custom` with the millimetres below. */
-  size: string;
-  customWidthMm?: number;
-  customHeightMm?: number;
-  sides: 1 | 2;
-  quantity: number;
-}
-
 /**
- * What the host passes into the `artwork.sources` fill.
+ * The job, as the `artwork-source@1` contract wants it.
  *
- * `onArtwork` is optional because the Print Shop currently passes `{ config }`
- * and nothing else — see the README's "What the host still owes this add-on".
- * When it is absent the flow still runs and still resolves an `ArtworkRef`
- * through the provider, but nothing carries the result back onto the order, so
- * the fill renders its result and stops rather than pretending it landed.
+ * The two shapes agree member for member — deliberately, so the seam a host
+ * mounts stays free of the contract registry while an add-on that implements
+ * the contract can pass the payload straight through.
  */
-export interface ArtworkSlotPayload {
-  config: HostConfiguration;
-  /** The host's own resolution of the configured size, when it sends one. */
-  size?: { widthMm: number; heightMm: number };
-  /** The product's name, already localized by the host. */
-  productLabel?: string;
-  onArtwork?: (ref: ArtworkRef) => void;
-}
-
 export function toJobSpec(payload: ArtworkSlotPayload): JobSpec {
-  const { config } = payload;
-  const resolved =
-    payload.size ??
-    (config.size === "custom"
-      ? {
-          widthMm: config.customWidthMm ?? 0,
-          heightMm: config.customHeightMm ?? 0,
-        }
-      : PRESET_SIZES[config.size]) ??
-    { widthMm: 0, heightMm: 0 };
-
-  return {
-    productKey: config.product,
-    // Falling back to the key rather than to an invented English name: a raw
-    // `business-cards` on screen is obviously a bug, whereas a hard-coded
-    // "Business cards" would silently be wrong in seven locales.
-    productLabel: payload.productLabel ?? config.product,
-    trimWidthMm: resolved.widthMm,
-    trimHeightMm: resolved.heightMm,
-    bleedMm: BLEED_MM,
-    sides: config.sides,
-    quantity: config.quantity,
-  };
+  return payload.job;
 }
 
 export function toImportJob(job: JobSpec): ImportJob {

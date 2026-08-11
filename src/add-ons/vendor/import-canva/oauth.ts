@@ -53,7 +53,20 @@ export const VENDOR_API_HOST = "api.canva.com";
 export const OAUTH = {
   verified: false,
   authorizeUrl: "https://www.canva.com/api/oauth/authorize",
-  tokenUrl: `https://${VENDOR_API_HOST}/rest/v1/oauth/token`,
+  /*
+   * WRITTEN OUT, NOT INTERPOLATED, and the reason is the artefact rather than
+   * taste. Interpolating the hostname builds to a string whose AUTHORITY is a
+   * variable, so the address in `dist/server.js` was an endpoint whose host is
+   * decided at run time — the one shape D11's egress gate cannot vouch for, and
+   * the shape it now reports. The tie to the single allow-listed hostname is
+   * not lost, it is ASSERTED: `manifest.test.ts` requires this URL's host to
+   * equal `VENDOR_API_HOST` exactly, and the allow-list to carry it.
+   *
+   * Note also what the failure taught: this package's server half is NOT
+   * minified, so a comment reaches `dist/` verbatim. An example address written
+   * in a comment is an address in the shipped bytes. Do not write one here.
+   */
+  tokenUrl: "https://api.canva.com/rest/v1/oauth/token",
   /**
    * The narrowest pair that can serve this add-on: see the list, fetch the one
    * the customer picked. Nothing about editing, publishing, folders, brand

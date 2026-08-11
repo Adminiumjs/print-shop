@@ -63,7 +63,23 @@ function subscribe(onChange: () => void): () => void {
 
 export type TFunction = (key: StringKey, params?: Record<string, string | number>) => string;
 
-/** Pure lookup with `{placeholder}` substitution — no plurals, by design. */
+/**
+ * Pure lookup with `{placeholder}` substitution — no plurals, by design.
+ *
+ * A NUMBER SUBSTITUTED INTO COPY IS FORMATTED, NEVER `String()`d, and this one
+ * line is what decides whether Arabic reads ٠٫٦ or 0.6. Every `t("…", { kg })`
+ * and `{ quantity }` in this add-on used to drop a Latin numeral into the
+ * middle of a right-to-left sentence, beside host strings on the same screen
+ * rendering ٦ and ٤٠ — the settings panel said "0.6 kg" between two Arabic
+ * lines, and the parcel hints did the same. The host fixed the identical defect
+ * at its own `t` seam; an add-on has its own seam and therefore its own copy of
+ * the bug.
+ *
+ * Fixing it HERE rather than at each call site fixes the call sites nobody has
+ * written yet. A caller that has already formatted its value passes a STRING
+ * and is left alone, which is what keeps money and dates — both of which have
+ * their own formatters below — coming out right.
+ */
 export function translate(
   locale: LocaleTag,
   key: StringKey,
@@ -71,9 +87,12 @@ export function translate(
 ): string {
   const raw = strings[locale][key] ?? strings[DEFAULT_LOCALE][key] ?? key;
   if (params === undefined) return raw;
-  return raw.replace(/\{(\w+)\}/g, (whole, name: string) =>
-    name in params ? String(params[name]) : whole,
-  );
+  const nf = new Intl.NumberFormat(locale);
+  return raw.replace(/\{(\w+)\}/g, (whole, name: string) => {
+    if (!(name in params)) return whole;
+    const value = params[name];
+    return typeof value === "number" ? nf.format(value) : String(value);
+  });
 }
 
 export function useLocale(): LocaleTag {
@@ -86,17 +105,82 @@ export function useT(): TFunction {
 }
 
 /**
- * Money and dates in the reader's own numerals and calendar.
+ * A CLOCK FACE IN THE READER'S NUMERALS — pure, so the label table can use it.
+ *
+ * `String(hour).padStart(2, "0")` is what the dispatch dialog did, and it is
+ * the same defect the `t` seam above had, one layer down: the padding produced
+ * a LATIN zero, so an Arabic shop read "الجمعة، ٧ أغسطس 10:20" — an Arabic date
+ * and a Latin time, in one chip. `minimumIntegerDigits` pads with whatever zero
+ * the locale writes.
+ */
+export function timeOfDay(locale: LocaleTag, hour: number, minute: number): string {
+  const two = (value: number) =>
+    new Intl.NumberFormat(locale, {
+      minimumIntegerDigits: 2,
+      useGrouping: false,
+    }).format(value);
+  return `${two(hour)}:${two(minute)}`;
+}
+
+/**
+ * A CLOCK FACE THAT ARRIVED AS A WIRE STRING, formatted like any other.
+ *
+ * `timeOfDay` above has always been right and has always been available; the
+ * three places that drew a time did not use it. A tracking event carries an ISO
+ * datetime and the panels rendered `event.at.slice(11, 16)` — the substring — so
+ * the collection window read `14:00–17:00` and every scan on the tracking list
+ * read `08:05`, in Latin digits, beside dates the very same component had just
+ * formatted into Arabic. `timeOfDay` was destructured on the same line in two of
+ * the three files.
+ *
+ * That is the shape of every digit defect in this wave: a formatter that exists,
+ * beside a value that goes round it. So the wire string is what this takes —
+ * `"2026-08-05T14:32:00"` or `"14:00"`, whatever a caller is holding — and there
+ * is no shorter path to a rendered time than calling it.
+ */
+export function clockFromWire(locale: LocaleTag, wire: string): string {
+  const at = /(\d{1,2}):(\d{2})/.exec(wire);
+  if (at === null) return wire;
+  return timeOfDay(locale, Number(at[1]), Number(at[2]));
+}
+
+/**
+ * A NUMBER A PERSON TYPED, IN WHATEVER DIGITS THEIR KEYBOARD MAKES.
+ *
+ * The parcel's weight and dimensions are editable fields, and the moment their
+ * DISPLAY is localised — which it must be, or an Arabic shop reads a Latin
+ * weight beside Arabic prices — `Number.parseFloat` stops understanding what
+ * comes back out of them. So reading is localised too: the Arabic-Indic and
+ * extended-Arabic digit blocks are folded onto 0–9, the Arabic decimal
+ * separator onto a point, and anything else is left for `parseFloat` to reject
+ * exactly as it did before.
+ */
+export function parseNumber(text: string): number {
+  const folded = text.replace(/[٠-٩۰-۹]/g, (d) => {
+    const code = d.codePointAt(0)!;
+    return String(code - (code >= 0x06f0 ? 0x06f0 : 0x0660));
+  });
+  return Number.parseFloat(folded.replace(/٫/g, ".").replace(/[٬،\s]/g, ""));
+}
+
+/**
+ * Money, numbers, times and dates in the reader's own numerals and calendar.
  *
  * Currency is a property of the money, never of the reader's language: a rate
  * quoted in USD stays USD however the number is written out.
  */
 export function useFormat(): {
   money: (major: number, currency: string) => string;
+  number: (value: number, opts?: Intl.NumberFormatOptions) => string;
+  timeOfDay: (hour: number, minute: number) => string;
+  clock: (wire: string) => string;
   day: (iso: string, opts?: Intl.DateTimeFormatOptions) => string;
 } {
   const locale = useLocale();
   return {
+    number: (value, opts) => new Intl.NumberFormat(locale, opts).format(value),
+    timeOfDay: (hour, minute) => timeOfDay(locale, hour, minute),
+    clock: (wire) => clockFromWire(locale, wire),
     money: (major, currency) =>
       new Intl.NumberFormat(locale, {
         style: "currency",

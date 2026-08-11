@@ -17,7 +17,7 @@
  * brand use beyond the nominative one D12 allows.
  */
 
-import { addWorkingDays, type Clock } from "./clock.ts";
+import { addWorkingDays, workingDaysBetween, type Clock } from "./clock.ts";
 
 export interface Service {
   code: string;
@@ -149,6 +149,34 @@ export function quoteAll(opts: {
     currency: opts.currency,
     estimatedDelivery: deliveryDate(opts.collected, service),
   })).sort((a, b) => a.amount - b.amount || a.code.localeCompare(b.code));
+}
+
+/**
+ * PUSH A QUOTED LIST BACK TO THE DAY THE SHOP CAN ACTUALLY POST.
+ *
+ * A rate arrives quoted from the day the CARRIER could collect. When the shop
+ * has to make the thing first, the parcel is not going that day, and every
+ * arrival date on the list is that many working days out. Shifting the dates
+ * rather than re-quoting is deliberate and it is what makes this work in
+ * connected mode too: the transit time stays the carrier's — it is the one
+ * thing only the carrier knows — and the only thing changed is the day the
+ * clock starts.
+ *
+ * The price is untouched. Posting a parcel on Monday instead of Thursday costs
+ * what the carrier says it costs; inventing a different figure here would be
+ * this add-on quoting a rate card it does not have.
+ */
+export function postponedTo(
+  rates: readonly QuotedRate[],
+  collected: string,
+  dispatched: string,
+): QuotedRate[] {
+  const days = workingDaysBetween(collected, dispatched);
+  if (days === 0) return [...rates];
+  return rates.map((rate) => ({
+    ...rate,
+    estimatedDelivery: addWorkingDays(rate.estimatedDelivery, days),
+  }));
 }
 
 /** The cheapest rate's code, for the chip the UI puts on exactly one row. */

@@ -8,10 +8,10 @@
  */
 
 import { FlaskConical } from "lucide-react";
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 
 import { useAddOnT, useLocale } from "../i18n/useT.ts";
-import type { MessageKey } from "../i18n/t.ts";
+import type { MessageKey, TFunction } from "../i18n/t.ts";
 
 /**
  * Two or three letters in a neutral tile — never a logo, drawn, traced or
@@ -64,10 +64,44 @@ export function Mono({ children, className }: { children: ReactNode; className?:
   return <span className={className ? `cvi-mono ${className}` : "cvi-mono"}>{children}</span>;
 }
 
-/** `85 × 55 mm`, in the one shape every size chip in this add-on uses. */
-export function sizeChip(widthMm: number, heightMm: number): string {
+/**
+ * `85 × 55 mm`, in the one shape every size chip in this add-on uses — THROUGH
+ * THE BUNDLE, because both the figures and the unit belong to the reader.
+ *
+ * [Corrected 2026-08-11, wave 4b round 5.] This built the chip in a template
+ * literal: two raw JavaScript numbers and a hard-coded English `mm`, rendered
+ * identically in all eight locales. On the design picker in ar-EG the chip read
+ * `85 × 55 mm` while `check.bleedOk` and `fix.redo` — the very next things the
+ * same flow says about the same design — wrote `مم`, and zh-CN read `mm` beside
+ * its own `毫米`. The bundle already had the unit right in every locale; this
+ * one function went around it.
+ *
+ * It takes `t` rather than calling a hook because it is a string, used inside
+ * `<Mono>` and in an `aria-label`, and its callers are components that already
+ * hold one. The numbers go in as NUMBERS so `translator`'s `Intl.NumberFormat`
+ * gets them; rounding stays here because a tenth of a millimetre is a property
+ * of the quantity, not of the language.
+ */
+export function sizeChip(t: TFunction, widthMm: number, heightMm: number): string {
   const round = (v: number): number => Math.round(v * 10) / 10;
-  return `${round(widthMm)} × ${round(heightMm)} mm`;
+  return t("dims", { w: round(widthMm), h: round(heightMm) });
+}
+
+/**
+ * A bare figure with no words around it, in the reader's own digits.
+ *
+ * `t()` covers every number that sits inside a sentence. A number rendered
+ * ALONE — the step numbers on the rail — never goes near it, and that is
+ * exactly how `1 2 3` came to stand against Arabic labels on a wizard whose
+ * every other figure was formatted. There is no string to translate here, only
+ * a numeral system to respect.
+ */
+export function useNum(): (value: number) => string {
+  const locale = useLocale();
+  return useMemo(() => {
+    const nf = new Intl.NumberFormat(locale);
+    return (value: number) => nf.format(value);
+  }, [locale]);
 }
 
 /**
@@ -84,6 +118,7 @@ export function useDateFormat(): (iso: string) => string {
 }
 
 export function StepRail({ steps, current }: { steps: readonly string[]; current: number }) {
+  const num = useNum();
   return (
     <div className="cvi-steps">
       {steps.map((label, i) => (
@@ -92,7 +127,14 @@ export function StepRail({ steps, current }: { steps: readonly string[]; current
           className="cvi-step"
           data-state={i === current ? "current" : i < current ? "done" : "todo"}
         >
-          <Mono className="cvi-step-n">{i + 1}</Mono>
+          {/*
+           * `{i + 1}` is what this was: a bare Latin 1, 2, 3 against Arabic
+           * labels. `.cvi-mono` isolates its run in CSS but declares no `dir`,
+           * so these were not Latin islands either — just unformatted numbers
+           * on a surface no host's tour reached, because the rail only exists
+           * once the customer has clicked into the wizard.
+           */}
+          <Mono className="cvi-step-n">{num(i + 1)}</Mono>
           <span>{label}</span>
         </div>
       ))}

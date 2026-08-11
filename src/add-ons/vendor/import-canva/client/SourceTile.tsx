@@ -92,6 +92,23 @@ export function SourceTile({
         </span>
       </button>
 
+      {/*
+       * THE FIRST SURFACE THAT NAMES THE COMPANY, SO THE LINE IS HERE (AC6).
+       *
+       * The tile above says the company's name in its title, on the artwork
+       * screen, to a customer who has pressed nothing. Until round 7 the
+       * not-affiliated line lived only inside the flow this tile OPENS — a DOM
+       * scan of that screen for "affiliat", with every add-on switched on,
+       * returned nothing at all.
+       *
+       * AC6, as amended, is about where a reader meets the naming rather than
+       * about how many of our screens carry a sentence. A disclaimer one press
+       * further in is a disclaimer a customer who does not press may never see.
+       * The hosts' `add-ons/affiliation.test.tsx` now tours every surface and
+       * asks exactly that, so this cannot go quiet again without a red suite.
+       */}
+      <p className="cvi-fine cvi-tile-fine">{t("notAffiliated")}</p>
+
       {pending !== null && (
         <ImportFlow
           job={pending.ctx.job}

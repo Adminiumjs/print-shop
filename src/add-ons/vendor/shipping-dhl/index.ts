@@ -19,8 +19,7 @@
 
 import { createElement } from "react";
 
-import type { AddOn, SettingsPanelPayload } from "../host/index.ts";
-import type { CheckoutPayload, DispatchPayload } from "./host-payloads.ts";
+import type { AddOn } from "../host/index.ts";
 import { strings } from "./i18n/strings.ts";
 import { applySettings, DEFAULT_SETTINGS } from "./settings.ts";
 import { DeliveryMethods } from "./ui/DeliveryMethods.tsx";
@@ -70,13 +69,26 @@ export function register(): AddOn {
       staysKey: "addon.shipping-dhl.disconnect.stays",
     },
     /*
-     * The shop's seeded record of using this add-on, newest first, pinned to
-     * the demo's Wednesday 5 August 2026 — no clock is read anywhere here.
+     * The shop's seeded record of using this add-on, newest first — RELATIVE,
+     * and pinned to nobody's Wednesday.
+     *
+     * These three lines used to read `{ iso: "2026-08-05", hour: 9, minute: 58,
+     * ref: "MP-4119" }`: a day, a time and a paperwork reference belonging to
+     * the ONE host this add-on was written against, under member names neutral
+     * enough that nothing ever asked. Registered in a second shop they became
+     * that shop's drawer showing the first shop's Wednesday against a reference
+     * it has never issued — the same defect the clock had, in the one place the
+     * clock repair did not reach.
+     *
+     * So: how long ago, and WHICH OF YOUR OWN references. The host dates them
+     * with `resolveActivity` against its own pinned clock and its own recent
+     * records, which is the only party that can. A shop with fewer records than
+     * this assumes gets the shorter list rather than a dangling reference.
      */
     activity: [
-      { iso: "2026-08-05", hour: 9, minute: 58, ref: "MP-4119", messageKey: "addon.shipping-dhl.act.1" },
-      { iso: "2026-08-05", hour: 9, minute: 55, ref: "MP-4119", messageKey: "addon.shipping-dhl.act.2" },
-      { iso: "2026-08-04", hour: 15, minute: 2, ref: "MP-4116", messageKey: "addon.shipping-dhl.act.3" },
+      { minutesAgo: 22, refIndex: 0, messageKey: "addon.shipping-dhl.act.1" },
+      { minutesAgo: 25, refIndex: 0, messageKey: "addon.shipping-dhl.act.2" },
+      { minutesAgo: 1_158, refIndex: 1, messageKey: "addon.shipping-dhl.act.3" },
     ],
     /*
      * D11, declared rather than hard-coded in the host's dialog. The host shows
@@ -97,20 +109,29 @@ export function register(): AddOn {
        * called `useState` directly would be borrowing the host component's hook
        * slots — stable today, broken the first time a fill is conditional.
        */
+      /*
+       * NO CASTS. Every `render` below used to end in `payload as SomePayload`,
+       * because `AddOnFill<never>` erased the parameter type and a cast was the
+       * only way to reach a component's own parameter type — so the compiler
+       * never once compared what a host passes with what this add-on reads. The
+       * fill type is parameterised by slot id now, so `payload` arrives already
+       * typed as that slot's payload and a component asking for a field the slot
+       * does not carry is a red build HERE, in the repo that made the mistake.
+       */
       {
         slot: "order.dispatch.actions",
         order: 10,
-        render: (payload) => createElement(DispatchAction, payload as DispatchPayload),
+        render: (payload) => createElement(DispatchAction, payload),
       },
       {
         slot: "checkout.delivery.methods",
         order: 10,
-        render: (payload) => createElement(DeliveryMethods, payload as CheckoutPayload),
+        render: (payload) => createElement(DeliveryMethods, payload),
       },
       {
         slot: "order.dispatch.panel",
         order: 10,
-        render: (payload) => createElement(TrackingPanel, payload as DispatchPayload),
+        render: (payload) => createElement(TrackingPanel, payload),
       },
       /*
        * §5.4 declares `settings.add-on.panel` a real slot, and this is what
@@ -120,10 +141,9 @@ export function register(): AddOn {
       {
         slot: "settings.add-on.panel",
         order: 10,
-        render: (payload) =>
-          createElement(SettingsPanel, { payload: payload as SettingsPanelPayload }),
+        render: (payload) => createElement(SettingsPanel, { payload }),
       },
-    ] as AddOn["fills"],
+    ],
   };
 }
 

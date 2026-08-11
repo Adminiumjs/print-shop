@@ -39,7 +39,7 @@ import {
 import { labelFilename, renderLabelPdf } from "./label.ts";
 import type { LabelStore } from "./label-store.ts";
 import { COLLECTION_WINDOW, quoteAll, zoneFor } from "./rates.ts";
-import { CURRENCY, TRACKING_SEED, WORKS_ADDRESS } from "./seed.ts";
+import { CURRENCY, DEMO_ORIGIN, TRACKING_SEED } from "./seed.ts";
 
 /**
  * Postcode shapes, by country.
@@ -86,7 +86,7 @@ export interface DemoCarrierOptions {
 export type DemoCarrier = ShippingCarrier & {
   readonly labels: LabelStore;
   /** Called by the client half between quoting and booking. */
-  rememberDestination(reference: string, to: Address): void;
+  rememberRoute(reference: string, from: Address, to: Address): void;
   /**
    * What the host's `shipments` table would answer. The customer's order view
    * asks "has this order gone out with a carrier?", which is a question about
@@ -104,6 +104,8 @@ function formatTracking(serial: number): string {
 
 interface Booked {
   shipment: Shipment;
+  /** Where it was collected FROM — the shop's own address, per booking. */
+  from: Address;
   to: Address;
   order: OrderRef;
   collected: string;
@@ -117,17 +119,23 @@ interface Booked {
  * status it does not recognise — the same two-source arrangement a real
  * carrier's tracking feed forces on you.
  */
-function eventsFor(record: Booked, origin: Address): TrackEvent[] {
+function eventsFor(record: Booked): TrackEvent[] {
   return [
     {
       at: isoDateTime(record.collected, "14:32"),
-      place: origin.city,
+      // WHERE IT WAS ACTUALLY COLLECTED FROM, per booking. This read the town
+      // the transport happened to be CONSTRUCTED with, which is one shop's
+      // address — so every scan line in a second shop named the first one's
+      // town. The shop's own origin travels with the booking now.
+      place: record.from.city,
       status: "collected",
       description: "Shipment picked up",
     },
     {
       at: isoDateTime(record.collected, "20:14"),
-      place: "Kingsbridge depot",
+      // A depot on the route rather than a place name out of one app's
+      // fiction: "Kingsbridge depot" was the print works' own county.
+      place: `${record.from.city} depot`,
       status: "at-hub",
       description: "Processed at the sorting depot",
     },
@@ -141,7 +149,7 @@ function eventsFor(record: Booked, origin: Address): TrackEvent[] {
 }
 
 export function createDemoCarrier(options: DemoCarrierOptions): DemoCarrier {
-  const from = options.from ?? WORKS_ADDRESS;
+  const from = options.from ?? DEMO_ORIGIN;
   const currency = options.currency ?? CURRENCY;
 
   // The counter, the bookings and the label bytes are the transport's whole
@@ -153,6 +161,7 @@ export function createDemoCarrier(options: DemoCarrierOptions): DemoCarrier {
   const byTracking = new Map<string, Booked>();
   const labelBytes = new Map<string, string>();
   const quotedTo = new Map<string, Address>();
+  const quotedFrom = new Map<string, Address>();
 
   function refuseUnknownAddress(to: Address): void {
     if (postcodeFits(to.postcode, to.country)) return;
@@ -202,7 +211,13 @@ export function createDemoCarrier(options: DemoCarrierOptions): DemoCarrier {
       };
 
       const to = quotedTo.get(order.reference) ?? from;
-      const record: Booked = { shipment, to, order, collected: day };
+      const record: Booked = {
+        shipment,
+        from: quotedFrom.get(order.reference) ?? from,
+        to,
+        order,
+        collected: day,
+      };
       byOrder.set(order.reference, record);
       byShipment.set(id, record);
       byTracking.set(tracking, record);
@@ -228,7 +243,7 @@ export function createDemoCarrier(options: DemoCarrierOptions): DemoCarrier {
       // An unknown reference is an empty list, never an exception: a works
       // pasting a reference out of an email wants "nothing yet", not a crash.
       if (record === undefined) return [];
-      return eventsFor(record, from);
+      return eventsFor(record);
     },
 
     async label(shipmentId: string): Promise<FileRef> {
@@ -264,7 +279,8 @@ export function createDemoCarrier(options: DemoCarrierOptions): DemoCarrier {
       read: (fileId) => labelBytes.get(fileId),
     },
 
-    rememberDestination(reference, to) {
+    rememberRoute(reference, from, to) {
+      quotedFrom.set(reference, from);
       quotedTo.set(reference, to);
     },
 
