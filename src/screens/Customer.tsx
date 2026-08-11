@@ -36,7 +36,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-import { fileFromRef, jobSpecFor, type ArtworkSlotPayload } from "../add-ons/artwork.ts";
+import { fileFromRef, jobSpecFor } from "../add-ons/artwork.ts";
 import { AddOnSlot } from "../components/AddOnSlot.tsx";
 import { Chip, EmptyState, Field, Mono, Tile } from "../components/Primitives.tsx";
 import { useT } from "../i18n/index.tsx";
@@ -1083,18 +1083,24 @@ export function Artwork() {
       <div style={{ marginBlockStart: 20 }}>
         <AddOnSlot
           slot="artwork.sources"
-          payload={
-            {
-              config,
-              size,
-              productLabel: t(`data.product.${config.product}` as never),
-              job: jobSpecFor(config, t(`data.product.${config.product}` as never)),
-              // The way back onto the order. Without it an add-on would have to
-              // reach into the host's store, and an add-on that does that has
-              // stopped being optional.
-              onArtwork: (ref) => supplyArtwork(fileFromRef(ref), ref.source),
-            } satisfies ArtworkSlotPayload
-          }
+          payload={{
+            /*
+             * THE JOB, RESOLVED HERE, IN MILLIMETRES.
+             *
+             * It used to travel as `{ config, size, productLabel, job }` — this
+             * app's own configuration record, naming a size by PRESET KEY,
+             * alongside three resolutions of it. Both artwork add-ons read the
+             * config and each carried a COPY of this app's size table to turn
+             * `a5` into millimetres, which drifts here and misses entirely
+             * anywhere else. One resolved job crosses the seam now, and the
+             * tables are gone from both add-ons.
+             */
+            job: jobSpecFor(config, t(`data.product.${config.product}` as never)),
+            // The way back onto the order. Without it an add-on would have to
+            // reach into the host's store, and an add-on that does that has
+            // stopped being optional.
+            onArtwork: (ref) => supplyArtwork(fileFromRef(ref), ref.source),
+          }}
           fallback={
             <div className="mp-slot-empty">
               <div className="mp-slot-empty-title">{t("cust.artwork.slotTitle")}</div>

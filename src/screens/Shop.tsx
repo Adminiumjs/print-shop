@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 
 import { AddOnSlot } from "../components/AddOnSlot.tsx";
+import { outboundOrderFor, shopClock } from "../add-ons/records.ts";
 import { EmptyState, Mono, Tag, Tile } from "../components/Primitives.tsx";
 import { useT } from "../i18n/index.tsx";
 import { PRODUCT_BY_KEY, type ProductKey } from "../lib/catalogue.ts";
@@ -253,6 +254,7 @@ export function Ticket() {
   const markCollected = useStore((s) => s.markCollected);
   const toast = useStore((s) => s.toast);
   const todayIso = useStore((s) => s.todayIso);
+  const now = useStore((s) => s.now);
 
   const job = jobs.find((j) => j.ref === ref) ?? null;
   if (job === null) return <EmptyState>{t("common.nothingHere")}</EmptyState>;
@@ -518,7 +520,25 @@ export function Ticket() {
                   <HandCoins size={16} aria-hidden="true" />
                   {t("shop.ticket.markCollected")}
                 </button>
-                <AddOnSlot slot="order.dispatch.actions" payload={{ job }} />
+                {/*
+                  * THE JOB, MAPPED INTO THE NEUTRAL ORDER the slot declares.
+                  *
+                  * It used to be `payload={{ job }}` — this app's own record,
+                  * straight across — which is exactly why the delivery add-on
+                  * ended up carrying this shop's grammages, size presets,
+                  * packaging keys and customer address book: nothing else could
+                  * have read a `Job`. `records.ts` does the conversion, which is
+                  * the host's job and the seam that makes the add-on portable.
+                  */}
+                <AddOnSlot
+                  slot="order.dispatch.actions"
+                  payload={{
+                    order: outboundOrderFor(job, (key) => t(`data.product.${key}` as never)),
+                    // The works' own clock, so "the van has gone" is about the
+                    // works' afternoon — see `records.ts`.
+                    now: shopClock(todayIso(), now),
+                  }}
+                />
                 <div className="mp-dispatch-spacer" />
               </div>
             )}

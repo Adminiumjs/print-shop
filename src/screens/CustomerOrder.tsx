@@ -12,6 +12,7 @@ import { ArrowRight, Check, CircleCheck, FileCheck2, Info, PackageOpen, Search, 
 import { useState } from "react";
 
 import { AddOnSlot } from "../components/AddOnSlot.tsx";
+import { checkoutItems, outboundOrderFor, shopClock, SHOP_ORIGIN } from "../add-ons/records.ts";
 import { EmptyState, Field, Mono, Tag, Tile } from "../components/Primitives.tsx";
 import { useI18n, useT } from "../i18n/index.tsx";
 import { PRODUCT_BY_KEY } from "../lib/catalogue.ts";
@@ -34,6 +35,7 @@ export function Basket() {
   const placeOrder = useStore((s) => s.placeOrder);
   const go = useStore((s) => s.go);
   const now = useStore((s) => s.now);
+  const todayIso = useStore((s) => s.todayIso);
   const toast = useStore((s) => s.toast);
   const registry = useStore((s) => s.registry);
   /*
@@ -232,7 +234,33 @@ export function Basket() {
               <AddOnSlot
                 slot="checkout.delivery.methods"
                 payload={{
-                  basket,
+                  /*
+                   * THE BASKET, MAPPED INTO NEUTRAL LINES — a key, a label
+                   * already translated, a quantity, what one weighs and how big
+                   * it is. It used to be `basket` itself, this app's own
+                   * `BasketLine[]`, which is why the delivery add-on carried a
+                   * copy of this shop's size presets and grammages: nothing else
+                   * could have priced a parcel from it.
+                   */
+                  items: checkoutItems(basket, (key) => t(`data.product.${key}` as never)),
+                  /*
+                   * WHEN THE WORKS THINKS IT IS. "Arrives Friday" counts from
+                   * today, and the add-on used to count from a pin of its own —
+                   * which agreed with this app and with no other.
+                   */
+                  now: shopClock(todayIso(), now),
+                  /*
+                   * AND WHEN THERE WILL BE SOMETHING TO COLLECT. This works
+                   * prints to order, and the summary on this same screen says
+                   * "ready by …" from the same `promiseFor`. Without this the
+                   * carrier quoted transit from today, so the panel could offer
+                   * a delivery day BEFORE the day the works said it would be
+                   * ready. Same value, so the two cannot disagree.
+                   */
+                  readyOn: readyBy,
+                  // Where the works posts from. A shop knows its own address;
+                  // the add-on that used to hold this one held it for every shop.
+                  origin: SHOP_ORIGIN,
                   /*
                    * The host's record, handed back down so the fill draws the
                    * selection rather than remembering one of its own. Scoped by
@@ -520,6 +548,8 @@ export function Confirmation() {
 
 export function OrderLookup() {
   const t = useT();
+  const now = useStore((s) => s.now);
+  const todayIso = useStore((s) => s.todayIso);
   const lookup = useStore((s) => s.lookup);
   const setLookup = useStore((s) => s.setLookup);
   const doLookup = useStore((s) => s.doLookup);
@@ -770,7 +800,11 @@ export function OrderLookup() {
             </div>
             <AddOnSlot
               slot="order.dispatch.panel"
-              payload={{ job }}
+              payload={{
+                order: outboundOrderFor(job, (key) => t(`data.product.${key}` as never)),
+                // The works' own clock — see `records.ts`.
+                now: shopClock(todayIso(), now),
+              }}
               fallback={
                 <div className="mp-row" style={{ color: "var(--fg-muted)", flexWrap: "nowrap" }}>
                   <span

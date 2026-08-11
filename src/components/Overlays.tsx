@@ -8,8 +8,9 @@
 import { Check, CircleCheck, ShieldCheck, Unplug, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import type { AddOn } from "../add-ons/host.ts";
-import { sampleJobs } from "../add-ons/samples.ts";
+import { resolveActivity, type AddOn } from "../add-ons/host.ts";
+import { sampleCatalogue } from "../add-ons/records.ts";
+import { useActivityContext } from "../add-ons/useActivityContext.ts";
 import { AddOnSlot } from "./AddOnSlot.tsx";
 import { useT, type TFunction } from "../i18n/index.tsx";
 import { cents, clock } from "../lib/format.ts";
@@ -599,7 +600,15 @@ function ManageDrawer({ addOnKey }: { addOnKey: string }) {
   const close = useStore((s) => s.closeOverlay);
   const openOverlay = useStore((s) => s.openOverlay);
   const patch = useStore((s) => s.patchAddOnSettings);
+  /*
+   * The add-on declares its history relative — "39 minutes ago, about your most
+   * recent job" — and this works dates it. The shelf in `Extras.tsx` reads the
+   * SAME context from the same hook, which is what stops the two screens
+   * disagreeing about when a seeded line happened.
+   */
+  const activityContext = useActivityContext();
   if (addOn === null) return null;
+  const activity = resolveActivity(addOn.activity, activityContext);
 
   return (
     <div className="mp-scrim mp-drawer-scrim" onClick={close} role="presentation">
@@ -650,7 +659,9 @@ function ManageDrawer({ addOnKey }: { addOnKey: string }) {
                 // What the host knows and no add-on does: its own catalogue,
                 // one job per family. Nothing is estimated here — an add-on
                 // with an opinion about these forms it with its own engine.
-                samples: sampleJobs((productKey) => t(`data.product.${productKey}` as never)),
+                samples: sampleCatalogue((productKey: string) =>
+                  t(`data.product.${productKey}` as never),
+                ),
               }}
               fallback={
                 <div style={{ fontSize: 12.5, color: "var(--fg-muted)" }}>
@@ -674,12 +685,21 @@ function ManageDrawer({ addOnKey }: { addOnKey: string }) {
                 seeded, so it says so — above the lines, because a caption
                 under them is read after the damage.
                */}
-              {(addOn.activity ?? []).length > 0 && (
+              {/*
+                READ `activity.length`, NEVER `addOn.activity.length`. An entry
+                naming a reference this works has not got is dropped by
+                `resolveActivity`, so the declared list can be longer than the
+                one on screen — and an add-on that seeded three lines into a
+                works with one job must not caption an empty list "these are
+                seeded" or, worse, claim it has never been used while three
+                lines are drawn underneath.
+               */}
+              {activity.length > 0 && (
                 <span style={{ fontSize: 12, lineHeight: 1.45, color: "var(--fg-subtle)" }}>
                   {t("addon.host.manage.activitySeeded")}
                 </span>
               )}
-              {(addOn.activity ?? []).map((entry, i) => (
+              {activity.map((entry, i) => (
                 <Mono key={`${entry.iso}-${i}`} className="mp-activity">
                   {t(entry.messageKey as never, {
                     when: clock(entry.iso, entry.hour, entry.minute),
@@ -687,7 +707,7 @@ function ManageDrawer({ addOnKey }: { addOnKey: string }) {
                   })}
                 </Mono>
               ))}
-              {(addOn.activity ?? []).length === 0 && (
+              {activity.length === 0 && (
                 <span style={{ fontSize: 12.5, color: "var(--fg-subtle)" }}>
                   {t("shop.manage.noActivity")}
                 </span>
