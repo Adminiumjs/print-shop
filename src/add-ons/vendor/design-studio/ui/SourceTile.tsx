@@ -123,11 +123,27 @@ export function ArtworkSourceTile({
           </div>
           {outcome.kind === "used" && (
             <div className="ds-result-facts">
+              {/*
+                      * THROUGH `t()`, so the figures are formatted and the unit
+                      * is translated. Written as `{w} × {h}mm` in JSX this was
+                      * three separate text nodes — a raw number, a separator, a
+                      * raw number — and an English unit glued to the second. On
+                      * an Arabic page that is Latin digits; the host's own
+                      * guard could not see them because its rule exempted any
+                      * token with a Latin letter in it, and `55mm` has two.
+                      */}
               <span className="ds-chip ds-mono">
-                {outcome.ref.widthMm} × {outcome.ref.heightMm}mm
+                {t("addon.design-studio.dims", {
+                  w: outcome.ref.widthMm,
+                  h: outcome.ref.heightMm,
+                })}
               </span>
-              <span className="ds-chip ds-mono">{outcome.ref.bleedMm}mm</span>
-              <span className="ds-chip ds-mono">{outcome.ref.dpi}dpi</span>
+              <span className="ds-chip ds-mono">
+                {t("addon.design-studio.mmValue", { v: outcome.ref.bleedMm })}
+              </span>
+              <span className="ds-chip ds-mono">
+                {t("addon.design-studio.dpiValue", { v: outcome.ref.dpi })}
+              </span>
               <span className="ds-chip ds-mono">{outcome.ref.fileId}</span>
             </div>
           )}
