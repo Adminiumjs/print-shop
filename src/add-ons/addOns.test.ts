@@ -37,10 +37,33 @@ const ALL = demoAddOns();
 const KEYS = new Set(ALL.map((a) => a.key));
 
 describe('the demo registry', () => {
-  it('carries the three built add-ons plus four described ones', () => {
-    expect(ALL).toHaveLength(7);
-    for (const key of DEMO_KEYS) expect(KEYS.has(key)).toBe(true);
+  /**
+   * ── WHAT A REGISTRY SUITE MAY ASSERT, AND WHAT IT MAY NOT ─────────────────
+   *
+   * [Amended 2026-08-11, wave 4b round 4.] This opened with
+   * `expect(ALL).toHaveLength(7)`, which turned "register one more add-on" into
+   * a red suite on a LIVE app whose screens were faultless. It was found by
+   * registering the maker studio's Live Personalizer here — the whole point of
+   * a portable add-on — and it was the only thing in the experiment that
+   * failed.
+   *
+   * It is the same shape as the `HOSTED_SLOTS` assertion removed further down
+   * this file: a host forbidding, in its own tests, the thing 24 D21 says a
+   * host must allow. A count is not an invariant. What holds however many
+   * add-ons this build carries is the set of RELATIONS between the registry and
+   * the vendored list, and those are what is asserted now.
+   */
+  it('registers every add-on it vendors, and describes others it has not built', () => {
+    for (const key of DEMO_KEYS) expect(KEYS.has(key), `${key} is vendored, not registered`).toBe(true);
+    expect(KEYS.size, 'two add-ons share a key').toBe(ALL.length);
     expect(ALL.filter(isConnectable).map((a) => a.key).sort()).toEqual([...DEMO_KEYS].sort());
+    /*
+     * The shelf says more than the build ships, which is the catalogue copy of
+     * 24 D12 — described honestly, with a "Not in this demo" chip where the
+     * Connect button would be. A shelf holding exactly what it ships reads as
+     * though those are all there could ever be.
+     */
+    expect(ALL.filter((a) => !isConnectable(a)).length).toBeGreaterThan(0);
   });
 
   it('gives every add-on a monogram of two or three letters and no brand colour', () => {
@@ -58,10 +81,86 @@ describe('the demo registry', () => {
     }
   });
 
-  it('names only slots the host actually hosts', () => {
-    for (const addOn of ALL) {
-      for (const fill of addOn.fills) expect(HOSTED_SLOTS).toContain(fill.slot);
+  /*
+   * REMOVED, wave 4b round 2: `it('names only slots the host actually hosts')`,
+   * which asserted `HOSTED_SLOTS` contained EVERY fill of EVERY registered
+   * add-on.
+   *
+   * It forbids the thing 24 D21 claims. The personalizer declares six fills and
+   * this works mounts five slots, five of which it does not host — so
+   * registering a portable add-on here would have turned the LIVE app's suite
+   * red while the app itself ran faultlessly, and the only way to keep it green
+   * would have been to stop the add-on being portable. `slots.ts` states the
+   * right rule in its header: a fill for a slot the host does not mount simply
+   * does not render, and that IS portability.
+   *
+   * The half worth keeping — every id in `HOSTED_SLOTS` is really mounted — was
+   * a grep over the sources for `slot="…"`, which a mount inside a comment
+   * satisfies. Both now live in `slotRender.test.tsx`, where the app is
+   * rendered and the mounts are the ones React actually reached.
+   */
+  /*
+   * AND THE REPLACEMENT WAS VACUOUS TOO, so it has been replaced in turn
+   * (wave 4b round 3). It asserted that `fillsFor` answers an unmounted slot
+   * with `[]`. `createRegistry` never consults `HOSTED_SLOTS` — it filters by
+   * enabled key, by `forAddOn` and by `SLOT_FILL` and by nothing else — so that
+   * is not a property of the seam at all. It was green because no add-on
+   * vendored here happens to fill a slot this works does not mount, which is a
+   * fact about the fixture and would evaporate the day one did. Same failure
+   * mode as the assertion it replaced: an accident wearing a claim's clothes.
+   *
+   * What is actually true, and what D21 actually needs, is below.
+   */
+  it('registers a fill for a slot this works does not mount, and mounts nothing for it (D21)', () => {
+    const unhosted = 'product.options.personalize';
+    expect(HOSTED_SLOTS as readonly string[]).not.toContain(unhosted);
+
+    /*
+     * A PORTABLE ADD-ON, STANDING IN FOR THE PERSONALIZER. It fills a real slot
+     * in the closed registry that this works has no screen for. Synthesised
+     * rather than vendored because the claim is about ANY such add-on, and
+     * because a fixture that has to be installed to be tested is a fixture that
+     * stops being run.
+     */
+    const elsewhere = {
+      ...ALL.find(isConnectable)!,
+      key: 'made-elsewhere',
+      fills: [{ slot: unhosted, order: 1, render: () => null }],
+    } as (typeof ALL)[number];
+
+    const withIt = createRegistry([...ALL, elsewhere]);
+    const everything = new Set([...ALL.map((a) => a.key), elsewhere.key]);
+
+    /*
+     * THE REGISTRY IS HONEST ABOUT IT — it hands the fill back, because a
+     * registry that silently dropped fills for unmounted slots would hide the
+     * difference between "this host has no screen for it" and "this add-on
+     * declared nothing". The old assertion demanded exactly that silence.
+     */
+    expect(withIt.fillsFor(unhosted as never, everything).map((r) => r.addOn)).toEqual([
+      elsewhere.key,
+    ]);
+
+    /*
+     * AND NOTHING THIS WORKS DRAWS CHANGES. Every slot it mounts answers
+     * identically with the portable add-on registered and without it, so
+     * registering one cannot disturb a screen — which is the half of D21 this
+     * file can prove.
+     */
+    const without = createRegistry(ALL);
+    for (const slot of HOSTED_SLOTS) {
+      const before = without.fillsFor(slot, everything).map((r) => r.addOn);
+      const after = withIt.fillsFor(slot, everything).map((r) => r.addOn);
+      expect(after, slot).toEqual(before);
     }
+
+    /*
+     * The other half — that the fill is never DRAWN, because no screen in this
+     * app mounts the slot — is a claim about rendering and cannot be made here.
+     * `slotRender.test.tsx` renders every surface this works has with exactly
+     * this add-on registered and enabled, and asserts no mount ever names the
+     * slot. That is where the property lives; this is where it is pointed at.
+     */
   });
 
   /**
@@ -120,9 +219,21 @@ describe('slot fills', () => {
     }
   });
 
+  /**
+   * ORDER, NOT CENSUS. This asserted `[10, 20]` — the exact `order` values of
+   * exactly two fills — so a fourth add-on filling `artwork.sources` turned it
+   * red for adding a row, not for sorting wrongly. Same shape as the registry
+   * count above it. What the rule actually is: the list comes back sorted, and
+   * the shop's own editor is ahead of anything that imports from elsewhere.
+   */
   it('puts the shop’s own editor ahead of the import in artwork.sources', () => {
     const fills = registry.fillsFor('artwork.sources', all);
-    expect(fills.map((f) => f.fill.order)).toEqual([10, 20]);
+    const orders = fills.map((f) => f.fill.order);
+    expect(orders, 'the slot came back unsorted').toEqual([...orders].sort((a, b) => a - b));
+
+    const keys = fills.map((f) => f.addOn);
+    expect(keys.indexOf('design-studio')).toBeGreaterThanOrEqual(0);
+    expect(keys.indexOf('design-studio')).toBeLessThan(keys.indexOf('import-canva'));
   });
 
   it('scopes a per-add-on slot to the one add-on that was asked for', () => {
