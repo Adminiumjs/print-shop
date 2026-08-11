@@ -247,7 +247,8 @@ export function Editor({
              */}
             <div className="ds-title-size">
               <span className="ds-mono">
-                {doc.widthMm} × {doc.heightMm}mm · {bleedW} × {bleedH}mm
+                {t("addon.design-studio.dims", { w: doc.widthMm, h: doc.heightMm })} ·{" "}
+                {t("addon.design-studio.dims", { w: bleedW, h: bleedH })}
               </span>{" "}
               {t("addon.design-studio.editor.withBleed")}
             </div>
@@ -303,7 +304,16 @@ export function Editor({
             >
               <ZoomOut size={14} aria-hidden />
             </button>
-            <span className="ds-zoom-value ds-mono">{Math.round(physicalZoom * 100)}%</span>
+            {/*
+              * THROUGH `t()`. `{n}%` in JSX is a raw number and a bare sign:
+              * Latin digits on an Arabic page, where the percent sign is ٪ and
+              * sits on the other side of the figure. The host's guard could not
+              * see it either — the number stood alone in its own text node, and
+              * the sign was in the next one.
+              */}
+            <span className="ds-zoom-value ds-mono">
+              {t("addon.design-studio.zoomValue", { v: Math.round(physicalZoom * 100) })}
+            </span>
             <button
               type="button"
               onClick={() => setZoomStep((z) => clamp(z * 1.25, 0.25, 6))}
@@ -453,7 +463,7 @@ export function Editor({
                   {t("addon.design-studio.legend.bleed")} —{" "}
                   <Measured
                     template={t("addon.design-studio.legend.bleedValue")}
-                    value={`${doc.bleedMm}mm`}
+                    value={t("addon.design-studio.mmValue", { v: doc.bleedMm })}
                   />
                 </span>
                 <span className="ds-legend-item">
@@ -461,7 +471,7 @@ export function Editor({
                   {t("addon.design-studio.legend.safe")} —{" "}
                   <Measured
                     template={t("addon.design-studio.legend.safeValue")}
-                    value={`${doc.safeMm}mm`}
+                    value={t("addon.design-studio.mmValue", { v: doc.safeMm })}
                   />
                 </span>
               </div>

@@ -36,7 +36,7 @@ import {
 import type { ComponentType, Dispatch } from "react";
 
 import { layersOn, roundMm, type Doc, type Layer, type PageAlign, type Side } from "../doc.ts";
-import type { T } from "../i18n/strings.ts";
+import type { DesignStudioKey, T } from "../i18n/strings.ts";
 import { FONTS, NO_STROKE, SWATCHES, WEIGHTS } from "../layouts.ts";
 import type { EditorAction } from "./editorState.ts";
 
@@ -194,7 +194,9 @@ export function Inspector({
                       }
                       onBlur={() => dispatch({ type: "endGesture" })}
                     />
-                    <span className="ds-mono">pt</span>
+                    {/* `pt` was written here, the way `mm` used to be two
+                        fields up: an English unit in eight locales. */}
+                    <span className="ds-mono">{t("addon.design-studio.insp.pt")}</span>
                   </span>
                 </label>
               </div>
@@ -206,9 +208,25 @@ export function Inspector({
                   value={layer.weight}
                   onChange={(e) => patch({ weight: Number(e.target.value) } as never)}
                 >
+                  {/*
+                   * THE WEIGHTS ARE NAMED, NOT NUMBERED.
+                   *
+                   * This listed `400 600 700 800` — the CSS numbers, straight
+                   * out of `WEIGHTS`, as the option's own label. Four bare Latin
+                   * runs in a menu on an Arabic page, and the guard could not
+                   * see them because nothing had ever pressed the text tool that
+                   * opens this panel.
+                   *
+                   * Formatting them would have answered the guard and helped
+                   * nobody: ٤٠٠ is not what a font weight is called in Arabic
+                   * any more than in English. What a person picking a weight
+                   * wants is its NAME, which every design tool shows and which
+                   * each locale can write for itself. The number stays where it
+                   * belongs, in `value`, which is a wire format.
+                   */}
                   {WEIGHTS.map((weight) => (
                     <option key={weight} value={weight}>
-                      {weight}
+                      {t(`addon.design-studio.insp.weight${weight}` as DesignStudioKey)}
                     </option>
                   ))}
                 </select>

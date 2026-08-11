@@ -74,8 +74,20 @@ export function LayoutPicker({
                 >
                   <span className="ds-tile-art" style={{ background: tint(layout.tint) }}>
                     <Icon size={30} aria-hidden />
+                    {/*
+                      * THROUGH `t()`, so the figures are formatted and the unit
+                      * is translated. Written as `{w} × {h}mm` in JSX this was
+                      * three separate text nodes — a raw number, a separator, a
+                      * raw number — and an English unit glued to the second. On
+                      * an Arabic page that is Latin digits; the host's own
+                      * guard could not see them because its rule exempted any
+                      * token with a Latin letter in it, and `55mm` has two.
+                      */}
                     <span className="ds-tile-chip ds-mono">
-                      {layout.widthMm} × {layout.heightMm}mm
+                      {t("addon.design-studio.dims", {
+                        w: layout.widthMm,
+                        h: layout.heightMm,
+                      })}
                     </span>
                   </span>
                   <span className="ds-tile-body">
@@ -97,7 +109,10 @@ export function LayoutPicker({
             <Plus size={16} aria-hidden />
             {t("addon.design-studio.picker.blank")} —{" "}
             <span className="ds-mono">
-              {BLANK_LAYOUT.widthMm} × {BLANK_LAYOUT.heightMm}mm
+              {t("addon.design-studio.dims", {
+                w: BLANK_LAYOUT.widthMm,
+                h: BLANK_LAYOUT.heightMm,
+              })}
             </span>
           </button>
         </div>
