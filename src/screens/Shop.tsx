@@ -26,10 +26,10 @@ import {
 
 import { AddOnSlot } from "../components/AddOnSlot.tsx";
 import { outboundOrderFor, shopClock } from "../add-ons/records.ts";
-import { EmptyState, Mono, Tag, Tile } from "../components/Primitives.tsx";
+import { EmptyState, Mono, Tag, Tile, Typed } from "../components/Primitives.tsx";
 import { useT } from "../i18n/index.tsx";
 import { PRODUCT_BY_KEY, type ProductKey } from "../lib/catalogue.ts";
-import { cents, day, dueLabel, flatTint, mm, multiplier, packagingHint, shortDay } from "../lib/format.ts";
+import { cents, day, dueLabel, flatTint, mm, multiplier, num, packagingHint, shortDay } from "../lib/format.ts";
 import {
   BOARD_COLUMNS,
   boardKpis,
@@ -200,7 +200,7 @@ function JobCard({ job, iso, onDrag }: { job: Job; iso: string; onDrag: (ref: st
 
       <div className="mp-jobcard-title">{t(`data.product.${job.productKey}` as never)}</div>
       <div className="mp-jobcard-spec">
-        {job.quantity} · {mm(job.trimWidthMm, job.trimHeightMm)}
+        {num(job.quantity)} · {mm(job.trimWidthMm, job.trimHeightMm)}
       </div>
       <div className="mp-jobcard-foot">
         <span className="mp-jobcard-cust">
@@ -405,7 +405,7 @@ export function Ticket() {
                       </div>
                       {proof.note !== undefined && (
                         <div style={{ fontSize: 12, color: "var(--fg-muted)", lineHeight: 1.4 }}>
-                          {proof.note}
+                          <Typed>{proof.note}</Typed>
                         </div>
                       )}
                     </div>
@@ -598,7 +598,7 @@ export function JobsList() {
                 <td>
                   <span style={{ fontWeight: 700 }}>{t(`data.product.${job.productKey}` as never)}</span>
                   <Mono style={{ display: "block", fontSize: 10.5, color: "var(--fg-subtle)" }}>
-                    {job.quantity} · {mm(job.trimWidthMm, job.trimHeightMm)}
+                    {num(job.quantity)} · {mm(job.trimWidthMm, job.trimHeightMm)}
                   </Mono>
                 </td>
                 <td style={{ color: "var(--fg-muted)" }}>{job.customer}</td>
@@ -845,7 +845,7 @@ function BreakCurve() {
             fontSize={9.5}
             fill="var(--fg-subtle)"
           >
-            {p.step.quantity}
+            {num(p.step.quantity)}
           </text>
         </g>
       ))}

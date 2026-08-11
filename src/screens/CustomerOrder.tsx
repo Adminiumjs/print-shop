@@ -16,7 +16,7 @@ import { checkoutItems, outboundOrderFor, shopClock, SHOP_ORIGIN } from "../add-
 import { EmptyState, Field, Mono, Tag, Tile } from "../components/Primitives.tsx";
 import { useI18n, useT } from "../i18n/index.tsx";
 import { PRODUCT_BY_KEY } from "../lib/catalogue.ts";
-import { cents, day, mm, shortDay } from "../lib/format.ts";
+import { cents, day, mm, num, shortDay } from "../lib/format.ts";
 import { CUSTOMER_STAGES, customerStageIndex, proofApproved } from "../lib/jobs.ts";
 import { checkArtwork, priceQuote, promiseFor, resolveSize } from "../lib/quote.ts";
 import { TAX_RATE } from "../lib/rates.ts";
@@ -128,7 +128,7 @@ export function Basket() {
                       </Mono>
                     </div>
                     <div className="mp-sizes" style={{ marginBlockStart: 8 }}>
-                      <span className="mp-size-chip mp-mono">{line.config.quantity}</span>
+                      <span className="mp-size-chip mp-mono">{num(line.config.quantity)}</span>
                       <span className="mp-size-chip mp-mono">
                         {mm(size.widthMm, size.heightMm)}
                       </span>
@@ -311,14 +311,19 @@ export function Basket() {
             </h2>
             <div className="mp-stack" style={{ gap: 11 }}>
               <Field label={t("cust.basket.card")}>
-                <input className="mp-input mp-input--mono" value="4242 4242 4242 4242" readOnly />
+                <input
+                  dir="ltr"
+                  className="mp-input mp-input--mono"
+                  value="4242 4242 4242 4242"
+                  readOnly
+                />
               </Field>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 11 }}>
                 <Field label={t("cust.basket.expiry")}>
-                  <input className="mp-input mp-input--mono" value="04 / 29" readOnly />
+                  <input dir="ltr" className="mp-input mp-input--mono" value="04 / 29" readOnly />
                 </Field>
                 <Field label={t("cust.basket.cvc")}>
-                  <input className="mp-input mp-input--mono" value="123" readOnly />
+                  <input dir="ltr" className="mp-input mp-input--mono" value="123" readOnly />
                 </Field>
               </div>
               <div
@@ -512,7 +517,7 @@ export function Confirmation() {
                   flex: "0 0 auto",
                 }}
               >
-                {n}
+                {num(n)}
               </span>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 700 }}>
