@@ -1,12 +1,66 @@
-import { defineConfig } from "vite";
+import { defineConfig, type UserConfig } from "vite";
 import react from "@vitejs/plugin-react";
+
+/**
+ * Vite's config type plus the block vitest reads out of the same file.
+ *
+ * NOT `import { defineConfig } from "vitest/config"`, and not
+ * `/// <reference types="vitest/config" />` either. The import drags in the copy
+ * of Vite nested under `vitest/`, and `tsc -b` then refuses the React plugin —
+ * a `PluginOption` from one Vite is not assignable to `PluginOption` from the
+ * other — which fails a build whose first half IS `tsc -b`. The triple-slash
+ * reference does not augment under this tsconfig's resolution at all. One local
+ * interface types the two settings that are actually used, keeps the plugin
+ * types on Vite's own copy, and is checked like everything else.
+ */
+interface ViteWithVitest extends UserConfig {
+  test: { testTimeout: number; hookTimeout: number };
+}
 
 // https://vite.dev/config/
 // `base` defaults to "/" (root deploy on Vercel / DigitalOcean). The
 // `build:demo` script overrides it with --base=/demo/print-shop/ so the app
 // can be served from the Adminium demo sub-path.
-export default defineConfig({
+const config: ViteWithVitest = {
   plugins: [react()],
+  /*
+   * ── THE TEST RUN, AND WHY IT NEEDS A TIMEOUT AT ALL ───────────────────────
+   *
+   * `npm test` was RED on a clean tree for a whole round. Three suites —
+   * `a11y.test.tsx`, `add-ons/egress.test.tsx` and `i18n/numerals.arabic.test.tsx`
+   * — each failed with "Test timed out in 5000ms", and every one of them passes.
+   * Nothing was wrong with them; nothing here said how long they are allowed to
+   * take, so vitest's 5 s default applied, and the round that wrote them only
+   * ever ran vitest directly with `--testTimeout` on the command line. A gate
+   * that is green only when it is run with a flag the README does not mention is
+   * not a gate. This is that flag, in the file, where the documented command
+   * picks it up.
+   *
+   * ── WHY THOSE THREE ARE SLOW, WHICH IS NOT A DEFECT ───────────────────────
+   *
+   * All three are the same thing: `testing/tour.tsx` mounts the whole app and
+   * CRAWLS it — every view, every overlay, every surface a press opens, with the
+   * add-ons off and on, up to a 400-render budget. That crawl is the coverage.
+   * It is what reaches inside an add-on's own flow, and the three questions
+   * asked of it (is everything named, does anything reach off-origin, is there a
+   * Latin digit on an Arabic page) are only as wide as it is. Measured on this
+   * repo: about 17 s per suite, ~40 ms per render.
+   *
+   * The three files run in PARALLEL, so the whole documented run is about 19 s
+   * of wall clock — the cost of one crawl, not three. That is a gate a developer
+   * waits for. Making the number smaller would mean crawling less, which is the
+   * one saving not worth having.
+   *
+   * So the timeout is generous rather than tight: enough headroom for a loaded
+   * CI box (3× the measured worst case), still short enough that a genuinely
+   * hung test fails the run instead of hanging it. `src/sources.test.ts` asserts
+   * it is still here — this is the sort of line that gets lost in a merge and is
+   * missed only by whoever next runs the command as documented.
+   */
+  test: {
+    testTimeout: 60_000,
+    hookTimeout: 60_000,
+  },
   build: {
     rollupOptions: {
       output: {
@@ -33,4 +87,6 @@ export default defineConfig({
       },
     },
   },
-});
+};
+
+export default defineConfig(config);

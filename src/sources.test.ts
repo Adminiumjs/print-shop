@@ -275,3 +275,43 @@ describe('no path a banned grep would find (17 §2)', () => {
     expect(offenders.map(relative)).toEqual([]);
   });
 });
+
+/**
+ * THE DOCUMENTED COMMAND IS THE ONE THAT HAS TO PASS.
+ *
+ * `npm test` shipped RED on a clean tree for a whole round. Three suites take
+ * 7–19 s — they mount the app and crawl it — and nothing configured a timeout,
+ * so vitest's 5 s default failed all three. Every one of them passed for the
+ * round that wrote them, because that round ran `npx vitest run --testTimeout=…`
+ * with its own flags and never ran the command the README gives a reader.
+ *
+ * The repair is in `vite.config.ts`. This is the part that keeps it there: a
+ * config line has no other test, it reads as boilerplate in a diff, and the only
+ * person who notices its absence is whoever next runs the documented command.
+ */
+describe("the test command a reader is given is the one that is configured", () => {
+  const config = readFileSync(join(process.cwd(), "vite.config.ts"), "utf8");
+
+  it("gives the suites long enough to finish", () => {
+    const declared = /testTimeout:\s*([\d_]+)/.exec(config);
+    expect(declared, "vite.config.ts sets no test.testTimeout — see the block there").not.toBe(
+      null,
+    );
+    /*
+     * The slowest suite measured about 17 s. Anything under 30 s is a gate that
+     * goes red on a loaded CI box, which is the same defect one machine later.
+     */
+    expect(Number((declared?.[1] ?? "0").replace(/_/g, ""))).toBeGreaterThanOrEqual(30_000);
+  });
+
+  it("runs the whole suite, with no flag a reader would have to know", () => {
+    // `vitest run` and nothing else. A `--testTimeout` here would be the same
+    // defect wearing the fix's clothes: the flag would live in one repo's
+    // package.json and the reason for it nowhere.
+    const scripts = JSON.parse(readFileSync(join(process.cwd(), "package.json"), "utf8")) as {
+      scripts: Record<string, string>;
+    };
+    expect(scripts.scripts.test).toBe("vitest run");
+    expect(readFileSync(join(process.cwd(), "README.md"), "utf8")).toContain("npm test");
+  });
+});
