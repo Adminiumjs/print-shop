@@ -21,6 +21,11 @@ import { describe, expect, it } from 'vitest';
 import { NOW } from './data/demo.ts';
 import { impuritiesIn, restatementsIn } from './testing/purity.ts';
 import {
+  RAW_CONTROL_EXPLANATION,
+  rawControlOffences,
+  rawControlsIn,
+} from './testing/encoding.ts';
+import {
   foreignImportsIn,
   offendingAddresses,
   sendersIn,
@@ -536,5 +541,44 @@ describe('an add-on brings its own inert origins with it (24 AC20, D21)', () => 
     const declared = INERT[0]!.origin;
     expect(offendingAddresses(`const a = "${declared}/x";`, INERT)).toEqual([]);
     expect(offendingAddresses(`const a = "${declared}.attacker.test/x";`, INERT)).not.toEqual([]);
+  });
+});
+
+/**
+ * ── EVERY SOURCE FILE IS TEXT, OR THE TOOLS STOP READING IT ─────────────────
+ *
+ * [Added 2026-08-12, with the eight raw bytes it found in this repo's own
+ * `i18n/reviewedCopy.test.ts`.]
+ *
+ * The rule and the argument for it are in `testing/encoding.ts`, which is the
+ * add-on monorepo's copy byte for byte — the same arrangement `testing/purity.ts`
+ * and `testing/egress.ts` are under, and `host-mirror.test.ts` fails on any
+ * difference. It is imported rather than restated for the reason
+ * `shared-rule.test.ts` gives: a scanner kept one-per-repo is not one rule, it
+ * is N rules that agree until the day one of them is repaired.
+ *
+ * What is decided HERE is only which files it is pointed at: everything this
+ * suite already walks, which is `.ts` and `.tsx` under `src/` — the vendored
+ * add-ons included, since that is where a re-sync would bring a raw byte back
+ * in. Stylesheets are outside this walk and so outside this rule.
+ */
+describe('every source file is text a tool will read', () => {
+  it('writes control characters as escapes, never as raw bytes', () => {
+    const offenders = ALL.flatMap((file) =>
+      rawControlOffences(file.slice(SRC.length), readFileSync(file, 'utf8')),
+    );
+    expect(offenders, `\n${RAW_CONTROL_EXPLANATION}\n${offenders.join('\n')}\n`).toEqual([]);
+  });
+
+  it('would report one, which is what makes the absence worth reading', () => {
+    // Driven over the scanner rather than over `src/`, so this stays true on a
+    // day every file is clean — which is every day until somebody pastes one.
+    const planted = `const k = \`a${String.fromCharCode(0)}b\`;\nconst j = 'x${String.fromCharCode(1)}y';`;
+    expect(rawControlsIn(planted).map((hit) => hit.label)).toEqual(['U+0000', 'U+0001']);
+    expect(rawControlsIn(planted).map((hit) => hit.line)).toEqual([1, 2]);
+    // And the escaped spelling of the same two strings is not a finding.
+    expect(rawControlsIn(String.raw`const k = 'a\x00b', j = 'x\x01y';`)).toEqual([]);
+    // Tabs and newlines are text, not findings.
+    expect(rawControlsIn('a\tb\r\nc')).toEqual([]);
   });
 });
