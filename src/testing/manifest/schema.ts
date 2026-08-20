@@ -1,17 +1,16 @@
 /*
  * VENDORED VERBATIM from packages/manifest/src/schema.ts.
- * Never hand-edit this copy: change the monorepo package and re-copy.
+ * Never hand-edit this copy: change the monorepo package and re-run
+ * `node scripts/sync-manifest-validator.mjs`.
  *
  * WHY A COPY. `@adminium/manifest` is not published to npm and this app is a
  * standalone repo that must build from a clean clone, so it cannot depend on
- * the monorepo. The same bind produced `src/add-ons/artwork.ts` and
- * `src/i18n/locales.ts`, and the same answer the three add-on repos already
- * use for their zod validators (`src/testing/schemas.ts`): copy it under
- * `testing/`, where `zod` is a devDependency and nothing in the shipped
- * bundle`s import graph can reach it.
+ * the monorepo. It lives under `testing/` because `zod` is a devDependency
+ * here and a runtime dependency the host does not carry (24 D7) — nothing in
+ * the shipped bundle's import graph may reach it, which sources.test.ts gates.
  *
  * The only edits are import specifiers: `.js` becomes `.ts`, and the
- * `@adminium/add-on-contracts` package import becomes a relative one.
+ * `@adminium/add-on-contracts` package import becomes relative ones.
  */
 /**
  * Manifest spec v1 (13-marketplace.md §2), frozen at `manifestVersion: 1` for
@@ -132,10 +131,26 @@ export type Capability = z.infer<typeof capabilitySchema>;
 
 // ── §2.4 compatibility ───────────────────────────────────────────────────────
 
+/** The three meta/data engines Adminium can talk to (01-architecture.md §2.3). */
+export const MANIFEST_ENGINES = ['postgres', 'mysql', 'sqlite'] as const;
+
 export const compatibilitySchema = z
   .object({
     minAdminiumVersion: semver,
     maxAdminiumVersion: semver.optional(), // exclusive upper bound
+    /**
+     * Which data engines this app's `requiredSchema` actually works on.
+     *
+     * ADDED rather than dropped from the manifests (28-T21). Thirteen shipped
+     * manifests already carried `engines` and this `.strict()` schema rejected
+     * every one — it is a spec field (13 §2.4) that never reached the code. The
+     * information is real: an app whose schema uses Postgres-only DDL cannot be
+     * installed against SQLite, and deleting the field to satisfy the validator
+     * would have thrown away the only place that is written down.
+     *
+     * Optional and additive, so nothing that validated before stops.
+     */
+    engines: z.array(z.enum(MANIFEST_ENGINES)).min(1).optional(),
     requires: z.array(capabilitySchema).optional(),
   })
   .strict();
@@ -325,11 +340,37 @@ export const frontendEnvVarSchema = z
   })
   .strict();
 
+/**
+ * Which of the three sides a frontend is (28-public-surface.md §4).
+ *
+ * The product rule this exists to make CHECKABLE: a micro-SaaS is the Adminium
+ * dashboard (mandatory, and never declared here — it comes from introspection)
+ * plus a staff side, a customer side, or both. At least one, or it is not a
+ * micro-SaaS but somebody's own build.
+ */
+export const FRONTEND_SIDES = ['staff', 'customer'] as const;
+
 export const frontendSchema = z
   .object({
+    /**
+     * REQUIRED, and the whole point of the array form. Without it the split
+     * lives only in prose and nothing can enforce §4's rule.
+     */
+    side: z.enum(FRONTEND_SIDES),
     kind: z.enum(FRONTEND_KINDS),
     entry: z.string().min(1).optional(),
     env: z.record(z.string(), frontendEnvVarSchema).optional(),
+    /**
+     * The view names this side owns, e.g. `{ book, visits }`.
+     *
+     * RE-ADMITTED, not newly invented. Eleven shipped manifests already carry
+     * this key and the `.strict()` schema rejected every one of them — while
+     * being, per the 28-T33 fleet audit, "the only machine-readable record of
+     * the staff/customer split anywhere in the fleet". Deleting it during
+     * normalization was the tempting move and would have made §4's rule
+     * permanently uncheckable.
+     */
+    routes: z.record(z.string(), z.string()).optional(),
   })
   .strict();
 
@@ -368,6 +409,28 @@ const WINDOW_MESSAGE = {
   path: ['compatibility'] as const,
 };
 
+/**
+ * At most one entry per side.
+ *
+ * Two `customer` frontends is not a richer app; it is an ambiguity — a
+ * publishable key is minted against ONE side, so a second entry claiming the
+ * same one leaves the installer and the key-minting UI with no way to say which
+ * bundle a key belongs to.
+ */
+function sidesAreDistinct(m: { frontends: readonly { side: string }[] }): boolean {
+  const seen = new Set<string>();
+  for (const f of m.frontends) {
+    if (seen.has(f.side)) return false;
+    seen.add(f.side);
+  }
+  return true;
+}
+
+const SIDES_MESSAGE = {
+  message: 'each side may appear at most once in `frontends`',
+  path: ['frontends'] as const,
+};
+
 export const appManifestSchema = z
   .object({
     kind: z.literal('app'),
@@ -381,11 +444,21 @@ export const appManifestSchema = z
     seeds: z.array(seedSchema).optional(),
     widgets: z.array(manifestWidgetSchema).optional(),
     capabilities: z.array(capabilitySchema).optional(),
-    frontend: frontendSchema,
+    /**
+     * ONE OR MORE SIDES (28 §4, D12). Replaces the singular `frontend`.
+     *
+     * `minItems: 1` is the gate: a manifest declaring no side does not validate,
+     * which is what turns "dashboard mandatory, staff optional, customer
+     * optional, at least one" from a slogan into something CI can hold. Two
+     * repos (factory-ops, hotel-reservations) could never validate under the old
+     * required-singular shape however their `requiredSchema` was repaired.
+     */
+    frontends: z.array(frontendSchema).min(1),
   })
   .strict()
   .refine(capabilitiesNotContradictory, { ...CAPS_MESSAGE, path: [...CAPS_MESSAGE.path] })
-  .refine(compatibilityWindowOrdered, { ...WINDOW_MESSAGE, path: [...WINDOW_MESSAGE.path] });
+  .refine(compatibilityWindowOrdered, { ...WINDOW_MESSAGE, path: [...WINDOW_MESSAGE.path] })
+  .refine(sidesAreDistinct, { ...SIDES_MESSAGE, path: [...SIDES_MESSAGE.path] });
 
 /**
  * `pages` and `frontend` are absent from this branch on purpose (24 §5.7 item

@@ -1,10 +1,12 @@
 /**
  * The vendored `@adminium/manifest` surface this repo's suite uses.
  *
- * The four modules beside this one are verbatim copies of the monorepo's
+ * The five modules beside this one are verbatim copies of the monorepo's
  * `packages/manifest` and `packages/add-on-contracts` sources — see the header
- * each carries. This barrel exists so a test imports `validateManifest` from
- * one place, exactly as it would from the package.
+ * each carries, and `scripts/sync-manifest-validator.mjs`, which writes them.
+ * Never hand-edit one: run that script, or `--check` it in CI. This barrel
+ * exists so a test imports `validateManifest` from one place, exactly as it
+ * would from the package.
  *
  * NOTHING UNDER `src/testing/` MAY BE IMPORTED BY SHIPPED CODE. `zod` is a
  * devDependency here and a runtime dependency the host does not carry (24 D7),

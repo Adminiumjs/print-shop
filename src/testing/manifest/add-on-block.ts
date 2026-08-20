@@ -1,17 +1,16 @@
 /*
  * VENDORED VERBATIM from packages/add-on-contracts/src/add-on-block.ts.
- * Never hand-edit this copy: change the monorepo package and re-copy.
+ * Never hand-edit this copy: change the monorepo package and re-run
+ * `node scripts/sync-manifest-validator.mjs`.
  *
  * WHY A COPY. `@adminium/manifest` is not published to npm and this app is a
  * standalone repo that must build from a clean clone, so it cannot depend on
- * the monorepo. The same bind produced `src/add-ons/artwork.ts` and
- * `src/i18n/locales.ts`, and the same answer the three add-on repos already
- * use for their zod validators (`src/testing/schemas.ts`): copy it under
- * `testing/`, where `zod` is a devDependency and nothing in the shipped
- * bundle`s import graph can reach it.
+ * the monorepo. It lives under `testing/` because `zod` is a devDependency
+ * here and a runtime dependency the host does not carry (24 D7) — nothing in
+ * the shipped bundle's import graph may reach it, which sources.test.ts gates.
  *
  * The only edits are import specifiers: `.js` becomes `.ts`, and the
- * `@adminium/add-on-contracts` package import becomes a relative one.
+ * `@adminium/add-on-contracts` package import becomes relative ones.
  */
 /**
  * The `addOn` manifest block (24-marketplace-wave-4.md §5.3) and its validation
