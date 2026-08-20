@@ -8,9 +8,15 @@
  *
  * THE CANVAS IS DRAWN AT THE FINISHED SIZE. Not a preview of it, not a
  * proportional stand-in — the white rectangle is the piece, the hatch around it
- * is the 3mm the guillotine takes, and the dashed line inside it is where ink
+ * is the bleed THIS JOB asks for, and the dashed line inside it is where ink
  * stops being safe. Everything the customer does happens in those coordinates,
  * which is the entire reason the output cannot have the wrong bleed.
+ *
+ * WHICH IS WHY THIS FILE DOES NOT BUILD ITS OWN DOCUMENTS. `startDoc` comes from
+ * `artworkSource.ts` with the job's bleed already bound; calling `docFromLayout`
+ * or `createDoc` here would put the hatch back at a constant 3mm and hand the
+ * host a file at a size it never asked for. The hatch is drawn from
+ * `doc.bleedMm`, so a job with no bleed at all has none to draw.
  *
  * Below 900px the layout inverts: canvas first, tools as a bottom bar,
  * inspector as a slide-up sheet. NOTHING here locks the document's scroll — see
@@ -35,11 +41,11 @@ import {
 import type { ComponentType, PointerEvent as ReactPointerEvent } from "react";
 import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 
+import type { StartDoc } from "../artworkSource.ts";
 import {
   PX_PER_MM_100,
   canRedo,
   canUndo,
-  createDoc,
   layersOn,
   outsideSafeArea,
   type Doc,
@@ -47,7 +53,7 @@ import {
   type Side,
 } from "../doc.ts";
 import type { T } from "../i18n/strings.ts";
-import { LAYOUTS, docFromLayout, draftFor, type StartingLayout } from "../layouts.ts";
+import { BLANK_LAYOUT, LAYOUTS, draftFor, type StartingLayout } from "../layouts.ts";
 import { Inspector } from "./Inspector.tsx";
 import { LayoutPicker } from "./LayoutPicker.tsx";
 import { Monogram } from "./Monogram.tsx";
@@ -80,6 +86,8 @@ export interface EditorProps {
   layouts: readonly StartingLayout[];
   /** Pre-selected by the caller when the job's finished size matched one. */
   initialLayout?: StartingLayout;
+  /** Starts a document for the job being made — see `artworkSource.ts`. */
+  startDoc: StartDoc;
   t: T;
   /** "Use this design" — the document goes into the order. */
   onUse: (doc: Doc) => void;
@@ -93,6 +101,7 @@ export function Editor({
   productLabel,
   layouts,
   initialLayout,
+  startDoc,
   t,
   onUse,
   onSave,
@@ -103,11 +112,12 @@ export function Editor({
     initialLayout ?? null,
     (layout): ReturnType<typeof initialState> =>
       initialState(
-        layout === null
-          ? // A placeholder standing in until the picker answers. It is never
-            // drawn: `picked` gates the canvas on the customer having chosen.
-            createDoc({ layoutId: "blank", widthMm: 210, heightMm: 297, sides: 1 })
-          : docFromLayout(layout, seedText(t)),
+        // With no layout chosen yet this is a placeholder standing in until the
+        // picker answers. It is never drawn: `picked` gates the canvas on the
+        // customer having chosen — but it goes through `startDoc` like every
+        // other document here, so there is one way to make one and no second
+        // one to get wrong.
+        startDoc(layout ?? BLANK_LAYOUT, seedText(t)),
       ),
   );
   const [picked, setPicked] = useState(initialLayout !== undefined);
@@ -157,7 +167,7 @@ export function Editor({
   }, [pickerOpen, picked, sheetOpen, onCancel]);
 
   const pick = (layout: StartingLayout) => {
-    dispatch({ type: "open", doc: docFromLayout(layout, seedText(t)) });
+    dispatch({ type: "open", doc: startDoc(layout, seedText(t)) });
     setPicked(true);
     setPickerOpen(false);
     setZoomStep(1);

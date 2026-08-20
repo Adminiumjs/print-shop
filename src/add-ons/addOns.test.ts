@@ -29,7 +29,7 @@ import { checkArtwork, type Configuration } from '../lib/quote.ts';
 
 // The two `artwork-source` implementations, driven for real below.
 import { createArtworkSource } from './vendor/design-studio/artworkSource.ts';
-import { docFromLayout, layoutForSize } from './vendor/design-studio/layouts.ts';
+import { layoutForSize } from './vendor/design-studio/layouts.ts';
 import { createCanvaSource } from './vendor/import-canva/source.ts';
 import { createDemoTransport } from './vendor/import-canva/demo/transport.ts';
 
@@ -353,13 +353,19 @@ describe('what comes back from an artwork add-on', () => {
    * the layout the configured size resolves to — which is exactly what
    * `SourceTile.tsx` does when the job already answers the picker's question —
    * and everything after it is the add-on's own code.
+   *
+   * IT STARTS THE DOCUMENT THE WAY THE EDITOR DOES, through the `startDoc` the
+   * add-on hands `open()`, which carries THIS job's bleed. Calling
+   * `docFromLayout()` here instead took the add-on's own default, and while
+   * this works asks for 3mm either way, a host-side harness that skips the seam
+   * the add-on ships is a harness that would go on passing after the seam broke.
    */
   async function designStudioRef(): Promise<ArtworkRef> {
     const source = createArtworkSource({
-      open: async (spec, layouts) => {
+      open: async (spec, layouts, startDoc) => {
         const match = layoutForSize(spec.trimWidthMm, spec.trimHeightMm);
         const chosen = layouts.find((l) => l.id === match?.id) ?? layouts[0]!;
-        return docFromLayout(chosen);
+        return startDoc(chosen);
       },
     });
     const ref = await source.start(job);
@@ -436,6 +442,10 @@ describe('what comes back from an artwork add-on', () => {
       bleed: 3,
       dpi: 300,
     });
+    // 3 because that is what THIS works asks for, and the add-on is required to
+    // return what it was asked for rather than a number of its own: the literal
+    // above and the job below have to be the same value, and were not always.
+    expect(built.bleedMm).toBe(job.bleedMm);
     expect(built.pages).toBe(config.sides);
   });
 

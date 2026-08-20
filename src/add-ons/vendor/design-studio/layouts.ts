@@ -11,6 +11,12 @@
  * seeded headline, rule and line of contact details exist so the first thing a
  * customer does is edit something rather than invent something.
  *
+ * A SIZE, AND NOT A BLEED. How far past the finished edge the artwork has to
+ * reach is the JOB's fact, not this table's — a host that reproduces onto a
+ * fixed-size object asks for none at all — so `docFromLayout()` takes it as an
+ * argument. It read `BLEED_MM` here for a while, which made every document this
+ * add-on built 3mm regardless of what the host had asked for.
+ *
  * Everything here is expressed as a fraction of the page and then clamped into
  * the safe area, which is why a fresh document from any layout exports with
  * every one of the works' checks passing. That is a property of the seeds, not
@@ -298,14 +304,27 @@ function fitPt(text: string, wMm: number, hMm: number, lines = 1): number {
  * Positions are fractions of the page rather than fixed millimetres so one set
  * of numbers serves an 85mm card and an 850mm banner, and every box is clamped
  * into the safe area on the way in.
+ *
+ * `bleedMm` DEFAULTS BUT IS NEVER DEFAULTED FOR A JOB. A caller holding a
+ * `JobSpec` passes `job.bleedMm` and nothing else will do: zero is a real
+ * instruction — reproduce the design at exactly its finished size — and reading
+ * it as "missing" is how a file comes back the wrong size. The default is for
+ * the callers that hold no job at all: this repo's suite, and a host driving the
+ * engine to re-derive a document it already has. The seeds do not move when it
+ * changes — they are clamped into the safe area, which is measured from the
+ * trim — so the bleed changes the SHEET the design is drawn on and nothing else.
  */
-export function docFromLayout(layout: StartingLayout, text: SeedText = DEFAULT_SEED_TEXT): Doc {
+export function docFromLayout(
+  layout: StartingLayout,
+  text: SeedText = DEFAULT_SEED_TEXT,
+  bleedMm: number = BLEED_MM,
+): Doc {
   let doc = createDoc({
     layoutId: layout.id,
     widthMm: layout.widthMm,
     heightMm: layout.heightMm,
     sides: layout.sides,
-    bleedMm: BLEED_MM,
+    bleedMm,
     safeMm: SAFE_MM,
   });
   if (layout.id === BLANK_LAYOUT.id) return doc;

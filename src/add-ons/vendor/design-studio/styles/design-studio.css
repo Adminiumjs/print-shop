@@ -262,7 +262,8 @@
 /*
  * The bleed area, drawn as a hatch so it reads as "this gets cut away" rather
  * than as part of the design. The white rectangle inside it is the finished
- * piece; the hatch outside it is the 3mm the guillotine takes.
+ * piece; the hatch outside it is what the guillotine takes. Its width comes from
+ * the job, not from this file — a job with no bleed at all draws no hatch.
  */
 .ds-bleed {
   position: relative;

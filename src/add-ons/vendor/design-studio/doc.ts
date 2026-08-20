@@ -32,7 +32,14 @@ import type { ArtworkRef } from "../host/contracts/index.ts";
 
 // ── constants ────────────────────────────────────────────────────────────────
 
-/** The works needs 3mm on every edge. This is why the host's checks pass. */
+/**
+ * What a print works typically needs on every edge — THE FALLBACK, not the
+ * answer. The answer is `job.bleedMm`, which the host resolves and
+ * `createArtworkSource` binds into the document before the customer draws
+ * anything; this constant is what a caller holding no job gets. Zero is a real
+ * value of that field and means "reach the finished edge and no further", so
+ * nothing may treat a bleed of 0 as absent and substitute this.
+ */
 export const BLEED_MM = 3;
 
 /** Ink inside this margin risks the guillotine; the canvas draws it dashed. */
@@ -668,12 +675,18 @@ export function nearestInkMm(doc: Doc): number {
 /**
  * The print payload.
  *
- * `bleedMm` is 3 BY CONSTRUCTION: it is a property of the document the customer
- * has been editing all along, not a value computed at export time from
+ * `bleedMm` IS THE JOB'S BY CONSTRUCTION: it is a property of the document the
+ * customer has been editing all along, not a value computed at export time from
  * something that might have been wrong. That single fact is why the host's
  * `checkArtwork()` passes on this add-on's output and routinely fails on a
  * design brought in from outside — and it is why the host, not this add-on,
  * runs the check.
+ *
+ * It says "the job's" rather than "3mm" because for a while it WAS 3mm, whatever
+ * the host asked for: the document was built from a constant, this function
+ * faithfully reported it, and a host wanting any other bleed got a file its own
+ * checks would reject. Nothing here changed in the repair — the fix belongs
+ * where the document is made, and this stays a description.
  */
 export function toArtworkRef(
   doc: Doc,
