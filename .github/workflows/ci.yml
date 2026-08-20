@@ -95,14 +95,23 @@ jobs:
 
       # `@adminium/manifest` cannot be installed from npm at the version these
       # repos need, which is why it is loaded by path. Only that package and its
-      # workspace dependency are built; a full monorepo install is not needed.
+      # workspace dependencies are built; a full monorepo install is not needed.
+      #
+      # THE `...` SUFFIX IS ON BOTH COMMANDS, AND IT HAS TO BE. The first run of
+      # this workflow installed the dependency closure correctly and then built
+      # only `manifest`, which fails: `@adminium/add-on-contracts` is a workspace
+      # dependency resolved through its `dist/`, so with that unbuilt `tsc`
+      # reports `Cannot find module '@adminium/add-on-contracts'` and eight
+      # implicit-any errors cascading from it. `pkg...` means "pkg and its
+      # dependencies", so the build walks config, then add-on-contracts, then
+      # manifest, in that order.
       - name: Build the product's manifest package
         if: steps.needs_product.outputs.value == 'true'
         working-directory: .adminium-product
         run: |
           corepack enable
           pnpm install --frozen-lockfile --filter "@adminium/manifest..."
-          pnpm --filter @adminium/manifest build
+          pnpm --filter "@adminium/manifest..." build
 
       # `ADMINIUM_REQUIRE_VALIDATOR` turns the skip into a failure. It is set in
       # the same condition as the checkout, so a repo that does not need the
