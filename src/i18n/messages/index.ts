@@ -45,6 +45,7 @@
  * The three bundles are VENDORED copies (see `src/add-ons/vendor/`), synced
  * from the add-ons monorepo by `scripts/sync-add-ons.sh` and never hand-edited.
  */
+import type { Translated } from "../untranslated.ts";
 import { LOCALE_TAGS, type LocaleTag } from "../locales.ts";
 import { addOns } from "../strings/addOns.ts";
 import { chrome } from "../strings/chrome.ts";
@@ -60,7 +61,7 @@ import { data } from "../strings/data.ts";
  */
 type Area<EN extends Record<string, string>> = { "en-US": EN } & Record<
   Exclude<LocaleTag, "en-US">,
-  Record<keyof EN, string>
+  Translated<EN>
 >;
 
 const AREAS: [
