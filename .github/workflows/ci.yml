@@ -40,7 +40,7 @@ jobs:
   build:
     name: build & test
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -105,20 +105,29 @@ jobs:
       # implicit-any errors cascading from it. `pkg...` means "pkg and its
       # dependencies", so the build walks config, then add-on-contracts, then
       # manifest, in that order.
-      - name: Build the product's manifest package
+      - name: Build the product's validator, and move it out of the workspace
         if: steps.needs_product.outputs.value == 'true'
-        working-directory: .adminium-product
         run: |
+          cd "$GITHUB_WORKSPACE/.adminium-product"
           corepack enable
           pnpm install --frozen-lockfile --filter "@adminium/manifest..."
           pnpm --filter "@adminium/manifest..." build
+          # AND OUT OF THE WORKSPACE IT GOES, which is not tidiness. `actions/
+          # checkout` can only write inside the workspace, and this repo's
+          # vitest collects `**/*.test.ts` from the repo root — so the product's
+          # OWN suite came along for the ride. The first run of this step ended
+          # in `packages/ui/src/components/icon/icon-core.test.ts` failing on a
+          # generator script that only makes sense inside the monorepo. Nothing
+          # here needs the product in the workspace; only its built `dist/` is
+          # read, by absolute path.
+          mv "$GITHUB_WORKSPACE/.adminium-product" "$RUNNER_TEMP/adminium-product"
 
       # `ADMINIUM_REQUIRE_VALIDATOR` turns the skip into a failure. It is set in
       # the same condition as the checkout, so a repo that does not need the
       # product never sets it and a repo that does cannot quietly skip.
       - name: Test
         env:
-          ADMINIUM_REPO: ${{ steps.needs_product.outputs.value == 'true' && format('{0}/.adminium-product', github.workspace) || '' }}
+          ADMINIUM_REPO: ${{ steps.needs_product.outputs.value == 'true' && format('{0}/adminium-product', runner.temp) || '' }}
           ADMINIUM_REQUIRE_VALIDATOR: ${{ steps.needs_product.outputs.value }}
         run: npm test
 
