@@ -141,7 +141,11 @@
  *   NET ONE (addresses, static) proves: no LITERAL address to an undeclared
  *   origin is in our sources or in the built bundle. It proves nothing about an
  *   address assembled at run time, which is one `join("")` away and is how
- *   every mutant since round 5 has been written.
+ *   every mutant since round 5 has been written. In a CONNECTED build it proves
+ *   one thing less, and `connectedBackend` below is where that is written down:
+ *   the Adminium instance the build was pointed at is a declared address, so
+ *   the claim narrows from "no undeclared address" to "no undeclared address
+ *   except the one backend this build was configured with".
  *
  *   NET TWO (senders, static) proves: no source in `src/` NAMES an API whose
  *   only purpose is to issue a request, in the spellings listed. It is a
@@ -251,6 +255,66 @@ export function offendingAddresses(text: string, inert: readonly InertOrigin[]):
 }
 
 /**
+ * The one address a CONNECTED build is configured to reach (28-T26).
+ *
+ * ── WHY THIS EXISTS ────────────────────────────────────────────────────────
+ * These apps ship as demos with no backend, and NET ONE is at its strictest
+ * state for exactly that reason: `OURS` is empty, so EVERY address is a
+ * finding. Connecting one to an Adminium instance breaks that, and it was
+ * worth measuring rather than assuming HOW. A build with
+ * `VITE_ADMINIUM_API_BASE_URL` set adds precisely one offender:
+ *
+ *     offenders a CONNECTED build adds: [ 'https://api.tenant.example.test' ]
+ *
+ * Vite inlines the variable as a string literal into the entry chunk, so the
+ * origin is in the shipped bytes and NET ONE reports it. Nothing else changes:
+ * measured on the same build, `sendersIn` and `foreignImportsIn` both return
+ * `[]` for a connected data source, because it names no request-issuing API —
+ * it imports a client that does, and a STATIC import is not something NET TWO
+ * looks at (`foreignImportsIn` reads dynamic `import()` only). So the plan's
+ * "relax NET TWO for a declared file" would have relaxed a net that never
+ * fired, and left the one that does still red.
+ *
+ * ── WHY AN ORIGIN AND NOT A FILE ───────────────────────────────────────────
+ * A file-scoped exemption — "`data/adminiumSource.ts` may do what it likes" —
+ * is the shape this file already argues against twice, and it is strictly
+ * weaker: it would forgive that file ANY address and ANY sender, including the
+ * beacon that beat the word list. An origin taken from the build configuration
+ * forgives ONE host, in EVERY file, and nothing else. A tracker's address is
+ * still a finding in the connected data source itself.
+ *
+ * ── THIS ENTRY IS NOT INERT, AND SAYING SO MATTERS ─────────────────────────
+ * Every other entry on the list is an address that CANNOT cause a request — a
+ * namespace, a message React prints. This one can, and is meant to: it is the
+ * app talking to its own backend. It shares `InertOrigin` because
+ * `offendingAddresses` reads only `.origin`, but a reviewer reads the `why`,
+ * and the `why` says what it is. The composed list is "declared"; "inert" is
+ * its stricter subset.
+ *
+ * ── FAILING CLOSED ─────────────────────────────────────────────────────────
+ * Unset (a demo build, and every marketplace clone) declares nothing, so the
+ * gate is byte-identically as strict as it was. Anything that is not exactly
+ * one absolute address also declares nothing — a half-written value does not
+ * quietly widen the net, it leaves the inlined literal to be reported.
+ *
+ * The origin is taken with this file's own `originOf` rather than `new URL`,
+ * so both sides of the comparison spell a host the same way; `new URL` drops a
+ * default port that the inlined literal would still carry.
+ */
+export function connectedBackend(baseUrl: string | undefined): readonly InertOrigin[] {
+  const value = (baseUrl ?? "").trim();
+  const [address] = addressesIn(value);
+  // Exactly one address, and nothing around it.
+  if (address === undefined || address !== value) return [];
+  return [
+    {
+      origin: originOf(address),
+      why: "the Adminium instance this build was configured to talk to (VITE_ADMINIUM_API_BASE_URL). NOT inert - this one is meant to be reached; it is declared because the operator who built this chose it",
+    },
+  ];
+}
+
+/**
  * APIs that exist to issue a request and do nothing else.
  *
  * Every entry is banned whatever it is handed, because there is no address any
@@ -338,6 +402,364 @@ export function foreignImportsIn(code: string): string[] {
     if (/^(["'])\.{1,2}\/[^"']*\1$/.test(spec)) continue; // a relative literal
     out.push(`import(${spec.slice(0, 60)})`);
   }
+  return out;
+}
+
+/** A package a shipped source is allowed to import, and why that is safe. */
+export interface AllowedModule {
+  /** The package: `react`, `@scope/thing`. A subpath of it is covered too. */
+  readonly name: string;
+  /** Why code from outside this repo may ship. A reviewer reads this. */
+  readonly why: string;
+}
+
+/** A source with comments gone, and its literals held where a scan cannot misread them. */
+export interface LexedSource {
+  /** Comments removed. String and template literals left exactly as written. */
+  readonly code: string;
+  /** Comments removed AND every literal's CONTENT replaced by a placeholder. */
+  readonly masked: string;
+  /** The literal contents, indexed by the number inside the placeholder. */
+  readonly literals: readonly string[];
+}
+
+/** `startsRegex` needs the tail of the code, because `return /x/` is a regex. */
+const KEYWORD_BEFORE_REGEX =
+  /(?:^|[^\w$])(?:return|typeof|instanceof|in|of|new|delete|void|throw|case|do|else|yield|await)\s*$/;
+
+function startsRegex(emitted: string, previous: string): boolean {
+  if (previous === "") return true;
+  if ("(,=:[!&|?{};+-*%~^<>".includes(previous)) return true;
+  return KEYWORD_BEFORE_REGEX.test(emitted);
+}
+
+/**
+ * Read a source the way a compiler does: as code, comments, and literals.
+ *
+ * ── WHY THIS EXISTS, AND WHAT IT REPLACED ──────────────────────────────────
+ *
+ * [Added 2026-08-20, after an adversarial pass beat every static net in this
+ * file at once.] Each host repo stripped comments before scanning, with two
+ * regexes that knew nothing about strings: one deleting everything between a
+ * block-comment opener and the next closer, one deleting from a double slash
+ * to end of line. So a source could carry this, and every static net went
+ * blind:
+ *
+ *     const openTok = "x " + SLASH_STAR;
+ *     import { track } from "some-analytics-sdk";
+ *     const closeTok = STAR_SLASH;
+ *
+ * With those two tokens written out as literals, the opener inside the FIRST
+ * STRING began a comment that ran to the closer inside the third, and the
+ * import between them was deleted before any scanner saw it. Measured end to
+ * end: the suite stayed green, the module was bundled, and a run-time-assembled
+ * beacon URL reached `dist/`. The same two literals hide `new Image()` from
+ * `sendersIn` and a literal address from `offendingAddresses` — it was not one
+ * gate's hole, it was the harness's.
+ *
+ * The author had already seen half of this: the `[^:]` guard in the line-comment
+ * regex is there so a `https` prefix inside a string is not read as a comment.
+ * There was no counterpart for block comments, and a rule that handles one case
+ * of a category and not the other is the shape this whole file argues against.
+ *
+ * ── AND THE OTHER HALF: A LITERAL IS NOT CODE ──────────────────────────────
+ *
+ * The reverse failure is a FALSE POSITIVE, which this codebase treats as a
+ * defect and not a nit, because a gate that fires on working code earns an
+ * exemption list and an exemption list is where its defects came from. A docs
+ * snippet in a template literal is prose, not a statement, and the first draft
+ * of the import scanner reported the package it mentions as undeclared.
+ *
+ * `masked` replaces every literal's CONTENT with a placeholder, so a scanner
+ * reading it cannot mistake prose for a statement, while the specifier of a
+ * REAL import is recovered from `literals` by index.
+ *
+ * ── WHAT IT DOES NOT DO ────────────────────────────────────────────────────
+ *
+ * It is a lexer, not a parser, and three approximations are deliberate: a
+ * template's substitution is kept inside the literal rather than lexed as the
+ * code it is (nothing that looks like an import statement can legally live
+ * there); a regex literal is told from division by the standard previous-token
+ * heuristic, which is what every fast tokenizer does and is not provably exact;
+ * and an unterminated literal ends at its line rather than running to the end
+ * of the file, so a typo cannot blank the rest of a source.
+ */
+export function lexSource(source: string): LexedSource {
+  let code = "";
+  let masked = "";
+  const literals: string[] = [];
+  let previous = "";
+  let i = 0;
+  const n = source.length;
+
+  const emit = (text: string): void => {
+    code += text;
+    masked += text;
+  };
+
+  const keep = (quote: string, content: string): void => {
+    const index = literals.length;
+    literals.push(content);
+    code += quote + content + quote;
+    masked += `${quote} ${String(index)} ${quote}`;
+    // A multi-line literal must not collapse the line count, or a reader given
+    // a line number is sent to the wrong place.
+    const newlines = content.split("\n").length - 1;
+    if (newlines > 0) masked += "\n".repeat(newlines);
+  };
+
+  while (i < n) {
+    const ch = source[i] as string;
+    const next = source[i + 1];
+
+    if (ch === "/" && next === "/") {
+      while (i < n && source[i] !== "\n") i += 1;
+      continue;
+    }
+
+    if (ch === "/" && next === "*") {
+      i += 2;
+      while (i < n && !(source[i] === "*" && source[i + 1] === "/")) {
+        if (source[i] === "\n") emit("\n");
+        i += 1;
+      }
+      i += 2;
+      emit(" ");
+      previous = " ";
+      continue;
+    }
+
+    if (ch === "/" && startsRegex(code, previous)) {
+      let j = i + 1;
+      let inClass = false;
+      let closed = false;
+      while (j < n) {
+        const c = source[j] as string;
+        if (c === "\\") {
+          j += 2;
+          continue;
+        }
+        if (c === "\n") break;
+        if (c === "[") inClass = true;
+        else if (c === "]") inClass = false;
+        else if (c === "/" && !inClass) {
+          closed = true;
+          break;
+        }
+        j += 1;
+      }
+      if (closed) {
+        j += 1;
+        while (j < n && /[a-z]/.test(source[j] as string)) j += 1;
+        // A regex body may hold quotes, and reading one as a string is how a
+        // lexer swallows the next real import.
+        emit(source.slice(i, j));
+        previous = "/";
+        i = j;
+        continue;
+      }
+    }
+
+    if (ch === '"' || ch === "'") {
+      let j = i + 1;
+      let content = "";
+      while (j < n) {
+        const c = source[j] as string;
+        if (c === "\\") {
+          content += c + (source[j + 1] ?? "");
+          j += 2;
+          continue;
+        }
+        if (c === ch || c === "\n") break;
+        content += c;
+        j += 1;
+      }
+      keep(ch, content);
+      previous = ch;
+      i = source[j] === ch ? j + 1 : j;
+      continue;
+    }
+
+    if (ch === "`") {
+      let j = i + 1;
+      let content = "";
+      let depth = 0;
+      while (j < n) {
+        const c = source[j] as string;
+        if (c === "\\") {
+          content += c + (source[j + 1] ?? "");
+          j += 2;
+          continue;
+        }
+        if (depth === 0 && c === "`") break;
+        if (c === "$" && source[j + 1] === "{") {
+          depth += 1;
+          content += "${";
+          j += 2;
+          continue;
+        }
+        if (depth > 0 && c === "{") depth += 1;
+        else if (depth > 0 && c === "}") depth -= 1;
+        content += c;
+        j += 1;
+      }
+      keep("`", content);
+      previous = "`";
+      i = j + 1;
+      continue;
+    }
+
+    emit(ch);
+    if (!/\s/.test(ch)) previous = ch;
+    i += 1;
+  }
+
+  return { code, masked, literals };
+}
+
+/**
+ * A source with its comments gone and every literal intact.
+ *
+ * This is what the nets that read VALUES want — `offendingAddresses` is looking
+ * for an address, and an address lives in a string. It differs from the two
+ * regexes it replaced only in being right about which opener starts a comment.
+ */
+export function withoutComments(source: string): string {
+  return lexSource(source).code;
+}
+
+/**
+ * `react/jsx-runtime` maps to `react`; `@scope/a/b` to `@scope/a`; `node:fs` to itself.
+ *
+ * The PACKAGE is the unit for the same reason the ORIGIN is the unit in net
+ * one: it is what "code from outside this repo" means. A subpath is not a
+ * different author, it is a different file by the same one.
+ *
+ * A TRAVERSAL SEGMENT IS NOT A SUBPATH, and it is why this is a function rather
+ * than a `split`. `react/../evil` does not resolve inside `react`, so it must
+ * never inherit `react`'s allowance; it is returned whole, matches no
+ * declaration, and is reported. Today most resolvers refuse it anyway because
+ * `react` publishes an `exports` map — but that is the PACKAGE's protection,
+ * not this gate's, and a dependency without one would hand the allowance over.
+ */
+export function packageOf(specifier: string): string {
+  const segments = specifier.split("/");
+  if (segments.some((segment) => segment === "." || segment === "..")) return specifier;
+  if (specifier.startsWith("@")) {
+    const [scope, name] = segments;
+    return name === undefined ? specifier : `${scope}/${name}`;
+  }
+  return segments[0] ?? specifier;
+}
+
+/**
+ * Every package a source imports that nobody has declared (28-T26 follow-up).
+ *
+ * ── THE HOLE THIS CLOSES, WHICH WAS IN NET TWO ALL ALONG ───────────────────
+ *
+ * `sendersIn` bans the APIs that issue a request, and `foreignImportsIn` bans a
+ * dynamic `import()` of anything but a relative literal. Between them they read
+ * as "no shipped source can reach outside this repo". They do not. A STATIC
+ * import was never looked at by either:
+ *
+ *     import { track } from "some-analytics-sdk";   // matched nothing
+ *     import "some-analytics-sdk";                  // matched nothing
+ *
+ * The `fetch` is in the SDK's code, not ours, so `sendersIn` sees a clean file;
+ * `foreignImportsIn` reads a dynamic call and this is not that. Net one over
+ * the bundle would catch such a package by its literal address — unless it
+ * assembles one at run time, which this file's own prose calls one `join("")`
+ * away and which is how every mutant since round 5 has been written.
+ *
+ * This was found by measuring what a CONNECTED build actually trips, not by a
+ * verifier: the plan said to relax net two for the data source, and net two
+ * turned out never to have fired on it.
+ *
+ * ── WHY AN ALLOWLIST IS THE RIGHT SHAPE HERE, HAVING ARGUED AGAINST ONE ────
+ *
+ * This file says twice that a static ban which fires on working code gets an
+ * exemption list, and that an exemption list is where the defects came from.
+ * That argument is about banning a SPELLING the app legitimately uses. This is
+ * the other kind, and it is exactly `InertOrigin`: a closed set of things
+ * somebody wrote down with a reason, where the DEFAULT IS REFUSAL. The set is
+ * small enough to read — four packages across both hosts — and a fifth is a
+ * decision somebody makes in a diff rather than a thing that slips in.
+ *
+ * ── IT READS `masked`, AND THAT IS THE WHOLE DESIGN ────────────────────────
+ *
+ * The first draft was anchored to the start of a line, to stop the word
+ * `import` inside a string from being read as a statement. An adversarial pass
+ * broke it from BOTH sides in one afternoon, which is what an anchor standing
+ * in for a lexer earns:
+ *
+ *   IT MISSED REAL IMPORTS. `const a = 1; import { track } from "sdk";` is
+ *   legal top-level ES that Vite bundles, and it does not begin its line.
+ *   Neither does an import preceded by U+00A0 — the anchor allowed tab and
+ *   space, while the ES WhiteSpace production also admits NBSP, FF, VT,
+ *   U+2000-200A and U+FEFF. Both were driven end to end into a shipped bundle.
+ *
+ *   IT INVENTED FAKE ONES. A docs snippet, a README in a string, an install
+ *   block rendered in a `pre` tag: any line inside a template literal that
+ *   began with the word import was reported as a package that does not exist.
+ *
+ * Reading `lexSource().masked` answers both at once, because a literal's
+ * CONTENT is no longer text a pattern can match, while a real specifier — which
+ * is itself a literal — is recovered from `literals` by index. Anything that is
+ * not a plain literal (a template, a concatenation, an identifier) resolves to
+ * nothing and is skipped, which is correct: those are not static specifiers,
+ * and a dynamic one is `foreignImportsIn`'s question.
+ *
+ * ── WHAT THIS STILL DOES NOT PROVE ─────────────────────────────────────────
+ *
+ * That a DECLARED package is safe. `react` is declared because a React app
+ * imports React, not because anybody audited every line of it; a supply-chain
+ * compromise inside a declared dependency is invisible here and is caught, if
+ * at all, by net one over the built output and net three at run time. What this
+ * proves is narrower and still worth having: no shipped source reaches for code
+ * by a name nobody has agreed to.
+ */
+export function foreignModulesIn(source: string, allowed: readonly AllowedModule[]): string[] {
+  const { masked, literals } = lexSource(source);
+  const declared = new Set(allowed.map((entry) => entry.name));
+  const out: string[] = [];
+  const seen = new Set<string>();
+
+  const consider = (placeholder: string): void => {
+    const match = /^ (\d+) $/.exec(placeholder);
+    if (match === null) return; // not a plain string literal
+    const specifier = literals[Number(match[1])];
+    if (specifier === undefined) return;
+    // A relative specifier is this repo's own code, which every other gate in
+    // this file already reads.
+    if (specifier.startsWith(".")) return;
+    if (declared.has(packageOf(specifier))) return;
+    if (seen.has(specifier)) return;
+    seen.add(specifier);
+    out.push(specifier);
+  };
+
+  /*
+   * `import … from "x"` and `export … from "x"`, across newlines. The clause
+   * may not contain a semicolon, a quote or a paren — an import clause never
+   * does — which stops the lazy match from stepping over a statement boundary
+   * and gluing an unrelated `from` onto this one.
+   */
+  for (const [, spec] of masked.matchAll(
+    /(?<![\w$.])(?:import|export)\s(?:[^;'"`()])*?\bfrom\s*["']([^"']*)["']/g,
+  )) {
+    if (spec !== undefined) consider(spec);
+  }
+
+  /*
+   * AND THE ONE WITH NO BINDINGS, WHICH IS THE SHAPE THAT HIDES. `import "x"`
+   * imports nothing and runs everything in `x` for its side effects, which is
+   * precisely how a beacon package would be added: there is no symbol in the
+   * file to notice, and no `from` for the pattern above to anchor on.
+   */
+  for (const [, spec] of masked.matchAll(/(?<![\w$.])import\s*["']([^"']*)["']/g)) {
+    if (spec !== undefined) consider(spec);
+  }
+
   return out;
 }
 

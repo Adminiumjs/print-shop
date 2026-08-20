@@ -28,6 +28,7 @@ import { basename, join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
+  connectedBackend,
   offendingAddresses,
   sendersIn,
   type InertOrigin,
@@ -536,9 +537,19 @@ describe('nothing in the artefact can reach a host we do not control (24 D11)', 
     INERT_ORIGINS?: readonly { origin: string; why: string }[];
   }>("./add-ons/vendor/*/add-on-facts.ts", { eager: true });
 
+  /*
+   * ── AND THE BACKEND A CONNECTED BUILD WAS POINTED AT (28-T26) ─────────────
+   *
+   * Empty in every demo build, which is every build the marketplace serves and
+   * every build CI makes. When `VITE_ADMINIUM_API_BASE_URL` is set, Vite inlines
+   * it here as a literal and this is the declaration that says so. It is the
+   * ONLY address the connected mode adds — measured, not assumed — and it is
+   * declared rather than inert, which `connectedBackend`'s `why` states.
+   */
   const INERT: readonly InertOrigin[] = [
     ...OURS,
     ...Object.values(VENDORED_ORIGINS).flatMap((module) => [...(module.INERT_ORIGINS ?? [])]),
+    ...connectedBackend(process.env["VITE_ADMINIUM_API_BASE_URL"]),
   ];
 
   it('reads a declaration off every add-on this bundle was built from', () => {
