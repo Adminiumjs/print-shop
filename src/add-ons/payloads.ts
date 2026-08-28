@@ -482,6 +482,34 @@ export interface RecordEditorPayload extends SlotPayload {
 }
 
 /**
+ * `record.actions` — one opening, on the screen where somebody is already
+ * looking at ONE record, to do a thing to it (bought 2026-08-28, 31 O1).
+ *
+ * Declared here with the rest because the registry is closed and an add-on may
+ * name it in a manifest today. THIS APP DOES NOT MOUNT IT — see `slots.ts` —
+ * and neither does the other example shop; its first consumer is the paperwork
+ * add-on, which is wave 5. Nothing here is waiting on it.
+ *
+ * `entity` and not `table`: every host of this surface is a shop whose records
+ * live in a store, and only the generated dashboard has tables. `patchRecord`
+ * is OPTIONAL because rendering a document writes nothing back, and forcing a
+ * read-only host to pass a handle would be forcing it to pass a lie. The long
+ * version of both, and the seven exhibits the slot was bought against, are in
+ * the monorepo's own `packages/host/src/payloads.ts`.
+ */
+export interface RecordActionsPayload extends SlotPayload {
+  /** The host's own word for what kind of record this is, lower-case. */
+  entity: string;
+  /** The record's identity WITHIN its entity, as the host knows it. */
+  recordId: string;
+  record: Readonly<Record<string, unknown>>;
+  /** When the host thinks it is — a document dated off any other clock lies. */
+  now: ShopClock;
+  /** Write back, or nothing where the host allows no write. */
+  patchRecord?: (patch: Record<string, unknown>) => void;
+}
+
+/**
  * THE MAP. Every id in the closed registry, and its payload.
  *
  * Keyed by the slot id union rather than by a hand-written list, so an id added
@@ -500,6 +528,7 @@ export interface SlotPayloads {
   'product.admin.panel': ProductAdminPayload;
   'order.line.actions': OrderLinePayload;
   'record.editor.panel': RecordEditorPayload;
+  'record.actions': RecordActionsPayload;
 }
 
 /**

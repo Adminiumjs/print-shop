@@ -54,6 +54,14 @@
  * `payloads.ts` maps every id below to its payload and asserts, at compile
  * time, that the two lists cover each other exactly.
  */
+/*
+ * [Amended 2026-08-28, wave 6.] The closed registry is TWELVE.
+ * `record.actions` was bought against the dossier in 31 Appendix A.1 and this
+ * app does not mount it: nothing here shows one record with an action to take
+ * on it that an add-on would want. It is in the list below because the list IS
+ * the registry mirror — an id missing from it fails a manifest the registry
+ * accepts — and `isHosted` says no, which is the honest pair.
+ */
 export const SLOT_IDS = [
   'artwork.sources',
   'checkout.delivery.methods',
@@ -66,6 +74,7 @@ export const SLOT_IDS = [
   'product.admin.panel',
   'order.line.actions',
   'record.editor.panel',
+  'record.actions',
 ] as const;
 
 export type SlotId = (typeof SLOT_IDS)[number];
@@ -163,4 +172,5 @@ export const SLOT_FILL: Readonly<Record<SlotId, 'single' | 'multi' | 'per-add-on
   'product.admin.panel': 'multi',
   'order.line.actions': 'multi',
   'record.editor.panel': 'multi',
+  'record.actions': 'multi',
 };
