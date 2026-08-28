@@ -192,8 +192,13 @@ export function ArtworkSourceTile({
  * Skip the picker when the configured job already answers its question. A
  * customer who has just chosen 500 business cards should not be asked what they
  * are making — but only if that layout is one the shop still offers.
+ *
+ * EXPORTED FOR `harness.test.tsx`, which holds the dev harness's panels to what
+ * each says on the page — one opens straight onto a layout and one opens the
+ * picker. A suite that restated this rule instead would go on passing while the
+ * shipped decision changed underneath it.
  */
-function initialLayoutFor(
+export function initialLayoutFor(
   widthMm: number,
   heightMm: number,
   offered: readonly StartingLayout[],

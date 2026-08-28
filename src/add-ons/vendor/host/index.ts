@@ -61,6 +61,7 @@ export type {
   PersonalizePayload,
   PostalAddress,
   ProductAdminPayload,
+  RecordActionsPayload,
   RecordEditorPayload,
   RoutePayload,
   SettingsPanelPayload,

@@ -606,6 +606,100 @@ export interface RecordEditorPayload extends SlotPayload {
 }
 
 /**
+ * `record.actions` — one opening, on the screen where somebody is already
+ * looking at ONE record, to do a thing to it (bought 2026-08-28, 31 O1).
+ *
+ * ── WHY IT IS NOT `record.editor.panel` WITH A DIFFERENT NAME ───────────────
+ *
+ * They are a panel and an action, in different buildings. `record.editor.panel`
+ * mounts inside the generated dashboard's record EDITOR — a form, on Adminium's
+ * own surface, where an add-on adds a section. This is a button on a shop's own
+ * screen: an invoice row in a help desk, a folio in a hotel, a certificate a
+ * student is looking at. No example app has a record editor to put a panel in,
+ * and the dashboard has no invoice row. A single id serving both would have to
+ * carry a `table` that eleven of the twelve exhibit screens do not have.
+ *
+ * ── `entity` AND NOT `table` ────────────────────────────────────────────────
+ *
+ * `table` is right in `RecordEditorPayload` for the reason its own comment
+ * gives: that slot's host is Adminium, where a table is a literal thing with a
+ * name in a manifest. Every host of THIS surface is an app whose records live
+ * in a store, and calling a help desk's invoice a "table" would be this file's
+ * founding mistake in the other direction — the dashboard's vocabulary pushed
+ * onto shops that do not use it, exactly as `packagingKey` once pushed a print
+ * works' onto everyone.
+ *
+ * So: `entity`, a plain lower-case name for what kind of record this is
+ * (`invoice`, `folio`, `certificate`), and the dashboard — when it mounts this
+ * — passes its table name into it. THAT MAPPING IS THE HOST'S JOB, as always.
+ *
+ * ── `patchRecord` IS OPTIONAL, AND THAT IS THE INTERESTING FIELD ────────────
+ *
+ * `SettingsPanelPayload.samples` is required and its comment explains at length
+ * why an optional field would have been the easier and worse choice. This one
+ * goes the other way, and the difference is worth stating so the two do not
+ * read as inconsistent.
+ *
+ * `samples` is optional-or-not on a question every host can answer: every shop
+ * has a catalogue, so "I have nothing to sample" is never honest. Whether an
+ * add-on may WRITE BACK to a record is a question hosts genuinely differ on.
+ * The dossier's own seven exhibits split down the middle: rendering an invoice
+ * to a file writes nothing to the invoice, and a student's certificate sheet is
+ * a read-only page by design — while logging a call onto a deal, or recording
+ * that a document was issued, is nothing BUT a write. A required handle would
+ * force the read-only hosts to pass one that lies.
+ *
+ * The absence is handled IN WORDS, per this file's rule: an add-on that wanted
+ * to record its result says the shop has not given it anywhere to put one, and
+ * still does the part it can. It never throws, and it never quietly skips the
+ * action — that is the `weight` precedent (see the header) applied to a
+ * capability rather than to a fact.
+ *
+ * ── AND IT SHIPS UNFILLED ───────────────────────────────────────────────────
+ *
+ * Nothing in this repo fills it yet. Its first consumer is `docs-paperwork`,
+ * which is wave 5. The closed registry's own entry sets out why a purchase on
+ * seven exhibits is not the guess the registry refuses; this file only repeats
+ * the consequence, which is that a reader will not find a fill by grepping.
+ */
+export interface RecordActionsPayload extends SlotPayload {
+  /**
+   * What kind of record this is — the host's own word for it, lower-case and
+   * stable: `invoice`, `folio`, `appointment`, `certificate`.
+   *
+   * REQUIRED, because an action that does not know what it has been handed
+   * cannot decide whether it applies, and the alternative to knowing is
+   * sniffing the record's fields — which is one shop's layout leaking into an
+   * add-on by the back door.
+   */
+  entity: string;
+  /**
+   * A stable identifier for the record WITHIN its entity, as the host knows it.
+   *
+   * Separate from `record` rather than dug out of it, because which field is
+   * the identity is a host fact: `id`, `ref`, `number` and `code` are all in
+   * use across the fifteen apps, and an add-on guessing between them is the
+   * same defect as an add-on guessing at a weight.
+   */
+  recordId: string;
+  /** The record itself, as the host holds it. Read-only: see `patchRecord`. */
+  record: Readonly<Record<string, unknown>>;
+  /**
+   * When the host thinks it is — the same `ShopClock` the dispatch surfaces
+   * take, and required for the same reason: a document dated off the add-on's
+   * own clock is dated off somebody else's Tuesday.
+   */
+  now: ShopClock;
+  /**
+   * Write back to this record, or nothing if the host does not allow it.
+   *
+   * OPTIONAL BY DESIGN — see the header above. An add-on handed no write
+   * handle says so on screen and does the readable half of its job.
+   */
+  patchRecord?: (patch: Record<string, unknown>) => void;
+}
+
+/**
  * THE MAP. Every id in the closed registry, and its payload.
  *
  * Keyed by the slot id union rather than by a hand-written list, so an id added
@@ -624,6 +718,7 @@ export interface SlotPayloads {
   'product.admin.panel': ProductAdminPayload;
   'order.line.actions': OrderLinePayload;
   'record.editor.panel': RecordEditorPayload;
+  'record.actions': RecordActionsPayload;
 }
 
 /**

@@ -11,9 +11,29 @@
  * The seam an add-on plugs into is declared by the host app that mounts it:
  * `print-shop/src/add-ons/host.ts` and `.../slots.ts`. This repo cannot import
  * those — the Print Shop is a separate standalone repo published to the
- * Adminiumjs org, and the closed contract registry it in turn mirrors
- * (`@adminium/add-on-contracts`) lives in the Adminium monorepo and is not on
- * npm. So the shape has to be restated somewhere on this side of the wire.
+ * Adminiumjs org. So the shape has to be restated somewhere on this side of
+ * the wire.
+ *
+ * ── CORRECTED 2026-08-15: THE REGISTRY IS ON NPM NOW ────────────────────────
+ *
+ * This paragraph used to end "...and the closed contract registry it in turn
+ * mirrors (`@adminium/add-on-contracts`) lives in the Adminium monorepo and is
+ * not on npm." That is no longer true. It publishes as
+ * **`@adminiumjs/add-on-contracts`** — the `adminiumjs` scope, NOT `adminium`,
+ * so `npm view @adminium/add-on-contracts` 404s and means nothing — and has
+ * been live since 0.2.1 on 2026-08-14.
+ *
+ * It does NOT make this file redundant. What this file mirrors is the HOST
+ * APP's seam — `register()`, the settings shape, `demoSwitch`, the payload
+ * casts — none of which the contracts package declares. That half still has to
+ * be copied, for the unchanged reason above.
+ *
+ * What it does change is narrower and worth knowing: the closed slot-id union
+ * and the `category` / `connect.kind` vocabularies now have a real published
+ * home, so the part of `slots.ts` that restates THOSE could become a dependency
+ * instead of a copy. That is an open option, not a decision taken here — and
+ * it would trade this repo's zero-dependency posture for drift protection on
+ * one half of the mirror.
  *
  * IT USED TO BE RESTATED THREE TIMES. Each add-on shipped as its own repo with
  * its own copy, and each copy carried only the members that add-on happened to

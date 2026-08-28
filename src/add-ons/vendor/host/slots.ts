@@ -31,10 +31,24 @@
  * which the print works does not, and that is not a widening of the contract —
  * it is D21 arriving: **a slot id names a surface, never an app**, so a second
  * host was always going to mount ids the first one had no use for. The union
- * below is the closed registry of ELEVEN, minus nothing: every id in it is
- * mounted by at least one of the two hosts except `record.editor.panel`, whose
- * host is Adminium's generated dashboard rather than an example app and whose
- * mount is Phase B (§5.10, D20).
+ * below is the closed registry, minus nothing: every id in it is mounted by at
+ * least one of the two hosts except `record.editor.panel`, whose host is
+ * Adminium's generated dashboard rather than an example app and whose mount is
+ * Phase B (§5.10, D20) — and, since 2026-08-28, `record.actions`.
+ *
+ * [Amended 2026-08-28, wave 6.] The registry is TWELVE. `record.actions` was
+ * bought against the seven-exhibit dossier in 31 Appendix A.1 and arrives with
+ * no fill anywhere in this repo, because the add-on that could have filled it
+ * turned out not to need it. It is in the union for the same reason
+ * `record.editor.panel` is: an add-on may name it in a manifest today, and a
+ * union that omitted it would fail every such manifest at compile time while
+ * the closed registry accepted it.
+ *
+ * WHICH MEANS THIS LIST NOW HAS TWO IDS NO EXAMPLE APP MOUNTS, and a reader
+ * counting them is right to be uneasy. The guard that keeps it honest is not
+ * here — it is in each host's own suite, where every id in THAT host's
+ * `HOSTED_SLOTS` must be mounted somewhere in its `src/`. Nothing obliges a
+ * host to host an id, and everything obliges a host that says it does.
  *
  * `nav.add-on.routes` is in the list and is now genuinely mounted — by Birch
  * Row, whose maker shell has a full-screen route for an add-on to occupy. The
@@ -57,6 +71,7 @@ export const HOSTED_SLOTS = [
   'product.admin.panel',
   'order.line.actions',
   'record.editor.panel',
+  'record.actions',
 ] as const;
 
 /**
@@ -156,4 +171,5 @@ export const SLOT_FILL: Readonly<Record<SlotId, 'single' | 'multi' | 'per-add-on
   'product.admin.panel': 'multi',
   'order.line.actions': 'multi',
   'record.editor.panel': 'multi',
+  'record.actions': 'multi',
 };

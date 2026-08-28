@@ -58,6 +58,31 @@ export interface DeliveryChoice {
   code: string;
   /** Already in the reader's language — the add-on renders its own names. */
   label: string;
+  /**
+   * IN MAJOR UNITS — 9.98, not 998 — AND THAT IS NOT WHAT THE REST OF THIS
+   * SEAM DOES.
+   *
+   * [Documented 2026-08-28, first retrofit.] This field was a bare
+   * `amount: number` with no unit anywhere, while `Money.amount` one file over
+   * in `payloads.ts` is minor units and says so at length, with the reason:
+   * `0.1 + 0.2` is not `0.3`, and a delivery estimate a cent out of step with
+   * the basket is a support ticket.
+   *
+   * So a host that reads the documented sibling and assumes the neighbour
+   * matches gets it wrong by a factor of a hundred — and gets it wrong in the
+   * direction that does not throw, does not fail a type check and does not fail
+   * a test: `ecommerce-storefront` shipped a delivery line reading $0.10 under a
+   * rate row reading $9.98, in the same render, and the arithmetic was
+   * internally consistent all the way down. It was caught by looking at the
+   * screen.
+   *
+   * MAJOR IS NOT CHANGED TO MINOR HERE, deliberately. Two hosts already fold
+   * this field into their own totals — `print-shop` multiplies it by 100 to
+   * reach cents, `ecommerce-storefront` adds it to a major-unit subtotal — and
+   * every add-on that quotes one divides its own integer cents by 100 on the
+   * way out. Flipping the convention would silently break all four at once, in
+   * the same undetectable direction. What was missing was this comment.
+   */
   amount: number;
   currency: string;
   /** ISO date the add-on estimated. */
