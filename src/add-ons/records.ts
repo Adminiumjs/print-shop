@@ -48,7 +48,7 @@ import { PRODUCTS, SIZE_BY_KEY } from '../lib/catalogue.ts';
 import { imposition, type Job } from '../lib/jobs.ts';
 import { MATERIAL_BY_KEY, PACKAGING_BY_KEY, sheetWeightKg } from '../lib/rates.ts';
 import { priceQuote, resolveSize, type Configuration } from '../lib/quote.ts';
-import { CUSTOMERS, WORKS } from '../data/demo.ts';
+import { source } from '../data/source.ts';
 
 /** What the shop quotes in, and what a carrier therefore bills in. */
 const CURRENCY = 'USD';
@@ -101,13 +101,21 @@ export function unitWeightGrams(
   return (sheetWeightKg(sheets, gsm) * 1000) / each;
 }
 
-/** The works' own address, as the seam wants it. */
+/**
+ * The works' own address, as the seam wants it.
+ *
+ * Through `source`, not through `data/demo.ts`. Reading the seed here meant a
+ * connected shop would have printed MARLOW PRESS on every dispatch label while
+ * the jobs above them came from the tenant's own database — an add-on quietly
+ * posting one shop's parcels from another shop's address.
+ */
+const works = source.works();
 export const SHOP_ORIGIN: PostalAddress = {
-  name: WORKS.name,
-  lines: [...WORKS.lines],
-  city: WORKS.city,
-  postcode: WORKS.postcode,
-  country: WORKS.countryCode,
+  name: works.name,
+  lines: [...works.lines],
+  city: works.city,
+  postcode: works.postcode,
+  country: works.countryCode,
 };
 
 /**
@@ -120,7 +128,7 @@ export const SHOP_ORIGIN: PostalAddress = {
  * onto a label, and nothing on the screen would say it was a guess.
  */
 export function addressFor(customerName: string): PostalAddress | undefined {
-  const found = CUSTOMERS.find((c) => c.name === customerName);
+  const found = source.customers().find((c) => c.name === customerName);
   if (found === undefined) return undefined;
   return {
     name: found.name,
