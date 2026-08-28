@@ -19,6 +19,7 @@
     "demo:reset": "node db/demo.mjs reset"
   },
   "dependencies": {
+    "@adminiumjs/public-client": "^0.2.2",
     "lucide-react": "^0.462.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

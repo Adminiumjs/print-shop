@@ -10,6 +10,7 @@ import { useEffect } from "react";
 
 import { demoAddOns } from "../add-ons/registry.ts";
 import { DemoDock } from "../components/DemoDock.tsx";
+import { isConnected } from "../data/source.ts";
 import { Overlays, Toasts } from "../components/Overlays.tsx";
 import { ScreenSkeleton } from "../components/Primitives.tsx";
 import { CustomerShell, ShopShell } from "../components/Shell.tsx";
@@ -73,7 +74,7 @@ export default function App() {
       ) : (
         <ShopShell>{body}</ShopShell>
       )}
-      <DemoDock />
+      {!isConnected() && <DemoDock />}
       <Overlays />
       <Toasts />
     </div>
