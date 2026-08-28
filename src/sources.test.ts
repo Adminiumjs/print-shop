@@ -19,7 +19,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { NOW } from './data/demo.ts';
-import { impuritiesIn, restatementsIn } from './testing/purity.ts';
+import { IMPURITIES, impuritiesIn, restatementsIn } from './testing/purity.ts';
 import {
   RAW_CONTROL_EXPLANATION,
   rawControlOffences,
@@ -50,6 +50,30 @@ const ALL = walk(SRC).filter((f) => /\.(ts|tsx)$/.test(f));
 const SHIPPED = ALL.filter((f) => !f.includes('.test.') && !f.includes(`${'testing'}/`));
 
 const read = (file: string) => readFileSync(file, 'utf8');
+
+/**
+ * ── THE ONE FILE THAT MAY READ THE REAL CLOCK (28-T28) ─────────────────────
+ *
+ * `purity.ts`'s rule is about the DEMO's reproducibility: every date derives
+ * from a pinned instant so that a test can assert a promise date and a
+ * screenshot taken in a year still matches the running app. A CONNECTED build
+ * is the case that rule was never about — its job is to show what the works is
+ * doing NOW, and the tenant's real clock is the input it is missing.
+ *
+ * So this is not "`adminiumSource.ts` is exempt", which is the shape this file
+ * argues against for egress and would forgive a die as readily as a clock. It
+ * is TWO MEANS, in ONE FILE. A `Math.random()` in the connected source is still
+ * a finding, a clock in any other file is still a finding, and the test below
+ * drives both of those rather than asserting them in prose.
+ */
+const CONNECTED_SOURCE = 'data/adminiumSource.ts';
+
+/** The clock half of `IMPURITIES`, by the exact words that file emits. */
+const CLOCKS: readonly string[] = [
+  'Date.now() \u2014 the real clock',
+  'new Date() with no argument \u2014 the real clock',
+  'performance.now() \u2014 a clock under another name',
+];
 
 /**
  * The source with its comments removed.
@@ -175,10 +199,28 @@ const ALLOWED_MODULES: readonly AllowedModule[] = [
     why: 'icons, which compile to inline `<svg>` elements. It fetches nothing: an icon that named an address would be reported by net one over the built output',
   },
   { name: 'zustand', why: 'the in-memory store. It holds state and makes no request' },
+  {
+    name: '@adminiumjs/public-client',
+    why: 'the connected mode\u2019s client for this shop\u2019s own Adminium instance (28-T28). It DOES issue requests, which is what it is for, and the address it may reach is not forgiven here \u2014 it is `connectedBackend`\u2019s single declared origin, checked over every file and over the built output',
+  },
 ];
 
-/** Ours, plus whatever the add-ons this app vendors declare for themselves. */
-const INERT: readonly InertOrigin[] = [...OURS, ...addOnOrigins()];
+/*
+ * Ours, plus whatever the add-ons this app vendors declare for themselves, plus
+ * the backend a CONNECTED build was pointed at (28-T26, 28-T28).
+ *
+ * Empty in every demo build, which is every build the marketplace serves and
+ * every build CI makes. When `VITE_ADMINIUM_API_BASE_URL` is set, Vite inlines
+ * it into `data/adminiumSource.ts` as a literal and this is the declaration
+ * that says so — one host, forgiven in EVERY file, rather than every host
+ * forgiven in one file. `builtOutput.test.ts` carries the same line for the
+ * shipped bytes.
+ */
+const INERT: readonly InertOrigin[] = [
+  ...OURS,
+  ...addOnOrigins(),
+  ...connectedBackend(process.env['VITE_ADMINIUM_API_BASE_URL']),
+];
 
 describe('no real third-party call, no real clock (24 D11)', () => {
   /*
@@ -385,9 +427,23 @@ describe('no real third-party call, no real clock (24 D11)', () => {
     // is what lets `quote.test.ts` assert a promise date and a screenshot taken
     // in a year still match the running demo.
     const offenders = SHIPPED.flatMap((file) =>
-      impuritiesIn(codeOf(file)).map((means) => `${relative(file)} → ${means}`),
+      impuritiesIn(codeOf(file))
+        .filter((means) => !(relative(file) === CONNECTED_SOURCE && CLOCKS.includes(means)))
+        .map((means) => `${relative(file)} → ${means}`),
     );
     expect(offenders).toEqual([]);
+  });
+
+  it('still refuses a die in the connected source, and a clock anywhere else', () => {
+    // The exemption above is two MEANS in one FILE, not a file that may do as
+    // it likes. Driven over the rule rather than over `src/`, so it stays true
+    // on a day this app has no connected source at all.
+    const die = 'const id = crypto.randomUUID();';
+    expect(impuritiesIn(die).filter((m) => !CLOCKS.includes(m))).toHaveLength(1);
+    // …and every name in the allow-list is a means `purity.ts` actually emits,
+    // so renaming one there fails here instead of quietly widening the net.
+    const known = IMPURITIES.map((impurity) => impurity.means);
+    expect(CLOCKS.filter((means) => !known.includes(means))).toEqual([]);
   });
 
   it('would say so if one arrived, in every spelling the three repos disagreed on', () => {
