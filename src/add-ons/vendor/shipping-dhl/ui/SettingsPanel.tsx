@@ -39,10 +39,19 @@ import { Field, Mono, inputStyle } from "./atoms.tsx";
 interface Values {
   demo_transport: boolean;
   collection_cutoff: string;
+  returns_name: string;
+  returns_lines: string;
+  returns_city: string;
+  returns_postcode: string;
+  returns_country: string;
 }
 
 function read(settings: SettingsPanelPayload["settings"]): Values {
   const values = settings ?? {};
+  const text = (key: keyof Values): string => {
+    const value = values[key];
+    return typeof value === "string" ? value : "";
+  };
   return {
     demo_transport:
       typeof values.demo_transport === "boolean"
@@ -52,6 +61,13 @@ function read(settings: SettingsPanelPayload["settings"]): Values {
       typeof values.collection_cutoff === "string" && values.collection_cutoff !== ""
         ? values.collection_cutoff
         : DEFAULT_SETTINGS.collection_cutoff,
+    // The returns depot (31 O4). Empty is a real state — NOT CONFIGURED — and
+    // the return surface says so, so no field here invents a default.
+    returns_name: text("returns_name"),
+    returns_lines: text("returns_lines"),
+    returns_city: text("returns_city"),
+    returns_postcode: text("returns_postcode"),
+    returns_country: text("returns_country"),
   };
 }
 
@@ -104,6 +120,74 @@ export function SettingsPanel({ payload }: { payload: SettingsPanelPayload }) {
       </Field>
       <div style={{ fontSize: 11.5, color: "var(--fg-subtle)", marginBlockStart: -8 }}>
         {t("addon.shipping-dhl.set.cutoffNote")}
+      </div>
+
+      {/*
+       * The returns depot (31 O4) — where a customer's return parcel is
+       * delivered. The shop tells its carrier where returns go; a host payload
+       * carries no address for that surface, so the fact lives here, in the
+       * add-on's own saved values. All five fields empty is a real state the
+       * return surface names on screen rather than papering over.
+       */}
+      <div>
+        <div
+          style={{
+            fontSize: 12.5,
+            fontWeight: 700,
+            color: "var(--fg-muted)",
+            marginBlockEnd: 8,
+          }}
+        >
+          {t("addon.shipping-dhl.set.returns")}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+          <Field label={t("addon.shipping-dhl.set.returnsName")}>
+            <input
+              value={values.returns_name}
+              onChange={(e) => payload.patch({ returns_name: e.target.value })}
+              style={inputStyle}
+            />
+          </Field>
+          <Field label={t("addon.shipping-dhl.dest.street")}>
+            <input
+              value={values.returns_lines}
+              onChange={(e) => payload.patch({ returns_lines: e.target.value })}
+              style={inputStyle}
+            />
+          </Field>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+              gap: 12,
+            }}
+          >
+            <Field label={t("addon.shipping-dhl.dest.city")}>
+              <input
+                value={values.returns_city}
+                onChange={(e) => payload.patch({ returns_city: e.target.value })}
+                style={inputStyle}
+              />
+            </Field>
+            <Field label={t("addon.shipping-dhl.error.postcode")}>
+              <input
+                value={values.returns_postcode}
+                onChange={(e) => payload.patch({ returns_postcode: e.target.value })}
+                style={inputStyle}
+              />
+            </Field>
+            <Field label={t("addon.shipping-dhl.error.country")}>
+              <input
+                value={values.returns_country}
+                onChange={(e) => payload.patch({ returns_country: e.target.value })}
+                style={inputStyle}
+              />
+            </Field>
+          </div>
+        </div>
+        <div style={{ fontSize: 11.5, color: "var(--fg-subtle)", marginBlockStart: 8 }}>
+          {t("addon.shipping-dhl.set.returnsNote")}
+        </div>
       </div>
 
       <div>

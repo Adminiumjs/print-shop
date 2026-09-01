@@ -113,6 +113,13 @@ FILES_host=(
   contracts/index.ts contracts/common.ts
   contracts/artwork-source.ts contracts/shipping-carrier.ts
   contracts/product-personalizer.ts
+  # The ABI a CONNECTED bundle is loaded through (26 §0.7). A built add-on
+  # aliases `react` to a shim that reads a global, so a host must publish its
+  # React on that global before importing one — and the KEY it publishes under
+  # is the contract, not a string a host should be retyping. Vendored for the
+  # same reason `host.ts` is: this app has no node_modules entry that resolves
+  # `@adminium/add-on-host`.
+  runtime/index.ts
 )
 
 # Reachable from each client entry point, and nothing else. Kept as an explicit
@@ -134,7 +141,7 @@ FILES_shipping_dhl=(
   demo-carrier.ts settings.ts runtime.ts index.ts
   i18n/strings.ts i18n/t.ts
   ui/atoms.tsx ui/labels.ts ui/DispatchAction.tsx ui/DeliveryMethods.tsx
-  ui/SettingsPanel.tsx ui/TrackingPanel.tsx
+  ui/SettingsPanel.tsx ui/TrackingPanel.tsx ui/ReturnLabel.tsx
 )
 FILES_import_canva=(
   add-on-facts.ts

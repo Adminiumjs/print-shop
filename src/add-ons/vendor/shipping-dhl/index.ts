@@ -24,6 +24,7 @@ import { strings } from "./i18n/strings.ts";
 import { applySettings, DEFAULT_SETTINGS } from "./settings.ts";
 import { DeliveryMethods } from "./ui/DeliveryMethods.tsx";
 import { DispatchAction } from "./ui/DispatchAction.tsx";
+import { ReturnLabel } from "./ui/ReturnLabel.tsx";
 import { SettingsPanel } from "./ui/SettingsPanel.tsx";
 import { TrackingPanel } from "./ui/TrackingPanel.tsx";
 
@@ -53,8 +54,30 @@ export function register(): AddOn {
     settings: [
       { key: "demo_transport", kind: "boolean" },
       { key: "collection_cutoff", kind: "time" },
+      /*
+       * The returns depot (31 O4) — where a customer's return parcel is
+       * delivered. The shop tells its CARRIER where returns go, which is why
+       * these are this add-on's own settings rather than a host fact: the
+       * host's payload carries no address for this surface, and the real
+       * product works exactly this way. All five are display text on a label;
+       * none is a secret.
+       */
+      { key: "returns_name", kind: "text" },
+      { key: "returns_lines", kind: "text" },
+      { key: "returns_city", kind: "text" },
+      { key: "returns_postcode", kind: "text" },
+      { key: "returns_country", kind: "text" },
     ],
-    defaultSettings: { ...DEFAULT_SETTINGS },
+    defaultSettings: {
+      ...DEFAULT_SETTINGS,
+      // Empty means NOT CONFIGURED, and the return surface says so in words
+      // rather than inventing a depot. There is no honest default address.
+      returns_name: "",
+      returns_lines: "",
+      returns_city: "",
+      returns_postcode: "",
+      returns_country: "",
+    },
     /*
      * The host pushes; this add-on does not poll. Its engines are handed
      * settings rather than a store, so a rate quoted a second after the shop
@@ -142,6 +165,20 @@ export function register(): AddOn {
         slot: "settings.add-on.panel",
         order: 10,
         render: (payload) => createElement(SettingsPanel, { payload }),
+      },
+      /*
+       * The inbound half (31 O4): a prepaid return label for the record in
+       * front of you. `record.actions` is multi-fill and mounted on records
+       * this fill has no business with — it renders NOTHING unless the host
+       * says the record is a `return`, which is the entity field doing the job
+       * it exists for. See `ui/ReturnLabel.tsx` for why the two addresses come
+       * from the operator's settings and the sender's own form rather than
+       * from the record.
+       */
+      {
+        slot: "record.actions",
+        order: 10,
+        render: (payload) => createElement(ReturnLabel, { payload }),
       },
     ],
   };

@@ -162,6 +162,26 @@ export const strings = {
     "addon.shipping-dhl.panel.trackIt": "Track it",
     "addon.shipping-dhl.panel.noPage":
       "The demo carrier has no tracking page of its own — the events above are all of it.",
+
+    // ── the inbound half: a prepaid return label (31 O4) ──────────────────
+    "addon.shipping-dhl.returns.title": "Prepaid return label",
+    "addon.shipping-dhl.returns.intro": "Get a label to send this back. The shop pays the carriage — you put the label on the parcel and hand it over.",
+    "addon.shipping-dhl.returns.toDepot": "It goes back to {name}, {city}.",
+    "addon.shipping-dhl.returns.notSetUp": "The shop has not given the carrier a returns address yet, so no label can be made here.",
+    "addon.shipping-dhl.returns.sender": "Collected from your address",
+    "addon.shipping-dhl.returns.senderName": "Your name",
+    "addon.shipping-dhl.returns.parcelNote": "A small parcel is assumed — about {kg} kg with the box. The depot weighs what actually arrives.",
+    "addon.shipping-dhl.returns.make": "Get the prepaid label",
+    "addon.shipping-dhl.returns.made": "Return label ready",
+    "addon.shipping-dhl.returns.apply": "Print it, fix it to the parcel and hand the parcel over. The tracking follows it back.",
+    "addon.shipping-dhl.set.returns": "Returns address",
+    "addon.shipping-dhl.set.returnsName": "Name on the label",
+    "addon.shipping-dhl.set.returnsNote": "Where a customer's return parcel is delivered. With no address here, the return surface says so and makes nothing.",
+    "addon.shipping-dhl.setting.returnsName": "Returns address — name on the label",
+    "addon.shipping-dhl.setting.returnsLines": "Returns address — street",
+    "addon.shipping-dhl.setting.returnsCity": "Returns address — town or city",
+    "addon.shipping-dhl.setting.returnsPostcode": "Returns address — postcode",
+    "addon.shipping-dhl.setting.returnsCountry": "Returns address — country",
   },
 
   "de-DE": {
@@ -273,6 +293,26 @@ export const strings = {
     "addon.shipping-dhl.panel.trackIt": "Sendung verfolgen",
     "addon.shipping-dhl.panel.noPage":
       "Der Demo-Versender hat keine eigene Verfolgungsseite — mehr als die Ereignisse oben gibt es nicht.",
+
+    // ── the inbound half: a prepaid return label (31 O4) ──────────────────
+    "addon.shipping-dhl.returns.title": "Vorausbezahltes Rücksendeetikett",
+    "addon.shipping-dhl.returns.intro": "Holen Sie ein Etikett, um dies zurückzuschicken. Der Betrieb übernimmt das Porto — Sie kleben das Etikett auf das Paket und geben es ab.",
+    "addon.shipping-dhl.returns.toDepot": "Es geht zurück an {name}, {city}.",
+    "addon.shipping-dhl.returns.notSetUp": "Der Betrieb hat dem Versanddienst noch keine Rücksendeadresse genannt, deshalb kann hier kein Etikett erstellt werden.",
+    "addon.shipping-dhl.returns.sender": "Abholung an Ihrer Adresse",
+    "addon.shipping-dhl.returns.senderName": "Ihr Name",
+    "addon.shipping-dhl.returns.parcelNote": "Angenommen wird ein kleines Paket — etwa {kg} kg mit Karton. Das Depot wiegt, was tatsächlich ankommt.",
+    "addon.shipping-dhl.returns.make": "Vorausbezahltes Etikett erstellen",
+    "addon.shipping-dhl.returns.made": "Rücksendeetikett bereit",
+    "addon.shipping-dhl.returns.apply": "Drucken Sie es, kleben Sie es auf das Paket und geben Sie das Paket ab. Die Sendungsverfolgung begleitet es zurück.",
+    "addon.shipping-dhl.set.returns": "Rücksendeadresse",
+    "addon.shipping-dhl.set.returnsName": "Name auf dem Etikett",
+    "addon.shipping-dhl.set.returnsNote": "Wohin das Rücksendepaket einer Kundin oder eines Kunden geliefert wird. Ohne Adresse hier sagt die Rücksendefläche genau das und erstellt nichts.",
+    "addon.shipping-dhl.setting.returnsName": "Rücksendeadresse — Name auf dem Etikett",
+    "addon.shipping-dhl.setting.returnsLines": "Rücksendeadresse — Straße",
+    "addon.shipping-dhl.setting.returnsCity": "Rücksendeadresse — Ort",
+    "addon.shipping-dhl.setting.returnsPostcode": "Rücksendeadresse — Postleitzahl",
+    "addon.shipping-dhl.setting.returnsCountry": "Rücksendeadresse — Land",
   },
 
   "fr-FR": {
@@ -384,6 +424,26 @@ export const strings = {
     "addon.shipping-dhl.panel.trackIt": "Suivre le colis",
     "addon.shipping-dhl.panel.noPage":
       "Le transporteur de démonstration n'a pas de page de suivi : les étapes ci-dessus sont tout ce qu'il y a.",
+
+    // ── the inbound half: a prepaid return label (31 O4) ──────────────────
+    "addon.shipping-dhl.returns.title": "Étiquette de retour prépayée",
+    "addon.shipping-dhl.returns.intro": "Obtenez une étiquette pour renvoyer ceci. L'atelier prend le transport en charge — collez l'étiquette sur le colis et déposez-le.",
+    "addon.shipping-dhl.returns.toDepot": "Il repart vers {name}, {city}.",
+    "addon.shipping-dhl.returns.notSetUp": "L'atelier n'a pas encore indiqué d'adresse de retour au transporteur ; aucune étiquette ne peut donc être créée ici.",
+    "addon.shipping-dhl.returns.sender": "Enlèvement à votre adresse",
+    "addon.shipping-dhl.returns.senderName": "Votre nom",
+    "addon.shipping-dhl.returns.parcelNote": "Un petit colis est supposé — environ {kg} kg avec le carton. Le dépôt pèse ce qui arrive réellement.",
+    "addon.shipping-dhl.returns.make": "Obtenir l'étiquette prépayée",
+    "addon.shipping-dhl.returns.made": "Étiquette de retour prête",
+    "addon.shipping-dhl.returns.apply": "Imprimez-la, fixez-la sur le colis et déposez le colis. Le suivi l'accompagne au retour.",
+    "addon.shipping-dhl.set.returns": "Adresse de retour",
+    "addon.shipping-dhl.set.returnsName": "Nom sur l'étiquette",
+    "addon.shipping-dhl.set.returnsNote": "Où est livré le colis de retour d'un client. Sans adresse ici, la surface de retour le dit et ne crée rien.",
+    "addon.shipping-dhl.setting.returnsName": "Adresse de retour — nom sur l'étiquette",
+    "addon.shipping-dhl.setting.returnsLines": "Adresse de retour — rue",
+    "addon.shipping-dhl.setting.returnsCity": "Adresse de retour — ville",
+    "addon.shipping-dhl.setting.returnsPostcode": "Adresse de retour — code postal",
+    "addon.shipping-dhl.setting.returnsCountry": "Adresse de retour — pays",
   },
 
   "cs-CZ": {
@@ -495,6 +555,26 @@ export const strings = {
     "addon.shipping-dhl.panel.trackIt": "Sledovat zásilku",
     "addon.shipping-dhl.panel.noPage":
       "Demo dopravce nemá vlastní stránku sledování — víc než události výše nenajdete.",
+
+    // ── the inbound half: a prepaid return label (31 O4) ──────────────────
+    "addon.shipping-dhl.returns.title": "Předplacený štítek k vrácení",
+    "addon.shipping-dhl.returns.intro": "Získejte štítek a pošlete to zpět. Přepravu hradí dílna — štítek nalepíte na balík a balík předáte.",
+    "addon.shipping-dhl.returns.toDepot": "Míří zpět na adresu {name}, {city}.",
+    "addon.shipping-dhl.returns.notSetUp": "Dílna dopravci zatím nesdělila adresu vratek, takže tu štítek vytvořit nejde.",
+    "addon.shipping-dhl.returns.sender": "Vyzvednutí na vaší adrese",
+    "addon.shipping-dhl.returns.senderName": "Vaše jméno",
+    "addon.shipping-dhl.returns.parcelNote": "Počítá se s malým balíkem — zhruba {kg} kg i s krabicí. Depo zváží, co skutečně dorazí.",
+    "addon.shipping-dhl.returns.make": "Získat předplacený štítek",
+    "addon.shipping-dhl.returns.made": "Štítek k vrácení je připraven",
+    "addon.shipping-dhl.returns.apply": "Vytiskněte ho, nalepte na balík a balík předejte. Sledování jde s ním celou cestu zpět.",
+    "addon.shipping-dhl.set.returns": "Adresa vratek",
+    "addon.shipping-dhl.set.returnsName": "Jméno na štítku",
+    "addon.shipping-dhl.set.returnsNote": "Kam se doručí vrácený balík zákazníka. Bez adresy to plocha vratek řekne a nic nevytvoří.",
+    "addon.shipping-dhl.setting.returnsName": "Adresa vratek — jméno na štítku",
+    "addon.shipping-dhl.setting.returnsLines": "Adresa vratek — ulice",
+    "addon.shipping-dhl.setting.returnsCity": "Adresa vratek — město",
+    "addon.shipping-dhl.setting.returnsPostcode": "Adresa vratek — PSČ",
+    "addon.shipping-dhl.setting.returnsCountry": "Adresa vratek — země",
   },
 
   "da-DK": {
@@ -606,6 +686,26 @@ export const strings = {
     "addon.shipping-dhl.panel.trackIt": "Følg pakken",
     "addon.shipping-dhl.panel.noPage":
       "Demo-fragtfirmaet har ingen sporingsside — hændelserne ovenfor er det hele.",
+
+    // ── the inbound half: a prepaid return label (31 O4) ──────────────────
+    "addon.shipping-dhl.returns.title": "Forudbetalt returetiket",
+    "addon.shipping-dhl.returns.intro": "Få en etiket til at sende dette tilbage. Værkstedet betaler fragten — du sætter etiketten på pakken og afleverer den.",
+    "addon.shipping-dhl.returns.toDepot": "Den går tilbage til {name}, {city}.",
+    "addon.shipping-dhl.returns.notSetUp": "Værkstedet har endnu ikke givet fragtfirmaet en returadresse, så der kan ikke laves en etiket her.",
+    "addon.shipping-dhl.returns.sender": "Afhentes på din adresse",
+    "addon.shipping-dhl.returns.senderName": "Dit navn",
+    "addon.shipping-dhl.returns.parcelNote": "Der regnes med en lille pakke — cirka {kg} kg med kassen. Depotet vejer det, der faktisk ankommer.",
+    "addon.shipping-dhl.returns.make": "Få den forudbetalte etiket",
+    "addon.shipping-dhl.returns.made": "Returetiketten er klar",
+    "addon.shipping-dhl.returns.apply": "Print den, sæt den på pakken og aflever pakken. Sporingen følger den tilbage.",
+    "addon.shipping-dhl.set.returns": "Returadresse",
+    "addon.shipping-dhl.set.returnsName": "Navn på etiketten",
+    "addon.shipping-dhl.set.returnsNote": "Hvor en kundes returpakke leveres. Uden en adresse her siger returfladen det og laver ingenting.",
+    "addon.shipping-dhl.setting.returnsName": "Returadresse — navn på etiketten",
+    "addon.shipping-dhl.setting.returnsLines": "Returadresse — gade",
+    "addon.shipping-dhl.setting.returnsCity": "Returadresse — by",
+    "addon.shipping-dhl.setting.returnsPostcode": "Returadresse — postnummer",
+    "addon.shipping-dhl.setting.returnsCountry": "Returadresse — land",
   },
 
   "zh-CN": {
@@ -710,6 +810,26 @@ export const strings = {
     "addon.shipping-dhl.panel.notSent": "这份订单还没有交给快递发出。",
     "addon.shipping-dhl.panel.trackIt": "查看物流",
     "addon.shipping-dhl.panel.noPage": "演示承运商没有自己的查询页面 — 上面的轨迹就是全部。",
+
+    // ── the inbound half: a prepaid return label (31 O4) ──────────────────
+    "addon.shipping-dhl.returns.title": "预付退货标签",
+    "addon.shipping-dhl.returns.intro": "获取一张标签，把这件退回。运费由店里承担——你把标签贴在包裹上交寄即可。",
+    "addon.shipping-dhl.returns.toDepot": "它将寄回 {name}，{city}。",
+    "addon.shipping-dhl.returns.notSetUp": "店里尚未向承运商提供退货地址，因此这里无法生成标签。",
+    "addon.shipping-dhl.returns.sender": "从你的地址取件",
+    "addon.shipping-dhl.returns.senderName": "你的姓名",
+    "addon.shipping-dhl.returns.parcelNote": "按小包裹估算——连箱约 {kg} 公斤。仓库会以实际到件的重量为准。",
+    "addon.shipping-dhl.returns.make": "获取预付标签",
+    "addon.shipping-dhl.returns.made": "退货标签已就绪",
+    "addon.shipping-dhl.returns.apply": "打印后贴到包裹上，再把包裹交寄。下方的物流轨迹会随它一路回来。",
+    "addon.shipping-dhl.set.returns": "退货地址",
+    "addon.shipping-dhl.set.returnsName": "标签上的名称",
+    "addon.shipping-dhl.set.returnsNote": "顾客的退货包裹会送到这里。此处没有地址时，退货界面会如实说明，并且不会生成标签。",
+    "addon.shipping-dhl.setting.returnsName": "退货地址——标签上的名称",
+    "addon.shipping-dhl.setting.returnsLines": "退货地址——街道",
+    "addon.shipping-dhl.setting.returnsCity": "退货地址——城市",
+    "addon.shipping-dhl.setting.returnsPostcode": "退货地址——邮编",
+    "addon.shipping-dhl.setting.returnsCountry": "退货地址——国家或地区",
   },
 
   "zh-TW": {
@@ -814,6 +934,26 @@ export const strings = {
     "addon.shipping-dhl.panel.notSent": "這份訂單還沒有交給貨運寄出。",
     "addon.shipping-dhl.panel.trackIt": "查看配送",
     "addon.shipping-dhl.panel.noPage": "示範業者沒有自己的查詢頁 — 上面的紀錄就是全部。",
+
+    // ── the inbound half: a prepaid return label (31 O4) ──────────────────
+    "addon.shipping-dhl.returns.title": "預付退貨標籤",
+    "addon.shipping-dhl.returns.intro": "取得一張標籤，把這件退回。運費由店裡負擔——你把標籤貼在包裹上交寄即可。",
+    "addon.shipping-dhl.returns.toDepot": "它將寄回 {name}，{city}。",
+    "addon.shipping-dhl.returns.notSetUp": "店裡尚未向承運業者提供退貨地址，因此這裡無法產生標籤。",
+    "addon.shipping-dhl.returns.sender": "從你的地址取件",
+    "addon.shipping-dhl.returns.senderName": "你的姓名",
+    "addon.shipping-dhl.returns.parcelNote": "按小包裹估算——連箱約 {kg} 公斤。倉庫會以實際到件的重量為準。",
+    "addon.shipping-dhl.returns.make": "取得預付標籤",
+    "addon.shipping-dhl.returns.made": "退貨標籤已就緒",
+    "addon.shipping-dhl.returns.apply": "列印後貼到包裹上，再把包裹交寄。下方的追蹤紀錄會隨它一路回來。",
+    "addon.shipping-dhl.set.returns": "退貨地址",
+    "addon.shipping-dhl.set.returnsName": "標籤上的名稱",
+    "addon.shipping-dhl.set.returnsNote": "顧客的退貨包裹會送到這裡。此處沒有地址時，退貨介面會如實說明，並且不會產生標籤。",
+    "addon.shipping-dhl.setting.returnsName": "退貨地址——標籤上的名稱",
+    "addon.shipping-dhl.setting.returnsLines": "退貨地址——街道",
+    "addon.shipping-dhl.setting.returnsCity": "退貨地址——城市",
+    "addon.shipping-dhl.setting.returnsPostcode": "退貨地址——郵遞區號",
+    "addon.shipping-dhl.setting.returnsCountry": "退貨地址——國家或地區",
   },
 
   "ar-EG": {
@@ -924,6 +1064,26 @@ export const strings = {
     "addon.shipping-dhl.panel.trackIt": "تتبّع الشحنة",
     "addon.shipping-dhl.panel.noPage":
       "شركة الشحن التجريبية ليس لها صفحة تتبّع خاصة — الأحداث أعلاه هي كل ما هناك.",
+
+    // ── the inbound half: a prepaid return label (31 O4) ──────────────────
+    "addon.shipping-dhl.returns.title": "ملصق إرجاع مدفوع مسبقًا",
+    "addon.shipping-dhl.returns.intro": "احصل على ملصق لإعادة هذا. المحل يتحمل تكلفة النقل — ألصق الملصق على الطرد وسلّمه.",
+    "addon.shipping-dhl.returns.toDepot": "يعود إلى {name}، {city}.",
+    "addon.shipping-dhl.returns.notSetUp": "لم يزوّد المحل شركة الشحن بعنوان للإرجاع بعد، لذلك لا يمكن إنشاء ملصق هنا.",
+    "addon.shipping-dhl.returns.sender": "الاستلام من عنوانك",
+    "addon.shipping-dhl.returns.senderName": "اسمك",
+    "addon.shipping-dhl.returns.parcelNote": "نفترض طردًا صغيرًا — نحو {kg} كجم مع الصندوق. المستودع يزن ما يصل فعليًا.",
+    "addon.shipping-dhl.returns.make": "الحصول على الملصق المدفوع مسبقًا",
+    "addon.shipping-dhl.returns.made": "ملصق الإرجاع جاهز",
+    "addon.shipping-dhl.returns.apply": "اطبعه وألصقه على الطرد ثم سلّم الطرد. التتبع أدناه يرافقه في طريق العودة.",
+    "addon.shipping-dhl.set.returns": "عنوان الإرجاع",
+    "addon.shipping-dhl.set.returnsName": "الاسم على الملصق",
+    "addon.shipping-dhl.set.returnsNote": "المكان الذي يُسلَّم إليه طرد إرجاع العميل. بدون عنوان هنا، تقول واجهة الإرجاع ذلك ولا تنشئ شيئًا.",
+    "addon.shipping-dhl.setting.returnsName": "عنوان الإرجاع — الاسم على الملصق",
+    "addon.shipping-dhl.setting.returnsLines": "عنوان الإرجاع — الشارع",
+    "addon.shipping-dhl.setting.returnsCity": "عنوان الإرجاع — المدينة",
+    "addon.shipping-dhl.setting.returnsPostcode": "عنوان الإرجاع — الرمز البريدي",
+    "addon.shipping-dhl.setting.returnsCountry": "عنوان الإرجاع — البلد",
   },
 } as const;
 

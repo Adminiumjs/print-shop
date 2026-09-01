@@ -59,6 +59,14 @@ const POSTCODE_FORMAT: Readonly<Record<string, RegExp>> = {
 /** The carrier's own words, quoted verbatim in the UI and never paraphrased. */
 export const POSTCODE_REFUSAL = "Postcode not recognised for the destination country";
 
+/**
+ * The same refusal at the other end of the route (31 O4). A label must carry a
+ * resolvable address at BOTH ends, so an address this carrier would refuse as a
+ * recipient it refuses as a sender — which is what makes a return flow's
+ * "fix the postcode and retry" demo a real rule rather than a flag.
+ */
+export const SENDER_POSTCODE_REFUSAL = "Postcode not recognised for the sender's country";
+
 export function postcodeFits(postcode: string, country: string): boolean {
   const normalised = postcode.trim().toUpperCase();
   if (normalised.length === 0) return false;
@@ -163,11 +171,11 @@ export function createDemoCarrier(options: DemoCarrierOptions): DemoCarrier {
   const quotedTo = new Map<string, Address>();
   const quotedFrom = new Map<string, Address>();
 
-  function refuseUnknownAddress(to: Address): void {
-    if (postcodeFits(to.postcode, to.country)) return;
+  function refuseUnknownAddress(address: Address, message: string): void {
+    if (postcodeFits(address.postcode, address.country)) return;
     throw new CarrierError({
       code: "POSTCODE_NOT_FOUND",
-      carrierMessage: POSTCODE_REFUSAL,
+      carrierMessage: message,
       // Retryable means the works can act and try again — fix the postcode —
       // not that repeating the identical call might come out differently.
       retryable: true,
@@ -180,7 +188,10 @@ export function createDemoCarrier(options: DemoCarrierOptions): DemoCarrier {
     key: "shipping-dhl",
 
     async quote(parcel: Parcel, origin: Address, to: Address): Promise<Rate[]> {
-      refuseUnknownAddress(to);
+      // Both ends, sender first (31 O4): a route is unserviceable whichever end
+      // the unresolvable address sits at, and the message says which one it is.
+      refuseUnknownAddress(origin, SENDER_POSTCODE_REFUSAL);
+      refuseUnknownAddress(to, POSTCODE_REFUSAL);
       return quoteAll({
         parcel,
         zone: zoneFor(origin.country, to.country),
@@ -231,7 +242,13 @@ export function createDemoCarrier(options: DemoCarrierOptions): DemoCarrier {
           collection: `${day} ${COLLECTION_WINDOW.from}-${COLLECTION_WINDOW.to}`,
           delivery: rate.estimatedDelivery,
           to,
-          from,
+          // THE QUOTED ROUTE'S SENDER, not the address this transport was
+          // constructed with. `eventsFor` had this exact repair (see its
+          // comment) and the label escaped it: for an outbound booking the two
+          // are the same shop address, so nothing ever looked wrong — and for
+          // an inbound RETURN (31 O4) the constructed address is the wrong end
+          // of the route entirely, printing the depot as its own sender.
+          from: record.from,
         }),
       );
 
