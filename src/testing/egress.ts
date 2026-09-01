@@ -250,9 +250,33 @@ export function originOf(address: string): string {
  * same letters — is reported, which a `startsWith` would not do.
  */
 export function offendingAddresses(text: string, inert: readonly InertOrigin[]): string[] {
-  const allowed = new Set(inert.map((entry) => entry.origin));
+  const allowed = new Set([...inert.map((entry) => entry.origin), ...XML_NAMESPACE_ORIGINS]);
   return addressesIn(text).filter((address) => !allowed.has(originOf(address)));
 }
+
+/**
+ * XML namespace URIs, which are IDENTIFIERS and never addresses.
+ *
+ * `scanMarkup` in this same file already makes exactly this judgement for
+ * `<svg xmlns="http://www.w3.org/2000/svg">`, with the note that the exemption
+ * "has to be made in both or markup and the page disagree". It was made in one:
+ * the DOM scan let a namespace past and the BUILT-OUTPUT scan did not, so the
+ * two nets disagreed about the same string depending on which one saw it.
+ *
+ * That disagreement went unnoticed while every icon set was a Rollup external,
+ * because the namespace lived in the host's bundle rather than the add-on's.
+ * The moment 26-T13 bundled `lucide-react` into each add-on — so a browser could
+ * `import()` the artefact at all — every add-on's dist grew an `xmlns` and the
+ * stricter of the two nets fired.
+ *
+ * Scoped to the exact namespace ORIGINS rather than to `w3.org`: a real request
+ * to `https://www.w3.org/anything-else` is still a finding, which is the same
+ * line Adminium's own offline-asset scanner draws for the same reason.
+ */
+export const XML_NAMESPACE_ORIGINS: readonly string[] = [
+  "http://www.w3.org",
+  "https://www.w3.org",
+];
 
 /**
  * The one address a CONNECTED build is configured to reach (28-T26).
@@ -329,6 +353,33 @@ export function connectedBackend(baseUrl: string | undefined): readonly InertOri
  */
 export const SENDERS: readonly { pattern: RegExp; means: string }[] = [
   { pattern: /(?<![\w$.])fetch\s*\(/, means: "fetch()" },
+  /*
+   * `fetch` REACHED THROUGH A GLOBAL, which the bare-call pattern above cannot
+   * see — its lookbehind refuses a preceding dot, so `window.fetch(url)` and
+   * `globalThis.fetch.bind(globalThis)` both read as clean.
+   *
+   * [Found 2026-08-31, wiring connected add-on mode.] That is not the alias
+   * hole this file's header already concedes (`window["fe" + "tch"]`). Those
+   * two spellings are ORDINARY — `globalThis.fetch.bind(globalThis)` is the
+   * idiom for capturing it with the right receiver, and it is what the loader
+   * that found this was written with. A guard that reads the commonest way to
+   * write the thing it bans as clean is a guard that would have reported the
+   * next one green too.
+   *
+   * The receiver must be NAMED. A bare `fetch` reference would fire on
+   * `fetch?: typeof fetch` in an interface, which is a type and sends nothing,
+   * and a rule that cries on a type declaration is a rule somebody switches
+   * off.
+   */
+  {
+    pattern: /(?<![\w$.])(?:window|self|top|parent|globalThis)\s*\.\s*fetch\b/,
+    means: "fetch reached through a global",
+  },
+  {
+    pattern:
+      /(?<![\w$.])(?:const|let|var)\s*\{[^}]*\bfetch\b[^}]*\}\s*=\s*(?:window|self|top|parent|globalThis)\b/,
+    means: "fetch destructured off a global",
+  },
   { pattern: /XMLHttpRequest/, means: "XMLHttpRequest" },
   { pattern: /WebSocket/, means: "a WebSocket" },
   { pattern: /EventSource/, means: "an EventSource (server-sent events)" },
