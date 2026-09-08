@@ -14,7 +14,7 @@
  * own suite said about its own package.
  */
 
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -101,6 +101,10 @@ const CLOCKS: readonly string[] = [
  */
 const codeOf = (file: string) => withoutComments(read(file));
 const relative = (file: string) => file.slice(SRC.length);
+
+/** The means this file is allowed to name, if any. Keyed the way `relative` reads. */
+const declaredMeans = (file: string): readonly string[] =>
+  DECLARED_SENDERS[relative(file)]?.means ?? [];
 
 /**
  * THE ADDRESSES THIS BUNDLE IS ALLOWED TO NAME, AND WHY EACH IS INERT.
@@ -191,6 +195,85 @@ const OURS: readonly InertOrigin[] = [];
  * AUDITED — `react` is here because a React app imports React. What the list
  * buys is that a name nobody agreed to cannot appear in a shipped source.
  */
+/**
+ * THE ONE FILE THAT MAY SEND, AND WHAT NARROWS IT (26-T13).
+ *
+ * ── WHY THERE IS AN EXEMPTION AT ALL ───────────────────────────────────────
+ *
+ * Net two bans `fetch` and a dynamic `import()` of anything but a relative
+ * literal. Connected add-on mode does both, and cannot not: it asks this shop's
+ * own Adminium what is installed, and imports the bundles that Adminium serves.
+ *
+ * 28 §5.4 budgeted a "relax net two for one declared file" change for the
+ * connected DATA source and it turned out to be unnecessary — that file names
+ * no sender, it imports a client that does. This one is the case that budget
+ * was written for, and it is worth being precise about why the two differ: the
+ * data client is a published package with its own audience and its own tests,
+ * and there is no package for the add-on routes. They are session-authenticated
+ * admin routes, so a publishable-key client is the wrong shape for them, and a
+ * new npm package cannot be published by the release pipeline without a manual
+ * bootstrap. So the loader lives here.
+ *
+ * ── WHAT MAKES IT NARROW ENOUGH TO WRITE DOWN ──────────────────────────────
+ *
+ * An exemption that only said "this file may send" would be a hole. What is
+ * actually claimed is stronger, and `add-ons/connected.test.ts` drives every
+ * clause of it:
+ *
+ *   · the LIST is same-origin and carries the operator's session cookie. There
+ *     is no configurable address, so net one has nothing new to forgive and
+ *     `OURS` stays empty — the asymmetry stated above holds.
+ *   · a BUNDLE URL is refused unless it resolves same-origin AND under
+ *     `/api/v1/add-ons/`. Seven shapes are driven, including the four that read
+ *     as same-origin and are not (a foreign origin under the right path, a
+ *     protocol-relative URL, userinfo, and a traversal out of the fence).
+ *   · a refused URL is not imported — asserted through the loader, because a
+ *     correct predicate a caller ignores is worth nothing.
+ *
+ * ── AND THE EXEMPTION IS ITSELF CHECKED ────────────────────────────────────
+ *
+ * A record rather than a list, so nobody can add one without writing why, and
+ * the suite below asserts every entry still names a file that EXISTS and still
+ * TRIPS one of the two rules. An exemption that has stopped doing anything is
+ * an exemption quietly widening the net, and this is the same discipline
+ * `affiliationExempt` already applies in the kit.
+ */
+const DECLARED_SENDERS: Readonly<Record<string, { means: readonly string[]; why: string }>> = {
+  'add-ons/connected.ts': {
+    /*
+     * TWO MEANS, NAMED. Not "this file may send".
+     *
+     * The first draft dropped the whole sender scan for a declared path, which
+     * forgave all twenty-three entries of `SENDERS` — image and audio beacons,
+     * `sendBeacon`, `window.open`, `location.href =`, `XMLHttpRequest`,
+     * WebSocket, WebRTC, geolocation — in the one file whose job is to talk to
+     * a server. The other two nets cannot make that up: net one sees only
+     * LITERAL addresses, and net three never executes this file, because the
+     * tour registers `demoAddOns()` itself and `App.tsx` returns early when
+     * `HOSTED` is false.
+     *
+     * The clock exemption twenty lines down was already written per-MEANS. This
+     * one now matches it, and the case below proves a beacon planted in this
+     * exact file is still a finding.
+     *
+     * ONE MEANS, not two, and the self-check below is what settled it. The
+     * loader takes its sender as an injected parameter and defaults it with
+     * `globalThis.fetch.bind(globalThis)`, so a bare `fetch(` appears only in
+     * that file's PROSE — and `codeOf` strips comments before any scan. A
+     * second entry here would have been an exemption forgiving something
+     * nothing does.
+     */
+    means: ['fetch reached through a global'],
+    why:
+      'connected add-on mode (26 \u00a76). It fetches this shop\u2019s own add-on list over a ' +
+      'same-origin session and imports the bundles that reply names \u2014 refusing any URL that ' +
+      'does not resolve same-origin and under /api/v1/add-ons/. See add-ons/connected.test.ts.',
+  },
+};
+
+/** The dynamic `import()` this file is allowed, for the same reason. */
+const DECLARED_DYNAMIC_IMPORT = 'add-ons/connected.ts';
+
 const ALLOWED_MODULES: readonly AllowedModule[] = [
   { name: 'react', why: 'the renderer; this is a React app and every screen imports it' },
   { name: 'react-dom', why: 'the renderer\u2019s DOM half \u2014 `react-dom/client` mounts the root, once' },
@@ -258,15 +341,67 @@ describe('no real third-party call, no real clock (24 D11)', () => {
     //
     // This is also what makes the two declared Canva endpoints above harmless:
     // an address with no way to send is a string.
+    //
+    // The senders half skips the ONE file declared above; the static-import
+    // half does not, because a package nobody agreed to is a finding wherever
+    // it appears.
     const offenders = SHIPPED.flatMap((file) => [
-      ...sendersIn(codeOf(file)).map((means) => `${relative(file)} → ${means}`),
-      ...foreignImportsIn(codeOf(file)).map((spec) => `${relative(file)} → ${spec}`),
-      // The static half, which neither of the two above ever looked at.
+      ...sendersIn(codeOf(file))
+        .filter((means) => !declaredMeans(file).includes(means))
+        .map((means) => `${relative(file)} → ${means}`),
+      ...(relative(file) === DECLARED_DYNAMIC_IMPORT
+        ? []
+        : foreignImportsIn(codeOf(file)).map((spec) => `${relative(file)} → ${spec}`)),
       ...foreignModulesIn(codeOf(file), ALLOWED_MODULES).map(
         (spec) => `${relative(file)} → imports ${spec}, which nobody declared`,
       ),
     ]);
     expect(offenders).toEqual([]);
+  });
+
+  it('has no declared sender that has stopped sending', () => {
+    // The exemption checks itself. A file that no longer names a means it is
+    // forgiven for needs no exemption for it, and leaving one there widens the
+    // net for a file nobody is looking at any more.
+    const stale = Object.entries(DECLARED_SENDERS).flatMap(([path, entry]) => {
+      const file = join(SRC, path);
+      if (!existsSync(file)) return [`${path} — the file is gone`];
+      const named = sendersIn(codeOf(file));
+      return entry.means
+        .filter((means) => !named.includes(means))
+        .map((means) => `${path} — no longer names ${means}`);
+    });
+    expect(stale).toEqual([]);
+  });
+
+  it('still refuses a BEACON in the connected source, and a fetch anywhere else', () => {
+    /*
+     * The exemption is two MEANS in one FILE, not a file that may do as it
+     * likes. Driven over the rule rather than over `src/`, so it stays true on
+     * a day this app has no connected source at all — the same shape as the
+     * clock exemption's own case below.
+     */
+    const planted = `
+      const img = new Image();
+      img.src = "https://" + host + "/p";
+      navigator.sendBeacon(endpoint, payload);
+      const ws = new WebSocket(url);
+    `;
+    const forgiven = DECLARED_SENDERS['add-ons/connected.ts']?.means ?? [];
+    const survives = sendersIn(planted).filter((means) => !forgiven.includes(means));
+    expect(survives.length).toBeGreaterThan(0);
+    expect(survives).toContain('new Image — an image beacon');
+    expect(survives).toContain('sendBeacon(), under any receiver');
+
+    // And the forgiveness is scoped to the path, not to the means globally.
+    expect(declaredMeans(join(SRC, 'data/adminiumSource.ts'))).toEqual([]);
+  });
+
+  it('declares a REASON for every exemption, not just a path', () => {
+    for (const [path, entry] of Object.entries(DECLARED_SENDERS)) {
+      expect(entry.why.length, path).toBeGreaterThan(60);
+      expect(entry.means.length, path).toBeGreaterThan(0);
+    }
   });
 
   /*

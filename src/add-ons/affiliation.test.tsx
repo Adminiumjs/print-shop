@@ -62,6 +62,31 @@ import { LOCALE_TAGS } from "../i18n/locales.ts";
 import { MESSAGES } from "../i18n/messages/index.ts";
 import { tourEveryView } from "../testing/tour.tsx";
 
+/*
+ * ── AND WHAT CONNECTED MODE DOES TO THIS FILE'S REACH (26-T13) ──────────────
+ *
+ * The glob below is resolved by the BUNDLER, so it is a static list of modules
+ * by the time this runs. That is what makes it honest about the add-ons this
+ * app vendors, and it is also the reason it can say nothing about one that
+ * arrives from a server at run time: a build-time glob cannot be asked a
+ * run-time question. `MARKS` would still be non-empty and this suite would
+ * still be green, which is the shape of a gate going blind rather than red.
+ *
+ * The guarantee is not dropped, it is MOVED. `add-ons/connected.ts` refuses to
+ * register a server-delivered add-on that declares `namesCompany` and ships no
+ * `notAffiliated` line, in every locale it ships — at registration, on every
+ * boot, the same move `registerAddOnMessages` made when add-on keys stopped
+ * being part of the host's `MessageKey` union.
+ *
+ * WHAT IS GENUINELY LOST for a server-delivered add-on, stated rather than
+ * papered over: this file asks whether the line is on the SAME SURFACE as the
+ * naming, and the registration check can only ask whether the line exists. That
+ * is AC6's 2026-08-09 amendment — "a disclaimer a reader meets after the naming
+ * is a disclaimer they may never meet" — and answering it needs the add-on's own
+ * screens rendered against its own marks, which is the add-on repository's job
+ * and not this shop's.
+ */
+
 /** Every mark declared by an add-on THIS app has vendored. */
 const VENDORED_FACTS = import.meta.glob<{
   COMPANY_MARKS?: readonly { mark: string; owner: string }[];

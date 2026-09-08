@@ -258,7 +258,17 @@ interface Actions {
   addSpoilage: (ref: string, sheets: number) => void;
   markCollected: (ref: string) => void;
 
-  registerAddOns: (addOns: readonly AddOn[]) => void;
+  /**
+   * Install a registry, seed defaults, and optionally say what is ENABLED.
+   *
+   * `enable` exists because connected mode has no separate switching-on step:
+   * an operator already decided in Studio what is installed and on, and asking
+   * them to flip it again in the shop would be a second source of truth for one
+   * fact. It rides in the same `set` as the registry — a loop over
+   * `connectAddOn` would have worked and would also have closed whatever dialog
+   * was open, N times, at whatever moment the async load happened to land.
+   */
+  registerAddOns: (addOns: readonly AddOn[], options?: { enable?: readonly string[] }) => void;
   toggleAddOn: (key: string) => void;
   connectAddOn: (key: string) => void;
   disconnectAddOn: (key: string) => void;
@@ -625,9 +635,56 @@ export const useStore = create<State & Actions>((set, get) => ({
 
   // ── add-ons ──────────────────────────────────────────────────────────────
 
-  registerAddOns: (addOns) => {
-    set({ registry: createRegistry(addOns) });
-    applyAddOnSettings(addOns, get().addOnSettings);
+  registerAddOns: (addOns, options) => {
+    /*
+     * SEED DEFAULTS FOR ANYTHING THIS STORE HAS NOT MET (26-T13).
+     *
+     * `addOnSettings` starts as `DEFAULT_ADD_ON_SETTINGS`, which is computed at
+     * module load from the three add-ons compiled into THIS bundle. In demo
+     * mode that covers everything registered, so nothing below ever fires.
+     *
+     * In connected mode the list arrives from the server and none of it is in
+     * that constant. `applyAddOnSettings` reads `settings[key] ?? {}`, so a
+     * server-delivered add-on would be pushed an EMPTY document — not its own
+     * `defaultSettings` — and the failure is a quiet one: a delivery add-on
+     * whose demo switch defaults to on would come up off, and the panel that
+     * should have drawn would render nothing at all. Which is indistinguishable
+     * from a slot nobody filled.
+     *
+     * Seeded rather than overwritten: an add-on the operator has already
+     * configured keeps what they set, and only keys this store has never seen
+     * take a default.
+     */
+    const settings = { ...get().addOnSettings };
+    for (const addOn of addOns) {
+      /*
+       * PER SETTING, not per add-on. An all-or-nothing test on the add-on KEY
+       * looked right and was not, for two reasons that both bite in connected
+       * mode:
+       *
+       *  - `addOnSettings` starts as `DEFAULT_ADD_ON_SETTINGS`, and that
+       *    constant is `defaultSettingsFor(REGISTERED)` over the three add-ons
+       *    VENDORED into this build. `registry.ts` is imported unconditionally
+       *    by this module, so those three keys are already present in a HOSTED
+       *    build too — which are exactly the three a real Adminium is most
+       *    likely to deliver. The key test then skipped them and the vendored
+       *    build's constants were pushed into the server-delivered object.
+       *  - A newer version of an add-on that adds a setting would never get its
+       *    default, because its key was already there.
+       */
+      const current = settings[addOn.key] ?? {};
+      const merged: Record<string, unknown> = { ...(addOn.defaultSettings ?? {}) };
+      // The operator's own values win over every default, which is the half
+      // that was right the first time.
+      for (const [key, value] of Object.entries(current)) merged[key] = value;
+      settings[addOn.key] = merged;
+    }
+    set({
+      registry: createRegistry(addOns),
+      addOnSettings: settings,
+      ...(options?.enable === undefined ? {} : { enabled: new Set(options.enable) }),
+    });
+    applyAddOnSettings(addOns, settings);
   },
 
   /**

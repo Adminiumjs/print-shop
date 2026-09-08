@@ -24,6 +24,34 @@ interface ViteWithVitest extends UserConfig {
 const config: ViteWithVitest = {
   plugins: [react()],
   /*
+   * ── THE DEV SERVER, AND THE ONE THING IT PROXIES (26-T13) ─────────────────
+   *
+   * Connected add-on mode reads `GET /api/v1/add-ons`, which is behind
+   * `manifests.manage` on a real Adminium SESSION rather than a publishable
+   * key. A session is a cookie, and a cookie belongs to an ORIGIN — so the only
+   * arrangement in which this works is the app being served from the same
+   * origin as the API. In production that is what a hosted surface IS; Adminium
+   * serves the bundle itself.
+   *
+   * `npm run dev:hosted` reproduces that without a surface build: the dev
+   * server proxies `/api` to a local Adminium, so the browser signs in through
+   * this origin, keeps the cookie on this origin, and the loader's own
+   * same-origin fence is exercised for real rather than only in a suite. Point
+   * it elsewhere with ADMINIUM_ORIGIN.
+   *
+   * It is dev-only. `vite build` does not read `server`, so nothing here
+   * reaches a bundle — which is why this is not an address `sources.test.ts`
+   * has to forgive: that gate walks `src/`, and this file is not in it.
+   */
+  server: {
+    proxy: {
+      '/api': {
+        target: process.env['ADMINIUM_ORIGIN'] ?? 'http://127.0.0.1:4600',
+        changeOrigin: false,
+      },
+    },
+  },
+  /*
    * ── THE TEST RUN, AND WHY IT NEEDS A TIMEOUT AT ALL ───────────────────────
    *
    * `npm test` was RED on a clean tree for a whole round. Three suites —

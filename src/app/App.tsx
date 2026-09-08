@@ -8,7 +8,9 @@
 
 import { useEffect } from "react";
 
+import { loadConnectedAddOns } from "../add-ons/connected.ts";
 import { demoAddOns } from "../add-ons/registry.ts";
+import { APP_KEY, HOSTED } from "../surface.ts";
 import { DemoDock } from "../components/DemoDock.tsx";
 import { isConnected } from "../data/source.ts";
 import { Overlays, Toasts } from "../components/Overlays.tsx";
@@ -54,14 +56,61 @@ export default function App() {
   }, [theme]);
 
   /*
-   * Register the compiled-in add-ons once. REGISTERED IS NOT ENABLED: the
-   * `enabled` set starts empty, so the app boots as its base state with the
-   * three honest empty panels showing, and stays there until somebody flips a
-   * dock toggle or connects one from the shelf. Registration only tells the
-   * host what COULD be switched on.
+   * Register the add-ons once, from whichever source this build has (26 §6).
+   *
+   * DEMO AND STANDALONE: the three compiled-in bundles, named by three imports
+   * in `registry.ts`. REGISTERED IS NOT ENABLED — the `enabled` set starts
+   * empty, so the app boots as its base state with the three honest empty
+   * panels showing, and stays there until somebody flips a dock toggle or
+   * connects one from the shelf. Registration only tells the host what COULD be
+   * switched on.
+   *
+   * HOSTED: the list comes from this shop's own Adminium, over a same-origin
+   * session, and the bundles are imported from it. Here registration IS
+   * enablement: an operator already decided what is installed and switched on,
+   * in Studio, and asking them to switch it on a second time in the shop would
+   * be a second source of truth for one fact. So the connected keys go straight
+   * into `enabled`.
+   *
+   * `HOSTED` folds to a literal at build time (`surface.ts` explains why it
+   * must not be wrapped in a call), so the branch a build does not take is not
+   * in that build's bytes — the demo carries no loader and no `fetch`.
    */
   useEffect(() => {
-    useStore.getState().registerAddOns(demoAddOns());
+    if (!HOSTED) {
+      useStore.getState().registerAddOns(demoAddOns());
+      return;
+    }
+    let live = true;
+    void loadConnectedAddOns({ appKey: APP_KEY, origin: window.location.origin }).then(
+      ({ addOns, problems }) => {
+        // The effect can be torn down before the fetch lands — React 19's
+        // StrictMode double-mount does exactly that in development — and
+        // registering into a store the app has moved on from would leave a
+        // registry nobody asked for.
+        if (!live) return;
+        // Messages are registered inside the loader now, per add-on and inside
+        // its guard — `registerAddOnMessages` THROWS, and one add-on with a
+        // hole in its Arabic used to abort this whole callback: no registry, no
+        // logged problems, a shop that looked like it had no add-ons at all.
+        //
+        // `registerAddOns` takes the enabled set in the SAME `set`, rather than
+        // this looping over `connectAddOn`. That action is the operator's
+        // Connect button and closes the open dialog as part of its meaning; N
+        // of them firing whenever an async load happened to land would shut a
+        // dialog somebody was reading.
+        useStore.getState().registerAddOns(addOns, { enable: addOns.map((a) => a.key) });
+        for (const problem of problems) {
+          // Reported rather than swallowed, and reported per add-on: four
+          // working add-ons and one broken one is a shop that runs, and the
+          // operator needs to know which one is missing.
+          console.warn(`[adminium] add-on "${problem.key}": ${problem.code} — ${problem.detail}`);
+        }
+      },
+    );
+    return () => {
+      live = false;
+    };
   }, []);
 
   const persona = personaFor(view);

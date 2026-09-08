@@ -31,6 +31,21 @@
  */
 
 /**
+ * THIS APP'S OWN MANIFEST KEY — what an add-on `attaches` to (24 §5.7).
+ *
+ * A literal rather than an import of `manifest.json`, for two reasons that pull
+ * the same way: importing the manifest would put the whole document — labels,
+ * eight locales, every declared surface — into the shipped bundle to read one
+ * string out of it, and `import.meta.env` values fold to literals here while a
+ * JSON import does not. `manifest.test.ts` asserts the two agree, so this
+ * cannot drift from the file that decides it.
+ *
+ * It is read by connected add-on mode, which narrows the server's list of every
+ * installed add-on to the ones attached to THIS host and switched on here.
+ */
+export const APP_KEY = "printing";
+
+/**
  * Set by `build:surface:*`. Absent in every other build, which is what makes
  * `HOSTED` false — and therefore what makes the hosted-only code disappear from
  * the demo and standalone bundles.

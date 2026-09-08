@@ -29,6 +29,7 @@ import {
   validateManifest,
 } from './testing/manifest/index.ts';
 import { JOB_STAGES } from './lib/jobs.ts';
+import { APP_KEY } from './surface.ts';
 import { HOSTED_SLOTS } from './add-ons/slots.ts';
 
 /** The three add-ons that attach to this app, from their own manifests. */
@@ -155,6 +156,17 @@ describe('what an app manifest may not do', () => {
     // fails if the key is ever renamed here.
     expect(ATTACHED_ADD_ONS.length).toBe(3);
     expect(manifest.key).toBe('printing');
+  });
+
+  it('is the same key `surface.ts` hands connected mode (26-T13)', () => {
+    // `APP_KEY` is a literal rather than an import of this file, because
+    // importing the manifest would put the whole document — every label in
+    // eight locales — into the shipped bundle to read one string out of it.
+    // This is what stops the literal drifting from the file that decides it: a
+    // rename here that missed `surface.ts` would silently narrow the server's
+    // add-on list to nothing, and an empty list is exactly what a shop with no
+    // add-ons installed looks like.
+    expect(APP_KEY).toBe(manifest.key);
   });
 });
 
