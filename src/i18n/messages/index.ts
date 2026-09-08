@@ -90,6 +90,29 @@ export type AddOnMessages = Readonly<Record<string, Readonly<Record<string, stri
 /** Which add-ons have registered, for the suite that checks they all did. */
 const registered = new Set<string>();
 
+/**
+ * WHICH ADD-ON OWNS EACH KEY THIS MAP GAINED — the half connected mode needs.
+ *
+ * The collision rule below is right and stays: an add-on that would overwrite a
+ * key somebody else already holds is refused. What it could not tell apart, as
+ * long as registration happened exactly once at module load, is the SAME add-on
+ * arriving twice.
+ *
+ * Connected mode makes that ordinary rather than exotic. `registry.ts` runs its
+ * merge as a module-load side effect and the store imports it for
+ * `DEFAULT_ADD_ON_SETTINGS`, so those three bundles are in this map before any
+ * boot decides which source it is using — and a server that then delivers one
+ * of the same three would collide with a copy of itself. Refusing that is a
+ * boot that dies on a correct configuration.
+ *
+ * So the question the rule asks becomes "does somebody ELSE hold this key",
+ * which is the question it was always trying to ask. Re-registering the same
+ * add-on OVERWRITES its own keys, deliberately: a server may deliver a newer
+ * version whose strings have changed, and silently keeping the older copy would
+ * be a shop running on a build's worth of stale words with nothing to say so.
+ */
+const owners = new Map<string, string>();
+
 export function registeredAddOnMessageKeys(): readonly string[] {
   return [...registered].sort();
 }
@@ -105,9 +128,11 @@ export function registeredAddOnMessageKeys(): readonly string[] {
  * A boot that dies with the locale and the key named is strictly better than a
  * shop running with a hole in its Arabic.
  *
- * A key that collides with one already in the bundle is refused for the same
- * reason: a later area silently winning a collision is how an add-on ends up
- * quietly rewriting the host's copy.
+ * A key that collides with one somebody ELSE already holds is refused for the
+ * same reason: a later area silently winning a collision is how an add-on ends
+ * up quietly rewriting the host's copy. An add-on re-registering its OWN keys
+ * is an update rather than a collision — see `owners` above for why connected
+ * mode makes that the ordinary case.
  */
 export function registerAddOnMessages(addOnKey: string, bundle: AddOnMessages): void {
   const english = bundle["en-US"];
@@ -129,10 +154,36 @@ export function registerAddOnMessages(addOnKey: string, bundle: AddOnMessages): 
     }
   }
 
-  for (const key of keys) {
-    const owner = MESSAGES["en-US"][key];
-    if (owner !== undefined) {
-      throw new Error(`add-on "${addOnKey}" would overwrite the existing message key "${key}"`);
+  /*
+   * THE KEYS ARE THE UNION ACROSS EVERY LOCALE, not the English set.
+   *
+   * The collision check used to read `Object.keys(english)` while the merge
+   * three blocks down does `Object.assign(MESSAGES[locale], bundle[locale])` —
+   * the WHOLE bundle, locale by locale. So a key present in one of the seven
+   * non-English bundles and absent from `en-US` was merged with no collision
+   * check and no owner recorded, which quietly falsified the sentence directly
+   * below it: the host's own keys were overwritable after all, and two add-ons
+   * could fight over one with neither registration refused.
+   *
+   * Checking the union costs one pass and closes it. The parity loop above
+   * still keys off English, and correctly — a key only some locales carry is a
+   * different fault, and it is the one this function has always reported first.
+   */
+  const everyKey = new Set(keys);
+  for (const locale of LOCALE_TAGS) {
+    for (const key of Object.keys(bundle[locale] ?? {})) everyKey.add(key);
+  }
+
+  for (const key of everyKey) {
+    if (MESSAGES["en-US"][key] === undefined && !owners.has(key)) continue;
+    const owner = owners.get(key);
+    // `undefined` means the HOST's own five areas hold it — never overwritable.
+    if (owner !== addOnKey) {
+      throw new Error(
+        `add-on "${addOnKey}" would overwrite the ` +
+          (owner === undefined ? "host's own" : `"${owner}" add-on's`) +
+          ` message key "${key}"`,
+      );
     }
   }
 
@@ -141,5 +192,6 @@ export function registerAddOnMessages(addOnKey: string, bundle: AddOnMessages): 
   // registration — and registration happens at module load, before any of them
   // is read, so nothing is ever read half-merged.
   for (const locale of LOCALE_TAGS) Object.assign(MESSAGES[locale], bundle[locale]);
+  for (const key of everyKey) owners.set(key, addOnKey);
   registered.add(addOnKey);
 }
