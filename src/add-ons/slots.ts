@@ -38,7 +38,7 @@
  */
 
 /**
- * THE CLOSED REGISTRY (24 §5.4). Eleven names, and not a twelfth.
+ * THE CLOSED REGISTRY (24 §5.4). Thirteen names, and not a fourteenth.
  *
  * ── WHY THIS LIST EXISTS SEPARATELY FROM `HOSTED_SLOTS` ─────────────────────
  *
@@ -61,6 +61,15 @@
  * on it that an add-on would want. It is in the list below because the list IS
  * the registry mirror — an id missing from it fails a manifest the registry
  * accepts — and `isHosted` says no, which is the honest pair.
+ *
+ * [Amended 2026-09-01, wave 7.] THIRTEEN. `shell.overlay` is the corner of a
+ * customer shell — a floating affordance reachable from every screen (33 O1).
+ * This app does not mount it either, and for a reason worth writing down
+ * rather than leaving to `isHosted`: the print works' customer side is a
+ * quoting and ordering flow, and the one thing a visitor there would want from
+ * a corner panel — somebody to ask about a job — is the counter, which this
+ * shop does in person. A host that mounted an overlay to prove it could would
+ * be putting a chat on a screen with nobody behind it.
  */
 export const SLOT_IDS = [
   'artwork.sources',
@@ -75,6 +84,7 @@ export const SLOT_IDS = [
   'order.line.actions',
   'record.editor.panel',
   'record.actions',
+  'shell.overlay',
 ] as const;
 
 export type SlotId = (typeof SLOT_IDS)[number];
@@ -173,4 +183,6 @@ export const SLOT_FILL: Readonly<Record<SlotId, 'single' | 'multi' | 'per-add-on
   'order.line.actions': 'multi',
   'record.editor.panel': 'multi',
   'record.actions': 'multi',
+  /* A corner two add-ons can stand in at once; `single` would lose one silently. */
+  'shell.overlay': 'multi',
 };

@@ -50,6 +50,14 @@
  * `HOSTED_SLOTS` must be mounted somewhere in its `src/`. Nothing obliges a
  * host to host an id, and everything obliges a host that says it does.
  *
+ * [Amended 2026-09-01, wave 7.] The registry is THIRTEEN. `shell.overlay` is
+ * the first id on a CUSTOMER SHELL rather than inside one of its flows — the
+ * corner of the page, reachable from every screen — and unlike the twelfth it
+ * arrives WITH its fill, `live-chat`, in the same wave. Its dossier is four
+ * exhibits where `record.actions` had seven, one of them an absence, and the
+ * closed registry's own entry sets out why that was accepted here and would
+ * not have been there. 33 Appendix A is the artifact.
+ *
  * `nav.add-on.routes` is in the list and is now genuinely mounted — by Birch
  * Row, whose maker shell has a full-screen route for an add-on to occupy. The
  * amendment recorded against §5.4 stands as history: for one release the Print
@@ -72,6 +80,7 @@ export const HOSTED_SLOTS = [
   'order.line.actions',
   'record.editor.panel',
   'record.actions',
+  'shell.overlay',
 ] as const;
 
 /**
@@ -172,4 +181,10 @@ export const SLOT_FILL: Readonly<Record<SlotId, 'single' | 'multi' | 'per-add-on
   'order.line.actions': 'multi',
   'record.editor.panel': 'multi',
   'record.actions': 'multi',
+  /*
+   * `multi`, because a corner is a place two add-ons can stand in at once and
+   * `single` would make the second one lose silently. Nothing stacks two today;
+   * the fill rule is what makes it possible when something does.
+   */
+  'shell.overlay': 'multi',
 };

@@ -700,6 +700,301 @@ export interface RecordActionsPayload extends SlotPayload {
 }
 
 /**
+ * `shell.overlay` — the layer ABOVE a customer app's pages: a floating
+ * affordance in the corner and the panel it opens (bought 2026-09-01, 33 O1).
+ *
+ * ── WHAT MAKES THIS PAYLOAD DIFFERENT FROM EVERY OTHER ONE IN THIS FILE ─────
+ *
+ * The other twelve hand over A RECORD — a job, a basket line, an order, a
+ * dispatch, a product. This one has no record to hand over, because the surface
+ * is not on a record: it is reachable from every screen the app has, including
+ * the ones with nothing on them. So what crosses the seam here is THE SHELL
+ * ITSELF plus the ENVIRONMENT, and the environment is the interesting half.
+ *
+ * An add-on may not read a clock, mint a random number, reach the network or
+ * touch storage (24 D7, D11; the purity suite enforces all four). Every other
+ * surface in this file gets away with that because a record is a static fact
+ * and the host had already done the impure work. An overlay that talks to
+ * anybody cannot: it needs an id nobody can guess, a place to put it, and
+ * somewhere to send what the visitor typed. So the host passes those in as
+ * HANDLES, and the fill's own bundle stays free of all four APIs.
+ *
+ * THE PAYLOAD IS THE ONLY DOOR (31 A.1's rule, kept). No overlay fill reaches
+ * into a host store, and every optional handle below has a written answer for
+ * what the fill does without it — a host that passes none still gets a working
+ * panel, which is the test that keeps this from becoming one app's shell under
+ * a general name.
+ */
+export interface ShellOverlayPayload extends SlotPayload {
+  /**
+   * The host's display name, for a fill that greets somebody.
+   *
+   * NOT a brand kit and not a logo: one string, already in the reader's
+   * language, and the only thing about the host's identity that crosses. A fill
+   * that wanted colours has the host's CSS custom properties, which it inherits
+   * by being rendered inside the host — see `renders` on the registry entry.
+   */
+  brand: string;
+  /**
+   * Which of the host's screens the visitor is on — the host's own view id,
+   * lower-case and stable (`orders`, `track`, `checkout`).
+   *
+   * Free text rather than an enum, because there is no vocabulary of screens
+   * fifteen different apps share, and the value is for the operator to read
+   * later ("they asked from the checkout") rather than for the add-on to
+   * branch on. A fill that branched on it would be one app's routing table
+   * baked into the seam.
+   */
+  screen: string;
+  /** BCP 47, as the host's own i18n resolved it. */
+  locale: string;
+  /**
+   * The reading direction the host is laid out in.
+   *
+   * Passed rather than derived, for the reason `now` is passed: the fill has no
+   * business asking the document what direction it is in when the host already
+   * knows, and a fill that guessed from `locale` would get Kurdish wrong.
+   */
+  dir: 'ltr' | 'rtl';
+  /** When the host thinks it is — the same clock the dispatch surfaces take. */
+  now: ShopClock;
+  /**
+   * What the host ALREADY knows about the visitor, or `null` when it knows
+   * nothing.
+   *
+   * Every field optional and the whole thing nullable, because the four states
+   * are all real: a storefront with an anonymous shopper knows nothing; a
+   * portal with a signed-in account knows a name and an e-mail; a tracking page
+   * with a claimed order knows a reference and no name. It PREFILLS and never
+   * gates — a fill that refused to open without an e-mail would be unusable on
+   * the host that has the most visitors.
+   */
+  customer: { name?: string; email?: string; reference?: string } | null;
+  /**
+   * A monotonic counter the host bumps to ask the overlays to open.
+   *
+   * A COUNTER AND NOT A BOOLEAN, because a boolean cannot express "open again":
+   * a visitor who closes the panel and presses the footer link a second time
+   * has changed nothing about a `boolean`, and the second press would do
+   * nothing. The fill remembers the last value it acted on and opens when the
+   * number moves.
+   *
+   * It opens EVERY enabled fill, which is honest while there is one and is
+   * recorded as the thing to widen when there are two (33 D16). The slot is
+   * `multi` so the corner can hold two; the request is not yet addressed to
+   * one, and inventing a `target` no host would pass is worse than saying so.
+   */
+  openRequest: number;
+  /**
+   * Mint an unguessable token — at least 128 bits, hex, from the HOST's CSPRNG.
+   *
+   * Required, not optional, and this is the field a host is most likely to want
+   * to skip. It cannot be: an overlay that identifies a visitor to a server
+   * needs a secret nobody can guess, `crypto` is banned in add-on code, and the
+   * alternatives an add-on could reach for on its own — a counter, a timestamp,
+   * `Math.random()` — are all guessable. A host that will not supply one is a
+   * host that should not mount an overlay that needs identity, and the fill
+   * would have no honest way to say so after the fact.
+   */
+  mintToken: () => string;
+  /**
+   * A token the host has been holding from an earlier visit, or `null`.
+   *
+   * WHERE IT WAS HELD IS THE HOST'S DECISION and deliberately not the add-on's:
+   * a storefront may keep it for the tab, a portal may key it to the signed-in
+   * account, and an app with a privacy promise may keep it nowhere and pass
+   * `null` for ever. Storage APIs are banned in add-on code, so this is the
+   * only way a conversation survives a reload — and a host that passes `null`
+   * and ignores `remember` gets a panel that works and forgets, which is a
+   * legitimate product decision rather than a broken one.
+   */
+  resumeToken: string | null;
+  /** Hand the host a token to keep, or `null` to forget the one it has. */
+  remember: (token: string | null) => void;
+  /**
+   * A way to reach the operator's Adminium instance, or `undefined` when there
+   * is none.
+   *
+   * ── `undefined` IS THE DEMO BRANCH, AND IT IS THE ONLY ONE ──────────────
+   *
+   * An example app running on fixtures has no server. Rather than each fill
+   * inventing its own idea of "am I connected", THIS FIELD'S ABSENCE is the
+   * single source every label reads (25 D9's pattern) — one `isDemo()`, and
+   * every simulated result on the panel is paired with it.
+   *
+   * ── AND IT IS `clientFor(key)`, NOT A CLIENT ────────────────────────────
+   *
+   * The host does not hand over ITS client. An overlay that writes to the
+   * public surface writes through its OWN publishable key, minted against its
+   * own scope, held in its own settings — because a scope document carries
+   * exactly one claim, and an add-on that identified a visitor through the
+   * app's claim would be reading the app's records. So the host hands over a
+   * FACTORY: the fill supplies the key it holds and gets a client for it. The
+   * host never reads the add-on's settings, which is the seam rule, and the
+   * add-on's key is revocable on its own.
+   */
+  publicApi?: { clientFor: (publishableKey: string) => PublicSurfaceClient };
+  /**
+   * Answer a visitor's question from whatever the host knows, if it knows
+   * anything.
+   *
+   * OPTIONAL, and the absence is ordinary: a help desk has a knowledge base to
+   * search, a storefront has nothing to search, and neither is a broken host.
+   * A fill handed no `suggest` simply does not offer suggestions — it does not
+   * apologise for the host and it does not invent answers.
+   *
+   * Synchronous, because every host that has one is searching data it already
+   * holds. A host that would need a round trip should return nothing rather
+   * than block a keystroke.
+   */
+  suggest?: (query: string) => readonly OverlaySuggestion[];
+  /**
+   * Hand what the visitor has been saying over to the HOST'S OWN model — a
+   * ticket, a contact record, an e-mail — and tell the fill what came of it.
+   *
+   * OPTIONAL for the reason `patchRecord` is optional on `record.actions`:
+   * hosts genuinely differ. A help desk has tickets and this is the whole point
+   * of it; a storefront has nothing to escalate to and honestly says so. A fill
+   * handed no `handoff` says the app has no way to pass this on and offers what
+   * it can instead — it never throws and never quietly drops the request.
+   */
+  handoff?: (handoff: OverlayHandoff) => HandoffReceipt | Promise<HandoffReceipt>;
+}
+
+/** One thing the host found, and a way to put the visitor in front of it. */
+export interface OverlaySuggestion {
+  id: string;
+  /** Already in the reader's language — the host owns its own catalogue's words. */
+  title: string;
+  /** Navigate to it. The host decides what that means on its own screens. */
+  open: () => void;
+}
+
+/**
+ * WHAT AN OVERLAY HANDS TO THE HOST WHEN IT GIVES UP AND ASKS FOR A PERSON.
+ *
+ * ── IT IS NOT A CHAT TRANSCRIPT, AND THE NAMING IS THE POINT ────────────────
+ *
+ * The plan this slot was bought under drafted this type as `ConversationSummary`
+ * with `messages: { who: 'customer' | 'staff' | 'bot' }` — the live chat's own
+ * record shape, in the shared mirror, under a general-sounding name. That is
+ * this file's founding defect exactly (see the header: `SampleJob` was a print
+ * works' job record with `Job` filed off the front), and it would have bound
+ * every future host of this surface to one add-on's vocabulary: a host writing
+ * a `handoff` would be writing against a chat whether or not it had one.
+ *
+ * So it is named for what the surface does — something was said in the corner
+ * of the page and the app is being asked to take it somewhere — and a chat maps
+ * its transcript into it at the boundary, which is four lines in the add-on and
+ * the mapping the seam exists to force. A feedback tab hands over one line, a
+ * callback request hands over none, and both are the same shape.
+ *
+ * `who` is `visitor | operator | app` and not `customer | staff | bot` for the
+ * same reason: `bot` is a fact about how one add-on generates a line, and no
+ * host has any use for the distinction between a canned reply and a typed one.
+ * `app` is honest about all of them — the host said this, not a person.
+ */
+export interface OverlayHandoff {
+  /**
+   * One line naming what this is about, already in the visitor's language.
+   *
+   * The fill writes it, because the fill is the only thing that knows: a chat
+   * summarises what was asked, a feedback tab uses the rating. A host putting
+   * this on a ticket has something to show in a list.
+   */
+  subject: string;
+  /** What was said, oldest first. Empty is legitimate — see `who`. */
+  lines: readonly OverlayHandoffLine[];
+  /** What the fill collected or was handed about the visitor. */
+  customer: ShellOverlayPayload['customer'];
+  /**
+   * The add-on's own reference for the thing being handed over, where it has
+   * one — a conversation id, a request number. Absent in demo mode, where
+   * nothing was ever written down.
+   */
+  reference?: string;
+}
+
+/** One line of what was said in the corner of the page. */
+export interface OverlayHandoffLine {
+  who: 'visitor' | 'operator' | 'app';
+  text: string;
+  /** ISO instant, where the fill has one to give. */
+  at?: string;
+}
+
+/** What the host did with a hand-off, in the host's own vocabulary. */
+export interface HandoffReceipt {
+  /** What the visitor can quote back — a ticket number, a message id. */
+  reference: string;
+  kind: 'ticket' | 'message' | 'email';
+}
+
+/**
+ * THE ADMINIUM PUBLIC SURFACE, AS AN OVERLAY MAY USE IT.
+ *
+ * A structural copy of `PublicClient` from `@adminiumjs/public-client`, and
+ * copied for the reason everything else here is copied: this repo publishes
+ * standalone and takes no runtime dependency an add-on's host does not already
+ * have. A real client satisfies this type — the member signatures are the
+ * package's own, verbatim — so a host passes `clientFor` straight through with
+ * no cast and no adapter.
+ *
+ * NARROWED IN EXACTLY ONE PLACE: the real interface also has `config()`,
+ * returning the whole compiled scope document. It is left out because
+ * `assertRefs` answers the only question a fill has about a scope — is what I
+ * need still here — and the difference matters: `assertRefs` names what is
+ * missing and fails at boot, while a fill reading `config()` would be an add-on
+ * inspecting the operator's configuration to decide what it is allowed to do.
+ */
+export interface PublicSurfaceClient {
+  list: <T = PublicRow>(ref: string, options?: PublicListOptions) => Promise<PublicListResult<T>>;
+  get: <T = PublicRow>(ref: string, id: string, signal?: AbortSignal) => Promise<T>;
+  create: <T = PublicRow>(ref: string, values: PublicRow) => Promise<T>;
+  update: <T = PublicRow>(ref: string, id: string, values: PublicRow) => Promise<T>;
+  /** Identify the visitor. `false` means the details did not match. */
+  claim: (match: Record<string, unknown>) => Promise<boolean>;
+  signOut: () => Promise<void>;
+  /** Is a claim session currently held? */
+  isClaimed: () => boolean;
+  /**
+   * Assert the live scope still carries what this fill needs, naming what is
+   * missing when it does not. Called at boot; an operator can narrow a scope at
+   * any time, and this turns the 403 that would produce into a legible failure.
+   */
+  assertRefs: (required: Record<string, string[]>) => Promise<void>;
+}
+
+/** One row as the public surface exposes it. */
+export type PublicRow = Record<string, unknown>;
+
+export interface PublicListResult<T = PublicRow> {
+  data: T[];
+  page?: { limit: number; offset: number; total: number | null };
+  cursor?: { next: string | null };
+}
+
+/** The filter grammar, exactly as the public surface accepts it. */
+export type PublicFilterOp =
+  | 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte'
+  | 'in' | 'like' | 'ilike' | 'is_null' | 'not_null' | 'between';
+
+export type PublicFilter =
+  | { column: string; op: PublicFilterOp; value?: unknown }
+  | { and: PublicFilter[] }
+  | { or: PublicFilter[] };
+
+export interface PublicListOptions {
+  where?: PublicFilter;
+  q?: string;
+  order?: string;
+  limit?: number;
+  offset?: number;
+  cursor?: string;
+  signal?: AbortSignal;
+}
+
+/**
  * THE MAP. Every id in the closed registry, and its payload.
  *
  * Keyed by the slot id union rather than by a hand-written list, so an id added
@@ -719,6 +1014,7 @@ export interface SlotPayloads {
   'order.line.actions': OrderLinePayload;
   'record.editor.panel': RecordEditorPayload;
   'record.actions': RecordActionsPayload;
+  'shell.overlay': ShellOverlayPayload;
 }
 
 /**

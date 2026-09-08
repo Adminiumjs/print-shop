@@ -46,6 +46,23 @@ export const VENDOR_NAME = "Canva";
 export const VENDOR_API_HOST = "api.canva.com";
 
 /**
+ * THE AUTHORIZE HOST, WHICH IS A DIFFERENT ONE — and that is the whole point.
+ *
+ * [Found 2026-08-31 by the 26-T15 round trip, against a real Adminium.] This
+ * add-on's manifest allow-listed `api.canva.com` alone while its authorize URL
+ * points at `www.canva.com`, so `POST /connect/oauth/start` refused it: the
+ * host will not send a client secret to a hostname the add-on never declared.
+ * The OAuth flow could not have run, and nothing in this repository said so —
+ * `manifest.test.ts` checked that both URLs END WITH `canva.com`, which is a
+ * suffix test where the runtime does an exact one.
+ *
+ * Two hostnames is not a widening of the allow-list; it is the allow-list
+ * finally describing the flow this package already declared. The containment
+ * test now asserts the rule its own comment always stated.
+ */
+export const VENDOR_AUTH_HOST = "www.canva.com";
+
+/**
  * PENDING VERIFICATION — see the block comment above. Read from the vendor's
  * documentation before this add-on connects to anything real, and record the
  * date in the README.

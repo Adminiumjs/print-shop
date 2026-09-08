@@ -510,6 +510,136 @@ export interface RecordActionsPayload extends SlotPayload {
 }
 
 /**
+ * `shell.overlay` — the layer ABOVE a customer app's pages: a floating
+ * affordance in the corner and the panel it opens (bought 2026-09-01, 33 O1).
+ *
+ * Declared here with the rest because the registry is closed and an add-on may
+ * name it in a manifest today. THIS SHOP DOES NOT MOUNT IT — see `slots.ts`
+ * for the reason, which is about who would answer rather than about screens.
+ *
+ * WHAT MAKES IT UNLIKE EVERY OTHER PAYLOAD HERE: the others hand over a RECORD,
+ * and this surface has none — it is reachable from every screen, including the
+ * empty ones. So what crosses is the SHELL plus the ENVIRONMENT, and the
+ * environment is the half that matters: an add-on may not read a clock, mint a
+ * random number, reach the network or touch storage (24 D7, D11), and an
+ * overlay that talks to anybody needs all four. They arrive as handles, and
+ * the fill's bundle stays clean. Every optional one has a written answer for
+ * its own absence — a host that passes none still gets a working panel. The
+ * long version is in the monorepo's `packages/host/src/payloads.ts`.
+ */
+export interface ShellOverlayPayload extends SlotPayload {
+  /** The host's display name, already in the reader's language. */
+  brand: string;
+  /** The host's own view id — free text, for an operator to read later. */
+  screen: string;
+  locale: string;
+  /** Passed, not derived: a fill guessing from `locale` gets Kurdish wrong. */
+  dir: 'ltr' | 'rtl';
+  now: ShopClock;
+  /** What the host already knows — it prefills and never gates. */
+  customer: { name?: string; email?: string; reference?: string } | null;
+  /** Monotonic. A counter and not a boolean, so "open again" can be said. */
+  openRequest: number;
+  /** ≥128 bits of hex from the HOST's CSPRNG; `crypto` is banned in add-ons. */
+  mintToken: () => string;
+  /** A token from an earlier visit. Where it was kept is the host's decision. */
+  resumeToken: string | null;
+  remember: (token: string | null) => void;
+  /** Absent in demo mode — the single `isDemo()` source every label reads. */
+  publicApi?: { clientFor: (publishableKey: string) => PublicSurfaceClient };
+  /** Optional: a host with nothing to search passes none and none is offered. */
+  suggest?: (query: string) => readonly OverlaySuggestion[];
+  /** Optional: a host with nothing to escalate to says so rather than throws. */
+  handoff?: (handoff: OverlayHandoff) => HandoffReceipt | Promise<HandoffReceipt>;
+}
+
+/** One thing the host found, and a way to put the visitor in front of it. */
+export interface OverlaySuggestion {
+  id: string;
+  title: string;
+  open: () => void;
+}
+
+/**
+ * What an overlay hands the host when it asks for a person.
+ *
+ * NOT a chat transcript, and the naming is the point: a type called
+ * `ConversationSummary` would bind every host of this surface to one add-on's
+ * record shape, which is this file's founding defect. A chat maps its
+ * transcript into this at the boundary; a feedback tab hands over one line.
+ */
+export interface OverlayHandoff {
+  /** One line naming what this is about, in the visitor's language. */
+  subject: string;
+  lines: readonly OverlayHandoffLine[];
+  customer: ShellOverlayPayload['customer'];
+  /** The add-on's own reference, where it has one. Absent in demo mode. */
+  reference?: string;
+}
+
+export interface OverlayHandoffLine {
+  /** `app` and not `bot`: no host needs to know how a line was generated. */
+  who: 'visitor' | 'operator' | 'app';
+  text: string;
+  at?: string;
+}
+
+/** What the host did with a hand-off, in the host's own vocabulary. */
+export interface HandoffReceipt {
+  reference: string;
+  kind: 'ticket' | 'message' | 'email';
+}
+
+/**
+ * The Adminium public surface as an overlay may use it — a structural copy of
+ * `PublicClient` from `@adminiumjs/public-client`, so a host passes one
+ * straight through with no cast. Copied rather than imported for the reason
+ * everything in this file is copied.
+ *
+ * Narrowed in one place: the real interface also has `config()`, returning the
+ * whole scope document. `assertRefs` answers the only question a fill has about
+ * a scope, and it names what is missing instead of inviting an add-on to
+ * inspect the operator's configuration.
+ */
+export interface PublicSurfaceClient {
+  list: <T = PublicRow>(ref: string, options?: PublicListOptions) => Promise<PublicListResult<T>>;
+  get: <T = PublicRow>(ref: string, id: string, signal?: AbortSignal) => Promise<T>;
+  create: <T = PublicRow>(ref: string, values: PublicRow) => Promise<T>;
+  update: <T = PublicRow>(ref: string, id: string, values: PublicRow) => Promise<T>;
+  claim: (match: Record<string, unknown>) => Promise<boolean>;
+  signOut: () => Promise<void>;
+  isClaimed: () => boolean;
+  assertRefs: (required: Record<string, string[]>) => Promise<void>;
+}
+
+export type PublicRow = Record<string, unknown>;
+
+export interface PublicListResult<T = PublicRow> {
+  data: T[];
+  page?: { limit: number; offset: number; total: number | null };
+  cursor?: { next: string | null };
+}
+
+export type PublicFilterOp =
+  | 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte'
+  | 'in' | 'like' | 'ilike' | 'is_null' | 'not_null' | 'between';
+
+export type PublicFilter =
+  | { column: string; op: PublicFilterOp; value?: unknown }
+  | { and: PublicFilter[] }
+  | { or: PublicFilter[] };
+
+export interface PublicListOptions {
+  where?: PublicFilter;
+  q?: string;
+  order?: string;
+  limit?: number;
+  offset?: number;
+  cursor?: string;
+  signal?: AbortSignal;
+}
+
+/**
  * THE MAP. Every id in the closed registry, and its payload.
  *
  * Keyed by the slot id union rather than by a hand-written list, so an id added
@@ -529,6 +659,7 @@ export interface SlotPayloads {
   'order.line.actions': OrderLinePayload;
   'record.editor.panel': RecordEditorPayload;
   'record.actions': RecordActionsPayload;
+  'shell.overlay': ShellOverlayPayload;
 }
 
 /**
