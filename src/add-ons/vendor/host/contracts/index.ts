@@ -13,10 +13,10 @@
  * implements), and an add-on that provides neither `artwork-source` nor
  * `shipping-carrier` should not have to load either.
  *
- * It also keeps the shipped bytes honest. `CarrierError` is the one runtime
- * value in here, so the delivery add-on's bundle pulls this file in and the
- * artwork add-ons' bundles do not — and neither ever pulls in the host seam,
- * which they import as types alone.
+ * It also keeps the shipped bytes honest. `CarrierError`, `isDocumentError`
+ * and `DOCUMENT_LOCALE_IDS` are the runtime values in here, so the delivery
+ * add-on's bundle pulls this file in and the artwork add-ons' bundles do not —
+ * and neither ever pulls in the host seam, which they import as types alone.
  */
 
 export type { FileRef } from './common.ts';
@@ -26,6 +26,27 @@ export type {
   AvailabilityVerdict,
   JobSpec,
 } from './artwork-source.ts';
+export { DOCUMENT_LOCALE_IDS, isDocumentError } from './document-render.ts';
+export type {
+  DocumentCoverage,
+  DocumentError,
+  DocumentErrorCode,
+  DocumentFormat,
+  DocumentKind,
+  DocumentLocaleId,
+  DocumentOutline,
+  DocumentPaper,
+  DocumentRenderer,
+  DocumentSubject,
+  LocalizedText,
+  OutlineSlot,
+  OutlineSlotDefault,
+  OutlineSlotType,
+  PublicDocumentRequest,
+  RecordRef,
+  RenderInput,
+  RenderedDocument,
+} from './document-render.ts';
 export type {
   Personalization,
   PreviewRef,

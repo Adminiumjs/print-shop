@@ -112,7 +112,7 @@ FILES_host=(
   index.ts host.ts payloads.ts slots.ts delivery.ts
   contracts/index.ts contracts/common.ts
   contracts/artwork-source.ts contracts/shipping-carrier.ts
-  contracts/product-personalizer.ts
+  contracts/product-personalizer.ts contracts/document-render.ts
   # The ABI a CONNECTED bundle is loaded through (26 §0.7). A built add-on
   # aliases `react` to a shim that reads a global, so a host must publish its
   # React on that global before importing one — and the KEY it publishes under
