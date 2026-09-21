@@ -457,7 +457,7 @@
   "pages": [
     {
       "ref": "jobs",
-      "template": "table",
+      "template": "page-crud",
       "title": {
         "key": "marketplaceData.printing.page.jobs",
         "fallback": "Jobs"
@@ -468,12 +468,12 @@
         "order": 1
       },
       "bindings": {
-        "jobs": "jobs"
+        "rows": "jobs"
       }
     },
     {
       "ref": "proofs",
-      "template": "table",
+      "template": "page-crud",
       "title": {
         "key": "marketplaceData.printing.page.proofs",
         "fallback": "Proofs"
@@ -484,12 +484,12 @@
         "order": 2
       },
       "bindings": {
-        "proofs": "proofs"
+        "rows": "proofs"
       }
     },
     {
       "ref": "artwork",
-      "template": "table",
+      "template": "page-crud",
       "title": {
         "key": "marketplaceData.printing.page.artwork",
         "fallback": "Artwork"
@@ -500,12 +500,12 @@
         "order": 3
       },
       "bindings": {
-        "artwork": "artwork"
+        "rows": "artwork"
       }
     },
     {
       "ref": "dispatches",
-      "template": "table",
+      "template": "page-crud",
       "title": {
         "key": "marketplaceData.printing.page.dispatches",
         "fallback": "Dispatch"
@@ -516,12 +516,12 @@
         "order": 4
       },
       "bindings": {
-        "dispatches": "dispatches"
+        "rows": "dispatches"
       }
     },
     {
       "ref": "materials",
-      "template": "table",
+      "template": "page-crud",
       "title": {
         "key": "marketplaceData.printing.page.materials",
         "fallback": "Materials"
@@ -532,12 +532,12 @@
         "order": 1
       },
       "bindings": {
-        "materials": "materials"
+        "rows": "materials"
       }
     },
     {
       "ref": "stock-movements",
-      "template": "table",
+      "template": "page-crud",
       "title": {
         "key": "marketplaceData.printing.page.stockMovements",
         "fallback": "Stock movements"
@@ -548,12 +548,12 @@
         "order": 2
       },
       "bindings": {
-        "stock_movements": "stock_movements"
+        "rows": "stock_movements"
       }
     },
     {
       "ref": "rate-card",
-      "template": "table",
+      "template": "page-crud",
       "title": {
         "key": "marketplaceData.printing.page.rateCard",
         "fallback": "Rate card"
@@ -564,12 +564,12 @@
         "order": 1
       },
       "bindings": {
-        "products": "products"
+        "rows": "products"
       }
     },
     {
       "ref": "quotes",
-      "template": "table",
+      "template": "page-crud",
       "title": {
         "key": "marketplaceData.printing.page.quotes",
         "fallback": "Saved quotes"
@@ -580,12 +580,12 @@
         "order": 2
       },
       "bindings": {
-        "quotes": "quotes"
+        "rows": "quotes"
       }
     },
     {
       "ref": "customers",
-      "template": "table",
+      "template": "page-crud",
       "title": {
         "key": "marketplaceData.printing.page.customers",
         "fallback": "Customers"
@@ -596,7 +596,7 @@
         "order": 3
       },
       "bindings": {
-        "customers": "customers"
+        "rows": "customers"
       }
     }
   ],
