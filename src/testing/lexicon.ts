@@ -386,7 +386,8 @@ export const IDEA_IN_LANGUAGE: Record<
  * The per-locale view the message-bundle suites want.
  *
  * `en-US` is the English substring ban's own job, so its only entry is the pair
- * D12 adds on top: `premium` is not in 17 §2's run of substrings.
+ * the add-on brand rule adds on top: `premium` is not in the release sweep's run
+ * of substrings.
  */
 export const TIERING_WORDS: Record<string, RegExp[]> = {
   /*

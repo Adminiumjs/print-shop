@@ -98,10 +98,10 @@ export function impuritiesIn(code: string): string[] {
  *
  *     export const zzSeed = crypto.getRandomValues(new Uint8Array(4))[0];
  *
- * to `personalizer/src/template.ts` — the engine whose determinism is the whole
- * of AC17 — left the package at 157 of 157 green and put the die in both built
- * bundles. The byte-for-byte guard could not see it: there was no second copy
- * of this file to differ from.
+ * to `personalizer/src/template.ts` — the engine whose whole point is that
+ * identical values give a byte-identical picture — left the package at 157 of
+ * 157 green and put the die in both built bundles. The byte-for-byte guard
+ * could not see it: there was no second copy of this file to differ from.
  *
  * So the arrangement itself is now the thing under test. `shared-rule.test.ts`
  * asks two questions of every package and every host: does it IMPORT this file,

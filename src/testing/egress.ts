@@ -3,7 +3,7 @@
  *
  * ── THE GUARD THIS REPLACES, AND HOW IT WAS BEATEN ──────────────────────────
  *
- * D11 says a demo makes no real third-party call. Every repo in this wave
+ * The rule: a demo makes no real third-party call. Every repo in this wave
  * enforced that as a grep for five literal words — `fetch(`, `XMLHttpRequest`,
  * `new WebSocket`, `navigator.sendBeacon`, `EventSource`. A verifier put two
  * real requests into a shipped component with none of them:
@@ -35,7 +35,7 @@
  * both are named where they are used: the XML namespace an `<svg>` element
  * carries, which is an identifier no agent ever dereferences, and Canva's
  * declared OAuth endpoints, which no code in the repo calls (the host runs the
- * flow — 24 §5.6) and which the manifest's `network.allow` pins.
+ * flow) and which the manifest's `network.allow` pins.
  *
  * This is the net that catches the mutant above: the tracker's address is a
  * literal, in the source and in the minified bundle, and it is on nobody's
@@ -74,8 +74,8 @@
  * ── AND THE THREE WAYS ROUND IT, WHICH WERE THE SAME MISTAKE AGAIN ──────────
  *
  * [Widened 2026-08-11, wave 4b round 6.] Three real outbound requests were put
- * into a shipped, always-rendered component and every D11 gate in both hosts
- * stayed green — 35 passing cases in one, 36 in the other:
+ * into a shipped, always-rendered component and every no-real-call gate in both
+ * hosts stayed green — 35 passing cases in one, 36 in the other:
  *
  *     window.open(`https://${host}/p?c=` + count);         // a NAVIGATION
  *     style.textContent = `.x{background-image:url(…)}`;   // CSS THE BROWSER RESOLVES
@@ -265,7 +265,7 @@ export function offendingAddresses(text: string, inert: readonly InertOrigin[]):
  *
  * That disagreement went unnoticed while every icon set was a Rollup external,
  * because the namespace lived in the host's bundle rather than the add-on's.
- * The moment 26-T13 bundled `lucide-react` into each add-on — so a browser could
+ * The moment each add-on began bundling `lucide-react` — so a browser could
  * `import()` the artefact at all — every add-on's dist grew an `xmlns` and the
  * stricter of the two nets fired.
  *
@@ -279,7 +279,7 @@ export const XML_NAMESPACE_ORIGINS: readonly string[] = [
 ];
 
 /**
- * The one address a CONNECTED build is configured to reach (28-T26).
+ * The one address a CONNECTED build is configured to reach.
  *
  * ── WHY THIS EXISTS ────────────────────────────────────────────────────────
  * These apps ship as demos with no backend, and NET ONE is at its strictest
@@ -704,7 +704,7 @@ export function packageOf(specifier: string): string {
 }
 
 /**
- * Every package a source imports that nobody has declared (28-T26 follow-up).
+ * Every package a source imports that nobody has declared.
  *
  * ── THE HOLE THIS CLOSES, WHICH WAS IN NET TWO ALL ALONG ───────────────────
  *
@@ -1363,9 +1363,9 @@ export function watchEgress(win: Window & typeof globalThis): {
    * boundary for the question being asked. `document.body.appendChild(img)` and
    * `document.head.appendChild(style)` both put a live request OUTSIDE the
    * mounted tree, which is how an `<img>` parsed out of `innerHTML` reached the
-   * network with 36 D11 cases green. The page is the unit, so the page is what
-   * is read — the passed root as well, since a detached fragment a caller wants
-   * looked at is not in the document yet.
+   * network with 36 no-real-call cases green. The page is the unit, so the page
+   * is what is read — the passed root as well, since a detached fragment a
+   * caller wants looked at is not in the document yet.
    *
    * Each element is read once however many roots reach it.
    */
