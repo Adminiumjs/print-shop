@@ -1,5 +1,5 @@
 /**
- * The configurator engine (24-marketplace-wave-4.md §4, D5).
+ * The configurator engine.
  *
  * Pure and deterministic: no `Date.now()`, no `Math.random()`, no imports from
  * React or the store. Every clock reading is passed in, so the vitest suite and
@@ -626,8 +626,8 @@ export interface ArtworkFile {
  * Run the works' checks on a file against the job it is for.
  *
  * The HOST runs this — never an artwork add-on on its own output — which is
- * what stops Design Studio and Canva Import marking their own homework
- * (24 §5.5). Design Studio's output passes because it was built at the right
+ * what stops Design Studio and Canva Import marking their own homework.
+ * Design Studio's output passes because it was built at the right
  * size with the bleed on it; a design made somewhere else routinely does not.
  */
 export function checkArtwork(file: ArtworkFile, config: Configuration): ArtworkVerdict[] {

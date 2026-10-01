@@ -1,7 +1,7 @@
 /**
  * WHO ELSE IS INVOLVED — the line every surface that names a company ends on.
  *
- * ── WHY IT MOVED OUT OF `Overlays.tsx` (24 AC6) ─────────────────────────────
+ * ── WHY IT MOVED OUT OF `Overlays.tsx` ──────────────────────────────────────
  *
  * [Moved and widened 2026-08-11, wave 4b round 6.] This component already
  * existed, one file over, and it was already right. It was mounted on the three
@@ -38,7 +38,7 @@
  * `namesCompany: true`  → the HOST's line, "Adminium is not affiliated with
  *                         this company." It names no add-on and no company, so
  *                         holding it here does not make the host know anything
- *                         about which add-ons exist (AC5).
+ *                         about which add-ons exist.
  * `namesCompany: false` → the ADD-ON's own words, out of its own eight-locale
  *                         bundle. The host has no sentence of its own claiming
  *                         an add-on connects to nobody, because that is not the

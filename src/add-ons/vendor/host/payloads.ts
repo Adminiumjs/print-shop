@@ -9,14 +9,14 @@
  *
  * ── WHY THIS FILE EXISTS ────────────────────────────────────────────────────
  *
- * It did not, and its absence was the single defect that made 24 D21's central
- * claim false. The rule this repo worked to said a payload an add-on only READS
- * may be narrowed and therefore belongs with the add-on; the shared mirror
- * carried only what an add-on hands BACK. That reasoning is sound about
- * ownership and silent about SHAPE, and the shape is what a second host
- * changes. So each add-on wrote down "what arrived", meaning what the ONE host
- * that existed happened to send, and the seam quietly became that host's record
- * layout under a general-sounding name:
+ * It did not, and its absence was the single defect that made the central claim
+ * — one add-on runs unchanged in any host — false. The rule this repo worked to
+ * said a payload an add-on only READS may be narrowed and therefore belongs
+ * with the add-on; the shared mirror carried only what an add-on hands BACK.
+ * That reasoning is sound about ownership and silent about SHAPE, and the shape
+ * is what a second host changes. So each add-on wrote down "what arrived",
+ * meaning what the ONE host that existed happened to send, and the seam quietly
+ * became that host's record layout under a general-sounding name:
  *
  *   `SampleJob` declared `trimWidthMm`, `packagingKey`, `productKey` and
  *   `materialKey` — a print works' job with `Job` filed off the front.
@@ -199,10 +199,10 @@ export interface PostalAddress {
  *
  * ── WHY THE HOST HAS TO SAY, AND AN ADD-ON MAY NOT ASSUME ───────────────────
  *
- * Every engine in this system is pure: no `Date.now()`, no bare `new Date()`
- * (24 D11), because a demo whose dates move is a demo nobody can screenshot or
- * assert. So each app pins a clock — and each app pins its OWN. The print works
- * is pinned to Wednesday 5 August at 10:20 and Birch Row to Thursday the 6th at
+ * Every engine in this system is pure: no `Date.now()`, no bare `new Date()`,
+ * because a demo whose dates move is a demo nobody can screenshot or assert.
+ * So each app pins a clock — and each app pins its OWN. The print works is
+ * pinned to Wednesday 5 August at 10:20 and Birch Row to Thursday the 6th at
  * 16:40, and neither is wrong.
  *
  * The delivery add-on used to hold `PINNED_NOW` as a constant with a comment
@@ -506,7 +506,7 @@ export type RoutePayload = SlotPayload;
  * connected has a note field; an add-on replaces the block and writes the words
  * back through the same setter, so the basket line reads the same either way
  * and a disconnect leaves the customer's request in plain language rather than
- * locked inside a picture nobody can open (24 D16).
+ * locked inside a picture nobody can open.
  */
 export interface PersonalizePayload extends SlotPayload {
   product: HostProduct;
@@ -539,7 +539,7 @@ export interface PersonalizePayload extends SlotPayload {
    * explanation.
    *
    * A FILL THAT SETS THIS MUST CLEAR IT WHEN IT UNMOUNTS. Switching the add-on
-   * off is a normal act (24 D6), and a gate left closed by a fill that no
+   * off is a normal act, and a gate left closed by a fill that no
    * longer exists is a shop that cannot sell anything.
    */
   setBlocked?: (reason: string | undefined) => void;
@@ -550,10 +550,11 @@ export interface PersonalizePayload extends SlotPayload {
    * ── SWITCHING AN ADD-ON ON MUST NOT TAKE WORDS OFF THE PAGE ──────────────
    *
    * `product.options.personalize` is a `single` slot: while a fill is mounted
-   * the host's own block is GONE. That block is not a placeholder — D19 is the
-   * rule that it is a finished thing — and on this host it is three parts: the
-   * note field with its counter, the maker's own instructions for what to type,
-   * and the promise that a picture comes back before anything is made.
+   * the host's own block is GONE. That block is not a placeholder — the screen a
+   * shop shows with no add-on is designed as a finished thing — and on this
+   * host it is three parts: the note field with its counter, the maker's own
+   * instructions for what to type, and the promise that a picture comes back
+   * before anything is made.
    *
    * An add-on that draws a live preview has honestly IMPROVED on the last two:
    * the shopper sees the piece instead of being told what will happen to it.
@@ -592,11 +593,11 @@ export interface OrderLinePayload extends SlotPayload {
 
 /**
  * `record.editor.panel` — the one slot whose host is Adminium's generated
- * dashboard rather than an example app (24 §5.10, D20).
+ * dashboard rather than an example app.
  *
  * Declared here with the rest because the registry is closed and an add-on may
  * name it in a manifest today; nothing mounts it until the add-on runtime
- * lands, which is Phase B.
+ * lands.
  */
 export interface RecordEditorPayload extends SlotPayload {
   /** The table the record belongs to, as `addOn.attaches[].table` names it. */
@@ -607,7 +608,7 @@ export interface RecordEditorPayload extends SlotPayload {
 
 /**
  * `record.actions` — one opening, on the screen where somebody is already
- * looking at ONE record, to do a thing to it (bought 2026-08-28, 31 O1).
+ * looking at ONE record, to do a thing to it (bought 2026-08-28).
  *
  * ── WHY IT IS NOT `record.editor.panel` WITH A DIFFERENT NAME ───────────────
  *
@@ -701,7 +702,7 @@ export interface RecordActionsPayload extends SlotPayload {
 
 /**
  * `shell.overlay` — the layer ABOVE a customer app's pages: a floating
- * affordance in the corner and the panel it opens (bought 2026-09-01, 33 O1).
+ * affordance in the corner and the panel it opens (bought 2026-09-01).
  *
  * ── WHAT MAKES THIS PAYLOAD DIFFERENT FROM EVERY OTHER ONE IN THIS FILE ─────
  *
@@ -712,18 +713,18 @@ export interface RecordActionsPayload extends SlotPayload {
  * ITSELF plus the ENVIRONMENT, and the environment is the interesting half.
  *
  * An add-on may not read a clock, mint a random number, reach the network or
- * touch storage (24 D7, D11; the purity suite enforces all four). Every other
+ * touch storage (the purity suite enforces all four). Every other
  * surface in this file gets away with that because a record is a static fact
  * and the host had already done the impure work. An overlay that talks to
  * anybody cannot: it needs an id nobody can guess, a place to put it, and
  * somewhere to send what the visitor typed. So the host passes those in as
  * HANDLES, and the fill's own bundle stays free of all four APIs.
  *
- * THE PAYLOAD IS THE ONLY DOOR (31 A.1's rule, kept). No overlay fill reaches
- * into a host store, and every optional handle below has a written answer for
- * what the fill does without it — a host that passes none still gets a working
- * panel, which is the test that keeps this from becoming one app's shell under
- * a general name.
+ * THE PAYLOAD IS THE ONLY DOOR (the rule `record.actions` set, kept). No
+ * overlay fill reaches into a host store, and every optional handle below has
+ * a written answer for what the fill does without it — a host that passes none
+ * still gets a working panel, which is the test that keeps this from becoming
+ * one app's shell under a general name.
  */
 export interface ShellOverlayPayload extends SlotPayload {
   /**
@@ -780,7 +781,7 @@ export interface ShellOverlayPayload extends SlotPayload {
    * number moves.
    *
    * It opens EVERY enabled fill, which is honest while there is one and is
-   * recorded as the thing to widen when there are two (33 D16). The slot is
+   * recorded as the thing to widen when there are two. The slot is
    * `multi` so the corner can hold two; the request is not yet addressed to
    * one, and inventing a `target` no host would pass is worse than saying so.
    */
@@ -819,8 +820,8 @@ export interface ShellOverlayPayload extends SlotPayload {
    *
    * An example app running on fixtures has no server. Rather than each fill
    * inventing its own idea of "am I connected", THIS FIELD'S ABSENCE is the
-   * single source every label reads (25 D9's pattern) — one `isDemo()`, and
-   * every simulated result on the panel is paired with it.
+   * single source every label reads — one `isDemo()`, and every simulated
+   * result on the panel is paired with it.
    *
    * ── AND IT IS `clientFor(key)`, NOT A CLIENT ────────────────────────────
    *

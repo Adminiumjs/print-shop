@@ -13,8 +13,9 @@
  *
  * With the add-on switched off this fill disappears and the host's own words
  * come back — "Collection from the works" — with nothing about a carrier left
- * on the page. That round trip is the whole demo device (24 D6), so this
- * component owns no state the host cannot throw away.
+ * on the page. That round trip — add-on off, the app exactly as it was — is
+ * the whole demo device, so this component owns no state the host cannot throw
+ * away.
  */
 
 import { useEffect, useState } from "react";
@@ -59,7 +60,7 @@ export function TrackingPanel({ order }: DispatchPayload) {
      * order simply has not gone out with a carrier, and there is nothing here
      * for the customer to do about it.
      *
-     * THE NOT-AFFILIATED LINE BELONGS HERE TOO (24 AC6). It used to sit only in
+     * THE NOT-AFFILIATED LINE BELONGS HERE TOO. It used to sit only in
      * the branch below, on the reasoning that a tracking timeline is where the
      * company is named. That reading was wrong about this branch: the monogram
      * reads "DHL", which is the company named as plainly as a word is, and a
@@ -98,7 +99,7 @@ export function TrackingPanel({ order }: DispatchPayload) {
             {t("addon.shipping-dhl.panel.carrier")}
           </div>
           {/* The company is named, in plain text, only to say who is carrying
-              the parcel. That is the whole of the permitted use (24 D12). */}
+              the parcel. That is the whole of the permitted use. */}
           <span style={{ fontSize: 13, fontWeight: 700 }}>DHL</span>
         </div>
         <div>

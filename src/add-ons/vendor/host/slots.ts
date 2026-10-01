@@ -4,7 +4,7 @@
  * The ONE shared contract; the three add-ons here import it by relative path.
  */
 /**
- * The slots a host app offers, and how each behaves (24 §5.4, D6).
+ * The slots a host app offers, and how each behaves.
  *
  * ONE MIRROR, NOT THREE. Every add-on in this repo used to carry its own copy
  * of this list, narrowed to the ids it happened to fill, and after a day the
@@ -29,20 +29,21 @@
  * [Amended 2026-08-10, wave 4b.] This file used to hold the Print Shop's five,
  * because the Print Shop was the only host. Birch Row mounts eight, six of
  * which the print works does not, and that is not a widening of the contract —
- * it is D21 arriving: **a slot id names a surface, never an app**, so a second
- * host was always going to mount ids the first one had no use for. The union
- * below is the closed registry, minus nothing: every id in it is mounted by at
- * least one of the two hosts except `record.editor.panel`, whose host is
- * Adminium's generated dashboard rather than an example app and whose mount is
- * Phase B (§5.10, D20) — and, since 2026-08-28, `record.actions`.
+ * it is the app-neutral rule arriving: **a slot id names a surface, never an
+ * app**, so a second host was always going to mount ids the first one had no
+ * use for. The union below is the closed registry, minus nothing: every id in
+ * it is mounted by at least one of the two hosts except `record.editor.panel`,
+ * whose host is Adminium's generated dashboard rather than an example app and
+ * whose mount waits for the add-on runtime — and, since 2026-08-28,
+ * `record.actions`.
  *
  * [Amended 2026-08-28, wave 6.] The registry is TWELVE. `record.actions` was
- * bought against the seven-exhibit dossier in 31 Appendix A.1 and arrives with
- * no fill anywhere in this repo, because the add-on that could have filled it
- * turned out not to need it. It is in the union for the same reason
- * `record.editor.panel` is: an add-on may name it in a manifest today, and a
- * union that omitted it would fail every such manifest at compile time while
- * the closed registry accepted it.
+ * bought against a seven-exhibit dossier and arrives with no fill anywhere in
+ * this repo, because the add-on that could have filled it turned out not to
+ * need it. It is in the union for the same reason `record.editor.panel` is: an
+ * add-on may name it in a manifest today, and a union that omitted it would
+ * fail every such manifest at compile time while the closed registry accepted
+ * it.
  *
  * WHICH MEANS THIS LIST NOW HAS TWO IDS NO EXAMPLE APP MOUNTS, and a reader
  * counting them is right to be uneasy. The guard that keeps it honest is not
@@ -56,15 +57,15 @@
  * arrives WITH its fill, `live-chat`, in the same wave. Its dossier is four
  * exhibits where `record.actions` had seven, one of them an absence, and the
  * closed registry's own entry sets out why that was accepted here and would
- * not have been there. 33 Appendix A is the artifact.
+ * not have been there.
  *
  * `nav.add-on.routes` is in the list and is now genuinely mounted — by Birch
  * Row, whose maker shell has a full-screen route for an add-on to occupy. The
- * amendment recorded against §5.4 stands as history: for one release the Print
- * Shop declared it, Design Studio filled it, and nothing anywhere drew it,
- * because the Print Shop switches views off one store field and has no router.
- * That is why each host's own `HOSTED_SLOTS` is asserted, in the host's own
- * suite, to be mounted somewhere in its `src/`.
+ * earlier record stands as history: for one release the Print Shop declared it,
+ * Design Studio filled it, and nothing anywhere drew it, because the Print Shop
+ * switches views off one store field and has no router. That is why each host's
+ * own `HOSTED_SLOTS` is asserted, in the host's own suite, to be mounted
+ * somewhere in its `src/`.
  */
 
 export const HOSTED_SLOTS = [
@@ -102,7 +103,7 @@ export type SlotId = (typeof HOSTED_SLOTS)[number];
  * somebody has something to be told: that other ways to send artwork exist but
  * none is connected, that no carrier is available, that the studio posts
  * everything itself — and, the one that matters most in wave 4b, that a piece
- * can still be personalized with a note field and a proof (D19). A `speaks`
+ * can still be personalized with a note field and a proof. A `speaks`
  * empty state is a FINISHED SCREEN, not a gap.
  *
  * `silent` — the host renders NOTHING. Not a dashed box, not a muted "no
@@ -131,7 +132,7 @@ export type SlotId = (typeof HOSTED_SLOTS)[number];
  *
  * Neither is a mistake, and there is no third value that would let one table
  * describe both. The same slot id lands on two differently built screens, and
- * D19 is a rule about WHAT A READER SEES — a rule about screens.
+ * the finished-screen rule is about WHAT A READER SEES — a rule about screens.
  *
  * The strongest evidence came from inside ONE host: Birch Row mounts
  * `cart.line.preview` three times, and its own file already records that the

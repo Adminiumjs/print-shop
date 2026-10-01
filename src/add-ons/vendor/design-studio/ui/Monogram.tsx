@@ -4,7 +4,7 @@
  * The add-on key is `design-studio`; its manifest, tests and README live in the monorepo.
  */
 /**
- * The add-on's mark: two letters in a neutral tile (24 D12).
+ * The add-on's mark: two letters in a neutral tile.
  *
  * NEVER a company logo, drawn, traced, approximated or embedded — and for this
  * add-on there is not even a company to name. The tile stays neutral anyway,

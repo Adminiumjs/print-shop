@@ -13,8 +13,9 @@
  * rule that everything else a host passes into a slot "is read by the add-on
  * and never handed back, so each add-on narrows it to the fields it reads".
  *
- * That rule is the CAUSE of the 24 D21 failure, not a description of the seam,
- * and it had been superseded for a day by the time anyone read this file again.
+ * That rule is the CAUSE of the failure to run one add-on unchanged in a
+ * second host, not a description of the seam, and it had been superseded for a
+ * day by the time anyone read this file again.
  * `payloads.ts` documents the whole account: each add-on duly wrote down "the
  * fields I read", which in practice was "the fields the one host I was built
  * against happened to send", and the second host's first screen threw three

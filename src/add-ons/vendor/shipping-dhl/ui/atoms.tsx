@@ -137,7 +137,7 @@ export function Code({ children, style }: { children: ReactNode; style?: CSSProp
 }
 
 /**
- * The monogram tile (24 D12).
+ * The monogram tile — never a company's logo, drawn or traced.
  *
  * Two or three letters on `--surface-3` with a 1px border, in `--fg-muted`. It
  * is not a logo, it is not a logo redrawn, and it carries no brand colour —
@@ -175,7 +175,7 @@ export type Tone = "neutral" | "pos" | "warn" | "danger" | "info";
  *
  * It used to be `whiteSpace: "nowrap"`, which is right for `cheapest` and for a
  * tracking status and wrong for the longest thing this component is ever asked
- * to hold: the D11 label, "These services, prices and dates come from a demo
+ * to hold: the demo label, "These services, prices and dates come from a demo
  * carrier. Nothing is sent to a real one." In the print works' wide dispatch
  * column that sentence fitted. In Birch Row's narrower one it was 483px of
  * unbreakable text in a 415px row — it overflowed the panel, ran off the
@@ -323,7 +323,7 @@ export const monoInputStyle: CSSProperties = {
   direction: "ltr",
 };
 
-/** The muted line D12 requires on every add-on surface that names a company. */
+/** The muted not-affiliated line every add-on surface that names a company carries. */
 export function NotAffiliated({ children }: { children: ReactNode }) {
   return (
     <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: "var(--fg-subtle)" }}>{children}</p>

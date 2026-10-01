@@ -311,7 +311,7 @@ function Permissions({ addOn, t, muted = false }: { addOn: AddOn; t: TFunction; 
 }
 
 /**
- * One dialog, three shapes (24 §5.6).
+ * One dialog, three shapes.
  *
  * The three `connect` kinds differ only in the credential step, and the parts
  * that do NOT differ are the point: the plain sentence, the explicit permission
@@ -331,8 +331,8 @@ function ConnectDialog({ addOnKey }: { addOnKey: string }) {
 
   /*
    * The two credential fields live HERE and nowhere else — not in the store,
-   * not in localStorage, not in a settings record the browser can read back
-   * (24 D15). They exist while the dialog is open and are dropped with it.
+   * not in localStorage, not in a settings record the browser can read back.
+   * They exist while the dialog is open and are dropped with it.
    */
   const [apiKey, setApiKey] = useState("");
   const [account, setAccount] = useState("");
@@ -340,7 +340,7 @@ function ConnectDialog({ addOnKey }: { addOnKey: string }) {
   if (addOn === null) return null;
 
   /*
-   * "Use the demo instead" is DECLARED by the add-on (24 D11), not recognised
+   * "Use the demo instead" is DECLARED by the add-on, not recognised
    * by the host. An add-on that reaches a third party names which of its own
    * settings means "do not reach it" and supplies the words for the switch;
    * this dialog flips that setting and skips the credential fields while it is
@@ -389,7 +389,7 @@ function ConnectDialog({ addOnKey }: { addOnKey: string }) {
           {addOn.connect === "api-key" && (
             <div className="mp-stack" style={{ gap: 13 }}>
               <div className="mp-eyebrow">{t("shop.connect.credentials")}</div>
-              {/* ON by default (D11). A live demo that reached the real service
+              {/* ON by default. A live demo that reached the real service
                   on every visitor click would be a defect, not a feature. */}
               {demoSwitch !== undefined && (
                 <Switch
@@ -439,7 +439,7 @@ function ConnectDialog({ addOnKey }: { addOnKey: string }) {
                     </Mono>
                   </div>
                   {/*
-                    AC7. An account name beside a green tick is the most
+                    An account name beside a green tick is the most
                     convincing thing on this dialog, and no account was ever
                     contacted. The consent screen says so — but a shop owner who
                     reopens Connect later never sees the consent screen again.
@@ -561,7 +561,7 @@ function ConsentPanel({ addOnKey }: { addOnKey: string }) {
  *
  * The right conclusion from that argument is not that the host should write the
  * sentences. It is that the ADD-ON should, which is what `settings.add-on.panel`
- * is for and why §5.4 declared it. The add-on owns the control and the sentence
+ * is for and why it was declared. The add-on owns the control and the sentence
  * together; the drawer owns the heading above them and the disconnect below.
  * An add-on that has nothing to set fills the slot anyway and says so in its
  * own words — and one that does not fill it at all gets the fallback.
@@ -648,10 +648,10 @@ function ManageDrawer({ addOnKey }: { addOnKey: string }) {
               {t("shop.manage.activity")}
             </div>
             {/* The add-on's own record, in its own words. A real install reads
-                the same list out of `adminium_audit_log` (24 §5.7). */}
+                the same list out of `adminium_audit_log`. */}
             <div className="mp-stack" style={{ gap: 6 }}>
               {/*
-                AC7. Timestamps, job references and "collection booked" are
+                Timestamps, job references and "collection booked" are
                 exactly what a real integration's audit trail looks like, and a
                 reviewer could screenshot this list and read it as one. It is
                 seeded, so it says so — above the lines, because a caption
@@ -706,7 +706,7 @@ function ManageDrawer({ addOnKey }: { addOnKey: string }) {
 }
 
 /**
- * The confirm that names what disappears and what stays (24 D16).
+ * The confirm that names what disappears and what stays.
  *
  * Two labelled blocks, never one paragraph: "are you sure?" teaches a shop
  * owner nothing, and the fear it leaves behind is that switching an add-on off
@@ -756,7 +756,7 @@ function DisconnectConfirm({ addOnKey }: { addOnKey: string }) {
           </div>
 
           {/*
-           * 24 AC6 — THE FOURTH SURFACE, AND THE ONE IT WAS MISSING FROM.
+           * THE LINE — THE FOURTH SURFACE, AND THE ONE IT WAS MISSING FROM.
            *
            * Connect, consent and manage all carried the line; this confirm puts
            * the company's name in its own heading twice (the visible title and

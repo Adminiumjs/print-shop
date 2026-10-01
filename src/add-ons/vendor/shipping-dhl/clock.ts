@@ -7,9 +7,10 @@
  * The clock, as an argument.
  *
  * Nothing in this repo reads a real one — no `Date.now()`, no `new Date()`
- * without an explicit value (24 D11). Every date the carrier produces is a
- * function of the pinned clock, which is what lets a delivery estimate be
- * asserted in a test and reproduced on the droplet a month later.
+ * without an explicit value, because the demo transport must be deterministic.
+ * Every date the carrier produces is a function of the pinned clock, which is
+ * what lets a delivery estimate be asserted in a test and reproduced on the
+ * droplet a month later.
  *
  * Dates are handled as ISO `YYYY-MM-DD` strings through UTC midnight. A local
  * `new Date('2026-08-05')` in a browser west of Greenwich is the 4th, and a

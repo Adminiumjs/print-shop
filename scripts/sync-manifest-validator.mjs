@@ -155,7 +155,7 @@ function vendor(srcRel, base) {
     ` * WHY A COPY. \`@adminium/manifest\` is not published to npm and this app is a\n` +
     ` * standalone repo that must build from a clean clone, so it cannot depend on\n` +
     ` * the monorepo. It lives under \`testing/\` because \`zod\` is a devDependency\n` +
-    ` * here and a runtime dependency the host does not carry (24 D7) — nothing in\n` +
+    ` * here and a runtime dependency the host does not carry — nothing in\n` +
     ` * the shipped bundle's import graph may reach it, which sources.test.ts gates.\n` +
     ` *\n` +
     ` * The only edits are import specifiers: \`.js\` becomes \`.ts\`, and the\n` +

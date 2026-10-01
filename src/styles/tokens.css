@@ -1,7 +1,7 @@
 /*
  * Design tokens — a faithful, hand-inlined mirror of @adminium/tokens
  * (packages/tokens/src/{tokens,accents}.css in the product monorepo). Values are
- * canonical; see 02-design-system.md §1.
+ * canonical.
  *
  * This file is copied rather than imported because this app is a standalone repo
  * published to the Adminiumjs org and @adminium/tokens is not yet on npm. When it
@@ -19,7 +19,7 @@
 :root {
   color-scheme: light;
 
-  /* Neutral surfaces + text (02-design-system.md §1.1) */
+  /* Neutral surfaces + text */
   --bg: #f6f6f8;
   --surface: #ffffff;
   --surface-2: #fafafa;
@@ -116,8 +116,8 @@
  *
  * Ink magenta because a press runs on CMYK and the M is the one a printer
  * points at. Its nearest neighbours in the shipped marketplace grid are
- * `events` #a21caf and `ordering` #e11d48, which is why 24-T14 checks the
- * three read apart; the recorded fallback is #9f1239 (deep wine).
+ * `events` #a21caf and `ordering` #e11d48, which is why the three were
+ * checked to read apart; the recorded fallback is #9f1239 (deep wine).
  *
  * THE DARK PAIR IS NOT THE LIGHT ONE DIMMED. #db2777 against a near-black
  * surface fails AA, so dark lightens it to #f9a8d4 and flips --accent-fg to

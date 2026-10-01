@@ -502,8 +502,8 @@ export function Ticket() {
               </div>
             ) : (
               /*
-               * SLOT 4 of 4, and the ONLY one that renders NOTHING when empty
-               * (24 D6). A works with no carrier connected hands the job over
+               * SLOT 4 of 4, and the ONLY one that renders NOTHING when empty.
+               * A works with no carrier connected hands the job over
                * the counter; a dashed "no carriers" panel on the shop floor
                * would be noise nobody can act on. The spacer leaves room for a
                * second action to appear without the row jumping.

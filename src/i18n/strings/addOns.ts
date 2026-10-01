@@ -11,7 +11,7 @@
  * Those four (`addon.stub.*`) NAME NO COMPANY, in any locale. They say what the
  * thing would do — a second delivery company, a card payment processor, a
  * mailing-list service — because a host that printed three real firms' names
- * for integrations it does not have would be failing acceptance criterion 5 in
+ * for integrations it does not have would be failing the no-company rule in
  * eight languages at once. `add-ons/shelf.ts` holds the entries themselves and
  * the full reasoning; a translator who reaches for a brand name here is
  * reintroducing the defect.
@@ -24,7 +24,7 @@
  * through `whatKey`, `disconnect`, `activity[].messageKey` and its
  * `settings.add-on.panel` fill. A confirm dialog that says "are you sure?" and
  * nothing else is still how a shop owner learns what disconnecting does by
- * doing it — the sentences did not go away, they changed owner (24 D16).
+ * doing it — the sentences did not go away, they changed owner.
  *
  * Translators: the six banned words of `chrome.ts` apply here in full, and two
  * more for add-ons — never "premium" and never "pro", because neither the word
@@ -49,10 +49,10 @@ export const addOns = {
       "Add customers who opt in to a mailing list, so the works can tell them when a run is on.",
     "addon.stub.sheets.line":
       "Write each finished job to a spreadsheet overnight, for the accounts.",
-    // 24 AC6, on the SHELF CARD: each of the four says, in its own key,
-    // that it names no company. See `add-ons/shelf.ts` — these entries are
-    // the host’s own catalogue copy, so the sentence is the host’s too;
-    // the three BUILT add-ons carry theirs in their own repos.
+    // The affiliation line, on the SHELF CARD: each of the four says, in its
+    // own key, that it names no company. See `add-ons/shelf.ts` — these
+    // entries are the host’s own catalogue copy, so the sentence is the host’s
+    // too; the three BUILT add-ons carry theirs in their own repos.
     "addon.stub.secondCarrier.noCompany":
       "Described here, not built — and it names no company, only what one would do.",
     "addon.stub.cardPayments.noCompany":
@@ -75,7 +75,7 @@ export const addOns = {
     "addon.host.manage.seeAll": "See all",
     "addon.host.manage.noSettings": "This one has nothing to set.",
 
-    // ── Disconnect confirm: what goes, and what stays (24 D16) ─────────────
+    // ── Disconnect confirm: what goes, and what stays ──────────────────────
 
     // ── Manage drawer activity, in mono ───────────────────────────────────
 

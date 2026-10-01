@@ -69,7 +69,7 @@ describe('every locale carries every key', () => {
   }
 });
 
-describe('the vocabulary ban (24 D10)', () => {
+describe('the vocabulary ban', () => {
   /*
    * English gets the full list as WORDS. Six of them are the print trade's own
    * — a quantity break wants to be called a tier and a proof wants to be free —
@@ -88,9 +88,9 @@ describe('the vocabulary ban (24 D10)', () => {
 
   /*
    * THE SAME SEMANTICS AS THE RELEASE GATE, which the word-anchored regex above
-   * does not have. 17 §2's grep is case-insensitive and UNANCHORED, so
+   * does not have. The release grep is case-insensitive and UNANCHORED, so
    * "explanation" is a hit on "plan" and "frontier" is a hit on "tier" — the
-   * two traps D10 names by name, and neither is visible to `\b(plans?|tiers?)\b`.
+   * two named traps, and neither is visible to `\b(plans?|tiers?)\b`.
    * A word-anchored guard is a guard that passes while the gate fails, which is
    * the worst kind.
    *
@@ -123,7 +123,7 @@ describe('the vocabulary ban (24 D10)', () => {
 
   it('would actually catch the two named traps', () => {
     // The guard above is an absence, and an absence proves nothing unless the
-    // check is shown to bite. These are the exact two words D10 names.
+    // check is shown to bite. These are the exact two named traps.
     expect(substringHits('a short explanation of the sizes')).toContain('plan');
     expect(substringHits('the frontier of large format')).toContain('tier');
     // The two a shortened list had dropped, which is the defect this closes.
@@ -143,7 +143,7 @@ describe('the vocabulary ban (24 D10)', () => {
     }
   });
 
-  it('spells the tiering idea in no language (24 D12)', () => {
+  it('spells the tiering idea in no language', () => {
     /*
      * The ban is on the IDEA, and the idea is spelt differently per language:
      * German advertises "Profi", Czech "prémiový"/"profesionální", Chinese

@@ -6,7 +6,7 @@
 /**
  * Which transport the client half is talking to.
  *
- * In DEMO MODE — what ships, and the default (24 D11) — that is the seeded
+ * In DEMO MODE — what ships, and the default — that is the seeded
  * carrier in this repo, running in the page. In CONNECTED MODE the host swaps
  * in a proxy that forwards each contract call to the add-on's SERVER half,
  * where the credentials live and where the only `fetch` in the system happens.

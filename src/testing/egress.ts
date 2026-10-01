@@ -295,7 +295,7 @@ export const XML_NAMESPACE_ORIGINS: readonly string[] = [
  * measured on the same build, `sendersIn` and `foreignImportsIn` both return
  * `[]` for a connected data source, because it names no request-issuing API —
  * it imports a client that does, and a STATIC import is not something NET TWO
- * looks at (`foreignImportsIn` reads dynamic `import()` only). So the plan's
+ * looks at (`foreignImportsIn` reads dynamic `import()` only). So the proposed
  * "relax NET TWO for a declared file" would have relaxed a net that never
  * fired, and left the one that does still red.
  *
@@ -723,7 +723,7 @@ export function packageOf(specifier: string): string {
  * away and which is how every mutant since round 5 has been written.
  *
  * This was found by measuring what a CONNECTED build actually trips, not by a
- * verifier: the plan said to relax net two for the data source, and net two
+ * verifier: the proposal was to relax net two for the data source, and net two
  * turned out never to have fired on it.
  *
  * ── WHY AN ALLOWLIST IS THE RIGHT SHAPE HERE, HAVING ARGUED AGAINST ONE ────

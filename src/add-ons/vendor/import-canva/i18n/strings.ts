@@ -126,9 +126,10 @@ export const importCanvaStrings = {
       "In Canva, set the design size to {needW} × {needH}mm — that is {trimW} × {trimH}mm plus {bleed}mm on every edge — and let the background run right to the edge. Then import it again.",
     "addon.import-canva.fix.redo.cta": "I have set the size — import again",
 
-    // AC7 — one label per step, worded for the step it stands on. The import
-    //       step keeps `demo.note`; the three before it get their own, because
-    //       "these designs" is a lie on a screen that shows no designs yet.
+    // Every simulated result is labelled: one label per step, worded for the
+    // step it stands on. The import step keeps `demo.note`; the three before
+    // it get their own, because "these designs" is a lie on a screen that
+    // shows no designs yet.
     "addon.import-canva.demo.connect":
       "Simulated: this demo contacts no account. Authorizing here connects to fixed data on this page.",
     "addon.import-canva.demo.consent":
@@ -139,8 +140,9 @@ export const importCanvaStrings = {
       "Simulated: these designs come from fixed data in this demo. No account was contacted and nothing left this page.",
     // The manage drawer's settings fill shows an account name and the day it
     // was authorized — the sort of answer a real connection gives back, and in
-    // the demo a fixture. AC7 does not stop at the happy path: a reader who
-    // screenshotted that panel would take it for a live connection.
+    // the demo a fixture. The labelling rule does not stop at the happy path:
+    // a reader who screenshotted that panel would take it for a live
+    // connection.
     "addon.import-canva.demo.account":
       "Simulated: no account was ever connected. The name and date here are fixed data in this demo.",
     "addon.import-canva.notAffiliated": "Adminium is not affiliated with this company.",
@@ -901,9 +903,9 @@ export type ImportCanvaKey = keyof (typeof importCanvaStrings)["en-US"];
  * Design Studio's specimen telephone number in ITS exemption list, and Maker
  * Shop did not — so wiring Design Studio into the second host, registration
  * only, zero bytes changed in any add-on, turned that host's suite red. The
- * fix was to edit a list in the host, which is exactly what AC20/D21 says must
- * never be necessary: an add-on is portable when moving it needs no edit in the
- * app that receives it.
+ * fix was to edit a list in the host, which is exactly what must never be
+ * necessary: an add-on is portable when moving it needs no edit in the app
+ * that receives it.
  *
  * The same shape had already been fixed twice this wave (HOSTED_SLOTS, the
  * Czech "pro" carve-out). This is the third and it is fixed the same way: the

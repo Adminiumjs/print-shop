@@ -12,10 +12,9 @@
  * add-on does happens inside a slot the host chose to offer.
  *
  * What it exports beyond that is the provider half — `createCanvaSource` — so a
- * host with a provider registry (Phase B, 24 §5.10) can build the
- * `artwork-source@1` implementation without going through a React tree, and the
- * strings, so the host can merge them into its own bundle where the parity
- * check lives.
+ * host with a provider registry can build the `artwork-source@1`
+ * implementation without going through a React tree, and the strings, so the
+ * host can merge them into its own bundle where the parity check lives.
  */
 
 import { createElement } from "react";
@@ -37,7 +36,7 @@ import { ADD_ON_KEY } from "./source.ts";
  * It is the ONLY source of time in this add-on. There is no `Date.now()`
  * anywhere here, so two visitors a month apart see the same four designs edited
  * on the same days, and a screenshot taken today still matches the app in a
- * year (24 D6/D11).
+ * year.
  */
 export const PINNED_CLOCK: Clock = { iso: "2026-08-05", hour: 10, minute: 20 };
 
@@ -62,7 +61,7 @@ export function register(): AddOn {
     key: ADD_ON_KEY,
     // A proper noun. "Canva" is used nominatively — to say what is being
     // connected to — and nothing here states or implies a partnership, an
-    // endorsement or an official status of any kind (24 D12).
+    // endorsement or an official status of any kind.
     name: "Canva Import",
     shortName: "Canva Import",
     lineKey: "addon.import-canva.line",
@@ -108,9 +107,10 @@ export function register(): AddOn {
     namesCompany: true,
     fills: [
       artworkSource,
-      // §5.4's `settings.add-on.panel`, filled rather than declared and left.
+      // The host's `settings.add-on.panel` slot, filled rather than declared
+      // and left.
       // The transport goes in so the panel can say its account row is a
-      // fixture — see `SettingsPanel.tsx` for why that is not optional (AC7).
+      // fixture — see `SettingsPanel.tsx` for why that is not optional.
       {
         slot: "settings.add-on.panel",
         order: 10,
@@ -139,7 +139,7 @@ export {
  * This file is the CLIENT entry point — `manifest.json` points both slot fills
  * at the bundle built from it, and that bundle is served into a page. The
  * vendor's authorize URL, token URL and API hostname are not the client's
- * business: §5.6 gives the OAuth flow to the HOST, so nothing reachable from a
+ * business: the OAuth flow belongs to the HOST, so nothing reachable from a
  * browser here ever calls them. Re-exporting them put the vendor hostname in
  * `dist/client.js` twice, which is bytes shipped to every visitor for a value
  * only the installer and the manifest need.

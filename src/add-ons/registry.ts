@@ -1,5 +1,5 @@
 /**
- * The static list the demo registers at startup (24 §5.9).
+ * The static list the demo registers at startup.
  *
  * In DEMO MODE the three add-on bundles are compiled into the app and named
  * here; in CONNECTED MODE (Phase B) this list comes from `GET /api/v1/add-ons`
@@ -10,7 +10,7 @@
  * Each `register()` is a pure function returning a plain object. Importing an
  * add-on has no side effect beyond its stylesheet and its strings, so the host
  * can register one, drop it from `enabled`, and be back at its base state with
- * nothing left behind — which is the whole claim D6 makes.
+ * nothing left behind — which is the whole claim the empty slots make.
  *
  * THE THREE IMPORTS BELOW ARE THE ONLY PLACE PRODUCTION SOURCE NAMES AN ADD-ON.
  * Not `src/` — the claim used to say that and it was false, and a false claim
@@ -18,7 +18,7 @@
  * instead of the code. `manifest.test.ts`, `state/delivery.test.ts` and
  * `builtOutput.test.ts` all name add-ons on purpose: a suite that asserted the
  * seam without ever naming what is on the far side of it would be asserting
- * nothing. What is true, and what acceptance criterion 5 actually needs, is
+ * nothing. What is true, and what the claim actually needs, is
  * that no SHIPPED module outside `./vendor/` and these three lines mentions
  * one. Their settings, their defaults, the words on their settings forms,
  * their eight-locale strings, their seeded activity and what their parcels
@@ -81,7 +81,7 @@ export function demoAddOns(): AddOn[] {
  * What every add-on starts from, keyed by add-on key and OPAQUE to the host.
  *
  * `api_key` and `account_number` are absent by construction rather than by
- * omission (24 D15): they are the credentialled add-on's two `secret: true`
+ * omission: they are the credentialled add-on's two `secret: true`
  * settings, they live in its server half, and a store the browser can read is
  * precisely where they must never appear. The connect dialog collects them into
  * component state and drops them; nothing here ever holds one.

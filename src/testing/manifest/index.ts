@@ -9,7 +9,7 @@
  * would from the package.
  *
  * NOTHING UNDER `src/testing/` MAY BE IMPORTED BY SHIPPED CODE. `zod` is a
- * devDependency here and a runtime dependency the host does not carry (24 D7),
+ * devDependency here and a runtime dependency the host does not carry,
  * so an import from a screen would put a validator in a customer's browser.
  * `src/sources.test.ts` asserts that no shipped module reaches this directory.
  */

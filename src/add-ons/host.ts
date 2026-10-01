@@ -1,5 +1,5 @@
 /**
- * AddOnHost — the seam add-ons plug into (24 §5.9).
+ * AddOnHost — the seam add-ons plug into.
  *
  * It mirrors the `DataSource` seam exactly. In DEMO MODE (what ships here) the
  * add-on bundles are built into the app and registered from a static list, and
@@ -12,7 +12,7 @@
  * registry, driven by a different switch. That is what lets a reviewer watch a
  * feature arrive and leave, and it costs nothing.
  *
- * THE HOST NAMES NO ADD-ON AND NO ADD-ON'S FIELDS (acceptance criterion 5).
+ * THE HOST NAMES NO ADD-ON AND NO ADD-ON'S FIELDS.
  * Everything an add-on is particular about — its settings and their defaults,
  * the words on its settings form, the sentence the connect dialog opens with,
  * what a disconnect takes and keeps, its own strings in eight locales, what a
@@ -27,10 +27,10 @@ import type { ReactNode } from 'react';
 import type { PayloadFor, ShopClock } from './payloads.ts';
 import { SLOT_FILL, type SlotId } from './slots.ts';
 
-/** Add-on categories — the closed vocabulary of 24 D2. */
+/** Add-on categories — a closed vocabulary of their own. */
 export type AddOnCategory = 'artwork' | 'delivery' | 'payments' | 'email' | 'data';
 
-/** What the shop must supply to connect (24 §5.6). */
+/** What the shop must supply to connect. */
 export type ConnectKind = 'none' | 'api-key' | 'oauth2';
 
 /** One ticked row in the connect dialog's permission list. */
@@ -134,7 +134,7 @@ export interface SeededActivityEntry {
  *
  * The words are still the add-on's: they are what THIS add-on did, phrased in
  * its own words (`messageKey` resolves in its own bundle). A real install reads
- * the same list out of `adminium_audit_log` (24 §5.7, category `add-on`) and
+ * the same list out of `adminium_audit_log` (category `add-on`) and
  * this demo has no server to read; what a host must never do is keep a
  * hand-written history of one particular add-on, because that is a host that
  * knows which add-ons exist.
@@ -151,7 +151,7 @@ export interface ActivityEntry {
 
 /**
  * The declaration that lets the connect dialog offer "use the demo instead"
- * without knowing what a carrier is (24 D11).
+ * without knowing what a carrier is.
  *
  * An add-on that reaches a third party says which of ITS settings means "do
  * not reach it", and supplies the words for the switch. The host shows the
@@ -171,8 +171,8 @@ export interface DemoSwitch {
  *
  * This used to read `AddOnFill<P = unknown>` with `AddOn.fills` typed
  * `readonly AddOnFill<never>[]`, and that pair of declarations is the whole
- * architectural defect 24 D21 tripped over. `never` ERASED the payload: a fill
- * could declare `render: (p: anything) => …` and still be assignable, so
+ * architectural defect a second host tripped over. `never` ERASED the payload:
+ * a fill could declare `render: (p: anything) => …` and still be assignable, so
  * nothing anywhere compared what a SCREEN passes with what a FILL reads. The
  * seam type-checked perfectly and threw three times on the first screen of the
  * second host.
@@ -235,7 +235,7 @@ export interface AddOn {
   whatKey: string;
   /**
    * Two or three letters, rendered in a neutral --surface-3 tile. NEVER a real
-   * company logo, drawn, traced or approximated (24 D12) — a shelf of twenty
+   * company logo, drawn, traced or approximated — a shelf of twenty
    * add-ons has to read as one system rather than twenty logos, and a redrawn
    * mark would be a legal problem rather than a taste problem.
    */
@@ -262,7 +262,7 @@ export interface AddOn {
    * at registration (see `i18n/messages/index.ts`).
    */
   messages?: Readonly<Record<string, Readonly<Record<string, string>>>>;
-  /** i18n keys naming exactly what a disconnect removes and what it keeps (24 D16). */
+  /** i18n keys naming exactly what a disconnect removes and what it keeps. */
   disconnect?: { goesKey: string; staysKey: string };
   /**
    * Seeded "what it last did", newest first — DECLARED relative and referring.
@@ -289,7 +289,7 @@ export interface AddOn {
    * add-on that reports `namesCompany: false`.
    *
    * i18n keys in the add-on's own bundle, rendered in order and joined with a
-   * space. 24 AC6 asks every add-on's detail surface to be clear about who else
+   * space. Every add-on's detail surface has to be clear about who else
    * is involved; an add-on that names no company has no relationship to
    * disclaim, and rendering nothing there is indistinguishable from having
    * forgotten the notice. So it states the positive fact — that it connects to
@@ -297,7 +297,7 @@ export interface AddOn {
    * all eight locales, and `Affiliation` in `components/Overlays.tsx` renders
    * whichever of the two sentences applies.
    *
-   * IT IS THE ADD-ON'S COPY, not the host's (AC5). The host does not know which
+   * IT IS THE ADD-ON'S COPY, not the host's. The host does not know which
    * add-ons connect to nothing and must not carry a sentence claiming it does.
    */
   noCompanyKeys?: readonly string[];

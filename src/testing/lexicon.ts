@@ -2,12 +2,12 @@
  * The release sweep's word list, in one executable place.
  *
  * THE GUARD HAS TO BE THE RELEASE GREP, NOT A POLITER VERSION OF IT. The sweep
- * (17 §2) reads BUILT OUTPUT case-insensitively for
- * `pricing|plan|tier|billing|upgrade|/mo|free` as SUBSTRINGS, and 24 D12 adds
- * `premium` and `pro` for add-ons. A `\b`-anchored version of that list is
- * strictly weaker than the thing it claims to enforce: "explanation",
- * "frontier", "freephone" and "flatplan" all pass a word boundary and all fail
- * the release. Substrings here, no anchors.
+ * reads BUILT OUTPUT case-insensitively for
+ * `pricing|plan|tier|billing|upgrade|/mo|free` as SUBSTRINGS, and the add-on
+ * brand rule adds `premium` and `pro` for add-ons. A `\b`-anchored version of
+ * that list is strictly weaker than the thing it claims to enforce:
+ * "explanation", "frontier", "freephone" and "flatplan" all pass a word
+ * boundary and all fail the release. Substrings here, no anchors.
  *
  * THE LIST IS NEVER SHORTENED TO MAKE A BUILD PASS. An earlier version of this
  * file kept a second, reduced array for the bundle with `free` and `plan`
@@ -45,14 +45,15 @@ export const SUBSTRING_BANNED = [
 ] as const;
 
 /**
- * The one 24 D12 adds that is a WORD rather than a substring.
+ * The one the add-on brand rule adds that is a WORD rather than a substring.
  *
- * "pro" is not in 17 §2's run of substrings and must not be turned into one: a
- * print works says "proof", "process", "product" and "properties" on nearly
- * every screen, and a substring rule over those would trade a real defect for
- * an imaginary one. What D12 forbids is the marketing word — a "Pro" add-on, a
- * "Pro" account — so it is checked as a standalone token, and the six places a
- * translator legitimately wrote it are allowed by exact phrase in `PRO_PHRASES`.
+ * "pro" is not in the sweep's run of substrings and must not be turned into
+ * one: a print works says "proof", "process", "product" and "properties" on
+ * nearly every screen, and a substring rule over those would trade a real
+ * defect for an imaginary one. What the rule forbids is the marketing word — a
+ * "Pro" add-on, a "Pro" account — so it is checked as a standalone token, and
+ * the six places a translator legitimately wrote it are allowed by exact
+ * phrase in `PRO_PHRASES`.
  */
 export const WORD_BANNED = ['pro'] as const;
 
@@ -138,8 +139,8 @@ export const PRO_PHRASES: readonly {
  *
  * ── WHAT THE RULE IS ────────────────────────────────────────────────────────
  *
- * 17 §2 bans a set of IDEAS and happens to spell them in English:
- * `pricing`, `plan`, `tier`, `billing`, `upgrade`, `free`, plus D12's
+ * The release sweep bans a set of IDEAS and happens to spell them in English:
+ * `pricing`, `plan`, `tier`, `billing`, `upgrade`, `free`, plus the brand rule's
  * `premium`/`pro`. Copy in the other seven languages says the same things in
  * its own words and the release grep cannot see any of it.
  *
@@ -222,7 +223,7 @@ export const PRO_PHRASES: readonly {
  */
 
 /**
- * The ideas 17 §2 and 24 D12 forbid, named once.
+ * The ideas the release sweep and the brand rule forbid, named once.
  *
  * `paid` ON ITS OWN IS DELIBERATELY NOT ONE OF THEM, and the attempt is worth
  * recording. It was in this list for one run and came straight back out: a shop
@@ -391,11 +392,11 @@ export const IDEA_IN_LANGUAGE: Record<
  */
 export const TIERING_WORDS: Record<string, RegExp[]> = {
   /*
-   * English's own cell, which is NOT empty and used to be nearly so. 17 §2's
-   * substring run covers `pricing plan tier billing upgrade free /mo` and D12
-   * adds `premium`; none of them appears in "switch to the paid version for
-   * more", which is the round-6 plant written in English. The hole was in every
-   * language including this one.
+   * English's own cell, which is NOT empty and used to be nearly so. The
+   * sweep's substring run covers `pricing plan tier billing upgrade free /mo`
+   * and the brand rule adds `premium`; none of them appears in "switch to the
+   * paid version for more", which is the round-6 plant written in English. The
+   * hole was in every language including this one.
    */
   "en-US": [/premium/i, /paid version/i, /full version/i, /paid account/i],
   ...Object.fromEntries(

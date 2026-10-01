@@ -1,7 +1,7 @@
 /**
  * The add-on seam's own suite.
  *
- * What it is really testing is D6: that registering an add-on and enabling one
+ * What it is really testing: that registering an add-on and enabling one
  * are different things, that a slot with nothing in it behaves the way the
  * screen was told it would, and — the assertion the whole wave rests on — that
  * turning an add-on off leaves the host exactly where it started. A demo where
@@ -48,7 +48,7 @@ describe('the demo registry', () => {
    * failed.
    *
    * It is the same shape as the `HOSTED_SLOTS` assertion removed further down
-   * this file: a host forbidding, in its own tests, the thing 24 D21 says a
+   * this file: a host forbidding, in its own tests, the thing portability says a
    * host must allow. A count is not an invariant. What holds however many
    * add-ons this build carries is the set of RELATIONS between the registry and
    * the vendored list, and those are what is asserted now.
@@ -58,8 +58,8 @@ describe('the demo registry', () => {
     expect(KEYS.size, 'two add-ons share a key').toBe(ALL.length);
     expect(ALL.filter(isConnectable).map((a) => a.key).sort()).toEqual([...DEMO_KEYS].sort());
     /*
-     * The shelf says more than the build ships, which is the catalogue copy of
-     * 24 D12 — described honestly, with a "Not in this demo" chip where the
+     * The shelf says more than the build ships, and says so honestly, with a
+     * "Not in this demo" chip where the
      * Connect button would be. A shelf holding exactly what it ships reads as
      * though those are all there could ever be.
      */
@@ -67,8 +67,9 @@ describe('the demo registry', () => {
   });
 
   it('gives every add-on a monogram of two or three letters and no brand colour', () => {
-    // 24 D12. A monogram is the entire visual identity an add-on gets, and the
-    // registry is where a fourth-letter logo-ish mark would first appear.
+    // No real logos. A monogram is the entire visual identity an add-on
+    // gets, and the registry is where a fourth-letter logo-ish mark would
+    // first appear.
     for (const addOn of ALL) {
       expect(addOn.monogram).toMatch(/^[A-Z]{2,3}$/);
       expect(JSON.stringify(addOn)).not.toMatch(/#[0-9a-f]{3,6}/i);
@@ -86,7 +87,7 @@ describe('the demo registry', () => {
    * which asserted `HOSTED_SLOTS` contained EVERY fill of EVERY registered
    * add-on.
    *
-   * It forbids the thing 24 D21 claims. The personalizer declares six fills and
+   * It forbids what portability claims. The personalizer declares six fills and
    * this works mounts five slots, five of which it does not host — so
    * registering a portable add-on here would have turned the LIVE app's suite
    * red while the app itself ran faultlessly, and the only way to keep it green
@@ -109,9 +110,9 @@ describe('the demo registry', () => {
    * fact about the fixture and would evaporate the day one did. Same failure
    * mode as the assertion it replaced: an accident wearing a claim's clothes.
    *
-   * What is actually true, and what D21 actually needs, is below.
+   * What is actually true, and what portability actually needs, is below.
    */
-  it('registers a fill for a slot this works does not mount, and mounts nothing for it (D21)', () => {
+  it('registers a fill for a slot this works does not mount, and mounts nothing for it', () => {
     const unhosted = 'product.options.personalize';
     expect(HOSTED_SLOTS as readonly string[]).not.toContain(unhosted);
 
@@ -144,8 +145,8 @@ describe('the demo registry', () => {
     /*
      * AND NOTHING THIS WORKS DRAWS CHANGES. Every slot it mounts answers
      * identically with the portable add-on registered and without it, so
-     * registering one cannot disturb a screen — which is the half of D21 this
-     * file can prove.
+     * registering one cannot disturb a screen — which is the half of
+     * portability this file can prove.
      */
     const without = createRegistry(ALL);
     for (const slot of HOSTED_SLOTS) {
@@ -164,7 +165,7 @@ describe('the demo registry', () => {
   });
 
   /**
-   * 24 AC6, in the form that covers both kinds of add-on.
+   * The not-affiliated line, in the form that covers both kinds of add-on.
    *
    * The criterion is written as though every add-on carries "Adminium is not
    * affiliated with this company". One of the built three names no company at
@@ -176,10 +177,10 @@ describe('the demo registry', () => {
    * where none is.
    *
    * `Affiliation` in `components/Overlays.tsx` renders whichever applies, on
-   * all three surfaces. The keys belong to the ADD-ON (AC5) — the host holds no
+   * all three surfaces. The keys belong to the ADD-ON — the host holds no
    * sentence claiming an add-on connects to nothing.
    */
-  it('leaves no shelf entry silent about who else is involved (AC6)', () => {
+  it('leaves no shelf entry silent about who else is involved', () => {
     /*
      * EVERY ENTRY, NOT ONLY THE CONNECTABLE ONES — widened 2026-08-11, round 6.
      *
@@ -203,12 +204,13 @@ describe('the demo registry', () => {
       /*
        * THE ADD-ON'S OWN NAMESPACE — for the add-ons, which is what the rule
        * was ever about. A host key on a REGISTERED add-on would be the host
-       * holding an add-on's copy, which is the thing AC5 took away.
+       * holding an add-on's copy, which is the thing this rule took away.
        *
        * The four described-but-not-built entries are the other case and are
        * checked the other way: they have no repo behind them, their name, their
-       * line and now their AC6 sentence are all `addon.stub.*` because they are
-       * the HOST's own catalogue copy (`add-ons/shelf.ts` says why), and a key
+       * line and now their affiliation sentence are all `addon.stub.*`
+       * because they are the HOST's own catalogue copy (`add-ons/shelf.ts`
+       * says why), and a key
        * in their own `addon.delivery-second-carrier.*` namespace would be a
        * namespace with nothing in it.
        */
@@ -268,8 +270,8 @@ describe('slot fills', () => {
   });
 
   it('fills the settings panel for every add-on that can be connected', () => {
-    // §5.4 declares the slot; a declared-but-never-filled slot beside a host
-    // that hand-wrote three forms is the defect this replaced.
+    // The registry declares the slot; a declared-but-never-filled slot beside
+    // a host that hand-wrote three forms is the defect this replaced.
     for (const addOn of ALL.filter(isConnectable)) {
       expect(addOn.fills.some((f) => f.slot === 'settings.add-on.panel'), addOn.key).toBe(true);
     }
@@ -284,9 +286,9 @@ describe('slot fills', () => {
   });
 
   it('leaves the works floor silent and speaks to the customer', () => {
-    // The one asymmetry of D6, pinned so a later edit has to mean it: where an
-    // empty slot has something to explain it says it in words; where it has
-    // nothing to explain it renders nothing.
+    // The one asymmetry of empty slots, pinned so a later edit has to mean it:
+    // where an empty slot has something to explain it says it in words; where
+    // it has nothing to explain it renders nothing.
     expect(SLOT_EMPTY_BEHAVIOUR['order.dispatch.actions']).toBe('silent');
     expect(SLOT_EMPTY_BEHAVIOUR['artwork.sources']).toBe('speaks');
     expect(SLOT_EMPTY_BEHAVIOUR['checkout.delivery.methods']).toBe('speaks');
@@ -316,7 +318,7 @@ describe('slot fills', () => {
 });
 
 /**
- * AC4 — "the host runs its own artwork checks on BOTH outputs".
+ * The host runs its own artwork checks on BOTH outputs.
  *
  * THE REFS BELOW ARE NOT WRITTEN DOWN. They used to be: two object literals
  * labelled "what Design Studio's exporter produces, by construction" and "the
@@ -374,7 +376,7 @@ describe('what comes back from an artwork add-on', () => {
   }
 
   /**
-   * Canva Import, run for real against its demo transport (24 D11 — there is no
+   * Canva Import, run for real against its demo transport (there is no
    * other transport in this bundle). The scripted chooser takes the seeded
    * loyalty card, which is the design the demo's own flow imports.
    */
@@ -391,7 +393,7 @@ describe('what comes back from an artwork add-on', () => {
     return ref!;
   }
 
-  it('tells the customer which checks had nothing to measure (AC7)', async () => {
+  it('tells the customer which checks had nothing to measure', async () => {
     /*
      * THE ONLY CHECK THIS SUITE MAKES OF A SENTENCE, and it earns its place.
      * `artwork-source@1` carries no ink-to-trim distance, no colour space and
@@ -420,7 +422,7 @@ describe('what comes back from an artwork add-on', () => {
   });
 
   it('passes every check the host runs on an upload', async () => {
-    // The HOST runs the checks (24 §5.5). This is the assertion that says so:
+    // The HOST runs the checks. This is the assertion that says so:
     // the same `checkArtwork` an uploaded file goes through, on the ref the
     // editor actually produced.
     const built = await designStudioRef();
@@ -506,7 +508,7 @@ describe('settings and seeded facts', () => {
   });
 
   it('declares every setting it defaults, and defaults every setting it declares', () => {
-    // The alphabet check (24 §5.4): one add-on used to declare i18n keys where
+    // The alphabet check: one add-on used to declare i18n keys where
     // another declared machine keys, and the host normalised between them.
     for (const addOn of CONNECTABLE) {
       const declared = addOn.settings.map((s) => s.key).sort();
@@ -518,7 +520,7 @@ describe('settings and seeded facts', () => {
   });
 
   it('defaults every demo switch to on', () => {
-    // 24 D11. A live demo that reached a real third party on every visitor
+    // A live demo that reached a real third party on every visitor
     // click would be a defect, not a feature. The host does not know which
     // setting means that — the add-on declares it.
     const withDemo = CONNECTABLE.filter((a) => a.demoSwitch !== undefined);
@@ -529,7 +531,7 @@ describe('settings and seeded facts', () => {
   });
 
   it('holds no credential of any kind', () => {
-    // 24 D15. The store is readable from the browser, so a secret reaching it
+    // The store is readable from the browser, so a secret reaching it
     // is a leak whatever else is true.
     const text = JSON.stringify(DEFAULT_ADD_ON_SETTINGS);
     for (const word of ['api_key', 'apiKey', 'account_number', 'accountNumber', 'token', 'secret']) {
@@ -646,7 +648,7 @@ describe('settings and seeded facts', () => {
     for (const ref of refs) expect(JOBS.some((j) => j.ref === ref), ref).toBe(true);
   });
 
-  it('names what a disconnect takes and keeps, per add-on (D16)', () => {
+  it('names what a disconnect takes and keeps, per add-on', () => {
     for (const addOn of CONNECTABLE) {
       expect(addOn.disconnect?.goesKey, addOn.key).toBeTruthy();
       expect(addOn.disconnect?.staysKey, addOn.key).toBeTruthy();

@@ -9,7 +9,7 @@
  * The tile is the whole of this add-on's presence in the base app. With it
  * switched off the host renders its own honest empty state ("More ways to send
  * artwork") and nothing here leaves a trace — no orphan button, no dead link,
- * no placeholder (24 D6). That is what makes an add-on optional rather than
+ * no placeholder. That is what makes an add-on optional rather than
  * the way the app was always going to work.
  *
  * The flow runs through the CONTRACT rather than around it: `start()` from

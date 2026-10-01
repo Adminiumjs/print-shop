@@ -20,8 +20,8 @@
  * ── AND THE ASSERTION THAT WAS ACTIVELY WRONG ───────────────────────────────
  *
  * The same file also asserted the OPPOSITE direction — that `HOSTED_SLOTS`
- * contains every fill of every registered add-on — which forbids the thing 24
- * D21 claims. The personalizer declares six fills and this works mounts five
+ * contains every fill of every registered add-on — which forbids
+ * portability. The personalizer declares six fills and this works mounts five
  * slots, five of which it does not host; registering a perfectly good portable
  * add-on here would have turned the live app's suite red while the app itself
  * ran faultlessly. A fill for a slot the host does not mount simply does not
@@ -62,7 +62,7 @@ const { mounts } = vi.hoisted(() => ({
  * It draws a MARKER rather than the fill: this suite is about the mount sites a
  * screen offers and the empty states it hands them, not about what an add-on
  * draws — the fills have their own suites in their own package, and letting
- * them render here would make a screen's D19 behaviour depend on which add-ons
+ * them render here would make a screen's fallback depend on which add-ons
  * happened to be vendored. The marker carries no words and takes no space, and
  * exists so the assertions can ask what the host put NEXT TO a mount.
  */
@@ -82,7 +82,7 @@ beforeAll(() => {
   window.scrollTo = () => {};
   /*
    * The store is born with an EMPTY registry — `App.tsx` registers on mount,
-   * because in connected mode the list arrives from the server (24 §5.9). A
+   * because in connected mode the list arrives from the server. A
    * suite that skipped this would render every add-on surface against nothing
    * and pass by having no add-ons to get wrong.
    */
@@ -178,7 +178,7 @@ beforeEach(() => {
   useStore.setState({ enabled: new Set(), basket: [] });
 });
 
-describe("every slot this app hosts is really mounted (24 §5.4, D6)", () => {
+describe("every slot this app hosts is really mounted", () => {
   it("reaches all five mounts across the two states a reviewer can be in", () => {
     renderEveryHostSurface();
     const withNothingOn = new Set(mounts.map((m) => m.slot));
@@ -210,7 +210,7 @@ describe("every slot this app hosts is really mounted (24 §5.4, D6)", () => {
   });
 
   /**
-   * D21, STATED AS THE PROPERTY THE OLD ASSERTION DENIED.
+   * PORTABILITY, STATED AS THE PROPERTY THE OLD ASSERTION DENIED.
    *
    * An add-on may declare a fill for a slot this works does not mount. It does
    * not render, nothing breaks, and that is precisely what makes the same
@@ -359,7 +359,8 @@ function isBareProse(el: Element): boolean {
  * immediately before the silent `order.dispatch.actions` mount in
  * `screens/Shop.tsx` and the whole suite stayed green — a sentence on a works's
  * ticket, telling the shop about a feature it has not bought, which is exactly
- * what D19 forbids and exactly what the check below the mount exists to catch.
+ * what an empty slot must never do and what the check below the mount exists
+ * to catch.
  * The maker studio closed this hole in its own copy; the repair never crossed
  * the two repos, and the app it was found in kept the defect.
  *
@@ -443,7 +444,7 @@ function slotsThatNameThemselves(): Set<string> {
   return out;
 }
 
-describe("what a person sees where a slot is (24 D19)", () => {
+describe("what a person sees where a slot is", () => {
   it("draws not one byte where a slot is declared silent", () => {
     renderBothStates();
     const noisy: string[] = [];
@@ -508,7 +509,7 @@ describe("what a person sees where a slot is (24 D19)", () => {
    * and its suite could not see it for the same reason.
    *
    * The state is still the empty works: connecting an add-on legitimately puts
-   * D16's "what a disconnect takes and keeps" sentence under the manage
+   * the "what a disconnect takes and keeps" sentence under the manage
    * drawer's own panel, and a rule scoped to the empty shop needs no carve-out
    * for it. A carve-out list is what stops a gate being one.
    */

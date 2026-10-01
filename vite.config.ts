@@ -24,7 +24,7 @@ interface ViteWithVitest extends UserConfig {
 const config: ViteWithVitest = {
   plugins: [react()],
   /*
-   * ── THE DEV SERVER, AND THE ONE THING IT PROXIES (26-T13) ─────────────────
+   * ── THE DEV SERVER, AND THE ONE THING IT PROXIES ──────────────────────────
    *
    * Connected add-on mode reads `GET /api/v1/add-ons`, which is behind
    * `manifests.manage` on a real Adminium SESSION rather than a publishable

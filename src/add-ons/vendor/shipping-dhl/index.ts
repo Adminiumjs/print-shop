@@ -11,10 +11,10 @@
  * answers, and everything the host needs to draw a shelf row, a connect dialog
  * and three surfaces is in the value it gets back.
  *
- * SCOPE, restated where someone would come looking to widen it (24 §7): this
- * books parcel collections with a carrier. It is not job dispatch, not
- * field-service routing and not driver management, and the fact that it fills a
- * slot called `order.dispatch.actions` does not make it any of those.
+ * SCOPE, restated where someone would come looking to widen it: this books
+ * parcel collections with a carrier. It is not job dispatch, not field-service
+ * routing and not driver management, and the fact that it fills a slot called
+ * `order.dispatch.actions` does not make it any of those.
  */
 
 import { createElement } from "react";
@@ -38,7 +38,7 @@ export function register(): AddOn {
     shortName: "DHL",
     lineKey: "addon.shipping-dhl.line",
     whatKey: "addon.shipping-dhl.what",
-    // Three letters on a neutral tile — never a mark, drawn or traced (D12).
+    // Three letters on a neutral tile — never a mark, drawn or traced.
     monogram: "DHL",
     category: "delivery",
     connect: "api-key",
@@ -49,13 +49,13 @@ export function register(): AddOn {
     ],
     // The two secret settings are absent on purpose: `settings` here is what
     // the settings panel may render in the browser, and a secret has no
-    // business in a client bundle (D15). The keys are machine keys — the same
+    // business in a client bundle. The keys are machine keys — the same
     // ones `manifest.json` declares and `settings.ts` reads.
     settings: [
       { key: "demo_transport", kind: "boolean" },
       { key: "collection_cutoff", kind: "time" },
       /*
-       * The returns depot (31 O4) — where a customer's return parcel is
+       * The returns depot — where a customer's return parcel is
        * delivered. The shop tells its CARRIER where returns go, which is why
        * these are this add-on's own settings rather than a host fact: the
        * host's payload carries no address for this surface, and the real
@@ -114,9 +114,10 @@ export function register(): AddOn {
       { minutesAgo: 1_158, refIndex: 1, messageKey: "addon.shipping-dhl.act.3" },
     ],
     /*
-     * D11, declared rather than hard-coded in the host's dialog. The host shows
-     * the switch and skips the credential fields while it is on; it does not
-     * learn that "demo_transport" means a stand-in for a delivery company.
+     * The demo switch — a demo never calls the real carrier — declared rather
+     * than hard-coded in the host's dialog. The host shows the switch and skips
+     * the credential fields while it is on; it does not learn that
+     * "demo_transport" means a stand-in for a delivery company.
      */
     demoSwitch: {
       key: "demo_transport",
@@ -157,9 +158,10 @@ export function register(): AddOn {
         render: (payload) => createElement(TrackingPanel, payload),
       },
       /*
-       * §5.4 declares `settings.add-on.panel` a real slot, and this is what
-       * fills it — including the default parcel weights, which the host used to
-       * compute by importing this repo's `parcel.ts` into its own chrome.
+       * The closed slot registry declares `settings.add-on.panel` a real slot,
+       * and this is what fills it — including the default parcel weights, which
+       * the host used to compute by importing this repo's `parcel.ts` into its
+       * own chrome.
        */
       {
         slot: "settings.add-on.panel",
@@ -167,7 +169,7 @@ export function register(): AddOn {
         render: (payload) => createElement(SettingsPanel, { payload }),
       },
       /*
-       * The inbound half (31 O4): a prepaid return label for the record in
+       * The inbound half: a prepaid return label for the record in
        * front of you. `record.actions` is multi-fill and mounted on records
        * this fill has no business with — it renders NOTHING unless the host
        * says the record is a `return`, which is the entity field doing the job

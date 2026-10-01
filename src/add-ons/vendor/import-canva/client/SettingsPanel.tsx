@@ -23,7 +23,8 @@ import { useAddOnT } from "../i18n/useT.ts";
 import { DemoNote, Mono, useDateFormat } from "./bits.tsx";
 
 /**
- * AC7 APPLIES HERE TOO, and this panel is where it was first missed.
+ * THE SIMULATION LABEL APPLIES HERE TOO, and this panel is where it was first
+ * missed.
  *
  * The account row prints `DEMO_ACCOUNT` and `DEMO_AUTHORIZED_ON` — a name and a
  * date only a real OAuth connection could hand back, and in the demo a fixture.

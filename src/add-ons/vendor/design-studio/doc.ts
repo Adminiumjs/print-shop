@@ -4,7 +4,7 @@
  * The add-on key is `design-studio`; its manifest, tests and README live in the monorepo.
  */
 /**
- * The document engine (24 §6).
+ * The document engine.
  *
  * Pure and deterministic. No `Date.now()`, no `Math.random()`, no `fetch`, no
  * React, no DOM: every clock reading is passed in and every id is derived from
@@ -22,7 +22,7 @@
  * customer is reasoning about, and it lets a deliberate full-bleed background
  * be the honest `x = -bleedMm` rather than a magic offset.
  *
- * THREE LAYER KINDS AND NO MORE — text, image, shape. The cutline in §6 is the
+ * THREE LAYER KINDS AND NO MORE — text, image, shape. The cutline is the
  * whole design: multi-page documents, warped text, image filters, gradients,
  * custom fonts and pen tools each turn a small editor into a design suite. If a
  * fourth kind starts to look necessary, that is the signal to stop.
@@ -616,8 +616,8 @@ export function outsideSafeArea(doc: Doc): Layer[] {
  * The file id has to be stable — the same design exported twice is the same
  * file, and a cart line, a proof and the works' copy must all point at it — so
  * it is derived from CONTENT rather than from a clock or a counter. That also
- * keeps the whole engine free of `Date.now()`, which D11 requires of every
- * add-on in this wave and which a random id would quietly break.
+ * keeps the whole engine free of `Date.now()`, which every add-on in this wave
+ * needs for a deterministic demo and which a random id would quietly break.
  */
 function fnv1a(input: string): string {
   let hash = 0x811c9dc5;
@@ -751,9 +751,10 @@ export function toArtworkFile(doc: Doc): ArtworkFileFacts {
 
 /**
  * One row of `artwork_designs` — the single table this add-on brings, kept on
- * disconnect (D16). The clock is an argument, never read: a saved design that
- * timestamped itself from `Date.now()` would make two runs of the same demo
- * disagree, which is exactly what D11 rules out.
+ * disconnect, because disconnecting never destroys data. The clock is an
+ * argument, never read: a saved design that timestamped itself from
+ * `Date.now()` would make two runs of the same demo disagree, which is exactly
+ * what a deterministic demo rules out.
  */
 export interface DesignRecord {
   id: string;

@@ -4,7 +4,7 @@
  * The add-on key is `design-studio`; its manifest, tests and README live in the monorepo.
  */
 /**
- * Design Studio — the add-on's registration (24 §6).
+ * Design Studio — the add-on's registration.
  *
  * `register()` returns the object `@adminium/add-on-host` describes,
  * and that object is the whole public surface: the host's registry indexes it,
@@ -20,7 +20,7 @@
  * conformance suite both drive. A host with a router can host the slot; this
  * add-on no longer claims one. There is no side effect on import — no global, no
  * patched host, no listener — which is what lets the host register an add-on,
- * unregister it, and be back to exactly its base state (D6).
+ * unregister it, and be back to exactly its base state.
  *
  * `connect: "none"` is the honest answer here and it changes what the connect
  * dialog shows: no credential form, no account, one click. The permission list
@@ -45,8 +45,8 @@ export function register(): AddOn {
     shortName: "Design Studio",
     lineKey: "addon.design-studio.line",
     whatKey: "addon.design-studio.what",
-    // Two letters in a neutral tile. Never a logo (D12) — and there is no
-    // company here to have one.
+    // Two letters in a neutral tile. Never a logo, which no add-on may carry —
+    // and there is no company here to have one.
     monogram: "DS",
     category: "artwork",
     connect: "none",
@@ -134,7 +134,7 @@ export function register(): AddOn {
      * out whether the notice is absent or merely forgotten.
      *
      * The words are here rather than in the host because the host names no
-     * add-on and holds no add-on's copy (AC5): a host-side "this one connects
+     * add-on and holds no add-on's copy: a host-side "this one connects
      * to nothing" would be the host asserting a fact about an add-on it is not
      * supposed to know. The settings panel repeats it at the foot of its own
      * form, where a shop owner changing a setting is looking.
@@ -160,10 +160,10 @@ export function register(): AddOn {
         render: (payload) => createElement(ArtworkFill, { payload }),
       },
       /*
-       * §5.4 declares `settings.add-on.panel` a real slot, and this is what
-       * fills it. Before, the manage drawer hand-wrote this form behind
-       * `addOn.key === "design-studio"` — a declared-but-never-filled slot next
-       * to a host that knew three add-ons by name.
+       * The slot registry declares `settings.add-on.panel` a real slot, and
+       * this is what fills it. Before, the manage drawer hand-wrote this form
+       * behind `addOn.key === "design-studio"` — a declared-but-never-filled
+       * slot next to a host that knew three add-ons by name.
        */
       {
         slot: "settings.add-on.panel",

@@ -31,7 +31,7 @@
  */
 
 /**
- * THIS APP'S OWN MANIFEST KEY — what an add-on `attaches` to (24 §5.7).
+ * THIS APP'S OWN MANIFEST KEY — what an add-on `attaches` to.
  *
  * A literal rather than an import of `manifest.json`, for two reasons that pull
  * the same way: importing the manifest would put the whole document — labels,

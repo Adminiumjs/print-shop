@@ -14,9 +14,9 @@
  * the same promise rather than seven of them getting an English one.
  *
  * The panel is real, and in the demo it authorizes against a fixture: no
- * redirect, no token, no account contacted (24 D11). The host runs the actual
+ * redirect, no token, no account contacted. The host runs the actual
  * authorization-code flow in a connected build; this add-on never sees a
- * secret either way (§5.6).
+ * secret either way.
  */
 
 import { Check } from "lucide-react";
@@ -31,7 +31,7 @@ export function ConsentPanel({
   onAuthorize,
   onCancel,
 }: {
-  /** True when the transport behind the flow answers from a fixture (D11). */
+  /** True when the transport behind the flow answers from a fixture. */
   simulated: boolean;
   onAuthorize: () => void;
   onCancel: () => void;
@@ -73,16 +73,18 @@ export function ConsentPanel({
           ))}
         </div>
 
-        {/* AC7 — ABOVE the button, not below it. This is the screen where a
-            customer decides to hand over access, so if the authorization is
-            simulated they have to be told before they press, not after. */}
+        {/* The simulation label — ABOVE the button, not below it. This is the
+            screen where a customer decides to hand over access, so if the
+            authorization is simulated they have to be told before they press,
+            not after. */}
         {simulated && (
           <div style={{ marginBlockEnd: 12 }}>
             <DemoNote messageKey="demo.consent" />
           </div>
         )}
 
-        {/* 24 D12 — on the surface where the customer decides, not in a footer. */}
+        {/* The not-affiliated line — on the surface where the customer decides,
+            not in a footer. */}
         <p className="cvi-fine" style={{ marginBlockEnd: 16 }}>
           {t("notAffiliated")}
         </p>

@@ -201,7 +201,7 @@ interface State {
    * Separate from `enabled` because the two are genuinely different facts: an
    * authorization is a credential, and connecting is a decision. The consent
    * panel grants the first, the connect dialog's button makes the second, and
-   * disconnecting revokes the credential while keeping the data (24 D16) —
+   * disconnecting revokes the credential while keeping the data —
    * which is exactly why this set is cleared there and `basket` is not.
    */
   authorizedAddOns: Set<string>;
@@ -209,10 +209,10 @@ interface State {
    * Artwork an add-on produced, waiting on the artwork screen.
    *
    * The HOST checks it — `checkArtwork()` runs here exactly as it does on an
-   * upload — so neither artwork add-on marks its own homework (24 §5.5). It is
+   * upload — so neither artwork add-on marks its own homework. It is
    * cleared when the add-on that made it is switched off, because a design
    * sitting on a screen whose source no longer exists is precisely the leftover
-   * D6 forbids.
+   * a disconnect must not leave.
    */
   suppliedArtwork: { source: string; file: ArtworkFile } | null;
 }
@@ -637,7 +637,7 @@ export const useStore = create<State & Actions>((set, get) => ({
 
   registerAddOns: (addOns, options) => {
     /*
-     * SEED DEFAULTS FOR ANYTHING THIS STORE HAS NOT MET (26-T13).
+     * SEED DEFAULTS FOR ANYTHING THIS STORE HAS NOT MET.
      *
      * `addOnSettings` starts as `DEFAULT_ADD_ON_SETTINGS`, which is computed at
      * module load from the three add-ons compiled into THIS bundle. In demo
@@ -705,7 +705,7 @@ export const useStore = create<State & Actions>((set, get) => ({
     }),
 
   /**
-   * DISCONNECT REMOVES SURFACES, NEVER DATA (24 D16).
+   * DISCONNECT REMOVES SURFACES, NEVER DATA.
    *
    * What goes: the add-on's fills stop rendering, so its tiles, its rate rows
    * and its tracking panel are gone from the moment the set changes.
@@ -725,15 +725,15 @@ export const useStore = create<State & Actions>((set, get) => ({
    * the add-on off and on in the dock and the design is gone for good. It is not
    * a leftover. It is a finished file, produced, named and measured, and by the
    * time it is sitting on the artwork screen it is indistinguishable from one
-   * the customer uploaded. D16 says a disconnect keeps the data and deletes the
+   * the customer uploaded. A disconnect keeps the data and deletes the
    * credentials, and a customer's artwork is data by any reading of the word.
    *
    * Nothing on the screen needs the add-on to render it. `checkArtwork` never
-   * knew where a file came from (§5.5), and `registry.byKey` answers for a
+   * knew where a file came from, and `registry.byKey` answers for a
    * REGISTERED add-on whether or not it is enabled — registering and enabling
-   * being different things is the whole of D6 — so "From Design Studio" and the
-   * unmeasured-checks note still resolve, and still say something true about
-   * where the file came from.
+   * being different things is the whole design — so "From Design Studio" and
+   * the unmeasured-checks note still resolve, and still say something true
+   * about where the file came from.
    *
    * The DELIVERY QUOTE below is the genuine leftover and stays deleted, and the
    * difference is worth naming: a rate row is a PRICE A DISCONNECTED COMPANY
@@ -752,7 +752,7 @@ export const useStore = create<State & Actions>((set, get) => ({
        * company that is no longer connected. The lines go back to COLLECTION,
        * which is where a works with no carrier connected always was: it is the
        * app's own default, it is what the order view's empty dispatch panel
-       * promises, and D6 asks for exactly the base state rather than a
+       * promises, and switching off means exactly the base state rather than a
        * plausible neighbouring one.
        */
       const droppedQuote = s.deliveryChoice?.addOn === key;

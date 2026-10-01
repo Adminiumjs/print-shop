@@ -29,7 +29,7 @@
  * plainer phrase a works would actually say — the release check reads bytes,
  * not meaning, so an innocent word with an unlucky spelling still trips it.
  *
- * Two more rules, both from 24 D12. The company is named ONLY to say what is
+ * Two more rules about the company's name. It is named ONLY to say what is
  * being connected to — never as a partner, never as an endorsement. And no
  * string here may be turned into a claim of affiliation by a translation that
  * reads more warmly than the English.
@@ -163,7 +163,7 @@ export const strings = {
     "addon.shipping-dhl.panel.noPage":
       "The demo carrier has no tracking page of its own — the events above are all of it.",
 
-    // ── the inbound half: a prepaid return label (31 O4) ──────────────────
+    // ── the inbound half: a prepaid return label ──────────────────────────
     "addon.shipping-dhl.returns.title": "Prepaid return label",
     "addon.shipping-dhl.returns.intro": "Get a label to send this back. The shop pays the carriage — you put the label on the parcel and hand it over.",
     "addon.shipping-dhl.returns.toDepot": "It goes back to {name}, {city}.",
@@ -294,7 +294,7 @@ export const strings = {
     "addon.shipping-dhl.panel.noPage":
       "Der Demo-Versender hat keine eigene Verfolgungsseite — mehr als die Ereignisse oben gibt es nicht.",
 
-    // ── the inbound half: a prepaid return label (31 O4) ──────────────────
+    // ── the inbound half: a prepaid return label ──────────────────────────
     "addon.shipping-dhl.returns.title": "Vorausbezahltes Rücksendeetikett",
     "addon.shipping-dhl.returns.intro": "Holen Sie ein Etikett, um dies zurückzuschicken. Der Betrieb übernimmt das Porto — Sie kleben das Etikett auf das Paket und geben es ab.",
     "addon.shipping-dhl.returns.toDepot": "Es geht zurück an {name}, {city}.",
@@ -425,7 +425,7 @@ export const strings = {
     "addon.shipping-dhl.panel.noPage":
       "Le transporteur de démonstration n'a pas de page de suivi : les étapes ci-dessus sont tout ce qu'il y a.",
 
-    // ── the inbound half: a prepaid return label (31 O4) ──────────────────
+    // ── the inbound half: a prepaid return label ──────────────────────────
     "addon.shipping-dhl.returns.title": "Étiquette de retour prépayée",
     "addon.shipping-dhl.returns.intro": "Obtenez une étiquette pour renvoyer ceci. L'atelier prend le transport en charge — collez l'étiquette sur le colis et déposez-le.",
     "addon.shipping-dhl.returns.toDepot": "Il repart vers {name}, {city}.",
@@ -556,7 +556,7 @@ export const strings = {
     "addon.shipping-dhl.panel.noPage":
       "Demo dopravce nemá vlastní stránku sledování — víc než události výše nenajdete.",
 
-    // ── the inbound half: a prepaid return label (31 O4) ──────────────────
+    // ── the inbound half: a prepaid return label ──────────────────────────
     "addon.shipping-dhl.returns.title": "Předplacený štítek k vrácení",
     "addon.shipping-dhl.returns.intro": "Získejte štítek a pošlete to zpět. Přepravu hradí dílna — štítek nalepíte na balík a balík předáte.",
     "addon.shipping-dhl.returns.toDepot": "Míří zpět na adresu {name}, {city}.",
@@ -687,7 +687,7 @@ export const strings = {
     "addon.shipping-dhl.panel.noPage":
       "Demo-fragtfirmaet har ingen sporingsside — hændelserne ovenfor er det hele.",
 
-    // ── the inbound half: a prepaid return label (31 O4) ──────────────────
+    // ── the inbound half: a prepaid return label ──────────────────────────
     "addon.shipping-dhl.returns.title": "Forudbetalt returetiket",
     "addon.shipping-dhl.returns.intro": "Få en etiket til at sende dette tilbage. Værkstedet betaler fragten — du sætter etiketten på pakken og afleverer den.",
     "addon.shipping-dhl.returns.toDepot": "Den går tilbage til {name}, {city}.",
@@ -811,7 +811,7 @@ export const strings = {
     "addon.shipping-dhl.panel.trackIt": "查看物流",
     "addon.shipping-dhl.panel.noPage": "演示承运商没有自己的查询页面 — 上面的轨迹就是全部。",
 
-    // ── the inbound half: a prepaid return label (31 O4) ──────────────────
+    // ── the inbound half: a prepaid return label ──────────────────────────
     "addon.shipping-dhl.returns.title": "预付退货标签",
     "addon.shipping-dhl.returns.intro": "获取一张标签，把这件退回。运费由店里承担——你把标签贴在包裹上交寄即可。",
     "addon.shipping-dhl.returns.toDepot": "它将寄回 {name}，{city}。",
@@ -935,7 +935,7 @@ export const strings = {
     "addon.shipping-dhl.panel.trackIt": "查看配送",
     "addon.shipping-dhl.panel.noPage": "示範業者沒有自己的查詢頁 — 上面的紀錄就是全部。",
 
-    // ── the inbound half: a prepaid return label (31 O4) ──────────────────
+    // ── the inbound half: a prepaid return label ──────────────────────────
     "addon.shipping-dhl.returns.title": "預付退貨標籤",
     "addon.shipping-dhl.returns.intro": "取得一張標籤，把這件退回。運費由店裡負擔——你把標籤貼在包裹上交寄即可。",
     "addon.shipping-dhl.returns.toDepot": "它將寄回 {name}，{city}。",
@@ -1065,7 +1065,7 @@ export const strings = {
     "addon.shipping-dhl.panel.noPage":
       "شركة الشحن التجريبية ليس لها صفحة تتبّع خاصة — الأحداث أعلاه هي كل ما هناك.",
 
-    // ── the inbound half: a prepaid return label (31 O4) ──────────────────
+    // ── the inbound half: a prepaid return label ──────────────────────────
     "addon.shipping-dhl.returns.title": "ملصق إرجاع مدفوع مسبقًا",
     "addon.shipping-dhl.returns.intro": "احصل على ملصق لإعادة هذا. المحل يتحمل تكلفة النقل — ألصق الملصق على الطرد وسلّمه.",
     "addon.shipping-dhl.returns.toDepot": "يعود إلى {name}، {city}.",
@@ -1120,9 +1120,9 @@ void _parity;
  * Design Studio's specimen telephone number in ITS exemption list, and Maker
  * Shop did not — so wiring Design Studio into the second host, registration
  * only, zero bytes changed in any add-on, turned that host's suite red. The
- * fix was to edit a list in the host, which is exactly what AC20/D21 says must
- * never be necessary: an add-on is portable when moving it needs no edit in the
- * app that receives it.
+ * fix was to edit a list in the host, which is exactly what must never be
+ * necessary: an add-on is portable when moving it needs no edit in the app
+ * that receives it.
  *
  * The same shape had already been fixed twice this wave (HOSTED_SLOTS, the
  * Czech "pro" carve-out). This is the third and it is fixed the same way: the

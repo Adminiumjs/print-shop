@@ -6,17 +6,17 @@
  * WHY A COPY. `@adminium/manifest` is not published to npm and this app is a
  * standalone repo that must build from a clean clone, so it cannot depend on
  * the monorepo. It lives under `testing/` because `zod` is a devDependency
- * here and a runtime dependency the host does not carry (24 D7) — nothing in
+ * here and a runtime dependency the host does not carry — nothing in
  * the shipped bundle's import graph may reach it, which sources.test.ts gates.
  *
  * The only edits are import specifiers: `.js` becomes `.ts`, and the
  * `@adminium/add-on-contracts` package import becomes relative ones.
  */
 /**
- * The `addOn` manifest block (24-marketplace-wave-4.md §5.3) and its validation
- * rules. Lives here rather than in `@adminium/manifest` because the rules are
- * assertions ABOUT the registries in this package — a slot id or a contract id
- * is only meaningful against the closed lists in `slots.ts` / `contracts.ts`.
+ * The `addOn` manifest block and its validation rules. Lives here rather than
+ * in `@adminium/manifest` because the rules are assertions ABOUT the registries
+ * in this package — a slot id or a contract id is only meaningful against the
+ * closed lists in `slots.ts` / `contracts.ts`.
  *
  * `@adminium/manifest` imports this to build the `kind: "add-on"` branch of its
  * discriminated union.
@@ -28,7 +28,7 @@ import { contractIdSchema, hasContractVersion } from './contracts.ts';
 import { slotIdSchema } from './slots.ts';
 
 /**
- * Add-ons get their OWN closed category vocabulary (D2), because an add-on is
+ * Add-ons get their OWN closed category vocabulary, because an add-on is
  * not a vertical and forcing it into the app facet set would make a carrier a
  * "commerce" product. Wave 4 uses two of the five; the other three exist so a
  * second add-on wave does not have to reopen the vocabulary.
@@ -37,7 +37,7 @@ export const ADD_ON_CATEGORIES = ['artwork', 'delivery', 'payments', 'email', 'd
 export const addOnCategorySchema = z.enum(ADD_ON_CATEGORIES);
 export type AddOnCategory = (typeof ADD_ON_CATEGORIES)[number];
 
-/** How the shop supplies credentials, if at all (§5.6). */
+/** How the shop supplies credentials, if at all. */
 export const CONNECT_KINDS = ['none', 'api-key', 'oauth2'] as const;
 export const connectKindSchema = z.enum(CONNECT_KINDS);
 export type ConnectKind = (typeof CONNECT_KINDS)[number];
@@ -45,7 +45,7 @@ export type ConnectKind = (typeof CONNECT_KINDS)[number];
 const SEMVER_RANGE = /^[\^~]?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$|^\*$/;
 
 /**
- * Exact hostname — no wildcards, no bare IPs, no ports, no scheme (D14).
+ * Exact hostname — no wildcards, no bare IPs, no ports, no scheme.
  *
  * The final label is alphabetic on purpose: it is what makes `203.0.113.10`
  * fail. Every real TLD is alphabetic, and an egress allow-list that quietly
@@ -119,9 +119,9 @@ export const addOnBlockSchema = z
     /** Grants over host + own tables, checked against SCOPE_OUT_OF_RANGE. */
     scopes: z.array(z.string().min(1)).optional(),
     network: addOnNetworkSchema.optional(),
-    /** D15 — the only settings the client bundle may read. */
+    /** The only settings the client bundle may read. */
     publicSettings: z.array(z.string().min(1)).optional(),
-    /** D11 — required to ship a demo that makes no real third-party call. */
+    /** Required to ship a demo that makes no real third-party call. */
     demoTransport: z.string().min(1).optional(),
   })
   .strict()
@@ -134,7 +134,7 @@ export const addOnBlockSchema = z
     message: 'CONTRACT_UNKNOWN: a consumed contract is not in the registry at that version',
     path: ['consumes'],
   })
-  // §5.6 — an oauth2 connect must name where it authorizes.
+  // An oauth2 connect must name where it authorizes.
   .refine(
     (b) =>
       b.connect.kind !== 'oauth2' ||
@@ -147,7 +147,7 @@ export const addOnBlockSchema = z
 
 export type AddOnBlock = z.infer<typeof addOnBlockSchema>;
 
-/** Issue codes the validators emit (13 §3.2 convention, extended by 24 §5.3). */
+/** Issue codes the validators emit. */
 export const ADD_ON_ISSUE_CODES = [
   'ATTACH_TARGET_UNKNOWN',
   'SLOT_UNKNOWN',

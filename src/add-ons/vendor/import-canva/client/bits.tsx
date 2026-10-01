@@ -15,8 +15,8 @@ import type { MessageKey, TFunction } from "../i18n/t.ts";
 
 /**
  * Two or three letters in a neutral tile — never a logo, drawn, traced or
- * approximated (24 D12). `aria-hidden` because the name is always beside it in
- * text; a screen reader announcing "C N V" adds nothing.
+ * approximated. `aria-hidden` because the name is always beside it in text; a
+ * screen reader announcing "C N V" adds nothing.
  */
 export function Monogram({ small = false }: { small?: boolean }) {
   return (
@@ -30,7 +30,7 @@ export function Monogram({ small = false }: { small?: boolean }) {
 }
 
 /**
- * The simulation label, one step's worth of it (24 D11, AC7).
+ * The simulation label, one step's worth of it.
  *
  * Every step of this flow shows something a real account would have supplied —
  * the connect card offers to authorize one, the consent panel takes the

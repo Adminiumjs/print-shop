@@ -6,16 +6,15 @@
  * WHY A COPY. `@adminium/manifest` is not published to npm and this app is a
  * standalone repo that must build from a clean clone, so it cannot depend on
  * the monorepo. It lives under `testing/` because `zod` is a devDependency
- * here and a runtime dependency the host does not carry (24 D7) — nothing in
+ * here and a runtime dependency the host does not carry — nothing in
  * the shipped bundle's import graph may reach it, which sources.test.ts gates.
  *
  * The only edits are import specifiers: `.js` becomes `.ts`, and the
  * `@adminium/add-on-contracts` package import becomes relative ones.
  */
 /**
- * Slot registry v1 — CLOSED (24-marketplace-wave-4.md §5.4; eleven slots, plus
- * two bought since and named at the end of the list, in the order they were
- * bought).
+ * Slot registry v1 — CLOSED (eleven slots, plus two bought since and named at
+ * the end of the list, in the order they were bought).
  *
  * A slot is a named place in a host surface, its payload, and its fill rule.
  * The registry is closed for the same reason the widget-id vocabulary is: an
@@ -104,7 +103,7 @@ export const SLOT_REGISTRY = [
     renders: 'a read-only tracking view',
   },
   {
-    // Renamed from `job.dispatch.actions` on 2026-08-05 (D21): the id names a
+    // Renamed from `job.dispatch.actions` on 2026-08-05: the id names a
     // surface, not the print shop's domain, so a second host can fill it.
     id: 'order.dispatch.actions',
     surface: 'staff',
@@ -169,7 +168,7 @@ export const SLOT_REGISTRY = [
   },
   {
     /*
-     * THE TWELFTH, BOUGHT ON 2026-08-28 (31-add-on-candidates.md O1).
+     * THE TWELFTH, BOUGHT ON 2026-08-28.
      *
      * ── IT IS NOT THE TWELFTH THIS FILE'S HEADER REFUSES ────────────────────
      *
@@ -196,9 +195,9 @@ export const SLOT_REGISTRY = [
      *   6. the post-resolution satisfaction action
      *   7. attach-a-room to a session record
      *
-     * 25 §8.2 declined this same shape and said what would change its mind:
-     * two independent implementations' worth of evidence. That is the bar this
-     * cleared, and the ruling is recorded rather than inferred.
+     * An earlier review declined this same shape and said what would change
+     * its mind: two independent implementations' worth of evidence. That is
+     * the bar this cleared, and the ruling is recorded rather than inferred.
      *
      * ── WHAT IT IS FOR ──────────────────────────────────────────────────────
      *
@@ -246,7 +245,7 @@ export const SLOT_REGISTRY = [
   },
   {
     /*
-     * THE THIRTEENTH, BOUGHT ON 2026-09-01 (33-live-chat-add-on.md O1 → D17).
+     * THE THIRTEENTH, BOUGHT ON 2026-09-01.
      *
      * The first slot on a CUSTOMER SHELL. Every other customer id in this list
      * is a place inside a flow — a product being configured, a basket line, a
@@ -301,11 +300,11 @@ export const SLOT_REGISTRY = [
      * ── THE ALTERNATIVE THAT WAS REJECTED, AND IS STILL ON FILE ─────────────
      *
      * Adminium injecting a script into every hosted customer surface, with no
-     * slot at all. Rejected for v1 (D3): demo mode needs the seam regardless —
+     * slot at all. Rejected for v1: demo mode needs the seam regardless —
      * an example app running on fixtures has no Adminium to inject anything —
      * and a second mount mechanism is the duplication this layer exists to
      * prevent. It stays on file as the way to reach OPERATOR-BUILT customer
-     * pages, which have no seam to mount into (33 D22).
+     * pages, which have no seam to mount into.
      *
      * ── THE ONE THING A READER SHOULD HOLD AGAINST IT ───────────────────────
      *
@@ -313,10 +312,10 @@ export const SLOT_REGISTRY = [
      * than one. A second overlay add-on would want to open A PARTICULAR fill
      * from a host entry point, and the payload's `openRequest` is a bare
      * counter that opens every one of them. That is recorded as un-purchased
-     * standing evidence (33 D16) rather than pre-solved with a `target` field
-     * nothing would pass: `multi` is right because two overlays must coexist
-     * without one of them winning, and the day a second one exists the request
-     * widens. Until then a host with one fill gets the behaviour it wants.
+     * standing evidence rather than pre-solved with a `target` field nothing
+     * would pass: `multi` is right because two overlays must coexist without
+     * one of them winning, and the day a second one exists the request widens.
+     * Until then a host with one fill gets the behaviour it wants.
      */
     id: 'shell.overlay',
     surface: 'customer',

@@ -8,7 +8,7 @@
  *
  * It fills the panel the host draws whether or not any add-on exists — "More
  * ways to send artwork", which reads as an honest empty state when nothing is
- * connected (24 D6). At order 20 this tile sits behind Design Studio's 10,
+ * connected. At order 20 this tile sits behind Design Studio's 10,
  * deliberately: the shop's own editor leads, and a customer who has not made
  * anything yet should meet it first.
  *
@@ -93,7 +93,7 @@ export function SourceTile({
       </button>
 
       {/*
-       * THE FIRST SURFACE THAT NAMES THE COMPANY, SO THE LINE IS HERE (AC6).
+       * THE FIRST SURFACE THAT NAMES THE COMPANY, SO THE LINE IS HERE.
        *
        * The tile above says the company's name in its title, on the artwork
        * screen, to a customer who has pressed nothing. Until round 7 the
@@ -101,9 +101,10 @@ export function SourceTile({
        * scan of that screen for "affiliat", with every add-on switched on,
        * returned nothing at all.
        *
-       * AC6, as amended, is about where a reader meets the naming rather than
-       * about how many of our screens carry a sentence. A disclaimer one press
-       * further in is a disclaimer a customer who does not press may never see.
+       * The not-affiliated rule is about where a reader meets the naming
+       * rather than about how many of our screens carry a sentence. A
+       * disclaimer one press further in is a disclaimer a customer who does
+       * not press may never see.
        * The hosts' `add-ons/affiliation.test.tsx` now tours every surface and
        * asks exactly that, so this cannot go quiet again without a red suite.
        */}

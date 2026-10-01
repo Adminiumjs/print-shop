@@ -1,5 +1,5 @@
 /**
- * The slots this app hosts (24 §5.4, D6).
+ * The slots this app hosts.
  *
  * A mirror of the closed registry in `@adminium/add-on-contracts`, copied
  * rather than imported for the same reason `styles/tokens.css` and
@@ -38,7 +38,7 @@
  */
 
 /**
- * THE CLOSED REGISTRY (24 §5.4). Thirteen names, and not a fourteenth.
+ * THE CLOSED REGISTRY. Thirteen names, and not a fourteenth.
  *
  * ── WHY THIS LIST EXISTS SEPARATELY FROM `HOSTED_SLOTS` ─────────────────────
  *
@@ -47,8 +47,8 @@
  * A slot id names a SURFACE and belongs to the registry; which surfaces THIS
  * app mounts is this app's own business. An add-on written for a maker studio
  * may fill `product.options.personalize`, and the print works not mounting it
- * is not a reason for that add-on to fail to compile — it is exactly what D21
- * claims when it says the same add-on runs in both shops with no change to
+ * is not a reason for that add-on to fail to compile — it is exactly the
+ * claim that the same add-on runs in both shops with no change to
  * either repo. A fill for a slot nobody here mounts simply never renders.
  *
  * `payloads.ts` maps every id below to its payload and asserts, at compile
@@ -56,14 +56,14 @@
  */
 /*
  * [Amended 2026-08-28, wave 6.] The closed registry is TWELVE.
- * `record.actions` was bought against the dossier in 31 Appendix A.1 and this
+ * `record.actions` was bought and this
  * app does not mount it: nothing here shows one record with an action to take
  * on it that an add-on would want. It is in the list below because the list IS
  * the registry mirror — an id missing from it fails a manifest the registry
  * accepts — and `isHosted` says no, which is the honest pair.
  *
  * [Amended 2026-09-01, wave 7.] THIRTEEN. `shell.overlay` is the corner of a
- * customer shell — a floating affordance reachable from every screen (33 O1).
+ * customer shell — a floating affordance reachable from every screen.
  * This app does not mount it either, and for a reason worth writing down
  * rather than leaving to `isHosted`: the print works' customer side is a
  * quoting and ordering flow, and the one thing a visitor there would want from

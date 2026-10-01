@@ -4,7 +4,7 @@
  *
  * ── WHY THIS FILE EXISTS ────────────────────────────────────────────────────
  *
- * It did not, and its absence is what made 24 D21's claim false. The payloads
+ * It did not, and its absence made the portability claim false. The payloads
  * were declared by each ADD-ON, as "the fields I read", which sounds like a
  * consumer narrowing safely and was in practice each add-on writing down the
  * record layout of the one host it had been built against. The delivery add-on
@@ -96,7 +96,7 @@ export interface PostalAddress {
 /**
  * WHEN THIS SHOP THINKS IT IS.
  *
- * Every engine here is pure — no `Date.now()`, no bare `new Date()` (24 D11) —
+ * Every engine here is pure — no `Date.now()`, no bare `new Date()` —
  * so this app pins a clock, and so does every other host. THEY ARE NOT THE SAME
  * INSTANT and they are not meant to be: the print works is pinned to Wednesday
  * 5 August at 10:20 and Birch Row to Thursday the 6th at 16:40.
@@ -382,7 +382,7 @@ export type RoutePayload = SlotPayload;
  * connected has a note field; an add-on replaces the block and writes the words
  * back through the same setter, so the basket line reads the same either way
  * and a disconnect leaves the customer's request in plain language rather than
- * locked inside a picture nobody can open (24 D16).
+ * locked inside a picture nobody can open.
  */
 export interface PersonalizePayload extends SlotPayload {
   product: HostProduct;
@@ -415,7 +415,7 @@ export interface PersonalizePayload extends SlotPayload {
    * explanation.
    *
    * A FILL THAT SETS THIS MUST CLEAR IT WHEN IT UNMOUNTS. Switching the add-on
-   * off is a normal act (24 D6), and a gate left closed by a fill that no
+   * off is a normal act, and a gate left closed by a fill that no
    * longer exists is a shop that cannot sell anything.
    */
   setBlocked?: (reason: string | undefined) => void;
@@ -426,8 +426,8 @@ export interface PersonalizePayload extends SlotPayload {
    * ── SWITCHING AN ADD-ON ON MUST NOT TAKE WORDS OFF THE PAGE ──────────────
    *
    * `product.options.personalize` is a `single` slot: while a fill is mounted
-   * the host's own block is GONE. That block is not a placeholder — D19 is the
-   * rule that it is a finished thing — and on this host it is three parts: the
+   * the host's own block is GONE. That block is not a placeholder — the rule is
+   * that it is a finished thing — and on this host it is three parts: the
    * note field with its counter, the maker's own instructions for what to type,
    * and the promise that a picture comes back before anything is made.
    *
@@ -468,7 +468,7 @@ export interface OrderLinePayload extends SlotPayload {
 
 /**
  * `record.editor.panel` — the one slot whose host is Adminium's generated
- * dashboard rather than an example app (24 §5.10, D20).
+ * dashboard rather than an example app.
  *
  * Declared here with the rest because the registry is closed and an add-on may
  * name it in a manifest today; nothing mounts it until the add-on runtime
@@ -483,7 +483,7 @@ export interface RecordEditorPayload extends SlotPayload {
 
 /**
  * `record.actions` — one opening, on the screen where somebody is already
- * looking at ONE record, to do a thing to it (bought 2026-08-28, 31 O1).
+ * looking at ONE record, to do a thing to it (bought 2026-08-28).
  *
  * Declared here with the rest because the registry is closed and an add-on may
  * name it in a manifest today. THIS APP DOES NOT MOUNT IT — see `slots.ts` —
@@ -511,7 +511,7 @@ export interface RecordActionsPayload extends SlotPayload {
 
 /**
  * `shell.overlay` — the layer ABOVE a customer app's pages: a floating
- * affordance in the corner and the panel it opens (bought 2026-09-01, 33 O1).
+ * affordance in the corner and the panel it opens (bought 2026-09-01).
  *
  * Declared here with the rest because the registry is closed and an add-on may
  * name it in a manifest today. THIS SHOP DOES NOT MOUNT IT — see `slots.ts`
@@ -521,7 +521,7 @@ export interface RecordActionsPayload extends SlotPayload {
  * and this surface has none — it is reachable from every screen, including the
  * empty ones. So what crosses is the SHELL plus the ENVIRONMENT, and the
  * environment is the half that matters: an add-on may not read a clock, mint a
- * random number, reach the network or touch storage (24 D7, D11), and an
+ * random number, reach the network or touch storage, and an
  * overlay that talks to anybody needs all four. They arrive as handles, and
  * the fill's bundle stays clean. Every optional one has a written answer for
  * its own absence — a host that passes none still gets a working panel. The

@@ -1,5 +1,5 @@
 /**
- * The works engine (24-marketplace-wave-4.md §4, D5): imposition, material
+ * The works engine: imposition, material
  * consumption and spoilage, and the job machine with its proof gate.
  *
  * Pure and deterministic, like `quote.ts` — the clock is always passed in.

@@ -61,7 +61,7 @@ function read(settings: SettingsPanelPayload["settings"]): Values {
       typeof values.collection_cutoff === "string" && values.collection_cutoff !== ""
         ? values.collection_cutoff
         : DEFAULT_SETTINGS.collection_cutoff,
-    // The returns depot (31 O4). Empty is a real state — NOT CONFIGURED — and
+    // The returns depot. Empty is a real state — NOT CONFIGURED — and
     // the return surface says so, so no field here invents a default.
     returns_name: text("returns_name"),
     returns_lines: text("returns_lines"),
@@ -123,7 +123,7 @@ export function SettingsPanel({ payload }: { payload: SettingsPanelPayload }) {
       </div>
 
       {/*
-       * The returns depot (31 O4) — where a customer's return parcel is
+       * The returns depot — where a customer's return parcel is
        * delivered. The shop tells its carrier where returns go; a host payload
        * carries no address for that surface, so the fact lives here, in the
        * add-on's own saved values. All five fields empty is a real state the

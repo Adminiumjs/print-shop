@@ -1,5 +1,5 @@
 /**
- * WHAT THE ADD-ONS SHELF CLAIMS ABOUT A COMPANY, RENDERED (24 AC6).
+ * WHAT THE ADD-ONS SHELF CLAIMS ABOUT A COMPANY, RENDERED.
  *
  * @vitest-environment jsdom
  *
@@ -126,7 +126,7 @@ afterEach(() => {
   host.remove();
 });
 
-describe("wherever a company is named, the card says what that is not (AC6)", () => {
+describe("wherever a company is named, the card says what that is not", () => {
   it("carries the disclaimer on the card of the add-on that names a carrier", () => {
     expect(wordsOn("DHL Shipping")).toContain(DISCLAIMER);
   });

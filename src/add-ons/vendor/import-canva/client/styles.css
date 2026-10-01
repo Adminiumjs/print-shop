@@ -7,10 +7,10 @@
  * This add-on's own stylesheet.
  *
  * Every colour, font and gradient here is a token the HOST already defines
- * (`styles/tokens.css`) — the one styling dependency 24 D7 allows. Nothing is
- * a hex: an add-on that forks a colour is an add-on that stops matching the
- * shop the day the shop is re-themed, and the light/dark switch is the host's
- * to make.
+ * (`styles/tokens.css`) — the one styling dependency allowed, because an add-on
+ * takes nothing its host does not already have. Nothing is a hex: an add-on
+ * that forks a colour is an add-on that stops matching the shop the day the
+ * shop is re-themed, and the light/dark switch is the host's to make.
  *
  * The class prefix is `cvi-` because these rules land in the same global
  * cascade as the host's `mp-` rules and every other add-on's. No add-on may
@@ -60,7 +60,7 @@
 }
 
 /*
- * The monogram (24 D12): a neutral tile with two or three letters and NO brand
+ * The monogram: a neutral tile with two or three letters and NO brand
  * colour, ever. It is not a stand-in for a logo we could not obtain — it is
  * what an add-on shelf looks like when twenty of them have to read as one
  * system instead of twenty marks.
@@ -258,7 +258,7 @@
   color: var(--fg-subtle);
 }
 /*
- * The same line under the action tile, where the company is first named (AC6).
+ * The same line under the action tile, where the company is first named.
  * A little air above it so it reads as a footnote to the tile rather than as a
  * second line of the tile's own body.
  */
@@ -267,7 +267,7 @@
 }
 
 /*
- * The simulation label (24 D11 / AC7).
+ * The simulation label.
  *
  * It appears on EVERY step that shows an answer a real account would have
  * given — the connect card, the consent panel, the picker and the import
@@ -439,8 +439,8 @@
 /*
  * No photography anywhere in this app, and none invented here: a design tile is
  * a gradient from the host's own family tints with an icon on it. A thumbnail
- * of the customer's actual artwork would also mean fetching it, which D11
- * forbids in the demo and the consent panel never asked for.
+ * of the customer's actual artwork would also mean fetching it — a real call,
+ * which no demo makes, and which the consent panel never asked for.
  */
 .cvi-thumb {
   position: relative;

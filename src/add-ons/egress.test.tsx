@@ -5,7 +5,7 @@
  *
  * ── WHY A THIRD GATE FOR ONE RULE ───────────────────────────────────────────
  *
- * D11 says a demo makes no real third-party call. Two static gates already
+ * A demo makes no real third-party call. Two static gates already
  * state it — `sources.test.ts` over `src/`, `builtOutput.test.ts` over the
  * bundle — and neither can decide the case that matters most, because both of
  * them read text and the defect is a VALUE.
@@ -59,7 +59,7 @@ import { describe, expect, it } from "vitest";
 import { reachesElsewhere, sendersIn, watchEgress } from "../testing/egress.ts";
 import { tourEveryView } from "../testing/tour.tsx";
 
-describe("nothing the running app draws reaches a host we do not control (24 D11)", () => {
+describe("nothing the running app draws reaches a host we do not control", () => {
   it("asks for nothing off this origin, on any surface, connected or not", async () => {
     const watch = watchEgress(window);
     const attempts: string[] = [];
@@ -139,7 +139,7 @@ describe("nothing the running app draws reaches a host we do not control (24 D11
    * THE THREE THAT GOT PAST ALL OF IT, ROUND 6.
    *
    * Each of these was planted in a shipped, always-rendered component and left
-   * every D11 gate in both hosts green — 35 passing cases in one, 36 in the
+   * every egress gate in both hosts green — 35 passing cases in one, 36 in the
    * other. None of them touches a request-issuing global, and none of them
    * assigns to a URL-bearing property, which is all net three watched:
    *

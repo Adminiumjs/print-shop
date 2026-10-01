@@ -1,11 +1,11 @@
 /**
- * WHEREVER A COMPANY IS NAMED, THE LINE IS ON THE SAME SCREEN (24 AC6).
+ * WHEREVER A COMPANY IS NAMED, THE LINE IS ON THE SAME SCREEN.
  *
  * @vitest-environment jsdom
  *
  * ── THE DEFECT ──────────────────────────────────────────────────────────────
  *
- * AC6, as amended 2026-08-09, is about a READER: a surface that names a real
+ * The rule, as amended 2026-08-09, is about a READER: a surface naming a real
  * company carries the line saying Adminium is not affiliated with it. Round 6
  * enforced that over the HOST's own components — `shelfClaims.test.tsx` fails
  * any file of ours that prints `addOn.name` or `addOn.monogram` without
@@ -17,7 +17,7 @@
  * your account…"*, on the artwork screen, with the add-ons on; a DOM scan of
  * that screen for "affiliat" came back EMPTY. The line existed one press
  * further in, inside the flow the tile opens, which is precisely the
- * arrangement AC6's amendment was written against: a disclaimer a reader meets
+ * arrangement the amendment was written against: a disclaimer a reader meets
  * after the naming is a disclaimer they may never meet.
  *
  * ── SO THIS ASKS THE READER'S QUESTION, ON EVERY SURFACE ────────────────────
@@ -63,7 +63,7 @@ import { MESSAGES } from "../i18n/messages/index.ts";
 import { tourEveryView } from "../testing/tour.tsx";
 
 /*
- * ── AND WHAT CONNECTED MODE DOES TO THIS FILE'S REACH (26-T13) ──────────────
+ * ── AND WHAT CONNECTED MODE DOES TO THIS FILE'S REACH ───────────────────────
  *
  * The glob below is resolved by the BUNDLER, so it is a static list of modules
  * by the time this runs. That is what makes it honest about the add-ons this
@@ -81,7 +81,7 @@ import { tourEveryView } from "../testing/tour.tsx";
  * WHAT IS GENUINELY LOST for a server-delivered add-on, stated rather than
  * papered over: this file asks whether the line is on the SAME SURFACE as the
  * naming, and the registration check can only ask whether the line exists. That
- * is AC6's 2026-08-09 amendment — "a disclaimer a reader meets after the naming
+ * is the 2026-08-09 amendment — "a disclaimer a reader meets after the naming
  * is a disclaimer they may never meet" — and answering it needs the add-on's own
  * screens rendered against its own marks, which is the add-on repository's job
  * and not this shop's.
@@ -185,7 +185,7 @@ const asRead = (host: HTMLElement): string[] => {
   return out;
 };
 
-describe("no surface names a company without the line (24 AC6)", () => {
+describe("no surface names a company without the line", () => {
   it("has marks to look for, from the add-ons rather than from here", () => {
     // Guard on the guard. A glob that stopped matching, or a package that
     // stopped exporting, would make every case below pass by having nothing to

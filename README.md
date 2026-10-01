@@ -23,7 +23,7 @@ sharing one bundle:
 | **Customer** | build a job, see the price break down line by line, save a quote, send artwork and read its verdicts, approve a proof, track an order |
 | **Print shop** | today's board, a job ticket with the imposition and the proof gate, materials and spoilage, the rate card, the add-on shelf |
 
-Out of the SPA on purpose (21 D4): full-table CRUD, bulk operations, imports,
+Out of the SPA on purpose: full-table CRUD, bulk operations, imports,
 role admin and analytics past a glanceable KPI. **The SPA quotes, takes and runs
 jobs; the rate card itself is edited in the generated Adminium dashboard**, and
 the Price list screen says exactly that.
@@ -43,7 +43,7 @@ day it is.
 
 ## The add-on slots
 
-This app is designed **with the holes already in it** (24 D6). Five slots exist
+This app is designed **with the holes already in it**. Five slots exist
 whether or not a single add-on does, and four of them are visible surfaces with
 a real empty state:
 
@@ -111,11 +111,11 @@ builds and still tests.
 > invisible until it is a bug in two places at once.
 
 The sync deliberately does **not** copy an add-on's tests, its conformance
-harness or its **server half**: secrets are server-only (24 D15), and a module
+harness or its **server half**: secrets are server-only, and a module
 that reads a credential must not be reachable from a browser bundle at all.
 `src/sources.test.ts` and `src/builtOutput.test.ts` both fail if one appears.
 
-Nothing in the demo makes a real third-party call (24 D11). Every add-on ships a
+Nothing in the demo makes a real third-party call. Every add-on ships a
 deterministic demo transport seeded from the pinned clock, and every simulated
 result is labelled as such on screen.
 

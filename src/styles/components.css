@@ -415,7 +415,7 @@
   text-wrap: pretty;
   max-inline-size: 68ch;
 }
-/* The fine line at the foot of anything that names a company (24 AC6) — see
+/* The fine line at the foot of anything that names a company — see
    `components/Affiliation.tsx`. Quiet, never hidden: it is smaller than the
    copy around it and it still sits on the same contrast token every other
    subtle line in this app uses. */
@@ -687,7 +687,7 @@
   display: none;
 }
 
-/* Add-on monogram: neutral by design (24 D12) — never a company's colours. */
+/* Add-on monogram: neutral by design — never a company's colours. */
 .mp-monogram {
   inline-size: 44px;
   block-size: 44px;

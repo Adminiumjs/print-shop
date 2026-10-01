@@ -9,8 +9,8 @@
  * This is the whole reason the add-on exists, and it is also the whole of its
  * staff-facing scope. It books parcel collections with a carrier. It is NOT job
  * dispatch, NOT field-service routing and NOT driver management, and it gains
- * none of those screens even as an empty state (24 §7). If a future change here
- * starts to look like a round plan, it belongs in a different product.
+ * none of those screens even as an empty state. If a future change here starts
+ * to look like a round plan, it belongs in a different product.
  *
  * The failure path is not optional and not a variant: the second seeded job's
  * address is refused, and this component renders the carrier's own words
@@ -272,9 +272,10 @@ export function DispatchAction({ order, now }: DispatchPayload) {
    * press returns the first shipment; a real carrier is under no such
    * obligation, and the screen was telling the works it had none either way.)
    *
-   * It also made D16 untestable. "A disconnect keeps the data" is a claim
-   * about data that survives — and there was no data, only a React state that
-   * a route change threw away, so the promise had nothing to be true of.
+   * It also made the disconnect rule untestable. "A disconnect keeps the data"
+   * is a claim about data that survives — and there was no data, only a React
+   * state that a route change threw away, so the promise had nothing to be
+   * true of.
    *
    * ── WHERE THE BOOKING ACTUALLY LIVES ──────────────────────────────────────
    *
@@ -539,10 +540,11 @@ export function DispatchAction({ order, now }: DispatchPayload) {
           >
             <CircleX size={18} aria-hidden="true" style={{ color: "var(--danger)" }} />
             <PanelTitle tone="danger">{t("addon.shipping-dhl.error.title")}</PanelTitle>
-            {/* D11 — a refusal is a result like any other, and this one was
-                written by the demo carrier: no real carrier ever saw this
-                address. The rates card that carried the chip is gone by the
-                time this one renders, so this card has to say it itself. */}
+            {/* Simulated results are labelled — and a refusal is a result like
+                any other, and this one was written by the demo carrier: no real
+                carrier ever saw this address. The rates card that carried the
+                chip is gone by the time this one renders, so this card has to
+                say it itself. */}
             {isDemo() && (
               <span style={{ marginInlineStart: "auto" }}>
                 <Tag tone="warn">{t("addon.shipping-dhl.error.simulated")}</Tag>
@@ -626,10 +628,11 @@ export function DispatchAction({ order, now }: DispatchPayload) {
         <Panel>
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
             <PanelTitle>{t("addon.shipping-dhl.rates.title")}</PanelTitle>
-            {/* D11 — the services, the prices and the delivery dates below are
-                all simulated, so the panel that shows them says so. The chip on
-                the booked result is not enough: a works reads these numbers,
-                picks one and commits before that panel ever renders. */}
+            {/* Simulated results are labelled — the services, the prices and
+                the delivery dates below are all simulated, so the panel that
+                shows them says so. The chip on the booked result is not
+                enough: a works reads these numbers, picks one and commits
+                before that panel ever renders. */}
             {isDemo() && (
               <span style={{ marginInlineStart: "auto" }}>
                 <Tag tone="warn">{t("addon.shipping-dhl.rates.simulated")}</Tag>
@@ -735,8 +738,8 @@ export function DispatchAction({ order, now }: DispatchPayload) {
             >
               <PackageCheck size={19} aria-hidden="true" style={{ color: "var(--pos)" }} />
               <PanelTitle tone="pos">{t("addon.shipping-dhl.booked.title")}</PanelTitle>
-              {/* D11 — wherever a real shipment would have been created, the
-                  screen says one was not. */}
+              {/* Simulated results are labelled — wherever a real shipment
+                  would have been created, the screen says one was not. */}
               {isDemo() && (
                 <span style={{ marginInlineStart: "auto" }}>
                   <Tag tone="warn">{t("addon.shipping-dhl.demoChip")}</Tag>
@@ -856,10 +859,11 @@ export function DispatchAction({ order, now }: DispatchPayload) {
           <Panel>
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
               <PanelTitle>{t("addon.shipping-dhl.tracking.title")}</PanelTitle>
-              {/* D11 — scans with places and times read as a parcel that moved.
-                  These were seeded from the pinned clock, and the chip on the
-                  card above does not reach this one: they are two cards, and a
-                  works scrolls to the timeline and screenshots it on its own. */}
+              {/* Simulated results are labelled — scans with places and times
+                  read as a parcel that moved. These were seeded from the pinned
+                  clock, and the chip on the card above does not reach this one:
+                  they are two cards, and a works scrolls to the timeline and
+                  screenshots it on its own. */}
               {isDemo() && (
                 <span style={{ marginInlineStart: "auto" }}>
                   <Tag tone="warn">{t("addon.shipping-dhl.tracking.simulated")}</Tag>

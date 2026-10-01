@@ -1447,10 +1447,9 @@ export type T = ReturnType<typeof translator>;
  * It used to live in the host. Print Shop's `numerals.arabic.test.tsx` carried
  * Design Studio's specimen telephone number in ITS exemption list, and Maker
  * Shop did not — so wiring Design Studio into the second host, registration
- * only, zero bytes changed in any add-on, turned that host's suite red. The
- * fix was to edit a list in the host, which is exactly what AC20/D21 says must
- * never be necessary: an add-on is portable when moving it needs no edit in the
- * app that receives it.
+ * only, zero bytes changed in any add-on, turned that host's suite red. The fix
+ * was to edit a list in the host, which must never be necessary: an add-on is
+ * portable when moving it needs no edit in the app that receives it.
  *
  * The same shape had already been fixed twice this wave (HOSTED_SLOTS, the
  * Czech "pro" carve-out). This is the third and it is fixed the same way: the

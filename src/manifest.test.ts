@@ -1,9 +1,9 @@
 /**
  * `manifest.json`, put through the real validator.
  *
- * This app is the HOST three add-ons attach to, and until this file existed the
- * wave's acceptance criterion 10 — "`publisher.id` is `adminium` on all four" —
- * could not be met, because only three of the four manifests existed. An
+ * This app is the HOST three add-ons attach to, and until this file existed
+ * the rule that `publisher.id` is `adminium` on all four could not be met,
+ * because only three of the four manifests existed. An
  * add-on that declares `attaches: [{ app: "printing" }]` is attaching to a
  * document nobody had written.
  *
@@ -51,7 +51,7 @@ describe('manifest.json validates', () => {
     expect(manifest.manifestVersion).toBe(MANIFEST_VERSION);
   });
 
-  it('is first-party, which is the only publisher v1 accepts (AC10, D13)', () => {
+  it('is first-party, which is the only publisher v1 accepts', () => {
     expect(manifest.publisher.id).toBe('adminium');
     // And the validator agrees, rather than this being a fact about a string.
     const stranger = { ...manifest, publisher: { ...manifest.publisher, id: 'somebody-else' } };
@@ -68,7 +68,7 @@ describe('manifest.json validates', () => {
     }
   });
 
-  it('declares exactly the four capabilities 24 D3 names for this app', () => {
+  it('declares exactly the four capabilities chosen for this app', () => {
     expect([...manifest.capabilities].sort()).toEqual(
       ['email-delivery', 'file-storage', 'payments', 'realtime'].sort(),
     );
@@ -137,8 +137,9 @@ describe('the schema it asks for is the one the app models', () => {
 describe('what an app manifest may not do', () => {
   it('declares no add-on block — the fields belong to the other branch', () => {
     expect(manifest).not.toHaveProperty('addOn');
-    // §5.7 item 6 in reverse: the union is discriminated, so an app carrying an
-    // add-on block is refused rather than quietly ignored.
+    // The rule that an add-on cannot install pages, in reverse: the union is
+    // discriminated, so an app carrying an add-on block is refused rather than
+    // quietly ignored.
     const confused = { ...manifest, addOn: { attaches: [], provides: [] } };
     expect(validateManifest(confused).ok).toBe(false);
   });
@@ -146,7 +147,7 @@ describe('what an app manifest may not do', () => {
   it('names no slot — a host HOSTS slots, it does not fill them', () => {
     // The slots this app hosts live in `src/add-ons/slots.ts` and are the
     // add-ons' business to fill. A `slots` key here would mean the host was
-    // filling its own holes, which is the design D6 exists to prevent.
+    // filling its own holes, which the slot design exists to prevent.
     expect(manifest).not.toHaveProperty('slots');
     expect(HOSTED_SLOTS.length).toBeGreaterThan(0);
   });
@@ -158,7 +159,7 @@ describe('what an app manifest may not do', () => {
     expect(manifest.key).toBe('printing');
   });
 
-  it('is the same key `surface.ts` hands connected mode (26-T13)', () => {
+  it('is the same key `surface.ts` hands connected mode', () => {
     // `APP_KEY` is a literal rather than an import of this file, because
     // importing the manifest would put the whole document — every label in
     // eight locales — into the shipped bundle to read one string out of it.
@@ -209,7 +210,7 @@ const realAvailable = existsSync(REAL_VALIDATOR);
 const VALIDATOR_REQUIRED = process.env.ADMINIUM_REQUIRE_VALIDATOR === 'true';
 
 /**
- * ── AND CI MAY NOT SKIP IT (28-T26 follow-up) ──────────────────────────────
+ * ── AND CI MAY NOT SKIP IT ─────────────────────────────────────────────────
  *
  * `describe.skipIf` above is right for a developer with no product checkout —
  * somebody reading the example app is not required to clone the product. It was

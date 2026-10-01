@@ -14,7 +14,7 @@
  * catch, because the suite is copied from the same place and would move with
  * it.
  *
- * The Zod validators stay behind (24 D7 — a shipped bundle takes no runtime
+ * The Zod validators stay behind (a shipped bundle takes no runtime
  * dependency the host lacks). Two runtime values do come across, for the same
  * reason `CarrierError` does: a provider cannot be written without them.
  * `DOCUMENT_LOCALE_IDS` is how an implementation builds an eight-locale record

@@ -4,7 +4,8 @@
  * The add-on key is `shipping-dhl`; its manifest, tests and README live in the monorepo.
  */
 /**
- * The demo transport — the DEFAULT one (24 D11).
+ * The demo transport — the DEFAULT one, because no demo makes a real
+ * third-party call.
  *
  * A live demo that posts to a real carrier on every visitor click is a defect,
  * not a feature, so this repo ships a carrier that books nothing. Everything it
@@ -60,10 +61,11 @@ const POSTCODE_FORMAT: Readonly<Record<string, RegExp>> = {
 export const POSTCODE_REFUSAL = "Postcode not recognised for the destination country";
 
 /**
- * The same refusal at the other end of the route (31 O4). A label must carry a
- * resolvable address at BOTH ends, so an address this carrier would refuse as a
- * recipient it refuses as a sender — which is what makes a return flow's
- * "fix the postcode and retry" demo a real rule rather than a flag.
+ * The same refusal at the other end of the route, which a return travels in
+ * reverse. A label must carry a resolvable address at BOTH ends, so an address
+ * this carrier would refuse as a recipient it refuses as a sender — which is
+ * what makes a return flow's "fix the postcode and retry" demo a real rule
+ * rather than a flag.
  */
 export const SENDER_POSTCODE_REFUSAL = "Postcode not recognised for the sender's country";
 
@@ -188,8 +190,9 @@ export function createDemoCarrier(options: DemoCarrierOptions): DemoCarrier {
     key: "shipping-dhl",
 
     async quote(parcel: Parcel, origin: Address, to: Address): Promise<Rate[]> {
-      // Both ends, sender first (31 O4): a route is unserviceable whichever end
-      // the unresolvable address sits at, and the message says which one it is.
+      // Both ends, sender first (a return reverses them): a route is
+      // unserviceable whichever end the unresolvable address sits at, and the
+      // message says which one it is.
       refuseUnknownAddress(origin, SENDER_POSTCODE_REFUSAL);
       refuseUnknownAddress(to, POSTCODE_REFUSAL);
       return quoteAll({
@@ -246,7 +249,7 @@ export function createDemoCarrier(options: DemoCarrierOptions): DemoCarrier {
           // constructed with. `eventsFor` had this exact repair (see its
           // comment) and the label escaped it: for an outbound booking the two
           // are the same shop address, so nothing ever looked wrong — and for
-          // an inbound RETURN (31 O4) the constructed address is the wrong end
+          // an inbound RETURN the constructed address is the wrong end
           // of the route entirely, printing the depot as its own sender.
           from: record.from,
         }),

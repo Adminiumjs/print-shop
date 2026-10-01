@@ -13,7 +13,7 @@ COPY . .
 # the marketplace demos rely on.
 #
 # The publishable key ends up in the bundle a browser downloads. That is what
-# `adm_pub_` is FOR (28 D3): it is a scope selector, not a credential, it can
+# `adm_pub_` is FOR: it is a scope selector, not a credential, it can
 # only read what its scope lists, and it is refused everywhere outside
 # /api/v1/public. A secret `adm_sk_` key here would be a real leak.
 ARG VITE_ADMINIUM_API_BASE_URL=""

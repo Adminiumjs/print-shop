@@ -35,8 +35,8 @@
  *      something costs money, or that more of the product can be had by
  *      paying — in any words at all? If yes, it does not ship. Ask the other
  *      two questions the sweep cannot ask either: does it name a real company
- *      as anything but "not affiliated" (AC6), and does it state a fact about
- *      one particular shop that an add-on's copy has no business knowing (D21)?
+ *      as anything but "not affiliated", and does it state a fact about
+ *      one particular shop that an add-on's copy has no business knowing?
  *   3. Only then run this file with `UPDATE_COPY_LEDGER=1`, which rewrites
  *      `reviewed-copy.json` in place, and commit it beside the strings.
  *

@@ -803,7 +803,7 @@ export function OrderLookup() {
             {/*
               * A HEADING, WRITTEN AS ONE. This was a `<div>` at 800 weight —
               * a heading to a reader and a bare line of prose to anything that
-              * reads markup, sitting directly above a slot mount. D19's rule is
+              * reads markup, sitting directly above a slot mount. The rule is
               * that nothing the host draws captions a slot, and the only thing
               * that distinguishes "Dispatch" (the name of the panel) from a
               * caption is that it is a heading. So it says so.

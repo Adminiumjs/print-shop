@@ -1,5 +1,5 @@
 /**
- * The DataSource seam (18 D7).
+ * The DataSource seam.
  *
  * This app ships in demo mode: every read below returns the seeded fiction in
  * `demo.ts`, synchronously, with no network involved. The seam exists so that

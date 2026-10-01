@@ -73,7 +73,7 @@ export const NO_STROKE = "none";
 
 /**
  * The whole font list. Two are the shop's own faces and two are on every
- * machine — custom fonts are on the cutline (§6), because the moment a customer
+ * machine — custom fonts are on the cutline, because the moment a customer
  * can upload one the works has to license it, embed it and explain why the one
  * they picked came out different.
  */

@@ -56,7 +56,7 @@ export default function App() {
   }, [theme]);
 
   /*
-   * Register the add-ons once, from whichever source this build has (26 §6).
+   * Register the add-ons once, from whichever source this build has.
    *
    * DEMO AND STANDALONE: the three compiled-in bundles, named by three imports
    * in `registry.ts`. REGISTERED IS NOT ENABLED — the `enabled` set starts

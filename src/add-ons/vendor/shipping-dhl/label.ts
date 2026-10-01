@@ -10,7 +10,7 @@
  * dispatch screen offers Download and Print, and a tile that downloads nothing
  * is a screenshot rather than a feature. It is also unmistakably not a shipping
  * label: the first line on the page says so, there is no barcode, and nothing
- * here draws or approximates a carrier's mark (24 D12).
+ * here draws or approximates a carrier's mark.
  *
  * The generator is deterministic in the strict sense — same shipment, same
  * bytes — which is what lets `FileRef.bytes` be asserted in a test. That means

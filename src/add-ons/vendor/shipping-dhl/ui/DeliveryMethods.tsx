@@ -189,7 +189,7 @@ export function DeliveryMethods({
         </div>
       )}
 
-      {/* AC7 — ABOVE the rates, not under them. A customer reads this list,
+      {/* The simulated-result label — ABOVE the rates, not under them. A customer reads this list,
           presses one and changes what they owe; a label they meet after the
           decision is a disclaimer, not a label.
           IT COVERS THE REFUSAL TOO. An earlier version gated this on

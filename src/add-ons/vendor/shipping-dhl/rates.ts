@@ -14,7 +14,8 @@
  *
  * Service names are descriptions, not product marks: "Express by 12:00" says
  * what the customer gets. Naming a carrier's trademarked product would be a
- * brand use beyond the nominative one D12 allows.
+ * brand use beyond the nominative one allowed — naming the company only to
+ * say what is being connected to.
  */
 
 import { addWorkingDays, workingDaysBetween, type Clock } from "./clock.ts";

@@ -18,7 +18,7 @@
  * The package's Zod validators are deliberately NOT here. They are the only
  * part of the contract that needs a runtime dependency, they are used only by
  * the conformance suite, and an add-on's shipped bundle may take no runtime
- * dependency the host does not already have (24 D7) — so they live under
+ * dependency the host does not already have — so they live under
  * `../testing/`, where `zod` is a devDependency and nothing ships.
  *
  * `LabelStore` used to sit at the bottom of this file with a note saying it is

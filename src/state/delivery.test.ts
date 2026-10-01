@@ -8,7 +8,7 @@
  *
  * These are the assertions that make the control a control: the host learns
  * what was chosen, one choice unmakes the other, the money follows, and
- * switching the add-on off takes its quote with it (D6, D16).
+ * switching the add-on off takes its quote with it.
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -104,7 +104,7 @@ describe('the money follows the choice', () => {
   });
 });
 
-describe('switching the add-on off takes its quote with it (D6)', () => {
+describe('switching the add-on off takes its quote with it', () => {
   it('falls back to the works’ own delivery when the quoting add-on is disconnected', () => {
     seedBasket();
     useStore.setState({ enabled: new Set([CHOICE.addOn]) });
@@ -113,7 +113,7 @@ describe('switching the add-on off takes its quote with it (D6)', () => {
     useStore.getState().disconnectAddOn(CHOICE.addOn);
 
     // A price quoted by a company that is no longer connected, sitting on a
-    // basket nobody has paid for, is exactly the leftover D6 forbids — and the
+    // basket nobody has paid for, is exactly the forbidden leftover — and the
     // lines land on the base state, not on a plausible neighbouring one.
     expect(useStore.getState().deliveryChoice).toBeNull();
     expect(useStore.getState().basket.map((l) => l.config.delivery)).toEqual(['collection']);
@@ -132,7 +132,7 @@ describe('switching the add-on off takes its quote with it (D6)', () => {
 });
 
 /**
- * ── A QUOTE IS A LEFTOVER; A DESIGN IS THE CUSTOMER'S (24 D16) ──────────────
+ * ── A QUOTE IS A LEFTOVER; A DESIGN IS THE CUSTOMER'S ───────────────────────
  *
  * [Added 2026-08-11, wave 4b round 4.] `disconnectAddOn` used to null
  * `suppliedArtwork` alongside the delivery quote, on the reasoning that both
@@ -141,7 +141,7 @@ describe('switching the add-on off takes its quote with it (D6)', () => {
  * away and back, and then a disconnect-and-reconnect in the dock loses it for
  * good.
  *
- * D16 is one sentence — a disconnect keeps the data and deletes the credentials
+ * The rule is short — a disconnect keeps the data and deletes the credentials
  * — and a file a customer made, named and had measured is data. The rate row is
  * not: it is a PRICE A DISCONNECTED COMPANY QUOTED, on a basket nobody has paid
  * for, and the shop can no longer honour it.
@@ -149,7 +149,7 @@ describe('switching the add-on off takes its quote with it (D6)', () => {
  * The two cases are asserted together, in one suite, because the interesting
  * thing is the DIFFERENCE and a reader has to be able to see both rules at once.
  */
-describe('what a disconnect keeps, and what it cannot (D16)', () => {
+describe('what a disconnect keeps, and what it cannot', () => {
   /*
    * Built the way the app builds one — `fileFromRef` on an `artwork-source@1`
    * reference — rather than typed out here, so the fixture cannot describe a
@@ -176,7 +176,7 @@ describe('what a disconnect keeps, and what it cannot (D16)', () => {
     expect(supplied!.file.filename).toBe(FILE.filename);
     // And it still remembers WHERE it came from, which is what lets the artwork
     // screen keep saying "From …" honestly. `registry.byKey` answers for a
-    // registered add-on whether or not it is enabled (D6).
+    // registered add-on whether or not it is enabled.
     expect(supplied!.source).toBe('design-studio');
   });
 

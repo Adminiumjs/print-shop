@@ -8,10 +8,10 @@
  *
  * It defines NO colours of its own. Every value flows through the host's design
  * tokens (`--surface`, `--fg-muted`, `--accent`, `--danger`, `--info`, …), which
- * D7 names as one of the three things an add-on may assume the host already
- * has. That is what makes the editor arrive looking like the shop rather than
- * like a widget bolted onto it, and it is why switching the shop's theme
- * switches this too with nothing to synchronise.
+ * are one of the three things an add-on may assume the host already has. That
+ * is what makes the editor arrive looking like the shop rather than like a
+ * widget bolted onto it, and it is why switching the shop's theme switches this
+ * too with nothing to synchronise.
  *
  * The product-family tints carry fallbacks because they are the print shop's
  * own vocabulary rather than part of the canonical token set — an add-on
@@ -48,7 +48,7 @@
   unicode-bidi: isolate;
 }
 
-/* ── the neutral monogram tile (24 D12) ─────────────────────────────────── */
+/* ── the neutral monogram tile, never a logo ────────────────────────────── */
 
 .ds-monogram {
   inline-size: 34px;

@@ -7,7 +7,7 @@
  * What this add-on declares about connecting, and — just as importantly — what
  * it does not implement.
  *
- * THE HOST RUNS THE FLOW (24 §5.6). This add-on declares an authorize URL, a
+ * THE HOST RUNS THE FLOW. This add-on declares an authorize URL, a
  * token URL and the scopes it wants; the host performs the authorization-code
  * exchange with PKCE, stores and refreshes the tokens, and hands back an
  * already-authorized HTTP client. There is no client secret in this repo, no
@@ -21,10 +21,10 @@
  *
  * The exact authorize and token endpoints, the scope identifiers and the
  * export-job shape must be READ FROM THE VENDOR'S CURRENT DOCUMENTATION at
- * implementation time and pinned in the README with the date they were read
- * (24 §8). This repo does not guess them into fact: nothing here is ever
- * called, the demo transport answers every request from a fixture (D11), and
- * the README's endpoint table carries "not yet read" until someone reads them.
+ * implementation time and pinned in the README with the date they were read.
+ * This repo does not guess them into fact: nothing here is ever called, the
+ * demo transport answers every request from a fixture, and the README's
+ * endpoint table carries "not yet read" until someone reads them.
  *
  * The one rule that outranks convenience when they ARE read: if the vendor's
  * real scope vocabulary cannot be narrowed to list-the-designs plus
@@ -35,12 +35,12 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-/** Named nominatively — to say what is being connected to, and nothing more (D12). */
+/** Named nominatively — to say what is being connected to, and nothing more. */
 export const VENDOR_NAME = "Canva";
 
 /**
  * The only hostname this add-on's egress allow-list carries. Exact hostname, no
- * wildcard, no scheme, no port (D14) — the manifest repeats it, and the host
+ * wildcard, no scheme, no port — the manifest repeats it, and the host
  * refuses and audits a call to anything else.
  */
 export const VENDOR_API_HOST = "api.canva.com";
@@ -48,10 +48,11 @@ export const VENDOR_API_HOST = "api.canva.com";
 /**
  * THE AUTHORIZE HOST, WHICH IS A DIFFERENT ONE — and that is the whole point.
  *
- * [Found 2026-08-31 by the 26-T15 round trip, against a real Adminium.] This
- * add-on's manifest allow-listed `api.canva.com` alone while its authorize URL
- * points at `www.canva.com`, so `POST /connect/oauth/start` refused it: the
- * host will not send a client secret to a hostname the add-on never declared.
+ * [Found 2026-08-31 by the install-and-connect round trip, against a real
+ * Adminium.] This add-on's manifest allow-listed `api.canva.com` alone while
+ * its authorize URL points at `www.canva.com`, so `POST /connect/oauth/start`
+ * refused it: the host will not send a client secret to a hostname the add-on
+ * never declared.
  * The OAuth flow could not have run, and nothing in this repository said so —
  * `manifest.test.ts` checked that both URLs END WITH `canva.com`, which is a
  * suffix test where the runtime does an exact one.
@@ -74,10 +75,11 @@ export const OAUTH = {
    * WRITTEN OUT, NOT INTERPOLATED, and the reason is the artefact rather than
    * taste. Interpolating the hostname builds to a string whose AUTHORITY is a
    * variable, so the address in `dist/server.js` was an endpoint whose host is
-   * decided at run time — the one shape D11's egress gate cannot vouch for, and
-   * the shape it now reports. The tie to the single allow-listed hostname is
-   * not lost, it is ASSERTED: `manifest.test.ts` requires this URL's host to
-   * equal `VENDOR_API_HOST` exactly, and the allow-list to carry it.
+   * decided at run time — the one shape the no-real-call egress gate cannot
+   * vouch for, and the shape it now reports. The tie to the single allow-listed
+   * hostname is not lost, it is ASSERTED: `manifest.test.ts` requires this
+   * URL's host to equal `VENDOR_API_HOST` exactly, and the allow-list to carry
+   * it.
    *
    * Note also what the failure taught: this package's server half is NOT
    * minified, so a comment reaches `dist/` verbatim. An example address written

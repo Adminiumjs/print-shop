@@ -12,10 +12,10 @@
  * THEY NAME NO COMPANY, AND THAT IS THE POINT OF THIS FILE EXISTING.
  * They used to read `name: 'Royal Mail Shipping'`, `'Stripe Payments'` and
  * `'Mailchimp Lists'` — three real firms named in the host app's own source for
- * integrations that do not exist. Acceptance criterion 5 says nothing in
+ * integrations that do not exist. The rule is that nothing in
  * `printing` names a carrier, and the prescribed grep (`dhl`) sailed straight
  * past all three. Naming a company you do not integrate with is also the one
- * class of wave-4 defect D12 calls a legal problem rather than a taste problem.
+ * class of wave-4 defect that is a legal problem rather than a taste problem.
  *
  * So each entry now says WHAT IT WOULD DO rather than WHO WOULD DO IT: a second
  * delivery company, a card payment processor, a mailing-list service. The shelf
@@ -24,7 +24,7 @@
  * The three add-ons that ARE built name their own companies, nominatively, in
  * their own repos, where a `TRADEMARKS.md` sits beside the claim.
  *
- * Their categories come from the closed five (D2) and deliberately use the
+ * Their categories come from the closed five and deliberately use the
  * three that wave 4 does not: payments, email and data exist in the vocabulary
  * so the next wave does not have to reopen it, and a shelf that shows them is
  * how a reader finds that out.
@@ -49,7 +49,7 @@ export const NOT_IN_THIS_DEMO: readonly AddOn[] = [
     shortName: 'Second carrier',
     lineKey: 'addon.stub.secondCarrier.line',
     whatKey: 'addon.stub.secondCarrier.line',
-    // Monograms are letters on a neutral tile (D12). With no company to
+    // Monograms are letters on a neutral tile. With no company to
     // initialise, these initialise the capability instead.
     monogram: 'DEL',
     category: 'delivery',

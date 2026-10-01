@@ -3,12 +3,12 @@
  *
  * Every other guard in this repo reads sources. That is one inference away from
  * the thing that ships — a minifier inlines a default, a bundler keeps a legal
- * comment, a string arrives from a dependency — and the sweep (17 §2) does not
+ * comment, a string arrives from a dependency — and the release sweep does not
  * read sources at all. So this suite builds the app and greps the bytes.
  *
  * It also checks the two things a bundle is the only honest place to check: that
  * no add-on's credential setting and no real third-party hostname reached the
- * browser (24 D15, D11). Both are true of the sources — the vendored halves
+ * browser. Both are true of the sources — the vendored halves
  * carry no server module — and "true of the sources" is exactly the claim a
  * packer refuses to take on trust.
  *
@@ -241,7 +241,7 @@ describe('the build wrote something to grep', () => {
     const exempt = built().filter((f) => thirdParty.has(chunkName(f)));
 
     /*
-     * PRINTED ON EVERY RUN. 24 §10's verification line says the sweep runs over
+     * PRINTED ON EVERY RUN. The release sweep runs over
      * `dist/` excluding `demo/`, and this suite excludes a little more than
      * that — so the exclusion is on the console beside the result rather than
      * three files away in a comment somebody has to go looking for.
@@ -365,7 +365,7 @@ describe('the vocabulary ban, over built output', () => {
 
   it('would catch the substrings the release catches', () => {
     // An absence proves nothing unless the check is shown to bite. These are
-    // the two traps D10 names, plus the two words a shortened list dropped.
+    // the two named traps, plus the two words a shortened list dropped.
     const bites = (text: string) => bundleOffences(text).map((o) => o.word);
     expect(bites('a short explanation of the sizes')).toContain('plan');
     expect(bites('the frontier of large format')).toContain('tier');
@@ -446,7 +446,7 @@ describe('nothing an add-on keeps to itself reached the browser', () => {
   });
 
   it('carries no secret setting key and no real third-party hostname', () => {
-    // 24 D15 and D11 in the artefact. Every needle is an add-on's own
+    // Secrets and real hosts, in the artefact. Every needle is an add-on's own
     // declaration of something that lives on its SERVER half; a demo's
     // transports are all demo ones, so none of them belongs in a browser.
     const offenders: string[] = [];
@@ -468,7 +468,7 @@ describe('nothing an add-on keeps to itself reached the browser', () => {
 });
 
 /**
- * D11 OVER THE ARTEFACT: NOT ONE ADDRESS THIS APP DID NOT DECLARE.
+ * NO REAL CALL, OVER THE ARTEFACT: NOT ONE ADDRESS THIS APP DID NOT DECLARE.
  *
  * ── WHY THE BUNDLE AND NOT ONLY THE SOURCES ─────────────────────────────────
  *
@@ -501,7 +501,7 @@ describe('nothing an add-on keeps to itself reached the browser', () => {
  * instruments the running page. No one of the three is complete; the reason
  * there are three is that each covers what the others cannot see.
  */
-describe('nothing in the artefact can reach a host we do not control (24 D11)', () => {
+describe('nothing in the artefact can reach a host we do not control', () => {
   /**
    * Every address allowed to appear in this app's bundle, and why it is inert.
    *
@@ -527,7 +527,7 @@ describe('nothing in the artefact can reach a host we do not control (24 D11)', 
    * `sources.test.ts`, in an app that only receives that add-on. Both lists
    * read the same declarations now — every add-on exports `INERT_ORIGINS` from
    * its own `add-on-facts.ts`, the sync vendors it, and this reads whatever
-   * this app has vendored. See `sources.test.ts` for the AC20/D21 argument.
+   * this app has vendored. See `sources.test.ts` for the portability argument.
    *
    * The bundle is where the two lists legitimately differ: React writes the SVG
    * and MathML namespaces and prints its own error address, and neither is any
@@ -538,7 +538,7 @@ describe('nothing in the artefact can reach a host we do not control (24 D11)', 
   }>("./add-ons/vendor/*/add-on-facts.ts", { eager: true });
 
   /*
-   * ── AND THE BACKEND A CONNECTED BUILD WAS POINTED AT (28-T26) ─────────────
+   * ── AND THE BACKEND A CONNECTED BUILD WAS POINTED AT ──────────────────────
    *
    * Empty in every demo build, which is every build the marketplace serves and
    * every build CI makes. When `VITE_ADMINIUM_API_BASE_URL` is set, Vite inlines

@@ -21,8 +21,8 @@
  *
  * Types only, deliberately. The package's Zod validators need a runtime
  * dependency the host does not carry, and an add-on's shipped bundle may take
- * no runtime dependency the host does not already have (24 D7) — so they live
- * under `../testing/`, where `zod` is a devDependency and nothing ships.
+ * no runtime dependency the host does not already have — so they live under
+ * `../testing/`, where `zod` is a devDependency and nothing ships.
  *
  * The asymmetry that makes this contract worth having: the HOST, not the
  * add-on, runs the artwork checks on the returned `ArtworkRef`. Design Studio's

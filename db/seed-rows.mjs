@@ -3,8 +3,8 @@
  * How many rows `db/seed.sql` actually inserts, per table.
  *
  * ── WHY THIS EXISTS ────────────────────────────────────────────────────────
- * 28-public-surface.md §5.2 item 3 asks for maker-shop's `db/generate-seed.mjs`
- * in every repo, so `seed.sql` cannot drift from `src/data/demo.ts`. That
+ * The goal is maker-shop's `db/generate-seed.mjs` in every repo, so `seed.sql`
+ * cannot drift from `src/data/demo.ts`. That
  * script is 372 lines of THIS studio's domain — it prices every line through
  * `piecesTotalCents()` and books every shelf movement through
  * `consumptionForLine()` — so "port it" is thirteen bespoke generators, not a

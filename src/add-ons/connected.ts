@@ -6,7 +6,7 @@
  * `createRegistry`, every slot and every surface below them are untouched,
  * which is the seam rule `DataSource` follows one directory over.
  *
- * Demo mode is not replaced (26 D7). A build with no surface side has no server
+ * Demo mode is not replaced. A build with no surface side has no server
  * to ask, `HOSTED` is false, and nothing in this file is reached.
  *
  * ── THIS IS THE ONE FILE IN `src/` THAT MAY SEND, AND IT IS DECLARED ────────
@@ -56,7 +56,7 @@
  * dynamic `import()`; the attribute exists only on elements, and a
  * `<script type="module" src>` hands nothing back to the importer. The two
  * arrangements that would give real enforcement — a blob URL, or an import map
- * — both need `script-src` widened beyond `'self'`, and 26 §0.5 records that no
+ * — both need `script-src` widened beyond `'self'`, and no
  * CSP change was needed or made. So this fetches, verifies, and then imports the
  * SAME URL, relying on the HTTP cache to make the second read the first read's
  * bytes. That is a weaker claim than SRI and it is stated here rather than
@@ -65,7 +65,7 @@
  * ── THE HOST PUBLISHES ITS REACT FIRST, AND THE ORDER IS LOAD-BEARING ──────
  *
  * A built add-on bundle contains no `import … from "react"` — it cannot, or a
- * browser could not resolve it (26 §0.7) — so each one aliases `react` and
+ * browser could not resolve it — so each one aliases `react` and
  * `react/jsx-runtime` to shims that read a well-known global. Those shims run
  * when the MODULE INITIALISES, before anything calls `register()`, because JSX
  * compiles to `jsx(...)` calls at module scope.
@@ -145,7 +145,7 @@ export interface ConnectedLoad {
 /**
  * The prefix a bundle URL must sit under.
  *
- * 26 §5.4 put the bundle inside `/api/v1` rather than at `/add-ons/<key>.js`
+ * The server puts the bundle inside `/api/v1` rather than at `/add-ons/<key>.js`
  * deliberately, so this is a real path and not a coincidence — but this file
  * treats it as a FENCE rather than as a route it constructs. The server sends
  * the URL; this only decides whether it is one this app will import.
@@ -229,7 +229,7 @@ function isConnectedDto(value: unknown): value is ConnectedAddOnDto {
  *
  * Every locale, not just English: a shop read in Arabic with the line only in
  * English has an undisclaimed surface for its actual readers, which is the
- * whole of what AC6 is about. The key is the one every add-on that names a
+ * whole of what the line is about. The key is the one every add-on that names a
  * company already uses — `addon.<key>.notAffiliated`.
  */
 function hasDisclaimer(addOn: AddOn): boolean {
@@ -508,7 +508,7 @@ export async function loadConnectedAddOns(options: ConnectedOptions): Promise<Co
     }
     if (refusal !== null) {
       /*
-       * AC6 AND THE KEY CHECK, DECIDED ABOVE AND REPORTED HERE.
+       * THE DISCLAIMER AND THE KEY CHECK, DECIDED ABOVE AND REPORTED HERE.
        *
        * `affiliation.test.tsx` tours every surface and requires the
        * not-affiliated line wherever a company's mark appears. It reads its
@@ -525,8 +525,8 @@ export async function loadConnectedAddOns(options: ConnectedOptions): Promise<Co
        * add-on is actually running.
        *
        * WHAT IT CANNOT CHECK, and the tour still can for a vendored copy:
-       * whether the line is on the SAME SURFACE as the naming. That is the
-       * amendment AC6 exists for — "a disclaimer a reader meets after the
+       * whether the line is on the SAME SURFACE as the naming. That is what
+       * the amendment was for — "a disclaimer a reader meets after the
        * naming is a disclaimer they may never meet" — and answering it needs
        * the add-on's own screens rendered, which is the add-on repository's to
        * do and not this shop's.

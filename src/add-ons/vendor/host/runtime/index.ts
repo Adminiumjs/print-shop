@@ -17,10 +17,10 @@
  * what demo mode does, compiling the add-on into the host's own build. It is
  * the wrong answer the moment a BROWSER resolves it. `dist/client.js` opened
  * with `import { useMemo } from "react"`, and a bare specifier cannot be
- * resolved by `import()` at all without an import map. So the artefact that
- * 26 §6 says the host "`import()`s from the server" could not be imported by a
- * browser, and the demo build worked only because Vite resolved those imports
- * before they ever reached one.
+ * resolved by `import()` at all without an import map. So the artefact a
+ * connected host is meant to `import()` from the server could not be imported
+ * by a browser, and the demo build worked only because Vite resolved those
+ * imports before they ever reached one.
  *
  * ─── The fix: React arrives through the host, not through the module graph ──
  *

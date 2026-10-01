@@ -15,9 +15,9 @@
  * What it deliberately does NOT do is judge the artwork. The verdicts the flow
  * shows come from `import.ts` so the customer can decide before they commit,
  * but the ruling that matters is the HOST's, run on the `ArtworkRef` this
- * returns (24 §5.5). That is why the ref carries the design's TRUE measurements
- * — a scaled import reports the scaled size and the resolution it cost, never
- * the numbers the works wanted to see.
+ * returns. That is why the ref carries the design's TRUE measurements — a
+ * scaled import reports the scaled size and the resolution it cost, never the
+ * numbers the works wanted to see.
  */
 
 import type { ArtworkRef, ArtworkSource, AvailabilityVerdict, JobSpec } from "../host/contracts/index.ts";

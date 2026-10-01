@@ -212,10 +212,10 @@ export function ImportFlow({
             <button type="button" className="cvi-button" onClick={() => setConsentOpen(true)}>
               {t("connect.authorize")}
             </button>
-            {/* AC7 — the first step is already a simulated one: pressing
-                Authorize contacts nothing. Saying so here rather than three
-                steps later is the difference between a labelled demo and a
-                demo with a disclaimer at the end. */}
+            {/* The simulation label — the first step is already a simulated
+                one: pressing Authorize contacts nothing. Saying so here rather
+                than three steps later is the difference between a labelled
+                demo and a demo with a disclaimer at the end. */}
             {transport.simulated && <DemoNote messageKey="demo.connect" />}
             <p className="cvi-fine">{t("notAffiliated")}</p>
           </div>
@@ -236,9 +236,10 @@ export function ImportFlow({
               <span className="cvi-fine">{t("pick.these")}</span>
             </div>
 
-            {/* AC7 — the grid below is fixture data. The label sits ABOVE it,
-                because a note underneath a list of four designs is a note the
-                reader meets after they have already believed the list. */}
+            {/* Every simulated result is labelled — the grid below is fixture
+                data. The label sits ABOVE it, because a note underneath a list
+                of four designs is a note the reader meets after they have
+                already believed the list. */}
             {transport.simulated && (
               <div style={{ marginBlockEnd: 12 }}>
                 <DemoNote messageKey="demo.pick" />
@@ -426,8 +427,9 @@ function ImportStep({
         </button>
       )}
 
-      {/* D11 — wherever a real account would have been read, the demo says so.
-          This is the fourth of four such labels, not the only one. */}
+      {/* No real call — wherever a real account would have been read, the
+          demo says so. This is the fourth of four such labels, not the only
+          one. */}
       {simulated && <DemoNote messageKey="demo.note" />}
       <p className="cvi-fine">{t("notAffiliated")}</p>
     </div>

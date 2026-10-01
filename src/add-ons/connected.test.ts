@@ -1,5 +1,5 @@
 /**
- * The connected add-on source (26-T13).
+ * The connected add-on source.
  *
  * `connected.ts` is the ONE file in `src/` allowed to name `fetch` and to
  * `import()` something that is not a relative literal. `sources.test.ts` grants
@@ -212,7 +212,7 @@ describe('what it refuses, and what it does with the rest', () => {
     expect(problems[0]?.detail).toContain('sha256-');
   });
 
-  it('refuses an add-on that names a company and ships no disclaimer (AC6)', async () => {
+  it('refuses an add-on that names a company and ships no disclaimer', async () => {
     // The tour cannot see this add-on — its marks are not in this checkout —
     // so the check moves to registration, the same move `registerAddOnMessages`
     // made for locale parity.

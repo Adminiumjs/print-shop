@@ -19,7 +19,7 @@
  * renders, computed here rather than typed into a screen.
  *
  * It is also deliberately NOT the judge of whether artwork may print. The host
- * runs its own checks on the `ArtworkRef` this add-on hands back (24 §5.5) —
+ * runs its own checks on the `ArtworkRef` this add-on hands back —
  * these verdicts exist so the customer sees the same answer BEFORE they commit,
  * in the same words, and so this add-on refuses to hand over a file it already
  * knows will be rejected.

@@ -6,7 +6,7 @@
 /**
  * `record.actions` — a prepaid return label for the record in front of you.
  *
- * ── THE INBOUND HALF OF THE CARRIER (31 O4, ruled 2026-09-01) ───────────────
+ * ── THE INBOUND HALF OF THE CARRIER ─────────────────────────────────────────
  *
  * A customer sending something back is the same contract with the route
  * reversed: `quote` takes two addresses and has no opinion about which one is

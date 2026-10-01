@@ -787,7 +787,7 @@
 }
 /*
  * The dispatch row. "Mark collected" stands alone here until a carrier is
- * connected — the fourth slot renders NOTHING when empty (24 D6), and the
+ * connected — the fourth slot renders NOTHING when empty, and the
  * spacer is what leaves it room to appear without the row jumping.
  */
 .mp-dispatch-row {

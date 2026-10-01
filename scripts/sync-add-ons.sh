@@ -69,7 +69,7 @@
 # WHAT IS DELIBERATELY NOT COPIED, and none of it is an oversight:
 #   *.test.ts(x)   the monorepo runs its own suites; re-running them here would
 #                  assert the copy rather than the thing (and the conformance
-#                  suites pull in zod, which the host does not carry — 24 D7).
+#                  suites pull in zod, which the host does not carry).
 #   src/testing/   the copied conformance harness and build helpers, same
 #                  reason. The shared package's `testing/` entry point — where
 #                  its zod validators live — is never vendored either.
@@ -77,7 +77,7 @@
 #                  manifest suite. This app has its own `src/add-ons/slots.ts`,
 #                  which is the authoritative list of what it hosts.
 #   src/carrier.ts src/http.ts src/server.ts src/server/artwork-source.ts
-#                  the SERVER halves. Secrets are server-only (24 D15) and the
+#                  the SERVER halves. Secrets are server-only and the
 #                  client bundle must not be able to reach the module that holds
 #                  them. `status` fails if one ever appears under vendor/.
 #   vite-env.d.ts  ambient Vite types the host already has.
@@ -113,7 +113,7 @@ FILES_host=(
   contracts/index.ts contracts/common.ts
   contracts/artwork-source.ts contracts/shipping-carrier.ts
   contracts/product-personalizer.ts contracts/document-render.ts
-  # The ABI a CONNECTED bundle is loaded through (26 §0.7). A built add-on
+  # The ABI a CONNECTED bundle is loaded through. A built add-on
   # aliases `react` to a shim that reads a global, so a host must publish its
   # React on that global before importing one — and the KEY it publishes under
   # is the contract, not a string a host should be retyping. Vendored for the
@@ -152,7 +152,7 @@ FILES_import_canva=(
   client/SettingsPanel.tsx client/bits.tsx client/styles.css
 )
 
-# Modules that must never be reachable from the browser half (D15), and the
+# Modules that must never be reachable from the browser half, and the
 # server ENTRY POINTS a manifest's `provides[].server` names. `design-studio`
 # holds no secret, so its server half is a packaging boundary rather than a leak
 # — but a server entry that turns up in the demo bundle means the split the
@@ -348,7 +348,7 @@ cmd_status() {
       done < <(cd "$dest" && find . -type f | sed 's|^\./||' | sort)
 
       if [ "$key" != host ]; then
-        # D15: the server half must not be reachable from a browser bundle.
+        # The server half must not be reachable from a browser bundle.
         for f in "${FORBIDDEN[@]}"; do
           [ -e "$dest/$f" ] && { state="SECRET-LEAK $f"; drift=1; }
         done

@@ -32,7 +32,7 @@ import type { DesignStudioKey } from "../i18n/strings.ts";
 import { LAYOUTS, LAYOUT_IDS } from "../layouts.ts";
 import { useHostT } from "./useHostLocale.ts";
 
-/** The values this panel edits, under the add-on's own machine keys (24 D15). */
+/** The values this panel edits, under the add-on's own non-secret machine keys. */
 export interface PublicSettings {
   starting_layouts?: readonly string[];
   proof_required?: boolean;
@@ -110,16 +110,16 @@ export function SettingsPanel({ payload }: { payload: SettingsPanelPayload }) {
       />
 
       {/*
-        24 AC6 asks every add-on to carry the "not affiliated" line on its
-        detail surface, and the host renders that line only where `namesCompany`
-        is true. This add-on reports FALSE, which is the honest value — it names
-        no company, so a disclaimer about one would be a sentence about nothing.
-        What the criterion is really asking for is that a shop owner reading the
-        detail surface never has to guess who else is involved, so this says it
-        the only way that is true here: nobody is.
+        The brand rule asks every add-on to carry the "not affiliated" line on
+        its detail surface, and the host renders that line only where
+        `namesCompany` is true. This add-on reports FALSE, which is the honest
+        value — it names no company, so a disclaimer about one would be a
+        sentence about nothing. What the criterion is really asking for is that
+        a shop owner reading the detail surface never has to guess who else is
+        involved, so this says it the only way that is true here: nobody is.
 
         IT LIVES IN THE ADD-ON, not in the host, for the reason the whole slot
-        exists (§6, AC5): the host names no add-on and holds no add-on's copy.
+        exists: the host names no add-on and holds no add-on's copy.
         A generic host-side "this one connects to nothing" line would be the
         host asserting a fact about an add-on it is not supposed to know.
       */}

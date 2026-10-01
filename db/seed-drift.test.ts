@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
- * `db/seed.sql` and `src/data/demo.ts` describe the same fiction (§5.2 item 3).
+ * `db/seed.sql` and `src/data/demo.ts` describe the same fiction.
  *
  * ── WHAT THIS IS, AND WHAT IT IS NOT ───────────────────────────────────────
- * §5.2 item 3 asks for maker-shop's `db/generate-seed.mjs` here, which WRITES
+ * The full version is maker-shop's `db/generate-seed.mjs`, which WRITES
  * the SQL from the TypeScript so the two cannot differ in any value. That
  * script is 372 lines of one studio's domain arithmetic, so porting it is a
  * bespoke generator per repo rather than a copy, and it is not funded yet.

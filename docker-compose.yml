@@ -82,7 +82,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      # Connected mode (28-T28). Unset — which is the default — builds the demo
+      # Connected mode. Unset — which is the default — builds the demo
       # exactly as before; Vite inlines these, so they are build args and not
       # `environment:`, and changing either needs `--build` to take effect.
       # Mint the key in Studio -> Public API against a scope covering these refs:

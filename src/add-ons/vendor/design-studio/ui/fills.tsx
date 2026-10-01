@@ -26,7 +26,7 @@ import { useHostT } from "./useHostLocale.ts";
 
 /**
  * The non-secret settings the client half may read (`publicSettings` in the
- * manifest, D15), declared beside the panel that edits them. There is nothing
+ * manifest), declared beside the panel that edits them. There is nothing
  * secret to leak here — `connect` is `none` and there is no account — but the
  * declaration is not conditional on having something to hide, and an add-on
  * that only declares its surface when it is inconvenient not to has not really

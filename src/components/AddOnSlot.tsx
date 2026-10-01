@@ -3,7 +3,7 @@
  *
  * Screens never reach into the registry themselves. They render `<AddOnSlot>`
  * and hand it what to show when nothing is there — which is how the same
- * component serves both empty-state behaviours (24 D6):
+ * component serves both empty-state behaviours:
  *
  *   `fallback` given  → the slot SPEAKS: a real, honest empty state in words,
  *                       used where a customer has something to be told.

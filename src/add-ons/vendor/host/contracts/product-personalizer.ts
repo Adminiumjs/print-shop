@@ -4,33 +4,32 @@
  * The ONE shared contract; the three add-ons here import it by relative path.
  */
 /**
- * `product-personalizer@1` — the third contract in the closed registry
- * (24 §5.5), and the one whose implementation spans three surfaces: the
- * shopper's live preview, the maker's setup panel, and — in Phase B — a record
- * editor inside the generated dashboard. That spread is why it is a contract at
- * all rather than a screen.
+ * `product-personalizer@1` — the third contract in the closed registry of
+ * provider contracts, and the one whose implementation spans three surfaces:
+ * the shopper's live preview, the maker's setup panel, and a record editor
+ * inside the generated dashboard. That spread is why it is a contract at all
+ * rather than a screen.
  *
  * MIRRORED, NOT IMPORTED, exactly like its two siblings in this directory. The
  * upstream is `packages/add-on-contracts/src/product-personalizer.ts` in the
  * Adminium monorepo, which is not on npm and which this repo cannot reach; the
  * types are restated here and the Zod validators are restated under
  * `../testing/schemas.ts`, because a validator needs `zod` and an add-on's
- * shipped bundle may take no runtime dependency the host does not already have
- * (24 D7).
+ * shipped bundle may take no runtime dependency the host does not already have.
  *
  * WHERE THIS FILE AND THE MONOREPO DISAGREE, THE MONOREPO IS RIGHT. The shapes
  * below are copied member for member from it, including the two that a reader
  * might otherwise think were invented here:
  *
  *   `PreviewRef.digest` — a content hash, and the whole mechanism behind
- *   acceptance criterion 17. Equal values and an equal angle must produce an
+ *   deterministic rendering. Equal values and an equal angle must produce an
  *   equal digest, which is what lets a cart thumbnail, a proof and an order line
  *   be provably the same picture rather than three pictures that look alike.
  *
  *   `Verdict`'s failing branch — it carries `remedies`, and `remedies` carries
  *   NUMBERS. "It doesn't fit" with no way out is a contract violation rather
- *   than a UI choice (D5c, AC18): the surface renders each remedy as a button
- *   and the number is what the button does.
+ *   than a UI choice: the surface renders each remedy as a button and the
+ *   number is what the button does.
  */
 
 import type { FileRef } from './common.ts';

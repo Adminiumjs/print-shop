@@ -11,15 +11,16 @@
  * A host app runs release gates over the code it ships, and some of those gates
  * need to know things that are true of an ADD-ON: which addresses it names and
  * cannot call, which of its strings must never reach a browser. Both used to be
- * written out inside each host — so the Print Shop's D11 list carried Canva's
- * endpoints, and BOTH hosts' D15 bundle gate carried the delivery add-on's
- * secret setting keys and its carrier hostname.
+ * written out inside each host — so the Print Shop's no-real-call list carried
+ * Canva's endpoints, and BOTH hosts' no-secret-in-the-bundle gate carried the
+ * delivery add-on's secret setting keys and its carrier hostname.
  *
- * That is AC20/D21 broken, and it was demonstrated in both directions:
- * vendoring the personalizer into the print works unchanged, registration only,
- * turned that host's `sources.test.ts` red on an address it had never heard of;
- * vendoring Canva Import into the studio did the same there. Making a portable
- * add-on pass required editing an exemption list inside the app receiving it.
+ * That breaks the rule that an add-on runs unchanged in any host app, and it
+ * was demonstrated in both directions: vendoring the personalizer into the
+ * print works unchanged, registration only, turned that host's
+ * `sources.test.ts` red on an address it had never heard of; vendoring Canva
+ * Import into the studio did the same there. Making a portable add-on pass
+ * required editing an exemption list inside the app receiving it.
  *
  * It is worse than red suites in the other direction, which is what the second
  * export is for. A host's "no credential reached the browser" gate was a list
@@ -46,18 +47,20 @@
  * The shapes are declared inline rather than imported from
  * `@adminium/add-on-host/testing`: this is shipped code, `testing/` is the
  * test-only entry point that pulls in zod, and no module that ships may reach
- * it (24 D7). The structure is what the hosts read, not the type.
+ * it: an add-on takes no runtime dependency its host does not already have.
+ * The structure is what the hosts read, not the type.
  */
 
 /**
  * ADDRESSES THIS ADD-ON NAMES, AND WHY NONE CAN CAUSE A REQUEST.
  *
- * A host's D11 net reports every absolute URL in what it ships whose ORIGIN
- * nobody has declared inert. An entry is a decision somebody wrote down, with a
- * reason a reviewer reads instead of a pattern they have to trust — never a
- * licence to CALL the address, because the net beside it bans everything that
- * could. An empty list is the strictest state there is: every address is
- * reported, so naming one means coming here and saying why it stays a string.
+ * A host's no-real-call net reports every absolute URL in what it ships whose
+ * ORIGIN nobody has declared inert. An entry is a decision somebody wrote down,
+ * with a reason a reviewer reads instead of a pattern they have to trust —
+ * never a licence to CALL the address, because the net beside it bans
+ * everything that could. An empty list is the strictest state there is: every
+ * address is reported, so naming one means coming here and saying why it stays
+ * a string.
  */
 export const INERT_ORIGINS: readonly { origin: string; why: string }[] = [
   {
@@ -71,7 +74,7 @@ export const INERT_ORIGINS: readonly { origin: string; why: string }[] = [
 ];
 
 /**
- * STRINGS THAT MUST NEVER APPEAR IN A CLIENT BUNDLE (24 D15, D11).
+ * STRINGS THAT MUST NEVER APPEAR IN A CLIENT BUNDLE.
  *
  * A host greps every emitted file for each of these. They are this add-on's
  * server-side facts: the machine keys a credential would be SAVED under, the
@@ -92,7 +95,7 @@ export const NEVER_IN_A_BROWSER: readonly { text: string; why: string }[] = [
    *
    * The contradiction is resolved in favour of inert, because that is what the
    * design says. `oauth.ts` writes both endpoints out as constants for the HOST
-   * to read — 24 §5.6 gives the redirect to the host, so the authorize URL has
+   * to read — the host runs the OAuth redirect, so the authorize URL has
    * to be reachable from a browser — and `manifest.test.ts` asserts the token
    * URL's host equals the one hostname the allow-list carries. They are
    * metadata about where a real integration would go, in an add-on whose every
@@ -106,11 +109,11 @@ export const NEVER_IN_A_BROWSER: readonly { text: string; why: string }[] = [
 ];
 
 /**
- * COMPANY MARKS THIS ADD-ON'S OWN SCREENS MAY PRINT (24 AC6).
+ * COMPANY MARKS THIS ADD-ON'S OWN SCREENS MAY PRINT.
  *
  * ── WHY A HOST NEEDS THIS, AND WHY IT CANNOT HOLD IT ITSELF ─────────────────
  *
- * AC6, as amended 2026-08-09, is about the READER: wherever a customer meets
+ * The not-affiliated rule is about the READER: wherever a customer meets
  * the name of a real company, the line saying Adminium is not affiliated with
  * it has to be in front of them — not one screen further in. Each host proves
  * that by touring its own app and asking, of every surface, whether anything on

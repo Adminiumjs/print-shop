@@ -1,5 +1,5 @@
 /**
- * SWITCHING AN ADD-ON OFF, AS A SHOP OWNER DOES IT (24 D16).
+ * SWITCHING AN ADD-ON OFF, AS A SHOP OWNER DOES IT.
  *
  * @vitest-environment jsdom
  *
@@ -16,7 +16,7 @@
  * credential line on its confirm, and this shop's confirm has no such line
  * because it has no credential to talk about: the two fields live in the
  * dialog's own component state and are dropped with it, so there is nothing to
- * delete and nothing to promise. That is D16's "deletes the credentials"
+ * delete and nothing to promise. That is "a disconnect deletes the credentials"
  * satisfied by construction rather than by an action — which is a stronger
  * claim, and the last case here is the one that holds it.
  *
@@ -96,12 +96,12 @@ afterEach(() => {
   host.remove();
 });
 
-describe("the shop is asked before an add-on is switched off (24 D16)", () => {
+describe("the shop is asked before an add-on is switched off", () => {
   it("puts Manage on the shelf and not a one-click Disconnect", () => {
     /*
      * The shelf's control is Manage, deliberately. A one-click Disconnect on a
      * row would be the same irreversible action with the explanation removed,
-     * and the explanation is the whole of what D16 asks for.
+     * and the explanation is the whole of what the disconnect rule asks for.
      */
     const row = host.querySelector(".mp-addon-row")!;
     const labels = [...row.querySelectorAll("button")].map((b) => (b.textContent ?? "").trim());
@@ -172,7 +172,7 @@ describe("and then it takes the surfaces and keeps the work", () => {
   });
 
   /**
-   * ── THE CREDENTIAL HALF OF D16, WHICH THIS SHOP SATISFIES BY NOT HAVING ONE ─
+   * ── THE CREDENTIAL HALF, WHICH THIS SHOP SATISFIES BY NOT HAVING ONE ────────
    *
    * The studio's suite asserts that its confirm says the key is deleted. This
    * app makes a stronger claim and it is worth asserting rather than describing:
@@ -196,7 +196,7 @@ describe("and then it takes the surfaces and keeps the work", () => {
     /*
      * THE ADD-ON'S OWN DECLARATION, not a list this suite keeps. `secret: true`
      * is a fact of the carrier's `manifest.json` and never reaches the client
-     * contract — which is the D15 design rather than an omission — so the names
+     * contract — which is by design rather than an omission — so the names
      * come from the vendored `add-on-facts.ts` the add-on ships for exactly this
      * purpose. A second credentialled add-on vendored tomorrow is covered with
      * no edit here.

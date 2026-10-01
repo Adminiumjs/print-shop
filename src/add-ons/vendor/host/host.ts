@@ -4,7 +4,7 @@
  * The ONE shared contract; the three add-ons here import it by relative path.
  */
 /**
- * THE ONE MIRROR OF THE HOST'S ADD-ON SEAM (24 §5.9).
+ * THE ONE MIRROR OF THE HOST'S ADD-ON SEAM.
  *
  * ── WHY THIS FILE EXISTS AT ALL, AND WHY THERE IS NOW EXACTLY ONE OF IT ──────
  *
@@ -94,10 +94,13 @@ import type { ReactNode } from 'react';
 import type { PayloadFor, ShopClock } from './payloads.ts';
 import { SLOT_FILL, type SlotId } from './slots.ts';
 
-/** Add-on categories — the closed vocabulary of 24 D2. */
+/**
+ * Add-on categories — a closed vocabulary of their own, not the app facets,
+ * because an add-on is not a vertical.
+ */
 export type AddOnCategory = 'artwork' | 'delivery' | 'payments' | 'email' | 'data';
 
-/** What the shop must supply to connect (24 §5.6). */
+/** What the shop must supply to connect. */
 export type ConnectKind = 'none' | 'api-key' | 'oauth2';
 
 /** One ticked row in the connect dialog's permission list. */
@@ -201,7 +204,7 @@ export interface SeededActivityEntry {
  *
  * The words are still the add-on's: `messageKey` resolves in its own bundle,
  * because what an add-on did is phrased by the add-on. A real install reads the
- * same list out of `adminium_audit_log` (24 §5.7, category `add-on`) and this
+ * same list out of `adminium_audit_log` (category `add-on`) and this
  * demo has no server to read; what a host must never do is keep a hand-written
  * history of one particular add-on, because that is a host that knows which
  * add-ons exist.
@@ -218,7 +221,8 @@ export interface ActivityEntry {
 
 /**
  * The declaration that lets the connect dialog offer "use the demo instead"
- * without knowing what a carrier is (24 D11).
+ * without knowing what a carrier is — a demo never reaches the real third
+ * party.
  *
  * An add-on that reaches a third party says which of ITS settings means "do
  * not reach it", and supplies the words for the switch. The host shows the
@@ -238,11 +242,11 @@ export interface DemoSwitch {
  *
  * This used to read `AddOnFill<P = unknown, S extends SlotId = SlotId>`, with
  * `AddOn.fills` typed `readonly AddOnFill<never>[]`, and that pair of
- * declarations is the whole architectural defect 24 D21 tripped over. `never`
- * erased the payload: a fill could declare `render: (p: anything) => …` and be
- * assignable, so nothing anywhere compared what a HOST passes with what a FILL
- * reads. The seam type-checked perfectly and threw three times on the first
- * screen of the second host.
+ * declarations is the whole architectural defect that kept one add-on from
+ * running unchanged in a second host. `never` erased the payload: a fill could
+ * declare `render: (p: anything) => …` and be assignable, so nothing anywhere
+ * compared what a HOST passes with what a FILL reads. The seam type-checked
+ * perfectly and threw three times on the first screen of the second host.
  *
  * Now `S` is the only parameter and the payload is derived from it. A fill for
  * `order.dispatch.panel` receives `SLOT_PAYLOADS['order.dispatch.panel']` and
@@ -311,7 +315,7 @@ export interface AddOn {
   whatKey: string;
   /**
    * Two or three letters, rendered in a neutral --surface-3 tile. NEVER a real
-   * company logo, drawn, traced or approximated (24 D12) — a shelf of twenty
+   * company logo, drawn, traced or approximated — a shelf of twenty
    * add-ons has to read as one system rather than twenty logos, and a redrawn
    * mark would be a legal problem rather than a taste problem.
    */
@@ -338,7 +342,7 @@ export interface AddOn {
    * at registration.
    */
   messages?: Readonly<Record<string, Readonly<Record<string, string>>>>;
-  /** i18n keys naming exactly what a disconnect removes and what it keeps (24 D16). */
+  /** i18n keys naming exactly what a disconnect removes and what it keeps. */
   disconnect?: { goesKey: string; staysKey: string };
   /**
    * Seeded "what it last did", newest first — RELATIVE, and resolved against
@@ -364,8 +368,8 @@ export interface AddOn {
    * add-on that reports `namesCompany: false`.
    *
    * i18n keys in the add-on's own bundle, rendered in order and joined with a
-   * space. 24 AC6 asks every add-on's detail surface to be clear about who else
-   * is involved; an add-on that names no company has no relationship to
+   * space. Every add-on's detail surface has to be clear about who else is
+   * involved; an add-on that names no company has no relationship to
    * disclaim, and rendering nothing there is indistinguishable from having
    * forgotten the notice. So it states the positive fact — that it connects to
    * no outside company and needs no account anywhere — in its own words and in

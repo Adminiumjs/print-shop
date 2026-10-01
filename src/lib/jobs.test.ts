@@ -1,7 +1,7 @@
 /**
  * The works engine. The two imposition figures asserted here are the ones the
  * plan, the comp and the job ticket all quote — 21 up / 24 sheets, and 6 up
- * rotated against 4 up upright / 42 sheets (24 acceptance criterion 2).
+ * rotated against 4 up upright / 42 sheets.
  */
 import { describe, expect, it } from 'vitest';
 

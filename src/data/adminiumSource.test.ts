@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
- * Connected mode (28-public-surface.md §5.2, 28-T28 wave 3).
+ * Connected mode.
  *
  * ── WHY THIS DRIVES A REAL CLIENT ──────────────────────────────────────────
  * `createPublicClient` takes an injectable `fetch`, so these run the SHIPPED
@@ -225,12 +225,12 @@ describe('the catalogue is code, and the database only maps back onto it', () =>
 describe('what a connected build refuses to carry over', () => {
   it('returns a blank works rather than the seed’s address', async () => {
     const connected = snapshotSource((await snapshot())!);
-    // WS-I G-1. `add-ons/records.ts` stamps this on every dispatch label.
+    // G-1. `add-ons/records.ts` stamps this on every dispatch label.
     expect(connected.works()).toEqual({
       name: '', lines: [], city: '', postcode: '', country: '', countryCode: '',
       established: 0, people: 0,
     });
-    // WS-I G-2: `customers` has a town and no postal address at all, so the
+    // G-2: `customers` has a town and no postal address at all, so the
     // delivery add-on resolves nothing — which is the miss it already handles.
     expect(connected.customers()[0]!.address).toEqual({
       lines: [], city: '', postcode: '', country: '',

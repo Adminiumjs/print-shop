@@ -6,17 +6,17 @@
  * WHY A COPY. `@adminium/manifest` is not published to npm and this app is a
  * standalone repo that must build from a clean clone, so it cannot depend on
  * the monorepo. It lives under `testing/` because `zod` is a devDependency
- * here and a runtime dependency the host does not carry (24 D7) — nothing in
+ * here and a runtime dependency the host does not carry — nothing in
  * the shipped bundle's import graph may reach it, which sources.test.ts gates.
  *
  * The only edits are import specifiers: `.js` becomes `.ts`, and the
  * `@adminium/add-on-contracts` package import becomes relative ones.
  */
 /**
- * Manifest validation entry point (13-marketplace.md §2, §9). Layers the
- * envelope schema with the v1 publisher policy: the installer rejects any
- * `publisher.id` other than `adminium` unless the `third-party-publishers`
- * feature flag is on (off in v1). Pure — safe in the browser storefront.
+ * Manifest validation entry point. Layers the envelope schema with the v1
+ * publisher policy: the installer rejects any `publisher.id` other than
+ * `adminium` unless the `third-party-publishers` feature flag is on (off
+ * in v1). Pure — safe in the browser storefront.
  */
 
 import {
@@ -31,22 +31,22 @@ export interface ManifestIssue {
   /** Dotted path to the offending field, e.g. `publisher.id`. */
   path: string;
   message: string;
-  /** Issue code for the add-on rules (24 §5.3); absent for schema issues. */
+  /** Issue code for the add-on rules; absent for schema issues. */
   code?: string;
 }
 
 export interface ValidateManifestOptions {
   /**
    * Allow a non-`adminium` publisher. Wired to the `third-party-publishers`
-   * feature flag (§9); OFF in v1, so third-party manifests are rejected.
+   * feature flag; OFF in v1, so third-party manifests are rejected.
    *
    * For an add-on the gate matters MORE, not less: an add-on's server half runs
-   * in the host process with no sandbox (24 D13), so an unsandboxed in-process
-   * add-on from an unknown publisher would be remote code execution with a
-   * marketplace in front of it.
+   * in the host process with no sandbox, so an unsandboxed in-process add-on
+   * from an unknown publisher would be remote code execution with a marketplace
+   * in front of it.
    */
   allowThirdPartyPublishers?: boolean;
-  /** Installed app keys, so an add-on's `attaches` can be checked (24 §5.3). */
+  /** Installed app keys, so an add-on's `attaches` can be checked. */
   knownAppKeys?: readonly string[];
   /** The host app's table refs, so an add-on's `scopes` can be bounded. */
   hostTables?: readonly string[];
@@ -85,7 +85,7 @@ export function validateManifest(
     });
   }
 
-  // D17 — apps and add-ons share one key namespace, and these keys shadow a
+  // Apps and add-ons share one key namespace, and these keys shadow a
   // storefront route or a data file.
   if ((RESERVED_KEYS as readonly string[]).includes(manifest.key)) {
     issues.push({

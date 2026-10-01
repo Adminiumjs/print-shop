@@ -671,10 +671,11 @@ export function AddOns() {
                               })}
                         </Mono>
                         {/*
-                         * 24 AC6, on the ROW and not only on the card. A shop
-                         * that has connected the carrier sees it here and never
-                         * again on this screen — the available grid it used to
-                         * sit in no longer holds that add-on at all.
+                         * The not-affiliated line, on the ROW and not only on
+                         * the card. A shop that has connected the carrier sees
+                         * it here and never again on this screen — the available
+                         * grid it used to sit in no longer holds that add-on at
+                         * all.
                          */}
                         <Affiliation addOn={addOn} style={{ marginBlockStart: 4 }} />
                       </div>
@@ -726,7 +727,7 @@ export function AddOns() {
                       {t(addOn.lineKey as never)}
                     </div>
                     {/*
-                     * 24 AC6, ON THE CARD. This used to be one footnote under
+                     * THE LINE, ON THE CARD. This used to be one footnote under
                      * the whole shelf — see `components/Affiliation.tsx` for
                      * why that is not the criterion, and why a page-wide grep
                      * for it went green on a page where no card said it.
@@ -784,7 +785,7 @@ export function AddOns() {
 
           {/*
            * THE FOOTNOTE THAT USED TO BE HERE IS GONE, AND ITS ABSENCE IS THE
-           * REPAIR (24 AC6).
+           * REPAIR.
            *
            * It printed `shop.notAffiliated` once, under both lists, on behalf
            * of seven cards — five of which name no company and had nothing to

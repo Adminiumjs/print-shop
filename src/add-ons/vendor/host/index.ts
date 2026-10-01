@@ -12,8 +12,8 @@
  *
  * Everything exported here is either a type or a pure function over plain data.
  * There is no React, no `zod`, no `fetch`, no clock and no storage — an add-on
- * takes no runtime dependency the host does not already have (24 D7), and the
- * package an add-on imports is the last place that rule may be bent.
+ * takes no runtime dependency the host does not already have, and the package
+ * an add-on imports is the last place that rule may be bent.
  */
 
 export type {

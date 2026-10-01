@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
- * A `DataSource` backed by a real Adminium instance (28-public-surface.md §5.2,
- * 28-T28 wave 3).
+ * A `DataSource` backed by a real Adminium instance.
  *
  * ── READS DO NOT BECOME ASYNC ──────────────────────────────────────────────
  * `loadSnapshot` fetches the whole read-set once, before React mounts, and
@@ -10,8 +9,8 @@
  *
  * ── THE EGRESS GATE IS NOT RELAXED FOR THIS FILE ───────────────────────────
  * This repo bans the MEANS of sending, over sources and over built output, and
- * §5.4 budgeted a "relax NET TWO for one declared file" change here. That turned
- * out to be the wrong shape and 28-T26 measured why: a connected data source
+ * a "relax NET TWO for one declared file" change was budgeted here. That turned
+ * out to be the wrong shape and measuring showed why: a connected data source
  * NAMES no request-issuing API — it imports a client that does — so NET TWO
  * never fires on it, while NET ONE reports the ORIGIN Vite inlines. So the only
  * widening is `connectedBackend(VITE_ADMINIUM_API_BASE_URL)`, which forgives one
@@ -29,9 +28,9 @@
  * dashboard can edit and the shop floor cannot sell, and a job whose product or
  * material this build does not know is DROPPED rather than priced with the
  * wrong rate. That is the people-ops pattern applied to a catalogue, and it is
- * the argument for 28-T36 moving pricing into the schema.
+ * the argument for moving pricing into the schema.
  *
- * ── WHAT THE SCHEMA CANNOT SAY (WS-I gaps, marked not hidden) ──────────────
+ * ── WHAT THE SCHEMA CANNOT SAY (schema gaps, marked not hidden) ────────────
  * G-1 THE WORKS HAS NO RECORD. Its name, address, founding year and headcount
  *     are in `demo.ts` and nowhere in `db/schema.sql`. Connected mode returns a
  *     BLANK works rather than Marlow Press — because `add-ons/records.ts` puts
@@ -136,7 +135,7 @@ interface WireDispatch {
 const FINISHED: ReadonlySet<string> = new Set(['dispatched', 'collected']);
 
 /**
- * WS-I G-1 — the works itself, which `db/schema.sql` has nowhere to put.
+ * G-1 — the works itself, which `db/schema.sql` has nowhere to put.
  *
  * Blank, not the seed's. `add-ons/records.ts` prints `SHOP_ORIGIN` on every
  * dispatch label, so carrying Marlow Press across would put one shop's address
@@ -258,13 +257,13 @@ export async function loadSnapshot(client: PublicClient): Promise<Snapshot | nul
     for (const row of materials) if (knownMaterial.has(row.key)) materialKey.set(row.id, row.key);
 
     const mappedCustomers: Customer[] = customers.map((row) => ({
-      // WS-I G-3: no customer key column, so the row id is the key. Nothing
+      // G-3: no customer key column, so the row id is the key. Nothing
       // downstream renders it — the seam resolves it to a display name.
       key: String(row.id),
       name: row.name,
       email: row.email,
       town: row.town,
-      // WS-I G-2: no postal address anywhere in this schema.
+      // G-2: no postal address anywhere in this schema.
       address: { lines: [], city: '', postcode: '', country: '' },
     }));
     const nameOf = new Map(mappedCustomers.map((c) => [c.key, c.name]));
@@ -445,7 +444,7 @@ export function snapshotSource(snap: Snapshot): DataSource {
     stock: () => snap.stock.map((s) => ({ ...s })),
     artwork: () => snap.artwork.map((a) => ({ ...a })),
     nextRef: () => snap.nextRef,
-    // WS-I G-1: blank, not Marlow Press. See the header.
+    // G-1: blank, not Marlow Press. See the header.
     works: () => ({ ...NO_WORKS, lines: [] }),
   };
 }

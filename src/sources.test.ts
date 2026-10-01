@@ -52,7 +52,7 @@ const SHIPPED = ALL.filter((f) => !f.includes('.test.') && !f.includes(`${'testi
 const read = (file: string) => readFileSync(file, 'utf8');
 
 /**
- * ── THE ONE FILE THAT MAY READ THE REAL CLOCK (28-T28) ─────────────────────
+ * ── THE ONE FILE THAT MAY READ THE REAL CLOCK ──────────────────────────────
  *
  * `purity.ts`'s rule is about the DEMO's reproducibility: every date derives
  * from a pinned instant so that a test can assert a promise date and a
@@ -119,7 +119,7 @@ const declaredMeans = (file: string): readonly string[] =>
  *
  * What stood here was a list of origins this app allows, and two of the entries
  * were Canva's — declared by an app that merely RECEIVES the add-on that names
- * them. That is AC20/D21 broken in both directions, and it was demonstrated in
+ * them. That is portability broken both ways, and it was demonstrated in
  * both: vendoring the personalizer into this app unchanged, registration only,
  * turned this suite red on
  * `add-ons/vendor/personalizer/template.ts → http://www.w3.org/2000/svg`, and
@@ -169,7 +169,7 @@ function addOnNeedles(): { text: string; why: string }[] {
  * EVERY address, so the day this app names one somebody has to come here and
  * write down why it cannot cause a request.
  *
- * ── AND CONNECTED MODE DOES NOT RELAX THIS LIST, ON PURPOSE (28-T26) ───────
+ * ── AND CONNECTED MODE DOES NOT RELAX THIS LIST, ON PURPOSE ────────────────
  *
  * `builtOutput.test.ts` declares the Adminium instance a connected build was
  * pointed at, because Vite inlines that origin into the shipped bytes and it
@@ -182,7 +182,7 @@ function addOnNeedles(): { text: string; why: string }[] {
 const OURS: readonly InertOrigin[] = [];
 
 /**
- * ── AND THE PACKAGES A SHIPPED SOURCE MAY IMPORT (28-T26 follow-up) ────────
+ * ── AND THE PACKAGES A SHIPPED SOURCE MAY IMPORT ───────────────────────────
  *
  * Net two banned the APIs that send and the dynamic `import()` of anything but
  * a relative literal, and read as though it covered "reaching outside this
@@ -196,7 +196,7 @@ const OURS: readonly InertOrigin[] = [];
  * buys is that a name nobody agreed to cannot appear in a shipped source.
  */
 /**
- * THE ONE FILE THAT MAY SEND, AND WHAT NARROWS IT (26-T13).
+ * THE ONE FILE THAT MAY SEND, AND WHAT NARROWS IT.
  *
  * ── WHY THERE IS AN EXEMPTION AT ALL ───────────────────────────────────────
  *
@@ -204,7 +204,7 @@ const OURS: readonly InertOrigin[] = [];
  * literal. Connected add-on mode does both, and cannot not: it asks this shop's
  * own Adminium what is installed, and imports the bundles that Adminium serves.
  *
- * 28 §5.4 budgeted a "relax net two for one declared file" change for the
+ * A "relax net two for one declared file" change was budgeted for the
  * connected DATA source and it turned out to be unnecessary — that file names
  * no sender, it imports a client that does. This one is the case that budget
  * was written for, and it is worth being precise about why the two differ: the
@@ -290,7 +290,7 @@ const ALLOWED_MODULES: readonly AllowedModule[] = [
 
 /*
  * Ours, plus whatever the add-ons this app vendors declare for themselves, plus
- * the backend a CONNECTED build was pointed at (28-T26, 28-T28).
+ * the backend a CONNECTED build was pointed at.
  *
  * Empty in every demo build, which is every build the marketplace serves and
  * every build CI makes. When `VITE_ADMINIUM_API_BASE_URL` is set, Vite inlines
@@ -305,11 +305,11 @@ const INERT: readonly InertOrigin[] = [
   ...connectedBackend(process.env['VITE_ADMINIUM_API_BASE_URL']),
 ];
 
-describe('no real third-party call, no real clock (24 D11)', () => {
+describe('no real third-party call, no real clock', () => {
   /*
-   * D11 AS A RULE, NOT A WORD LIST — and this repo is where the word list was
-   * beaten. A verifier put two real requests inside the vendored delivery
-   * add-on's `UnresolvedDestination`:
+   * NO REAL CALL AS A RULE, NOT A WORD LIST — and this repo is where the word
+   * list was beaten. A verifier put two real requests inside the vendored
+   * delivery add-on's `UnresolvedDestination`:
    *
    *     const img = new Image();
    *     img.src = "https://tracking.example-analytics.net/p?c=" + …
@@ -511,7 +511,7 @@ describe('no real third-party call, no real clock (24 D11)', () => {
    * to a shipped module left both suites green.
    */
   /*
-   * ── THE CONNECTED-BUILD RELAXATION, DRIVEN AT ITS EDGES (28-T26) ─────────
+   * ── THE CONNECTED-BUILD RELAXATION, DRIVEN AT ITS EDGES ──────────────────
    *
    * `connectedBackend` is the only thing that can widen NET ONE, so it is the
    * only thing worth trying to beat. These run over the rule itself rather than
@@ -558,7 +558,7 @@ describe('no real third-party call, no real clock (24 D11)', () => {
   });
 
   it('reads no real clock and rolls no dice', () => {
-    // 21 D6. Every date in the app derives from the pinned moment below, which
+    // Every date in the app derives from the pinned moment below, which
     // is what lets `quote.test.ts` assert a promise date and a screenshot taken
     // in a year still match the running demo.
     const offenders = SHIPPED.flatMap((file) =>
@@ -629,7 +629,7 @@ describe('no real third-party call, no real clock (24 D11)', () => {
   });
 });
 
-describe('secrets are server-only (24 D15)', () => {
+describe('secrets are server-only', () => {
   /**
    * ── THE SAME NEEDLES, ONE BUILD EARLIER, AND THEY ARE THE ADD-ON'S ────────
    *
@@ -676,7 +676,7 @@ describe('secrets are server-only (24 D15)', () => {
     /*
      * `src/testing/` holds the vendored manifest validator and the lexicon
      * fixture. Both import `zod`, which is a devDependency and a runtime
-     * dependency the host does not carry (24 D7) — and the lexicon module
+     * dependency the host does not carry — and the lexicon module
      * spells every banned word, so shipping it would fail the very grep it
      * defines. An import from a screen is the one way either could get out.
      */
@@ -776,7 +776,7 @@ describe('the vendored halves are copies, and say so', () => {
    */
   it('resolves every vendored import inside the vendor tree', () => {
     const bare = /(?:from|import)\s*\(?\s*['"](@[^'"]+|[a-z][^'"./]*)['"]/g;
-    /** What the host app itself already depends on (24 D7). */
+    /** What the host app itself already depends on. */
     const ALLOWED = new Set(['react', 'react-dom', 'react/jsx-runtime', 'lucide-react']);
     const offenders = vendored().flatMap((file) =>
       [...codeOf(file).matchAll(bare)]
@@ -796,9 +796,9 @@ describe('the vendored halves are copies, and say so', () => {
   });
 });
 
-describe('the host names no company (acceptance criterion 5)', () => {
+describe('the host names no company', () => {
   /*
-   * AC5 says nothing in `printing` names a carrier, and the grep the criterion
+   * The rule says nothing in `printing` names a carrier, and the grep the rule
    * prescribes is "dhl" — which is exactly the name this app does NOT contain
    * and so proved nothing. What it did contain, until this suite existed, was
    * `name: 'Royal Mail Shipping'`, `'Stripe Payments'` and `'Mailchimp Lists'`
@@ -838,7 +838,7 @@ describe('the host names no company (acceptance criterion 5)', () => {
   });
 });
 
-describe('no path a banned grep would find (17 §2)', () => {
+describe('no path a banned grep would find', () => {
   it('writes no href containing the banned fragment', () => {
     const offenders = SHIPPED.filter((file) => /href=["'][^"']*\/mo/.test(codeOf(file)));
     expect(offenders.map(relative)).toEqual([]);
@@ -895,7 +895,7 @@ describe("the test command a reader is given is the one that is configured", () 
  * — which fails loudly here rather than silently on the day an add-on that
  * really does name an address is vendored.
  */
-describe('an add-on brings its own inert origins with it (24 AC20, D21)', () => {
+describe('an add-on brings its own inert origins with it', () => {
   it('reads a declaration off every add-on this app vendors', () => {
     const declared = Object.entries(VENDORED_ORIGINS);
     expect(declared.length, 'no vendored inert-origin declarations were found').toBeGreaterThan(0);

@@ -5,7 +5,7 @@
  */
 /**
  * The settings the CLIENT half is allowed to see — `publicSettings` in the
- * manifest, and nothing else (24 D15).
+ * manifest, and nothing else, because secrets never reach the browser.
  *
  * `api_key` and `account_number` are marked `secret: true` and are absent from
  * this module deliberately: they are injected into the server context, redacted
@@ -23,7 +23,7 @@
  */
 
 export interface PublicSettings {
-  /** D11 — on by default. The demo makes no third-party call, ever. */
+  /** On by default. The demo makes no third-party call, ever. */
   demo_transport: boolean;
   /** `HH:MM`. Book before it and the van calls the same afternoon. */
   collection_cutoff: string;

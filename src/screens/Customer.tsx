@@ -890,7 +890,7 @@ export function Artwork() {
    * it: one job takes one file, and two artwork panels on one screen would
    * leave a customer choosing between them with no way to tell which the works
    * will print. The checks below are the SAME checks — `checkArtwork` does not
-   * know or care where the file came from (24 §5.5).
+   * know or care where the file came from.
    */
   const real = supplied?.file ?? uploaded;
   const showFile = supplied !== null || dropped;
@@ -1019,7 +1019,7 @@ export function Artwork() {
                     {t("addon.host.artwork.why")}
                   </span>
                   {/*
-                   * AC7, and the reason it belongs HERE rather than in a
+                   * A label, and the reason it belongs HERE rather than in a
                    * footnote: three of the works' six checks — ink near the
                    * trim, colour space, embedded fonts — have nothing to
                    * measure on an add-on-supplied design, because

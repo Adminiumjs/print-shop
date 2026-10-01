@@ -1,6 +1,6 @@
 /**
- * The arithmetic is right and asserted, not eyeballed (24 acceptance
- * criterion 2). The worked example below is the one figure that the prompt, the
+ * The arithmetic is right and asserted, not eyeballed. The worked example
+ * below is the one figure that the prompt, the
  * comp, this suite and the running demo must all agree on — if it moves, one of
  * them is wrong and this file says which.
  */

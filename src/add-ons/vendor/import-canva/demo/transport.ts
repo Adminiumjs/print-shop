@@ -4,7 +4,7 @@
  * The add-on key is `import-canva`; its manifest, tests and README live in the monorepo.
  */
 /**
- * The demo transport (24 D11): four designs, no network.
+ * The demo transport: four designs, no network.
  *
  * Nothing here calls out, and nothing here reads a real clock. Every date, file
  * id and filename is derived from the PINNED clock the host passes in

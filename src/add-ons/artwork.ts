@@ -76,7 +76,7 @@ export function jobSpecFor(config: Configuration, productLabel: string): JobSpec
 /**
  * An `ArtworkRef` as the works' own `checkArtwork()` wants to see it.
  *
- * THE HOST RUNS THE CHECKS, never the add-on that made the file (24 §5.5), and
+ * THE HOST RUNS THE CHECKS, never the add-on that made the file, and
  * this is the conversion that lets it: whatever an add-on believes about its
  * own output, what reaches `checkArtwork` is the four facts the contract
  * carries — finished size, bleed, dots and pages — measured the way an upload
