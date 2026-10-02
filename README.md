@@ -191,3 +191,8 @@ rather than rendering a raw dotted key at one reader.
 ## Licence
 
 AGPL-3.0-only. See `LICENSE`.
+
+## Building on this app with a coding agent
+
+The Adminium skills teach Claude Code, Codex and other agents to build and change an app:
+`npx skills add Adminiumjs/skills` — https://github.com/Adminiumjs/skills
