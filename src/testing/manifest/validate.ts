@@ -21,11 +21,18 @@
 
 import {
   FIRST_PARTY_PUBLISHER_ID,
+  LOCAL_PUBLISHER_ID,
   RESERVED_KEYS,
   addOnIssues,
+  cappedFormulaWarnings,
   manifestSchema,
   type Manifest,
+  PHONE_KIND,
+  PHONE_SIDE,
 } from './schema.ts';
+import { plainTextLengthWarnings } from './public-access.ts';
+import { ledgerIndexIssues } from './ledger-indexes.ts';
+import { tableShapeIssues } from './table-shapes.ts';
 
 export interface ManifestIssue {
   /** Dotted path to the offending field, e.g. `publisher.id`. */
@@ -46,15 +53,82 @@ export interface ValidateManifestOptions {
    * in front of it.
    */
   allowThirdPartyPublishers?: boolean;
+  /**
+   * Allow the publisher `local`: an app made on this install and installed
+   * from a file. Narrower than the option above on purpose — it lets exactly
+   * one id through, and never for an add-on, whose server half would run in
+   * the host process.
+   */
+  allowLocalPublisher?: boolean;
   /** Installed app keys, so an add-on's `attaches` can be checked. */
   knownAppKeys?: readonly string[];
   /** The host app's table refs, so an add-on's `scopes` can be bounded. */
   hostTables?: readonly string[];
 }
 
+/**
+ * A warning is advice, never a refusal: a manifest with warnings validates.
+ * Kept apart from `issues` on purpose — every app repo compares its vendored
+ * validator's issues with Adminium's, and a warning reported as an issue
+ * would fail them all on their next push.
+ */
 export type ValidateManifestResult =
-  | { ok: true; manifest: Manifest }
-  | { ok: false; issues: ManifestIssue[] };
+  | { ok: true; manifest: Manifest; warnings: ManifestIssue[] }
+  | { ok: false; issues: ManifestIssue[]; warnings: ManifestIssue[] };
+
+/** Rules that fill a column, so an insert may leave it out. */
+const FILLING_RULES = ['copy', 'sequence', 'code', 'rollup', 'stamp', 'formula', 'format', 'default', 'lookup', 'perNight'] as const;
+
+/** A setting key that reads like bank details (an IBAN, an account or routing number). */
+const BANK_SETTING = /(^|_)(bank|iban|swift|routing)(_|$)|account_?(number|no|name)|sort_?code/i;
+
+/**
+ * Advice about an app that validates: a column with no default that is not
+ * nullable is NOT NULL once installed, so every insert must give it a value —
+ * a draft saved half-filled is refused. Every app round has hit this once.
+ */
+export function manifestWarnings(manifest: Manifest): ManifestIssue[] {
+  if (manifest.kind !== 'app') return [];
+  const out: ManifestIssue[] = [];
+  (manifest.requiredSchema?.tables ?? []).forEach((table, t) => {
+    table.columns.forEach((column, c) => {
+      if (column.nullable === true || column.default !== undefined || column.role !== undefined) return;
+      if (FILLING_RULES.some((rule) => column.rules?.[rule] !== undefined)) return;
+      out.push({
+        path: `requiredSchema.tables.${String(t)}.columns.${String(c)}`,
+        message: `"${table.ref}.${column.ref}" has no default and is not nullable, so it will be required at install: every new row must give it a value`,
+      });
+    });
+    // MySQL compares text ignoring case and accents; Postgres and SQLite do not.
+    (table.unique ?? []).forEach((set, k) => {
+      for (const ref of set) {
+        const column = table.columns.find((c) => c.ref === ref);
+        if (column?.type !== 'text' || column.rules?.normalize !== undefined || column.rules?.code !== undefined) continue;
+        out.push({
+          path: `requiredSchema.tables.${String(t)}.unique.${String(k)}`,
+          message: `MySQL compares "${table.ref}.${ref}" ignoring case and accents, Postgres and SQLite do not: give it normalize "email" or "trim"`,
+        });
+      }
+    });
+  });
+  // A plain-text column longer than its plain text takes: the end of what a guest types is refused.
+  out.push(...plainTextLengthWarnings(manifest.publicAccess ?? [], manifest.requiredSchema?.tables ?? []));
+  // A capped balance worked out from a formula whose columns stay open while the capped rows exist.
+  for (const warning of cappedFormulaWarnings(manifest.requiredSchema?.tables ?? [])) out.push({ path: warning.path.map(String).join('.'), message: warning.message });
+  /*
+   * Every manifest setting that is not secret is published to the app's
+   * customer side. Bank details belong in the app's settings table, read
+   * only by a signed-in guest; one declared here must at least be secret.
+   */
+  (manifest.settings ?? []).forEach((setting, s) => {
+    if (setting.secret === true || !BANK_SETTING.test(setting.key)) return;
+    out.push({
+      path: `settings.${String(s)}`,
+      message: `"${setting.key}" reads like bank details, and a setting that is not secret is published to the customer side: keep them in the settings table, or mark it secret`,
+    });
+  });
+  return out;
+}
 
 /**
  * Validate an untrusted manifest document. Returns the typed manifest on
@@ -68,17 +142,33 @@ export function validateManifest(
   if (!parsed.success) {
     return {
       ok: false,
-      issues: parsed.error.issues.map((issue) => ({
-        path: issue.path.map(String).join('.'),
-        message: issue.message,
-      })),
+      issues: parsed.error.issues.map((issue) => {
+        // A check with a code of its own (a ledger's scope) hands it through the issue's params.
+        const code = issue.code === 'custom' ? (issue as { params?: { code?: unknown } }).params?.code : undefined;
+        return { path: issue.path.map(String).join('.'), message: issue.message, ...(typeof code === 'string' ? { code } : {}) };
+      }),
+      warnings: [],
     };
   }
 
   const manifest = parsed.data;
   const issues: ManifestIssue[] = [];
 
-  if (!(opts.allowThirdPartyPublishers ?? false) && manifest.publisher.id !== FIRST_PARTY_PUBLISHER_ID) {
+  const publisher = manifest.publisher.id;
+  if (publisher === LOCAL_PUBLISHER_ID && manifest.kind === 'add-on') {
+    // Before the third-party option, which would otherwise let it through.
+    issues.push({
+      path: 'publisher.id',
+      message: `an add-on cannot carry the publisher "${LOCAL_PUBLISHER_ID}"`,
+    });
+  } else if (publisher === LOCAL_PUBLISHER_ID && !(opts.allowThirdPartyPublishers ?? false)) {
+    if (!(opts.allowLocalPublisher ?? false)) {
+      issues.push({
+        path: 'publisher.id',
+        message: `"${LOCAL_PUBLISHER_ID}" is a self-made app: it installs from a file you upload, not from a catalogue`,
+      });
+    }
+  } else if (!(opts.allowThirdPartyPublishers ?? false) && publisher !== FIRST_PARTY_PUBLISHER_ID) {
     issues.push({
       path: 'publisher.id',
       message: `third-party publishers are not accepted in v1 (expected "${FIRST_PARTY_PUBLISHER_ID}")`,
@@ -101,8 +191,80 @@ export function validateManifest(
     }),
   );
 
-  if (issues.length > 0) return { ok: false, issues };
-  return { ok: true, manifest };
+  issues.push(...sampleDataIssues(manifest));
+  // The receipt key Adminium makes must be one every database can index.
+  issues.push(...ledgerIndexIssues(manifest));
+  // A table shared under a shape Adminium writes down is what that shape says.
+  if (manifest.kind === 'app') issues.push(...tableShapeIssues(manifest));
+
+  const warnings = manifestWarnings(manifest);
+  if (issues.length > 0) return { ok: false, issues, warnings };
+  return { ok: true, manifest, warnings };
+}
+
+/**
+ * An app that declares no screen of its own: every `frontends` entry is
+ * `kind: "none"`. Its tables and pages are the whole app, and a package of it
+ * carries no built side.
+ */
+export function isManifestOnly(manifest: Manifest): boolean {
+  // A phone side is built on the builder's machine and is no part of a package.
+  return manifest.kind === 'app' && manifest.frontends.every((frontend) => frontend.kind === 'none' || frontend.kind === PHONE_KIND);
+}
+
+/** Whether the app has a phone side (`frontends` names `mobile`). */
+export function hasPhoneSide(manifest: Manifest): boolean {
+  return manifest.kind === 'app' && manifest.frontends.some((frontend) => frontend.side === PHONE_SIDE);
+}
+
+/** `sampleData.skipWhenShared` names the app's own tables, its `table` is one it shares, and no table left in links to a skipped one. */
+function sampleDataIssues(manifest: Manifest): ManifestIssue[] {
+  const out: ManifestIssue[] = [];
+  if (manifest.kind === 'app') {
+    // Rows for an add-on: one the app names, in a file of its own.
+    const named = new Set([...(manifest.addOns?.requires ?? []), ...(manifest.addOns?.suggests ?? [])].map((need) => need.key));
+    for (const [key, section] of Object.entries(manifest.sampleData?.addOns ?? {})) {
+      if (!named.has(key)) {
+        out.push({ path: `sampleData.addOns.${key}`, message: `"${key}" is not an add-on this app names: add it to addOns.requires or addOns.suggests` });
+      }
+      if (section.file === manifest.sampleData?.file) {
+        out.push({ path: `sampleData.addOns.${key}.file`, message: `rows for "${key}" are a file of their own, not the app's own sample file` });
+      }
+    }
+  }
+  const rule = manifest.kind === 'app' ? manifest.sampleData?.skipWhenShared : undefined;
+  if (rule === undefined) return out;
+  const tables = new Map((manifest.requiredSchema?.tables ?? []).map((table) => [table.ref, table]));
+  const shared = tables.get(rule.table);
+  if (shared === undefined) {
+    out.push({ path: 'sampleData.skipWhenShared.table', message: `"${rule.table}" is not one of this app's tables` });
+  } else if (shared.shape === undefined) {
+    out.push({
+      path: 'sampleData.skipWhenShared.table',
+      message: `"${rule.table}" is built on no shape, so no other app can share it`,
+    });
+  }
+  const seen = new Set<string>();
+  rule.skip.forEach((ref, i) => {
+    if (!tables.has(ref)) out.push({ path: `sampleData.skipWhenShared.skip.${String(i)}`, message: `"${ref}" is not one of this app's tables` });
+    else if (seen.has(ref)) out.push({ path: `sampleData.skipWhenShared.skip.${String(i)}`, message: `"${ref}" is listed twice` });
+    seen.add(ref);
+  });
+  /*
+   * Closed under links: a table left in whose rows point at a skipped table
+   * would point its sample rows at rows never added, so every add would fail.
+   */
+  for (const table of tables.values()) {
+    if (seen.has(table.ref)) continue;
+    for (const column of table.columns) {
+      if (column.type !== 'fk' || column.references === undefined || !seen.has(column.references)) continue;
+      out.push({
+        path: 'sampleData.skipWhenShared.skip',
+        message: `"${table.ref}" links to "${column.references}" (${column.ref}), which is skipped: skip "${table.ref}" too, or its sample rows point at rows never added`,
+      });
+    }
+  }
+  return out;
 }
 
 /** Throwing variant for trusted callers (build tooling); use the safe form at runtime. */

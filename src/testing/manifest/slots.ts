@@ -195,9 +195,9 @@ export const SLOT_REGISTRY = [
      *   6. the post-resolution satisfaction action
      *   7. attach-a-room to a session record
      *
-     * An earlier review declined this same shape and said what would change
-     * its mind: two independent implementations' worth of evidence. That is
-     * the bar this cleared, and the ruling is recorded rather than inferred.
+     * This same shape was declined once, with what would change that stated:
+     * two independent implementations' worth of evidence. That is the bar this
+     * cleared, and the ruling is recorded rather than inferred.
      *
      * ── WHAT IT IS FOR ──────────────────────────────────────────────────────
      *
@@ -216,10 +216,9 @@ export const SLOT_REGISTRY = [
      * STUDENT's own page (`learning-platform/src/screens/Certificate.tsx`
      * opens "the student's completion sheet") and the wallet pass is the
      * ticket-holder's. Ruling the id `staff` would have put the two exhibits
-     * everyone actually wants to demo outside the thing bought to carry them,
-     * and 31 §A.3 already records "neither the 11 nor A.1 covers a customer
-     * surface" as an open gap — which is the same observation from the other
-     * end.
+     * everyone actually wants to demo outside the thing bought to carry them.
+     * That no slot yet covers a customer surface is a known gap, and this is
+     * the same observation from the other end.
      *
      * There is nothing in the payload that a customer looking at their own
      * record makes dishonest: it is a record and a way to write back to it,
