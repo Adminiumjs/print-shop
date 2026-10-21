@@ -1,5 +1,8 @@
 # Print Shop
 
+> **This app will be reworked in Q4 2026.** Until then it is kept as it is and may not show what
+> the newest Adminium can do.
+
 An open-source **print works, front and back** — an example app for
 [Adminium](https://adminium.dev), and the host the wave's three demo add-ons
 attach to. The demo shop is called **Marlow Press**.
