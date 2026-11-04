@@ -1,6 +1,26 @@
 import { defineConfig, type UserConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
+import { surfaceJsonPlugin } from "./surface-emit.ts";
+import { MESSAGES } from "./src/i18n/messages/index.ts";
+import { APP_KEY, APP_LABEL_KEY, SURFACE_NAV } from "./src/surface-nav.ts";
+
+/*
+ * Every build-time flag is defined, always, even when unset: Vite replaces
+ * `import.meta.env` with an object of the variables it loaded, so an unset
+ * one compiles to a lookup no minifier folds, and code meant for one build
+ * ships in another. `define` always writes a literal, so `SURFACE_SIDE` and
+ * the rest in `src/surface.ts` fold in every build.
+ */
+const FLAGS = [
+  "VITE_ADMINIUM_SURFACE_SIDE",
+  "VITE_ADMINIUM_API_BASE_URL",
+  "VITE_ADMINIUM_PUBLISHABLE_KEY",
+  "VITE_ADMINIUM_ORDER_KEY",
+  "VITE_ADMINIUM_DESIGN_KEY",
+] as const;
+const define = Object.fromEntries(FLAGS.map((name) => [`import.meta.env.${name}`, JSON.stringify(process.env[name] ?? "")]));
+
 /**
  * Vite's config type plus the block vitest reads out of the same file.
  *
@@ -22,7 +42,16 @@ interface ViteWithVitest extends UserConfig {
 // `build:demo` script overrides it with --base=/demo/print-shop/ so the app
 // can be served from the Adminium demo sub-path.
 const config: ViteWithVitest = {
-  plugins: [react()],
+  define,
+  plugins: [
+    react(),
+    /*
+     * `surface.json` beside `index.html`, on surface builds only: Adminium
+     * reads it to list the app's sections. A build with no side writes
+     * nothing, so the demo and standalone builds stay as they were.
+     */
+    surfaceJsonPlugin({ appKey: APP_KEY, appLabelKey: APP_LABEL_KEY, nav: SURFACE_NAV, messages: MESSAGES }),
+  ],
   /*
    * ── THE DEV SERVER, AND THE ONE THING IT PROXIES ──────────────────────────
    *

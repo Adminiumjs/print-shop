@@ -1,0 +1,11 @@
+{
+  "from": "checkout",
+  "package": "@adminiumjs/add-on-customiser",
+  "version": "1.0.15",
+  "commit": "52c95aa",
+  "files": {
+    "index.js": "e82a3c49e8b7917d721fbf1bc7ba2d93f83bbb5d97b906d354060a3c9f0f6ca2",
+    "stage3d.js": "4eb6e168cdb76b73717f5bb3feb3e97e92ce49401d81062204224fd7e7a543c1",
+    "editor.css": "67cf89c95b18bb6b817eb9e180eb9857021cedc01c2cc25c10e38277d7437c76"
+  }
+}
