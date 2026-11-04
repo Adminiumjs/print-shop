@@ -1,13 +1,13 @@
 /**
  * The option graph: what the works prints, and which choices each thing allows.
  *
- * Split out of `quote.ts` for the same reason `rates.ts` is: this is DATA. The
+ * Split out of `quote.ts` because this is DATA, as `press.ts` is. The
  * engine reads it; no screen retypes a millimetre. Labels live in the i18n
  * bundle under `data.*` — nothing here is a display string, only keys and
  * numbers, so the whole catalogue translates without touching this file.
  */
 
-import type { FinishKey, MaterialKey, PackagingKey } from './rates.ts';
+import type { FinishKey, MaterialKey, PackagingKey } from './press.ts';
 
 /** Named sizes, in millimetres. The mono chips render these verbatim. */
 export interface PresetSize {

@@ -218,7 +218,7 @@ describe('the add-ons’ own strings arrived', () => {
  *   `US$` / `$US` through `Intl.NumberFormat`. A bare `$` names a dozen
  *   currencies.
  *
- *   AND A TYPED PRICE CANNOT FOLLOW THE ENGINE. The rate lives in `rates.ts`;
+ *   AND A TYPED PRICE CANNOT FOLLOW THE RATE CARD. The rate lives in Adminium;
  *   change it and eight bundles go on quoting the old figure on two screens
  *   while the basket charges the new one.
  *

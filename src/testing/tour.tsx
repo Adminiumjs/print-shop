@@ -43,7 +43,7 @@ import { I18nProvider } from "../i18n/index.tsx";
 import type { LocaleTag } from "../i18n/locales.ts";
 import { MESSAGES } from "../i18n/messages/index.ts";
 import { finishOptions } from "../lib/quote.ts";
-import { MATERIALS } from "../lib/rates.ts";
+import { MATERIALS } from "../lib/press.ts";
 import { ALL_VIEWS, useStore, type Overlay, type View } from "../state/store.ts";
 
 export interface Visit {

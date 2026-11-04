@@ -15,8 +15,8 @@ import { AddOnSlot } from "./AddOnSlot.tsx";
 import { Affiliation } from "./Affiliation.tsx";
 import { useT, type TFunction } from "../i18n/index.tsx";
 import { cents, clock } from "../lib/format.ts";
-import { priceQuote } from "../lib/quote.ts";
-import { PROOF_BY_POST_CENTS, TAX_RATE } from "../lib/rates.ts";
+import { priced } from "../lib/priced.ts";
+import { RATE_CARD } from "../lib/rateCard.ts";
 import { useStore } from "../state/store.ts";
 import { NavSheet } from "./Shell.tsx";
 import { Field, Mono, Monogram, Switch, Tag } from "./Primitives.tsx";
@@ -105,7 +105,14 @@ function QuoteSheet() {
   const t = useT();
   const config = useStore((s) => s.config);
   if (config === null) return null;
-  const quote = priceQuote(config);
+  const quote = priced(config);
+  if (quote === null) {
+    return (
+      <Modal title={t("cust.quote.breakdownTitle")}>
+        <p className="mp-lede">{t("cust.quote.notPriced")}</p>
+      </Modal>
+    );
+  }
 
   return (
     <Modal title={t("cust.quote.breakdownTitle")}>
@@ -117,7 +124,7 @@ function QuoteSheet() {
       ))}
       <div className="mp-qrow">
         <div className="mp-qrow-label" style={{ fontWeight: 500, color: "var(--fg-muted)" }}>
-          {t("line.tax", { pct: Math.round(TAX_RATE * 100) })}
+          {t("line.tax", { pct: RATE_CARD.taxPct })}
         </div>
         <Mono className="mp-qrow-amt">{cents(quote.taxCents)}</Mono>
       </div>
@@ -204,7 +211,7 @@ function ProofSheet({ jobRef }: { jobRef: string }) {
               <span style={{ fontSize: 12, color: "var(--fg-subtle)" }}>
                 {key === "email"
                   ? t("overlay.proof.emailNote")
-                  : t("overlay.proof.postNote", { price: cents(PROOF_BY_POST_CENTS) })}
+                  : t("overlay.proof.postNote", { price: cents(RATE_CARD.proofByPostCents) })}
               </span>
             </span>
           </button>

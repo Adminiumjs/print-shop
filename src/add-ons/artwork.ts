@@ -10,7 +10,7 @@
  * screen easier.
  */
 
-import { BLEED_MM } from '../lib/rates.ts';
+import { BLEED_MM } from '../lib/press.ts';
 import { resolveSize, type ArtworkFile, type Configuration } from '../lib/quote.ts';
 
 /** `artwork-source@1`. What an add-on resolves its flow to. */

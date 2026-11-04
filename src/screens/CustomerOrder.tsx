@@ -18,8 +18,9 @@ import { useI18n, useT } from "../i18n/index.tsx";
 import { PRODUCT_BY_KEY } from "../lib/catalogue.ts";
 import { cents, day, mm, num, shortDay } from "../lib/format.ts";
 import { CUSTOMER_STAGES, customerStageIndex, proofApproved } from "../lib/jobs.ts";
-import { checkArtwork, priceQuote, promiseFor, resolveSize } from "../lib/quote.ts";
-import { TAX_RATE } from "../lib/rates.ts";
+import { priced } from "../lib/priced.ts";
+import { checkArtwork, promiseFor, resolveSize } from "../lib/quote.ts";
+import { RATE_CARD } from "../lib/rateCard.ts";
 import { useStore, worksBandFor } from "../state/store.ts";
 
 export function Basket() {
@@ -83,16 +84,18 @@ export function Basket() {
     );
   }
 
-  const quotes = basket.map((line) => priceQuote(line.config));
   /*
-   * A carrier's quote is taxed like anything else the customer is charged, and
-   * it is zero unless one was chosen — `chooseAddOnDelivery` has already set
-   * every line to collection, so the works' own band is not in `goods` at the
-   * same time.
+   * Each line as Adminium priced it (its work, its delivery band and its tax),
+   * added up; a line Adminium has not priced holds the order back. A carrier's
+   * quote is the carrier's own figure, added as it came — `chooseAddOnDelivery`
+   * has already set every line to collection, so the works' own band is not in
+   * the lines at the same time.
    */
+  const quotes = basket.map((line) => priced(line.config));
+  const unpriced = quotes.some((q) => q === null);
   const carriage = deliveryChoice === null ? 0 : Math.round(deliveryChoice.amount * 100);
-  const goods = quotes.reduce((sum, q) => sum + q.subtotalCents, 0) + carriage;
-  const tax = Math.round(goods * TAX_RATE);
+  const goods = quotes.reduce((sum, q) => sum + (q?.subtotalCents ?? 0), 0) + carriage;
+  const tax = quotes.reduce((sum, q) => sum + (q?.taxCents ?? 0), 0);
   const total = goods + tax;
   const readyBy = basket
     .map((line) => promiseFor(line.config, { iso: now.iso, hour: now.hour }).readyBy)
@@ -124,7 +127,7 @@ export function Basket() {
                         {t(`data.product.${product.key}` as never)}
                       </span>
                       <Mono style={{ fontSize: 15, fontWeight: 700 }}>
-                        {cents(quotes[i]!.totalCents)}
+                        {quotes[i] === null ? t("cust.quote.askUs") : cents(quotes[i]!.totalCents)}
                       </Mono>
                     </div>
                     <div className="mp-sizes" style={{ marginBlockStart: 8 }}>
@@ -401,7 +404,7 @@ export function Basket() {
           </div>
           <div className="mp-qrow" style={{ borderBlockEnd: 0 }}>
             <div className="mp-qrow-label" style={{ fontWeight: 500, color: "var(--fg-muted)" }}>
-              {t("line.tax", { pct: Math.round(TAX_RATE * 100) })}
+              {t("line.tax", { pct: RATE_CARD.taxPct })}
             </div>
             <Mono className="mp-qrow-amt">{cents(tax)}</Mono>
           </div>
@@ -416,6 +419,7 @@ export function Basket() {
           <button
             type="button"
             className="mp-button mp-btn mp-button--block"
+            disabled={unpriced}
             onClick={() => {
               const ref = useStore.getState().jobs.length >= 0 ? "MP-4127" : "MP-4127";
               placeOrder();

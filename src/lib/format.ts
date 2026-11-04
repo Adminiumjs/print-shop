@@ -10,7 +10,7 @@
 
 import { money as ambientMoney, number as ambientNumber, locale, t } from "../i18n/ambient.ts";
 import type { TintFamily } from "./catalogue.ts";
-import { PACKAGING_BATCH } from "./rates.ts";
+import { PACKAGING_BATCH } from "./press.ts";
 
 /** Cents → the reader's currency format. The engines work in integer cents. */
 export function cents(value: number): string {
@@ -82,8 +82,8 @@ export function sqm(area: number): string {
  *   `US$` in English and `$US` in French — because a bare `$` names about a
  *   dozen different currencies. These three said `$`.
  *
- *   AND A PRICE IN A TRANSLATED STRING CANNOT FOLLOW THE ENGINE. `rates.ts`
- *   holds `rateCents: 450`. Change it and eight bundles go on saying 4.50 — in
+ *   AND A PRICE IN A TRANSLATED STRING CANNOT FOLLOW THE RATE CARD. The card
+ *   holds a box at 4.50. Change it and eight bundles go on saying 4.50 — in
  *   eight languages, on the price list AND on the configurator, with the basket
  *   charging something else. A number a program computes must not also be typed
  *   into prose.

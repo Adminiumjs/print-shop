@@ -35,8 +35,10 @@ import { useT } from "../i18n/index.tsx";
 import { PRODUCTS, PRODUCT_BY_KEY, SIZE_BY_KEY, type ProductKey } from "../lib/catalogue.ts";
 import { cents, clock, day, mm, num, shortDay } from "../lib/format.ts";
 import { imposition, proofApproved } from "../lib/jobs.ts";
-import { priceQuote, resolveSize } from "../lib/quote.ts";
-import { BLEED_MM, DELIVERY_BANDS, MATERIALS, SAFE_MM } from "../lib/rates.ts";
+import { BLEED_MM, DELIVERY_BANDS, MATERIALS, SAFE_MM } from "../lib/press.ts";
+import { priced } from "../lib/priced.ts";
+import { resolveSize } from "../lib/quote.ts";
+import { deliveryRateCents } from "../lib/rateCard.ts";
 import { useStore } from "../state/store.ts";
 
 /**
@@ -102,7 +104,8 @@ export function Reorder() {
       <div className="mp-stack" style={{ gap: 12 }}>
         {pastJobs.map((job) => {
           const product = PRODUCT_BY_KEY[job.productKey as ProductKey];
-          const quote = priceQuote({
+          // Re-priced on today's rate card: Adminium's price of the same job.
+          const quote = priced({
             product: job.productKey as never,
             material: job.materialKey as never,
             size: product.sizes[0]!,
@@ -137,7 +140,7 @@ export function Reorder() {
               </div>
               <div style={{ textAlign: "end", flex: "0 0 auto" }}>
                 <Mono style={{ fontSize: 15, fontWeight: 800, display: "block" }}>
-                  {cents(quote.totalCents)}
+                  {quote === null ? t("cust.quote.askUs") : cents(quote.totalCents)}
                 </Mono>
                 <div style={{ fontSize: 10.5, color: "var(--fg-subtle)", marginBlockEnd: 7 }}>
                   {t("cust.reorder.today")}
@@ -443,7 +446,7 @@ export function SavedQuotes() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 14 }}>
           {saved.map((quote) => {
             const product = PRODUCT_BY_KEY[quote.config.product];
-            const priced = priceQuote(quote.config);
+            const price = priced(quote.config);
             const size = resolveSize(quote.config);
             return (
               <div key={quote.ref} className="mp-panel mp-panel-pad mp-stack" style={{ gap: 12 }}>
@@ -465,7 +468,7 @@ export function SavedQuotes() {
                     </div>
                   </div>
                   <Mono style={{ fontSize: 14.5, fontWeight: 800, flex: "0 0 auto" }}>
-                    {cents(priced.totalCents)}
+                    {price === null ? t("cust.quote.askUs") : cents(price.totalCents)}
                   </Mono>
                 </div>
                 <div style={{ fontSize: 12.5, color: "var(--fg-muted)" }}>
@@ -547,7 +550,7 @@ export function DeliveryInfo() {
             <span style={{ fontSize: 13.5, fontWeight: 700 }}>
               {t(`data.delivery.${band.key}` as never)}
             </span>
-            <Mono style={{ fontSize: 14, fontWeight: 800 }}>{cents(band.rateCents)}</Mono>
+            <Mono style={{ fontSize: 14, fontWeight: 800 }}>{cents(deliveryRateCents(band.key))}</Mono>
           </div>
         ))}
       </div>

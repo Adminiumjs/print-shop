@@ -48,26 +48,15 @@ import {
   checkArtwork,
   checkCustomSize,
   finishOptions,
-  fromPriceCents,
-  nextBreakSaving,
-  priceLevers,
-  priceQuote,
   promiseFor,
   resolveSize,
   type ArtworkFile,
   type Configuration,
-  type Quote,
 } from "../lib/quote.ts";
-import {
-  BLEED_MM,
-  EXPRESS_UPLIFT,
-  MATERIAL_BY_KEY,
-  PACKAGING_BY_KEY,
-  PROOF_BY_POST_CENTS,
-  QUANTITY_BREAKS,
-  SIZE_LIMITS,
-  TAX_RATE,
-} from "../lib/rates.ts";
+import { BLEED_MM, BREAK_QUANTITIES, MATERIAL_BY_KEY, PACKAGING_BY_KEY, SIZE_LIMITS, nextBreakQuantity } from "../lib/press.ts";
+import { priced, priceLevers, type Quote } from "../lib/priced.ts";
+import { materialRateCents, packagingRateCents, RATE_CARD } from "../lib/rateCard.ts";
+import { defaultConfig } from "../state/store.ts";
 import { useStore } from "../state/store.ts";
 
 /* ── 1 · PRODUCTS ────────────────────────────────────────────────────────── */
@@ -113,10 +102,12 @@ export function Products() {
               </div>
               <div className="mp-from">
                 <span className="mp-from-note">
-                  {t("cust.products.from", {
-                    price: cents(fromPriceCents(product.key)),
-                    qty: product.fromQuantity,
-                  })}
+                  {fromPrice(product) === null
+                    ? t("cust.quote.askUs")
+                    : t("cust.products.from", {
+                        price: cents(fromPrice(product)!),
+                        qty: product.fromQuantity,
+                      })}
                 </span>
               </div>
             </div>
@@ -170,8 +161,8 @@ export function Configurator() {
 
   if (config === null) return null;
   const product = PRODUCT_BY_KEY[config.product];
-  const quote = priceQuote(config);
-  const blocked = quote.blocked.length > 0;
+  const quote = priced(config);
+  const blocked = quote !== null && quote.blocked.length > 0;
 
   return (
     <section className="mp-screen">
@@ -219,6 +210,8 @@ export function Configurator() {
           <span style={{ fontSize: 13, fontWeight: 700, color: "var(--warn)" }}>
             {t("cust.quote.barBlocked")}
           </span>
+        ) : quote === null ? (
+          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--fg-muted)" }}>{t("cust.quote.askUs")}</span>
         ) : (
           <div style={{ flex: 1, minInlineSize: 0, display: "flex", alignItems: "baseline", gap: 8 }}>
             <Mono className="mp-quotebar-total">{cents(quote.totalCents)}</Mono>
@@ -235,7 +228,7 @@ export function Configurator() {
         <button
           type="button"
           className="mp-button mp-btn"
-          disabled={blocked}
+          disabled={blocked || quote === null}
           onClick={() => useStore.getState().addToBasket()}
         >
           {t("cust.quote.barCta")}
@@ -559,15 +552,15 @@ function QuantityStep({
   return (
     <Step n={5} title={t("cust.config.step.quantity")}>
       <div className="mp-chips">
-        {QUANTITY_BREAKS.map((step) => {
-          const at = priceQuote({ ...config, quantity: step.quantity });
+        {BREAK_QUANTITIES.map((quantity) => {
+          const at = priced({ ...config, quantity });
           return (
             <Chip
-              key={step.quantity}
-              selected={config.quantity === step.quantity}
-              label={<Mono>{step.quantity}</Mono>}
-              sub={unitPrice(at.unitCents)}
-              onClick={() => onChange({ quantity: step.quantity })}
+              key={quantity}
+              selected={config.quantity === quantity}
+              label={<Mono>{quantity}</Mono>}
+              sub={at === null ? t("cust.quote.askUs") : unitPrice(at.unitCents)}
+              onClick={() => onChange({ quantity })}
             />
           );
         })}
@@ -625,7 +618,7 @@ function OptionsStep({
                   key={key}
                   selected={config.packaging === key}
                   label={t(`data.packaging.${key}` as never)}
-                  sub={packagingHint(t as never, PACKAGING_BY_KEY[key])}
+                  sub={packagingHint(t as never, { basis: PACKAGING_BY_KEY[key].basis, rateCents: packagingRateCents(key) })}
                   onClick={() => onChange({ packaging: key })}
                 />
               ))}
@@ -648,7 +641,7 @@ function OptionsStep({
                 {t("cust.config.options.proof")}
               </span>
               <span style={{ fontSize: 11.5, color: "var(--fg-subtle)" }}>
-                {t("cust.config.options.proofNote", { price: cents(PROOF_BY_POST_CENTS) })}
+                {t("cust.config.options.proofNote", { price: cents(RATE_CARD.proofByPostCents) })}
               </span>
             </span>
           </button>
@@ -668,7 +661,7 @@ function OptionsStep({
               </span>
               <span style={{ fontSize: 11.5, color: "var(--fg-subtle)" }}>
                 {t("cust.config.options.expressNote", {
-                  pct: Math.round(EXPRESS_UPLIFT * 100),
+                  pct: RATE_CARD.expressPct,
                   day: shortDay(expressDay.readyBy),
                 })}
               </span>
@@ -697,7 +690,7 @@ function OptionsStep({
 }
 
 /** Every figure traces to a choice above it, and the lines add up on screen. */
-export function QuotePanel({ config, quote }: { config: Configuration; quote: Quote }) {
+export function QuotePanel({ config, quote }: { config: Configuration; quote: Quote | null }) {
   const t = useT();
   const now = useStore((s) => s.now);
   const addToBasket = useStore((s) => s.addToBasket);
@@ -705,7 +698,7 @@ export function QuotePanel({ config, quote }: { config: Configuration; quote: Qu
   const toast = useStore((s) => s.toast);
   const [leversOpen, setLeversOpen] = useState(false);
 
-  const blocked = quote.blocked.length > 0;
+  const blocked = quote !== null && quote.blocked.length > 0;
   const promise = promiseFor(config, { iso: now.iso, hour: now.hour });
 
   return (
@@ -717,9 +710,9 @@ export function QuotePanel({ config, quote }: { config: Configuration; quote: Qu
         </span>
       </div>
 
-      {blocked ? (
+      {blocked || quote === null ? (
         <div style={{ padding: "22px 18px", textAlign: "center", color: "var(--fg-subtle)", fontSize: 13 }}>
-          {t("cust.quote.blocked")}
+          {t(blocked ? "cust.quote.blocked" : "cust.quote.notPriced")}
         </div>
       ) : (
         <>
@@ -736,7 +729,7 @@ export function QuotePanel({ config, quote }: { config: Configuration; quote: Qu
 
             <div className="mp-qrow">
               <div className="mp-qrow-label" style={{ color: "var(--fg-muted)", fontWeight: 500 }}>
-                {t("line.tax", { pct: Math.round(TAX_RATE * 100) })}
+                {t("line.tax", { pct: RATE_CARD.taxPct })}
               </div>
               <Mono className="mp-qrow-amt" style={{ color: "var(--fg-muted)" }}>
                 {cents(quote.taxCents)}
@@ -815,6 +808,28 @@ export function QuotePanel({ config, quote }: { config: Configuration; quote: Qu
   );
 }
 
+/**
+ * A product's "from" price: Adminium's total for it as it starts, on its
+ * cheapest stock (the rate card's lowest rate), plain, collected. Null when
+ * Adminium has not priced it.
+ */
+function fromPrice(product: Product): number | null {
+  const cheapest = [...product.materials].sort((a, b) => materialRateCents(a) - materialRateCents(b))[0]!;
+  const plain = product.finishes.find((f) => f === "none" || f === "plain-edges" || f === "rolled") ?? product.finishes[0]!;
+  const config: Configuration = { ...defaultConfig(product.key), material: cheapest, sides: 1, finish: plain, packaging: "bundled", printedProof: false, express: false, delivery: "collection" };
+  return priced(config)?.totalCents ?? null;
+}
+
+/** What the next quantity break does to the price a piece, from Adminium's two prices; null at the top break or unpriced. */
+function nextBreakSaving(config: Configuration): { quantity: number; currentUnitCents: number; nextUnitCents: number } | null {
+  const quantity = nextBreakQuantity(config.quantity);
+  if (quantity === null) return null;
+  const current = priced(config);
+  const upgraded = priced({ ...config, quantity });
+  if (current === null || upgraded === null || current.unitCents === 0 || upgraded.unitCents === 0) return null;
+  return { quantity, currentUnitCents: current.unitCents, nextUnitCents: upgraded.unitCents };
+}
+
 function lineDetail(
   line: Quote["lines"][number],
   t: ReturnType<typeof useT>,
@@ -834,6 +849,7 @@ function lineDetail(
     }
   }
   if (line.key === "express") return t("lineDetail.express", { pct: Number(d.pct) });
+  if (line.key === "delivery" && d.toQuote === 1) return t("lineDetail.deliveryQuote");
   if (line.key === "delivery" && typeof d.kg === "number")
     return t("lineDetail.weight", { kg: d.kg });
   return "";

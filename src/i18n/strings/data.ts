@@ -3,7 +3,7 @@
  * products, materials, finishes, sizes, packaging, delivery bands, and — the
  * ones that matter most — the compatibility reasons and the artwork verdicts.
  *
- * `catalogue.ts` and `rates.ts` hold no display strings at all, which is what
+ * `catalogue.ts` and `press.ts` hold no display strings at all, which is what
  * lets the whole product range translate without anyone touching the engine.
  *
  * TWO THINGS TO KEEP IN TRANSLATION.
@@ -138,6 +138,7 @@ export const data = {
     "line.express": "Express",
     "line.delivery": "Delivery",
     "line.minimum": "Large-format minimum",
+    "line.cap": "Capped at the next break's price",
     "line.tax": "Tax ({pct}%)",
     "line.total": "Total",
     "line.worksOutAt": "Works out at",
@@ -148,6 +149,7 @@ export const data = {
     "lineDetail.break": "at the {qty} break",
     "lineDetail.express": "+{pct}% on the work",
     "lineDetail.weight": "{kg}kg",
+    "lineDetail.deliveryQuote": "we'll quote the delivery",
 
     // Board columns and stages
     "column.prepress": "Prepress",
@@ -281,6 +283,7 @@ export const data = {
     "line.express": "Express",
     "line.delivery": "Versand",
     "line.minimum": "Mindestbetrag Großformat",
+    "line.cap": "Begrenzt auf den Preis der nächsten Mengenstaffel",
     "line.tax": "Steuer ({pct} %)",
     "line.total": "Gesamt",
     "line.worksOutAt": "Ergibt",
@@ -291,6 +294,7 @@ export const data = {
     "lineDetail.break": "zur {qty}er-Staffel",
     "lineDetail.express": "+{pct} % auf die Arbeit",
     "lineDetail.weight": "{kg} kg",
+    "lineDetail.deliveryQuote": "wir nennen Ihnen den Versandpreis",
 
     "column.prepress": "Druckvorstufe",
     "column.printing": "Druck",
@@ -423,6 +427,7 @@ export const data = {
     "line.express": "Express",
     "line.delivery": "Livraison",
     "line.minimum": "Minimum grand format",
+    "line.cap": "Plafonné au prix du palier de quantité suivant",
     "line.tax": "Taxe ({pct} %)",
     "line.total": "Total",
     "line.worksOutAt": "Soit",
@@ -433,6 +438,7 @@ export const data = {
     "lineDetail.break": "au palier de {qty}",
     "lineDetail.express": "+{pct} % sur le travail",
     "lineDetail.weight": "{kg} kg",
+    "lineDetail.deliveryQuote": "nous chiffrerons la livraison",
 
     "column.prepress": "Prépresse",
     "column.printing": "Impression",
@@ -565,6 +571,7 @@ export const data = {
     "line.express": "Expres",
     "line.delivery": "Doprava",
     "line.minimum": "Minimum velkoformát",
+    "line.cap": "Omezeno cenou dalšího množstevního stupně",
     "line.tax": "Daň ({pct} %)",
     "line.total": "Celkem",
     "line.worksOutAt": "Vychází na",
@@ -575,6 +582,7 @@ export const data = {
     "lineDetail.break": "při množství {qty}",
     "lineDetail.express": "+{pct} % na práci",
     "lineDetail.weight": "{kg} kg",
+    "lineDetail.deliveryQuote": "cenu dopravy vám sdělíme",
 
     "column.prepress": "Příprava",
     "column.printing": "Tisk",
@@ -707,6 +715,7 @@ export const data = {
     "line.express": "Ekspres",
     "line.delivery": "Levering",
     "line.minimum": "Minimum for storformat",
+    "line.cap": "Højst prisen ved næste mængdetrin",
     "line.tax": "Moms ({pct} %)",
     "line.total": "I alt",
     "line.worksOutAt": "Svarer til",
@@ -717,6 +726,7 @@ export const data = {
     "lineDetail.break": "ved {qty} stk.",
     "lineDetail.express": "+{pct} % på arbejdet",
     "lineDetail.weight": "{kg} kg",
+    "lineDetail.deliveryQuote": "vi giver tilbud på leveringen",
 
     "column.prepress": "Prepress",
     "column.printing": "Tryk",
@@ -849,6 +859,7 @@ export const data = {
     "line.express": "加急",
     "line.delivery": "配送",
     "line.minimum": "大幅面起订额",
+    "line.cap": "不高于下一数量档的价格",
     "line.tax": "税（{pct}%）",
     "line.total": "合计",
     "line.worksOutAt": "折合",
@@ -859,6 +870,7 @@ export const data = {
     "lineDetail.break": "按 {qty} 的价档",
     "lineDetail.express": "工费加 {pct}%",
     "lineDetail.weight": "{kg} 公斤",
+    "lineDetail.deliveryQuote": "运费另行报价",
 
     "column.prepress": "印前",
     "column.printing": "印刷",
@@ -991,6 +1003,7 @@ export const data = {
     "line.express": "加急",
     "line.delivery": "配送",
     "line.minimum": "大幅面起訂額",
+    "line.cap": "不高於下一數量檔的價格",
     "line.tax": "稅（{pct}%）",
     "line.total": "合計",
     "line.worksOutAt": "折合",
@@ -1001,6 +1014,7 @@ export const data = {
     "lineDetail.break": "按 {qty} 的價檔",
     "lineDetail.express": "工資加 {pct}%",
     "lineDetail.weight": "{kg} 公斤",
+    "lineDetail.deliveryQuote": "運費另行報價",
 
     "column.prepress": "印前",
     "column.printing": "印刷",
@@ -1133,6 +1147,7 @@ export const data = {
     "line.express": "مستعجل",
     "line.delivery": "التوصيل",
     "line.minimum": "الحد الأدنى للمقاسات الكبيرة",
+    "line.cap": "لا يزيد عن سعر الكمية التالية",
     "line.tax": "ضريبة ({pct}٪)",
     "line.total": "الإجمالي",
     "line.worksOutAt": "يعادل",
@@ -1143,6 +1158,7 @@ export const data = {
     "lineDetail.break": "عند كمية {qty}",
     "lineDetail.express": "+{pct}٪ على الشغل",
     "lineDetail.weight": "{kg} كجم",
+    "lineDetail.deliveryQuote": "سنرسل لك سعر التوصيل",
 
     "column.prepress": "التجهيز",
     "column.printing": "الطباعة",

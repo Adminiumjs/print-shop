@@ -1,8 +1,8 @@
 /**
- * The arithmetic is right and asserted, not eyeballed. The worked example
- * below is the one figure that the prompt, the
- * comp, this suite and the running demo must all agree on — if it moves, one of
- * them is wrong and this file says which.
+ * The configurator's rules: sizes, finishes, the working calendar and the
+ * artwork checks. The prices are Adminium's, and the parity contract
+ * (`src/contract/pricing-parity.test.ts`) holds them to the old figures but for
+ * the fixes it names.
  */
 import { describe, expect, it } from 'vitest';
 
@@ -14,16 +14,13 @@ import {
   checkArtwork,
   checkCustomSize,
   finishOptions,
-  fromPriceCents,
   isWorkingDay,
-  nextBreakSaving,
-  priceLevers,
-  priceQuote,
   promiseFor,
   type ArtworkFile,
   type Configuration,
 } from './quote.ts';
-import { QUANTITY_BREAKS, SIZE_LIMITS, breakFor } from './rates.ts';
+import { SIZE_LIMITS } from './press.ts';
+import { priced } from './priced.ts';
 
 /** The pinned clock: Wednesday, 5 August 2026, 10:20. */
 const NOW = { iso: '2026-08-05', hour: 10 };
@@ -31,7 +28,7 @@ const NOW = { iso: '2026-08-05', hour: 10 };
 /**
  * The worked example, verbatim from prompt I:
  *   500 business cards on 350gsm silk board, double-sided, matt lamination both
- *   sides, boxed, delivered under 2kg.
+ *   sides, boxed, delivered under 2kg: its dates.
  */
 const WORKED: Configuration = {
   product: 'business-cards',
@@ -45,77 +42,6 @@ const WORKED: Configuration = {
   express: false,
   delivery: 'band-2kg',
 };
-
-describe('the worked example', () => {
-  const quote = priceQuote(WORKED);
-  const line = (key: string): number =>
-    quote.lines.find((l) => l.key === key)?.amountCents ?? 0;
-
-  it('imposes 21 up on SRA3 and takes 24 sheets', () => {
-    expect(quote.up).toBe(21);
-    expect(quote.sheets).toBe(24);
-    expect(quote.rotated).toBe(false);
-  });
-
-  it('prices print and material at the 500 break, and nothing else at it', () => {
-    // print 24 × $1.20 = $28.80, material 24 × $0.42 = $10.08,
-    // together $38.88 × 0.66 = $25.66.
-    expect(quote.multiplier).toBe(0.66);
-    expect(line('print') + line('material')).toBe(2566);
-  });
-
-  it('prices lamination, setup, packaging and delivery at full rate', () => {
-    expect(line('finishing')).toBe(2280); // 24 × $0.95
-    expect(line('setup')).toBe(1800);
-    expect(line('packaging')).toBe(450); // one box per 500
-    expect(line('delivery')).toBe(650); // under 2kg
-  });
-
-  it('totals $92.95, which is $0.19 each', () => {
-    expect(quote.subtotalCents).toBe(7746);
-    expect(quote.taxCents).toBe(1549);
-    expect(quote.totalCents).toBe(9295);
-    expect(Math.round(quote.unitCents) / 100).toBeCloseTo(0.19, 2);
-  });
-
-  it('adds up on screen — the lines plus tax ARE the total', () => {
-    const summed = quote.lines.reduce((sum, l) => sum + l.amountCents, 0);
-    expect(summed + quote.taxCents).toBe(quote.totalCents);
-  });
-
-  it('derives the unit price from the total and never re-multiplies it', () => {
-    expect(quote.unitCents * WORKED.quantity).toBeCloseTo(quote.totalCents, 6);
-  });
-});
-
-describe('quantity breaks', () => {
-  it('takes the break at or below a typed-in amount', () => {
-    expect(breakFor(25).multiplier).toBe(1.0);
-    expect(breakFor(300).multiplier).toBe(0.74); // the 250 break
-    expect(breakFor(999).multiplier).toBe(0.66); // the 500 break
-    expect(breakFor(5000).multiplier).toBe(0.58); // the top break
-  });
-
-  it('gives anything under the smallest break the smallest break', () => {
-    expect(breakFor(10).multiplier).toBe(1.0);
-  });
-
-  it('makes the unit price fall as the quantity rises', () => {
-    const units = QUANTITY_BREAKS.map(
-      (step) => priceQuote({ ...WORKED, quantity: step.quantity }).unitCents,
-    );
-    for (let i = 1; i < units.length; i += 1) {
-      expect(units[i]!).toBeLessThan(units[i - 1]!);
-    }
-  });
-
-  it('says what the next break up would save, and nothing at the top', () => {
-    const saving = nextBreakSaving({ ...WORKED, quantity: 250 });
-    expect(saving?.quantity).toBe(500);
-    expect(saving!.nextUnitCents).toBeLessThan(saving!.currentUnitCents);
-    expect(nextBreakSaving({ ...WORKED, quantity: 1000 })).toBeNull();
-  });
-});
 
 describe('custom sizes name the limit they broke', () => {
   it('accepts a size inside every limit', () => {
@@ -159,7 +85,7 @@ describe('custom sizes name the limit they broke', () => {
   });
 
   it('refuses to guess a price for a size outside the limits', () => {
-    const quote = priceQuote({
+    const quote = priced({
       product: 'pvc-banners',
       material: 'pvc-510',
       size: 'custom',
@@ -173,8 +99,8 @@ describe('custom sizes name the limit they broke', () => {
       express: false,
       delivery: 'collection',
     });
-    expect(quote.totalCents).toBe(0);
-    expect(quote.blocked.length).toBeGreaterThan(0);
+    expect(quote!.totalCents).toBe(0);
+    expect(quote!.blocked.length).toBeGreaterThan(0);
   });
 });
 
@@ -257,69 +183,6 @@ describe('the working calendar', () => {
   });
 });
 
-describe('express', () => {
-  it('uplifts the works’ own charges by 35% but never the courier’s', () => {
-    const standard = priceQuote(WORKED);
-    const express = priceQuote({ ...WORKED, express: true });
-
-    const upliftable = standard.lines
-      .filter((l) => l.key !== 'delivery')
-      .reduce((sum, l) => sum + l.amountCents, 0);
-    const line = express.lines.find((l) => l.key === 'express');
-    expect(line?.amountCents).toBe(Math.round(upliftable * 0.35));
-
-    const deliveryOf = (q: typeof standard): number =>
-      q.lines.find((l) => l.key === 'delivery')?.amountCents ?? 0;
-    expect(deliveryOf(express)).toBe(deliveryOf(standard));
-  });
-});
-
-describe('large format', () => {
-  const BANNER: Configuration = {
-    product: 'pvc-banners',
-    material: 'pvc-510',
-    size: 'custom',
-    customWidthMm: 1000,
-    customHeightMm: 2000,
-    sides: 1,
-    finish: 'hemmed',
-    quantity: 1,
-    packaging: 'bundled',
-    printedProof: false,
-    express: false,
-    delivery: 'tube',
-  };
-
-  it('prices by the square metre', () => {
-    const quote = priceQuote(BANNER);
-    // 2 m² × $28 = $56.
-    expect(quote.lines.find((l) => l.key === 'print')?.amountCents).toBe(5600);
-  });
-
-  it('charges hemming by the finished perimeter', () => {
-    // (1.0 + 2.0) × 2 = 6 linear metres × $6 = $36.
-    expect(priceQuote(BANNER).lines.find((l) => l.key === 'finishing')?.amountCents).toBe(3600);
-  });
-
-  it('never goes below the minimum, and shows the shortfall as its own line', () => {
-    const tiny = priceQuote({
-      ...BANNER,
-      customWidthMm: 300,
-      customHeightMm: 300,
-      finish: 'plain-edges',
-    });
-    const worked = tiny.lines
-      .filter((l) => l.key !== 'delivery')
-      .reduce((sum, l) => sum + l.amountCents, 0);
-    expect(worked).toBe(3500);
-    expect(tiny.lines.some((l) => l.key === 'minimum')).toBe(true);
-  });
-
-  it('takes no quantity break — large-format runs are 1–20 at one rate', () => {
-    expect(priceQuote({ ...BANNER, quantity: 20 }).multiplier).toBe(1);
-  });
-});
-
 describe('artwork checks carry the number that produced them', () => {
   const GOOD: ArtworkFile = {
     filename: 'cards-front.pdf',
@@ -380,20 +243,5 @@ describe('artwork checks carry the number that produced them', () => {
       expect(typeof verdict.key).toBe('string');
       expect(verdict.measured).toBeTypeOf('object');
     }
-  });
-});
-
-describe('the products grid', () => {
-  it('computes every "from" figure rather than carrying a typed number', () => {
-    for (const product of PRODUCTS) {
-      expect(fromPriceCents(product.key)).toBeGreaterThan(0);
-    }
-  });
-
-  it('names the three biggest levers on a price', () => {
-    const levers = priceLevers(priceQuote(WORKED));
-    expect(levers).toHaveLength(3);
-    expect(levers[0]!.sharePct).toBeGreaterThanOrEqual(levers[1]!.sharePct);
-    expect(levers.every((l) => l.sharePct > 0)).toBe(true);
   });
 });

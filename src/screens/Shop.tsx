@@ -43,19 +43,8 @@ import {
   type Job,
 } from "../lib/jobs.ts";
 import { checkArtwork } from "../lib/quote.ts";
-import {
-  BLEED_MM,
-  DELIVERY_BANDS,
-  FINISHES,
-  LARGE_FORMAT_MINIMUM_CENTS,
-  MATERIALS,
-  MATERIAL_BY_KEY,
-  PACKAGING,
-  PRINT_PER_SHEET_CENTS,
-  QUANTITY_BREAKS,
-  SETUP_CENTS,
-  type MaterialKey,
-} from "../lib/rates.ts";
+import { BLEED_MM, BREAK_QUANTITIES, DELIVERY_BANDS, FINISHES, MATERIALS, MATERIAL_BY_KEY, PACKAGING, type MaterialKey } from "../lib/press.ts";
+import { breakMultiplier, deliveryRateCents, finishRateCents, materialRateCents, packagingRateCents, RATE_CARD } from "../lib/rateCard.ts";
 import { useStore } from "../state/store.ts";
 
 /* ── 7 · TODAY ───────────────────────────────────────────────────────────── */
@@ -707,14 +696,14 @@ export function Prices() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
         <PriceCard title={t("shop.prices.section.setup")}>
-          <PriceRow label={t("line.setup")} value={`${cents(SETUP_CENTS)} ${t("shop.prices.perJob")}`} />
-          <PriceRow label={t("shop.prices.perSide")} value={`${cents(PRINT_PER_SHEET_CENTS[1])} ${t("shop.prices.perSheet")}`} />
-          <PriceRow label={t("shop.prices.bothSides")} value={`${cents(PRINT_PER_SHEET_CENTS[2])} ${t("shop.prices.perSheet")}`} />
+          <PriceRow label={t("line.setup")} value={`${cents(RATE_CARD.setupCents)} ${t("shop.prices.perJob")}`} />
+          <PriceRow label={t("shop.prices.perSide")} value={`${cents(RATE_CARD.printPerSheetCents[1])} ${t("shop.prices.perSheet")}`} />
+          <PriceRow label={t("shop.prices.bothSides")} value={`${cents(RATE_CARD.printPerSheetCents[2])} ${t("shop.prices.perSheet")}`} />
         </PriceCard>
 
         <PriceCard title={t("shop.prices.section.material")}>
           {MATERIALS.filter((m) => m.kind === "sheet").map((m) => (
-            <PriceRow key={m.key} label={t(`data.material.${m.key}` as never)} value={cents(m.rateCents)} />
+            <PriceRow key={m.key} label={t(`data.material.${m.key}` as never)} value={cents(materialRateCents(m.key))} />
           ))}
         </PriceCard>
 
@@ -723,16 +712,21 @@ export function Prices() {
             <PriceRow
               key={f.key}
               label={t(`data.finish.${f.key}` as never)}
-              value={`${cents(f.rateCents)} ${f.basis === "per-250-units" ? t("shop.prices.per250") : t("shop.prices.perSheet")}`}
+              value={
+                // A gloss or matt lamination is priced by the sides it covers; the look costs the same.
+                f.key === "gloss-lam" || f.key === "matt-lam"
+                  ? `${cents(finishRateCents("lam-one"))} ${t("shop.prices.perSide")} · ${cents(finishRateCents("lam-both"))} ${t("shop.prices.bothSides")}`
+                  : `${cents(finishRateCents(CARD_FINISH[f.key]!))} ${f.basis === "per-250-units" ? t("shop.prices.per250") : t("shop.prices.perSheet")}`
+              }
             />
           ))}
         </PriceCard>
 
         <PriceCard title={t("shop.prices.section.largeFormat")}>
           {MATERIALS.filter((m) => m.kind === "roll").map((m) => (
-            <PriceRow key={m.key} label={t(`data.material.${m.key}` as never)} value={cents(m.rateCents)} />
+            <PriceRow key={m.key} label={t(`data.material.${m.key}` as never)} value={cents(materialRateCents(m.key))} />
           ))}
-          <PriceRow label={t("shop.prices.minimum")} value={cents(LARGE_FORMAT_MINIMUM_CENTS)} />
+          <PriceRow label={t("shop.prices.minimum")} value={cents(RATE_CARD.largeFormatMinimumCents)} />
         </PriceCard>
 
         <PriceCard title={t("shop.prices.section.packaging")}>
@@ -740,11 +734,11 @@ export function Prices() {
             <PriceRow
               key={p.key}
               label={t(`data.packaging.${p.key}` as never)}
-              value={packagingHint(t as never, p)}
+              value={packagingHint(t as never, { basis: p.basis, rateCents: packagingRateCents(p.key) })}
             />
           ))}
-          {DELIVERY_BANDS.filter((b) => b.rateCents > 0).map((b) => (
-            <PriceRow key={b.key} label={t(`data.delivery.${b.key}` as never)} value={cents(b.rateCents)} />
+          {DELIVERY_BANDS.filter((b) => deliveryRateCents(b.key) > 0).map((b) => (
+            <PriceRow key={b.key} label={t(`data.delivery.${b.key}` as never)} value={cents(deliveryRateCents(b.key))} />
           ))}
         </PriceCard>
 
@@ -766,6 +760,9 @@ export function Prices() {
     </section>
   );
 }
+
+/** The card's code for each sheet finish this screen lists. */
+const CARD_FINISH: Partial<Record<string, string>> = { "soft-touch": "lam-soft", "spot-uv": "spot-uv", "round-corners": "corners" };
 
 function PriceCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -802,8 +799,9 @@ function BreakCurve() {
   const t = useT();
   const w = 340;
   const h = 100;
-  const points = QUANTITY_BREAKS.map((step, i) => {
-    const x = 20 + (i * (w - 40)) / (QUANTITY_BREAKS.length - 1);
+  const points = BREAK_QUANTITIES.map((quantity, i) => {
+    const step = { quantity, multiplier: breakMultiplier(quantity) };
+    const x = 20 + (i * (w - 40)) / (BREAK_QUANTITIES.length - 1);
     const y = 10 + (1 - (step.multiplier - 0.5) / 0.55) * (h - 30);
     return { x, y, step };
   });

@@ -222,7 +222,7 @@ export interface BootOptions {
 }
 
 export async function boot(engine: Engine, port: number, now: number, options: BootOptions = {}): Promise<Server> {
-  const clockFile = join(tmpdir(), `maker-contract-clock-${String(port)}`);
+  const clockFile = join(tmpdir(), `printing-contract-clock-${String(port)}`);
   const checkout = options.adminium ?? ADMINIUM_REPO;
   const env: NodeJS.ProcessEnv = {
     ...process.env,
@@ -235,7 +235,7 @@ export async function boot(engine: Engine, port: number, now: number, options: B
     E2E_SINK_PORT: String(port + 2),
     E2E_FAKE_LLM_PORT: "0",
     // Its own database, so a contract never meets another run's rows (`CONTRACT_DB_SUFFIX` keeps two checkouts' runs apart).
-    E2E_DATABASE: options.database ?? `maker_contract_${engine}${process.env["CONTRACT_DB_SUFFIX"] ?? ""}`,
+    E2E_DATABASE: options.database ?? `printing_contract_${engine}${process.env["CONTRACT_DB_SUFFIX"] ?? ""}`,
     CONTRACT_NOW: String(now),
     CONTRACT_CLOCK_FILE: clockFile,
     NODE_OPTIONS: `${process.env["NODE_OPTIONS"] ?? ""} --import=${pathToFileURL(fileURLToPath(new URL("./clock.mjs", import.meta.url))).href}`.trim(),

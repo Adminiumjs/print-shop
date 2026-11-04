@@ -5,7 +5,7 @@
  * Pure and deterministic, like `quote.ts` — the clock is always passed in.
  */
 
-import { BLEED_MM, SRA3_PRINTABLE } from './rates.ts';
+import { BLEED_MM, SRA3_PRINTABLE } from './press.ts';
 
 // ── imposition ───────────────────────────────────────────────────────────────
 

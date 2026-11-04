@@ -20,8 +20,8 @@
  *
  * ── THE CATALOGUE IS CODE, AND THE DATABASE'S COPY IS NOT READ ─────────────
  * The biggest thing this connection reveals. `lib/catalogue.ts` and
- * `lib/rates.ts` hold the products, the materials, their rates and their
- * imposition — as compile-time unions the quote engine reasons about. The
+ * `lib/press.ts` hold the products and the materials as compile-time unions
+ * the configurator reasons about (their rates are the rate card's, in Adminium). The
  * database has `products` and `materials` tables that MIRROR them, and this
  * file reads them for exactly one purpose: to turn a job's `product_id` back
  * into the app's own key. A tenant who adds a product gets a row the generated
@@ -50,7 +50,7 @@ import { createPublicClient, toTenantDay, type PublicClient } from '@adminiumjs/
 
 import { PRODUCTS } from '../lib/catalogue.ts';
 import type { Job, JobStage, ProofEvent, StockRow } from '../lib/jobs.ts';
-import { MATERIALS } from '../lib/rates.ts';
+import { MATERIALS } from '../lib/press.ts';
 import type { Configuration } from '../lib/quote.ts';
 import type { ArtworkRecord, Customer, Now, SavedQuote } from './types.ts';
 import type { DataSource, Works } from './source.ts';

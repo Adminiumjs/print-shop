@@ -1,5 +1,7 @@
 /**
- * The configurator engine.
+ * The configurator's rules: the sizes a job may take, the finishes a stock
+ * allows, the working days, the artwork checks. Never a price: every figure
+ * is Adminium's (`priced.ts`).
  *
  * Pure and deterministic: no `Date.now()`, no `Math.random()`, no imports from
  * React or the store. Every clock reading is passed in, so the vitest suite and
@@ -16,37 +18,20 @@ import {
   PRODUCT_BY_KEY,
   SIZE_BY_KEY,
   incompatibleReason,
-  type Product,
   type ProductKey,
 } from './catalogue.ts';
-import { imposition } from './jobs.ts';
 import {
   BLEED_MM,
   CUTOFF_HOUR,
-  DELIVERY_BY_KEY,
-  EXPRESS_UPLIFT,
-  FINISH_BY_KEY,
-  LAMINATION_ONE_SIDE_CENTS,
-  LARGE_FORMAT_MINIMUM_CENTS,
-  MATERIAL_BY_KEY,
   MIN_DPI,
-  PACKAGING_BY_KEY,
-  PRINT_PER_SHEET_CENTS,
-  PROOF_BY_POST_CENTS,
   PROOF_BY_POST_EXTRA_DAYS,
-  SETUP_CENTS,
   SIZE_LIMITS,
   STANDARD_WORKING_DAYS,
-  TAX_RATE,
-  breakFor,
-  deliveryBandFor,
-  nextBreak,
-  sheetWeightKg,
   type DeliveryKey,
   type FinishKey,
   type MaterialKey,
   type PackagingKey,
-} from './rates.ts';
+} from './press.ts';
 
 // ── the configuration a customer builds ──────────────────────────────────────
 
@@ -222,311 +207,6 @@ export function finishOptions(config: Configuration): FinishOption[] {
     const reason = incompatibleReason(key, config.material);
     return { key, available: reason === null, reason };
   });
-}
-
-// ── money ────────────────────────────────────────────────────────────────────
-
-export type QuoteLineKey =
-  | 'setup'
-  | 'print'
-  | 'material'
-  | 'finishing'
-  | 'packaging'
-  | 'proof'
-  | 'express'
-  | 'delivery'
-  | 'minimum';
-
-export interface QuoteLine {
-  key: QuoteLineKey;
-  amountCents: number;
-  /** Numbers the mono sub-label renders, e.g. `{ sheets: 24, rate: 120 }`. */
-  detail: Record<string, number | string>;
-}
-
-export interface Quote {
-  lines: QuoteLine[];
-  /** Sum of the lines, ex-tax. */
-  subtotalCents: number;
-  taxCents: number;
-  totalCents: number;
-  /** Total ÷ quantity, derived once and never re-multiplied. */
-  unitCents: number;
-  /** What the run consumes, for the ticket and the materials line. */
-  sheets: number;
-  up: number;
-  rotated: boolean;
-  size: ResolvedSize;
-  weightKg: number;
-  /** The break that applied, so the UI can show what the next one saves. */
-  multiplier: number;
-  blocked: SizeViolation[];
-}
-
-const cents = (n: number): number => Math.round(n);
-
-/**
- * Price a configuration.
- *
- * Rounding happens per LINE, once, and the total is the sum of the rounded
- * lines plus the rounded tax — so every figure on the panel adds up on screen.
- * A total computed from unrounded intermediates would be off by a cent from
- * what the customer can see, which is precisely the kind of small dishonesty
- * this configurator exists to avoid.
- */
-export function priceQuote(config: Configuration): Quote {
-  const product = PRODUCT_BY_KEY[config.product];
-  const material = MATERIAL_BY_KEY[config.material];
-
-  // A custom size outside the limits does not get a guessed price.
-  if (config.size === 'custom') {
-    const check = checkCustomSize(
-      config.customWidthMm ?? 0,
-      config.customHeightMm ?? 0,
-      { stretched: config.finish === 'stretched' },
-    );
-    if (!check.ok) {
-      return {
-        lines: [],
-        subtotalCents: 0,
-        taxCents: 0,
-        totalCents: 0,
-        unitCents: 0,
-        sheets: 0,
-        up: 0,
-        rotated: false,
-        size: check.size,
-        weightKg: 0,
-        multiplier: 1,
-        blocked: check.violations,
-      };
-    }
-  }
-
-  const size = resolveSize(config);
-  const lines: QuoteLine[] =
-    product.press === 'sheet'
-      ? sheetLines(config, product, size)
-      : largeFormatLines(config, product, size);
-
-  const impos =
-    product.press === 'sheet'
-      ? imposition(size.widthMm, size.heightMm, config.quantity)
-      : { up: 1, rotated: false, sheets: config.quantity };
-
-  // Express uplifts everything the works does, not the courier's charge.
-  if (config.express) {
-    const upliftable = lines
-      .filter((l) => l.key !== 'delivery')
-      .reduce((sum, l) => sum + l.amountCents, 0);
-    lines.push({
-      key: 'express',
-      amountCents: cents(upliftable * EXPRESS_UPLIFT),
-      detail: { pct: Math.round(EXPRESS_UPLIFT * 100) },
-    });
-  }
-
-  const weightKg =
-    product.press === 'sheet'
-      ? sheetWeightKg(impos.sheets, material.gsm) * 1.08
-      : size.areaSqm * config.quantity * (material.gsm / 1000) * 1.15;
-
-  const band =
-    config.delivery === 'collection'
-      ? DELIVERY_BY_KEY.collection
-      : deliveryBandFor(weightKg, product.press === 'large-format');
-
-  if (band.rateCents > 0) {
-    lines.push({
-      key: 'delivery',
-      amountCents: band.rateCents,
-      detail: { band: band.key, kg: Math.round(weightKg * 10) / 10 },
-    });
-  }
-
-  const subtotalCents = lines.reduce((sum, l) => sum + l.amountCents, 0);
-  const taxCents = cents(subtotalCents * TAX_RATE);
-  const totalCents = subtotalCents + taxCents;
-
-  return {
-    lines,
-    subtotalCents,
-    taxCents,
-    totalCents,
-    unitCents: config.quantity > 0 ? totalCents / config.quantity : 0,
-    sheets: impos.sheets,
-    up: impos.up,
-    rotated: impos.rotated,
-    size,
-    weightKg: Math.round(weightKg * 100) / 100,
-    multiplier: product.quantityMode === 'breaks' ? breakFor(config.quantity).multiplier : 1,
-    blocked: [],
-  };
-}
-
-function sheetLines(config: Configuration, product: Product, size: ResolvedSize): QuoteLine[] {
-  const material = MATERIAL_BY_KEY[config.material];
-  const { sheets } = imposition(size.widthMm, size.heightMm, config.quantity);
-  const multiplier = breakFor(config.quantity).multiplier;
-
-  const printRate = PRINT_PER_SHEET_CENTS[config.sides];
-  const printRaw = sheets * printRate;
-  const materialRaw = sheets * material.rateCents;
-
-  const lines: QuoteLine[] = [
-    { key: 'setup', amountCents: SETUP_CENTS, detail: {} },
-    {
-      key: 'print',
-      amountCents: cents(printRaw * multiplier),
-      detail: { sheets, rate: printRate, multiplier },
-    },
-    {
-      key: 'material',
-      amountCents: cents(materialRaw * multiplier),
-      detail: { sheets, rate: material.rateCents, multiplier },
-    },
-  ];
-
-  const finishing = finishingCents(config, sheets, size);
-  if (finishing > 0) {
-    lines.push({ key: 'finishing', amountCents: finishing, detail: { sheets } });
-  }
-
-  const packaging = packagingCents(config);
-  if (packaging > 0) {
-    lines.push({ key: 'packaging', amountCents: packaging, detail: { quantity: config.quantity } });
-  }
-
-  if (config.printedProof) {
-    lines.push({
-      key: 'proof',
-      amountCents: PROOF_BY_POST_CENTS,
-      detail: { days: PROOF_BY_POST_EXTRA_DAYS },
-    });
-  }
-
-  void product;
-  return lines;
-}
-
-function largeFormatLines(config: Configuration, product: Product, size: ResolvedSize): QuoteLine[] {
-  const material = MATERIAL_BY_KEY[config.material];
-  const totalAreaSqm = size.areaSqm * config.quantity;
-
-  const lines: QuoteLine[] = [
-    { key: 'setup', amountCents: SETUP_CENTS, detail: {} },
-    {
-      key: 'print',
-      amountCents: cents(totalAreaSqm * material.rateCents),
-      detail: { sqm: Math.round(totalAreaSqm * 100) / 100, rate: material.rateCents },
-    },
-  ];
-
-  const finishing = finishingCents(config, 0, size);
-  if (finishing > 0) {
-    lines.push({ key: 'finishing', amountCents: finishing, detail: { finish: config.finish } });
-  }
-
-  if (config.printedProof) {
-    lines.push({
-      key: 'proof',
-      amountCents: PROOF_BY_POST_CENTS,
-      detail: { days: PROOF_BY_POST_EXTRA_DAYS },
-    });
-  }
-
-  // No large-format job leaves for less than the minimum; the shortfall is its
-  // own line so the customer can see exactly why a small banner costs what it
-  // does rather than finding a mystery number in the total.
-  const worked = lines.reduce((sum, l) => sum + l.amountCents, 0);
-  if (worked < LARGE_FORMAT_MINIMUM_CENTS) {
-    lines.push({
-      key: 'minimum',
-      amountCents: LARGE_FORMAT_MINIMUM_CENTS - worked,
-      detail: { minimum: LARGE_FORMAT_MINIMUM_CENTS },
-    });
-  }
-
-  void product;
-  return lines;
-}
-
-function finishingCents(config: Configuration, sheets: number, size: ResolvedSize): number {
-  const finish = FINISH_BY_KEY[config.finish];
-  switch (finish.basis) {
-    case 'none':
-      return 0;
-    case 'per-sheet': {
-      // Lamination on a one-sided job laminates one side.
-      const rate =
-        finish.sides === 2 && config.sides === 1 ? LAMINATION_ONE_SIDE_CENTS : finish.rateCents;
-      return cents(sheets * rate);
-    }
-    case 'per-250-units':
-      return cents(Math.ceil(config.quantity / 250) * finish.rateCents);
-    case 'per-linear-m': {
-      const perimeterM = ((size.widthMm + size.heightMm) * 2) / 1000;
-      return cents(perimeterM * finish.rateCents * config.quantity);
-    }
-    case 'per-each':
-      // Pole pockets go top and bottom.
-      return cents(2 * finish.rateCents * config.quantity);
-    case 'per-sqm':
-      return cents(size.areaSqm * config.quantity * finish.rateCents);
-    /* c8 ignore next 2 */
-    default:
-      return 0;
-  }
-}
-
-function packagingCents(config: Configuration): number {
-  const packaging = PACKAGING_BY_KEY[config.packaging];
-  switch (packaging.basis) {
-    case 'included':
-      return 0;
-    case 'per-unit':
-      return cents(config.quantity * packaging.rateCents);
-    case 'per-500':
-      return cents(Math.ceil(config.quantity / 500) * packaging.rateCents);
-    /* c8 ignore next 2 */
-    default:
-      return 0;
-  }
-}
-
-/**
- * What the next quantity break would do to the unit price, in the plain words
- * the configurator shows under the chips ("250 works out at $0.28 each — 500
- * drops it to $0.22"). Returns null at the top break.
- */
-export function nextBreakSaving(
-  config: Configuration,
-): { quantity: number; currentUnitCents: number; nextUnitCents: number } | null {
-  const step = nextBreak(config.quantity);
-  if (step === null) return null;
-  const current = priceQuote(config);
-  const upgraded = priceQuote({ ...config, quantity: step.quantity });
-  if (current.unitCents === 0 || upgraded.unitCents === 0) return null;
-  return {
-    quantity: step.quantity,
-    currentUnitCents: current.unitCents,
-    nextUnitCents: upgraded.unitCents,
-  };
-}
-
-/**
- * The three biggest levers on this price, largest first, as i18n keys with
- * their share. "What moves this price" renders these in words.
- */
-export function priceLevers(quote: Quote): { key: QuoteLineKey; sharePct: number }[] {
-  if (quote.subtotalCents === 0) return [];
-  return [...quote.lines]
-    .sort((a, b) => b.amountCents - a.amountCents)
-    .slice(0, 3)
-    .map((l) => ({
-      key: l.key,
-      sharePct: Math.round((l.amountCents / quote.subtotalCents) * 100),
-    }));
 }
 
 // ── the working calendar ─────────────────────────────────────────────────────
@@ -713,31 +393,4 @@ export function artworkBlocked(verdicts: ArtworkVerdict[]): boolean {
 
 export function artworkNeedsTick(verdicts: ArtworkVerdict[]): boolean {
   return !artworkBlocked(verdicts) && verdicts.some((v) => v.level === 'warn');
-}
-
-/**
- * The cheapest this product can be had for, at the quantity the grid quotes.
- * Computed rather than typed, so a rate change moves the products grid too.
- */
-export function fromPriceCents(productKey: ProductKey): number {
-  const product = PRODUCT_BY_KEY[productKey];
-  const cheapest = [...product.materials].sort(
-    (a, b) => MATERIAL_BY_KEY[a].rateCents - MATERIAL_BY_KEY[b].rateCents,
-  )[0]!;
-  const size = product.sizes[0] === 'custom' ? 'custom' : product.sizes[0]!;
-  const plainFinish = product.finishes.find((f) => FINISH_BY_KEY[f].basis === 'none') ?? 'none';
-
-  return priceQuote({
-    product: productKey,
-    material: cheapest,
-    size,
-    ...(size === 'custom' ? { customWidthMm: 800, customHeightMm: 2000 } : {}),
-    sides: 1,
-    finish: plainFinish,
-    quantity: product.fromQuantity,
-    packaging: 'bundled',
-    printedProof: false,
-    express: false,
-    delivery: 'collection',
-  }).totalCents;
 }

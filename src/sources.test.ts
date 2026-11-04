@@ -49,10 +49,16 @@ const ALL = walk(SRC).filter((f) => /\.(ts|tsx)$/.test(f));
 /**
  * The shipped half: everything that is not itself a test or a test helper.
  * `manifest/` and `sample/` write `manifest.json` and the sample bundle at
- * build time: no screen imports them, so nothing in them reaches a browser.
+ * build time: no screen imports them, so nothing in them reaches a browser,
+ * but for the rate card the price list shows (`sample/rate-card.ts`), which is
+ * held to every rule here. `contract/` boots a real Adminium for the contract
+ * tests: it never ships either.
  */
-const BUILD_TIME = ['testing', 'manifest', 'sample'];
-const SHIPPED = ALL.filter((f) => !f.includes('.test.') && !BUILD_TIME.some((dir) => f.includes(`/src/${dir}/`)));
+const BUILD_TIME = ['testing', 'manifest', 'sample', 'contract'];
+const READ_BY_SCREENS = ['/src/sample/rate-card.ts'];
+const SHIPPED = ALL.filter(
+  (f) => !f.includes('.test.') && (READ_BY_SCREENS.some((file) => f.endsWith(file)) || !BUILD_TIME.some((dir) => f.includes(`/src/${dir}/`))),
+);
 
 const read = (file: string) => readFileSync(file, 'utf8');
 

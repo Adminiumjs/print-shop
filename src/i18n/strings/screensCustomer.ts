@@ -60,6 +60,8 @@ export const screensCustomer = {
 
     "cust.quote.title": "Your quote",
     "cust.quote.blocked": "Set a size within the limits above to price this job.",
+    "cust.quote.askUs": "Ask us",
+    "cust.quote.notPriced": "The works hasn't priced this combination yet: ask us and we'll quote it.",
     "cust.quote.ready": "Ready {day}",
     "cust.quote.readySub": "{days} working days",
     "cust.quote.levers": "What moves this price",
@@ -305,6 +307,8 @@ export const screensCustomer = {
 
     "cust.quote.title": "Ihr Angebot",
     "cust.quote.blocked": "Wählen Sie oben ein Format innerhalb der Grenzen, dann rechnen wir.",
+    "cust.quote.askUs": "Fragen Sie uns",
+    "cust.quote.notPriced": "Diese Kombination hat die Druckerei noch nicht kalkuliert: Fragen Sie uns, wir nennen Ihnen den Preis.",
     "cust.quote.ready": "Fertig {day}",
     "cust.quote.readySub": "{days} Arbeitstage",
     "cust.quote.levers": "Was diesen Preis bewegt",
@@ -541,6 +545,8 @@ export const screensCustomer = {
 
     "cust.quote.title": "Votre devis",
     "cust.quote.blocked": "Choisissez un format dans les limites ci-dessus pour le chiffrer.",
+    "cust.quote.askUs": "Demandez-nous",
+    "cust.quote.notPriced": "L'atelier n'a pas encore chiffré cette combinaison : demandez-nous, nous vous ferons un devis.",
     "cust.quote.ready": "Prêt {day}",
     "cust.quote.readySub": "{days} jours ouvrés",
     "cust.quote.levers": "Ce qui pèse sur ce prix",
@@ -778,6 +784,8 @@ export const screensCustomer = {
 
     "cust.quote.title": "Vaše nabídka",
     "cust.quote.blocked": "Zvolte výše rozměr v mezích, ať to můžeme spočítat.",
+    "cust.quote.askUs": "Zeptejte se",
+    "cust.quote.notPriced": "Tuhle kombinaci tiskárna zatím nespočítala: zeptejte se nás a cenu vám pošleme.",
     "cust.quote.ready": "Hotovo {day}",
     "cust.quote.readySub": "{days} pracovní dny",
     "cust.quote.levers": "Co s cenou hýbe",
@@ -1012,6 +1020,8 @@ export const screensCustomer = {
 
     "cust.quote.title": "Dit tilbud",
     "cust.quote.blocked": "Vælg et format inden for grænserne ovenfor, så regner vi på det.",
+    "cust.quote.askUs": "Spørg os",
+    "cust.quote.notPriced": "Trykkeriet har ikke prissat denne kombination endnu: spørg os, så giver vi et tilbud.",
     "cust.quote.ready": "Klar {day}",
     "cust.quote.readySub": "{days} arbejdsdage",
     "cust.quote.levers": "Hvad der flytter prisen",
@@ -1240,6 +1250,8 @@ export const screensCustomer = {
 
     "cust.quote.title": "您的报价",
     "cust.quote.blocked": "请在上方范围内设定尺寸，我们才能计价。",
+    "cust.quote.askUs": "问我们",
+    "cust.quote.notPriced": "印刷厂还没有为这个组合计价：问我们，我们给您报价。",
     "cust.quote.ready": "{day} 完成",
     "cust.quote.readySub": "{days} 个工作日",
     "cust.quote.levers": "影响价格的因素",
@@ -1463,6 +1475,8 @@ export const screensCustomer = {
 
     "cust.quote.title": "您的報價",
     "cust.quote.blocked": "請在上方範圍內設定尺寸，我們才能計價。",
+    "cust.quote.askUs": "問我們",
+    "cust.quote.notPriced": "印刷廠還沒有為這個組合計價：問我們，我們給您報價。",
     "cust.quote.ready": "{day} 完成",
     "cust.quote.readySub": "{days} 個工作天",
     "cust.quote.levers": "影響價格的因素",
@@ -1691,6 +1705,8 @@ export const screensCustomer = {
 
     "cust.quote.title": "عرض سعرك",
     "cust.quote.blocked": "اختر مقاسًا داخل الحدود أعلاه حتى نحسب الشغل.",
+    "cust.quote.askUs": "اسألنا",
+    "cust.quote.notPriced": "لم تسعّر المطبعة هذا الاختيار بعد: اسألنا وسنرسل لك السعر.",
     "cust.quote.ready": "جاهز {day}",
     "cust.quote.readySub": "{days} أيام عمل",
     "cust.quote.levers": "ما الذي يحرّك هذا السعر",

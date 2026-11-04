@@ -46,33 +46,23 @@ import type {
 } from './payloads.ts';
 import { PRODUCTS, SIZE_BY_KEY } from '../lib/catalogue.ts';
 import { imposition, type Job } from '../lib/jobs.ts';
-import { MATERIAL_BY_KEY, PACKAGING_BY_KEY, sheetWeightKg } from '../lib/rates.ts';
-import { priceQuote, resolveSize, type Configuration } from '../lib/quote.ts';
+import { MATERIAL_BY_KEY, PACKAGING_BY_KEY, sheetWeightKg } from '../lib/press.ts';
+import { priced } from '../lib/priced.ts';
+import { resolveSize, type Configuration } from '../lib/quote.ts';
 import { source } from '../data/source.ts';
 
 /** What the shop quotes in, and what a carrier therefore bills in. */
 const CURRENCY = 'USD';
 
-/**
- * Vinyl's real grammage.
- *
- * `rates.ts` records it as `0` because vinyl is PRICED BY AREA rather than by
- * weight, which is true of the price and false of the parcel: a roll of vinyl
- * weighs something, and a courier is going to notice. The delivery add-on used
- * to carry this number, which meant an add-on held a fact about this shop's
- * materials. It is the works' fact and it is here.
- */
-const VINYL_GSM = 440;
-
-const gsmOf = (materialKey: string): number =>
-  MATERIAL_BY_KEY[materialKey as keyof typeof MATERIAL_BY_KEY]?.gsm || VINYL_GSM;
+/** A stock's grammage, the works' fact (vinyl at the rate card's 300 gsm). */
+const gsmOf = (materialKey: string): number => MATERIAL_BY_KEY[materialKey as keyof typeof MATERIAL_BY_KEY]?.gsm ?? 0;
 
 /**
  * WHAT ONE PIECE WEIGHS, in grams — the works' own arithmetic, per unit.
  *
  * Sheet work is weighed by the SHEETS THE RUN CONSUMES rather than by the
- * trimmed pieces, which is the choice that surprises people and is the same one
- * `priceQuote` makes: a 500-run imposed 21-up eats 24 sheets, and the offcut
+ * trimmed pieces, which is the choice that surprises people: a 500-run imposed
+ * 21-up eats 24 sheets, and the offcut
  * goes in the box or in the bin but it was still bought. Divided back down to
  * one piece so that the number crossing the seam is a property of the THING
  * rather than of this particular run.
@@ -186,7 +176,8 @@ export function slotItemFor(
   label: (productKey: string) => string,
 ): SlotItem {
   const size = resolveSize(config);
-  const quote = priceQuote(config);
+  // Adminium's price a piece, when it has priced this configuration.
+  const quote = priced(config);
   return {
     id,
     key: config.product,
@@ -200,7 +191,7 @@ export function slotItemFor(
       size.heightMm,
     ),
     unitSize: { widthMm: size.widthMm, heightMm: size.heightMm },
-    unitPrice: money(quote.unitCents),
+    ...(quote === null || quote.blocked.length > 0 ? {} : { unitPrice: money(quote.unitCents) }),
   };
 }
 

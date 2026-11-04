@@ -25,7 +25,8 @@ import {
   type BoardColumn,
   type Job,
 } from "../lib/jobs.ts";
-import { addWorkingDays, priceQuote, type Configuration } from "../lib/quote.ts";
+import { priced } from "../lib/priced.ts";
+import { addWorkingDays, type Configuration } from "../lib/quote.ts";
 import type { StockRow } from "../lib/jobs.ts";
 
 export type Persona = "customer" | "shop";
@@ -284,7 +285,7 @@ interface Actions {
   clearSuppliedArtwork: () => void;
 }
 
-function defaultConfig(product: ProductKey): Configuration {
+export function defaultConfig(product: ProductKey): Configuration {
   const p = PRODUCT_BY_KEY[product];
   const size = p.sizes[0]!;
   return {
@@ -806,8 +807,8 @@ export function personaFor(view: View): Persona {
   return (CUSTOMER_VIEWS as readonly string[]).includes(view) ? "customer" : "shop";
 }
 
-/** The live quote for whatever is currently in the configurator. */
+/** Adminium's price for whatever is in the configurator; null when it has none. */
 export function useQuote() {
   const config = useStore((s) => s.config);
-  return config === null ? null : priceQuote(config);
+  return config === null ? null : priced(config);
 }
