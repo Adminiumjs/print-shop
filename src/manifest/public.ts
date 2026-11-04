@@ -153,7 +153,7 @@ export const QUOTE_SELECT = [
   "created_at",
   "link_expires",
 ];
-export const QUOTE_LINE_SELECT = ["id", "quote_id", "position", ...CONFIG_SELECT];
+export const QUOTE_LINE_SELECT = ["id", "quote_id", "position", ...CONFIG_SELECT, "design_id"];
 
 /** The customer's answer to a proof: approve it, or ask for a change in their own words, while it waits. */
 const ANSWER = {
@@ -339,7 +339,7 @@ export const PUBLIC_ACCESS = [
     children: {
       quote_lines: {
         via: "quote_id",
-        writable: CONFIG_WRITABLE,
+        writable: [...CONFIG_WRITABLE, "design_code"],
         requires: ["product_id", "material_option_id", "sides_option_id"],
         select: QUOTE_LINE_SELECT.filter((c) => c !== "quote_id"),
         position: "position",

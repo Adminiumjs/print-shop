@@ -932,7 +932,15 @@ export const TABLES: Table[] = [
     label: l("Quote line"),
     labelPlural: l("Quote lines"),
     keyField: "product_name",
-    columns: [id, fk("quote_id", "saved_quotes", "Quote", { index: true }), int("position", "Position", opt), ...configuration()],
+    columns: [
+      id,
+      fk("quote_id", "saved_quotes", "Quote", { index: true }),
+      int("position", "Position", opt),
+      ...configuration(),
+      // A design the customer made for it, kept so the quote orders again with it: found by its code, as a job's is.
+      text("design_code", 40, "Design code", opt),
+      link("design_id", "designs", "Design", { lookup: { from: "design_code", table: { addOn: CUSTOMISER, table: "designs" }, column: "code" } }),
+    ],
   },
   {
     // A free pack of the works' papers and finishes: one to an address.

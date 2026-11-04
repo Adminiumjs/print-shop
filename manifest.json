@@ -5808,6 +5808,37 @@
                 "min": 0
               }
             }
+          },
+          {
+            "ref": "design_code",
+            "type": "text",
+            "maxLength": 40,
+            "label": {
+              "en-US": "Design code"
+            },
+            "nullable": true
+          },
+          {
+            "ref": "design_id",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Design"
+            },
+            "rules": {
+              "addOnLink": {
+                "addOn": "customiser",
+                "table": "designs"
+              },
+              "lookup": {
+                "from": "design_code",
+                "table": {
+                  "addOn": "customiser",
+                  "table": "designs"
+                },
+                "column": "code"
+              }
+            }
           }
         ]
       },
@@ -8928,7 +8959,8 @@
         "proof_by_post",
         "express",
         "price",
-        "weight_kg"
+        "weight_kg",
+        "design_id"
       ]
     },
     {
@@ -9508,7 +9540,8 @@
             "canvas_option_id",
             "packaging_id",
             "proof_by_post",
-            "express"
+            "express",
+            "design_code"
           ],
           "requires": [
             "product_id",
@@ -9540,7 +9573,8 @@
             "proof_by_post",
             "express",
             "price",
-            "weight_kg"
+            "weight_kg",
+            "design_id"
           ],
           "position": "position",
           "min": 1,
@@ -9896,7 +9930,8 @@
         "proof_by_post",
         "express",
         "price",
-        "weight_kg"
+        "weight_kg",
+        "design_id"
       ]
     }
   ],
