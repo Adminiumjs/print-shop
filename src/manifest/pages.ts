@@ -117,7 +117,7 @@ const SPECS: PageSpec[] = [
       [title("product_name"), ref("order_id"), f("stage", { control: "segmented" }), f("ready_by", { control: "date" })],
       CONFIG_FIELDS,
       [money("price"), number("weight_kg"), f("design_code")],
-      [f("proof_state", { control: "segmented" }), number("changes"), number("turnaround_days"), when("ready_from"), toggle("artwork_checked"), number("artwork_count"), number("warnings_accepted")],
+      [f("proof_state", { control: "segmented" }), number("changes"), number("turnaround_days"), toggle("artwork_checked"), number("artwork_count"), number("warnings_accepted")],
       [when("printing_at"), f("printed_by"), when("finishing_at"), when("ready_at"), when("handed_over_at"), number("spoiled_sheets"), wide("works_note", "text")],
     ),
   },

@@ -621,7 +621,6 @@ export function customiserSection(): SampleBundle {
   const proofs: Row[] = [];
   for (const j of JOBS) {
     const ref = `MP-${String(j.ref)}`;
-    const approval = j.proofs.find((pr) => pr.answer?.state === "approved");
     jobs.push({
       "@label": jobLabel(j.ref),
       order_id: { "@ref": orderLabel(j.ref) },
@@ -629,7 +628,6 @@ export function customiserSection(): SampleBundle {
       ...configRow(j.cfg, JOB_FIGURES[ref]!),
       design_code: j.design === undefined ? null : designCode(j.design),
       design_id: j.design === undefined ? null : { "@ref": j.design },
-      ready_from: approval === undefined ? wall(j.ordered, PLACED_AT) : wall(approval.answer!.on, ANSWERED_AT),
       ready_by: day(j.due),
       stage: j.stage,
       artwork_checked: j.proofs.length > 0,

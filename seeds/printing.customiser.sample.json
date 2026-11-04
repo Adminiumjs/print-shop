@@ -5800,11 +5800,6 @@
           "weight_kg": 1.02,
           "design_code": null,
           "design_id": null,
-          "ready_from": {
-            "@day": -4,
-            "@time": "09:30",
-            "@week": true
-          },
           "ready_by": {
             "@day": 5,
             "@week": true
@@ -5849,11 +5844,6 @@
           "weight_kg": 2.23,
           "design_code": null,
           "design_id": null,
-          "ready_from": {
-            "@day": -4,
-            "@time": "09:30",
-            "@week": true
-          },
           "ready_by": {
             "@day": 2,
             "@week": true
@@ -5900,11 +5890,6 @@
           "weight_kg": 5.48,
           "design_code": null,
           "design_id": null,
-          "ready_from": {
-            "@day": -2,
-            "@time": "09:30",
-            "@week": true
-          },
           "ready_by": {
             "@day": 5,
             "@week": true
@@ -5947,11 +5932,6 @@
           "weight_kg": 3.36,
           "design_code": null,
           "design_id": null,
-          "ready_from": {
-            "@day": -5,
-            "@time": "10:00",
-            "@week": true
-          },
           "ready_by": {
             "@day": 1,
             "@week": true
@@ -5998,11 +5978,6 @@
           "weight_kg": 1.56,
           "design_code": null,
           "design_id": null,
-          "ready_from": {
-            "@day": -5,
-            "@time": "10:00",
-            "@week": true
-          },
           "ready_by": {
             "@day": 1,
             "@week": true
@@ -6047,11 +6022,6 @@
           "weight_kg": 0.47,
           "design_code": null,
           "design_id": null,
-          "ready_from": {
-            "@day": -5,
-            "@time": "10:00",
-            "@week": true
-          },
           "ready_by": {
             "@day": 0,
             "@week": true
@@ -6094,11 +6064,6 @@
           "weight_kg": 2.46,
           "design_code": null,
           "design_id": null,
-          "ready_from": {
-            "@day": -2,
-            "@time": "09:30",
-            "@week": true
-          },
           "ready_by": {
             "@day": 2,
             "@week": true
@@ -6143,11 +6108,6 @@
           "weight_kg": 1.55,
           "design_code": null,
           "design_id": null,
-          "ready_from": {
-            "@day": -5,
-            "@time": "09:30",
-            "@week": true
-          },
           "ready_by": {
             "@day": -1,
             "@week": true
@@ -6192,11 +6152,6 @@
           "weight_kg": 4.24,
           "design_code": null,
           "design_id": null,
-          "ready_from": {
-            "@day": -2,
-            "@time": "09:30",
-            "@week": true
-          },
           "ready_by": {
             "@day": 5,
             "@week": true
@@ -6239,11 +6194,6 @@
           "weight_kg": 1.17,
           "design_code": null,
           "design_id": null,
-          "ready_from": {
-            "@day": -5,
-            "@time": "10:00",
-            "@week": true
-          },
           "ready_by": {
             "@day": 1,
             "@week": true
@@ -6290,11 +6240,6 @@
           "weight_kg": 0.86,
           "design_code": null,
           "design_id": null,
-          "ready_from": {
-            "@day": -2,
-            "@time": "09:30",
-            "@week": true
-          },
           "ready_by": {
             "@day": 2,
             "@week": true
@@ -6339,11 +6284,6 @@
           "weight_kg": 0.34,
           "design_code": null,
           "design_id": null,
-          "ready_from": {
-            "@day": -5,
-            "@time": "09:30",
-            "@week": true
-          },
           "ready_by": {
             "@day": -1,
             "@week": true
@@ -6390,11 +6330,6 @@
           "weight_kg": 5.5,
           "design_code": null,
           "design_id": null,
-          "ready_from": {
-            "@day": -5,
-            "@time": "10:00",
-            "@week": true
-          },
           "ready_by": {
             "@day": 6,
             "@week": true
@@ -6437,11 +6372,6 @@
           "weight_kg": 9.48,
           "design_code": null,
           "design_id": null,
-          "ready_from": {
-            "@day": -2,
-            "@time": "09:30",
-            "@week": true
-          },
           "ready_by": {
             "@day": 1,
             "@week": true
@@ -6489,11 +6419,6 @@
           "design_code": "MP4112C8G2S6E4WB",
           "design_id": {
             "@ref": "design:mp-4112"
-          },
-          "ready_from": {
-            "@day": -2,
-            "@time": "10:00",
-            "@week": true
           },
           "ready_by": {
             "@day": 5,

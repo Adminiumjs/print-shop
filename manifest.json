@@ -4034,28 +4034,6 @@
             }
           },
           {
-            "ref": "ready_from",
-            "type": "timestamptz",
-            "label": {
-              "en-US": "Counted from"
-            },
-            "nullable": true,
-            "rules": {
-              "stamp": {
-                "set": "now",
-                "on": [
-                  "create",
-                  {
-                    "column": "proof_state",
-                    "values": [
-                      "approved"
-                    ]
-                  }
-                ]
-              }
-            }
-          },
-          {
             "ref": "ready_by",
             "type": "date",
             "label": {
@@ -4066,7 +4044,7 @@
               "stamp": {
                 "set": {
                   "addWorkingDays": {
-                    "from": "ready_from",
+                    "from": "now",
                     "days": "turnaround_days",
                     "weekdays": "working_days",
                     "cutoff": "cutoff",
@@ -4078,12 +4056,20 @@
                     }
                   }
                 },
-                "on": {
-                  "columns": [
-                    "ready_from",
-                    "turnaround_days"
-                  ]
-                }
+                "on": [
+                  "create",
+                  {
+                    "column": "proof_state",
+                    "values": [
+                      "approved"
+                    ]
+                  },
+                  {
+                    "columns": [
+                      "turnaround_days"
+                    ]
+                  }
+                ]
               }
             }
           },
@@ -6718,10 +6704,6 @@
                 {
                   "column": "turnaround_days",
                   "control": "number"
-                },
-                {
-                  "column": "ready_from",
-                  "control": "datetime"
                 },
                 {
                   "column": "artwork_checked",

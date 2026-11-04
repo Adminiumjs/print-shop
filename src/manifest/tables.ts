@@ -29,7 +29,8 @@
  *     (`addWorkingDays`: the works' days and its two o'clock cut-off are
  *     settings, its closures a table): the standard days or the express
  *     days, the printed proof's post days, a working day for each change
- *     asked; counted again from the moment its proof is approved;
+ *     asked; counted again from the moment a change is asked or its proof
+ *     approved;
  *   - an order's delivery is one band on the basket's weight, collection
  *     costs nothing, and over the top band the works quotes it by hand; its
  *     tax is the settings' rate on the goods and the delivery;
@@ -790,21 +791,20 @@ export const TABLES: Table[] = [
       figure("posted_proofs", "int", "Proofs by post", { rollup: { from: "proofs", via: "job_id", count: true, where: { column: "kind", eq: "post" } } }),
       figure("proof_ok", "int", "Ready for press", { formula: PROOF_OK }),
       figure("turnaround_days", "int", "Working days to ready", { formula: { add: [WORK_DAYS, PROOF_WAIT_DAYS] } }),
-      // Counted from the order coming in, and again from the moment its proof is approved.
-      at("ready_from", "Counted from", { ...opt, rules: stamp("now", [onCreate, onState("proof_state", "approved")]) }),
+      // Counted from the order coming in, and again from the moment a change is asked or the proof approved.
       date("ready_by", "Ready by", {
         ...opt,
         rules: stamp(
           {
             addWorkingDays: {
-              from: "ready_from",
+              from: "now",
               days: "turnaround_days",
               weekdays: WORKING_DAYS,
               cutoff: CUTOFF,
               closures: { table: "closures", from: "from_date", to: "to_date", active: "active" },
             },
           },
-          { columns: ["ready_from", "turnaround_days"] },
+          [onCreate, onState("proof_state", "approved"), { columns: ["turnaround_days"] }],
         ),
       }),
       // Its artwork: how many files, and the warnings the customer accepted on them.

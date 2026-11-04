@@ -116,16 +116,16 @@ describe("every total, number and date is Adminium's", () => {
     });
   });
 
-  it("dates a job's ready-by in working days, with the cut-off and the closures, counted again on approval", () => {
+  it("dates a job's ready-by in working days, with the cut-off and the closures, counted again on a change or an approval", () => {
     const set = ((rules("jobs", "ready_by")["stamp"] as Json)["set"] as Json)["addWorkingDays"];
     expect(set).toEqual({
-      from: "ready_from",
+      from: "now",
       days: "turnaround_days",
       weekdays: "working_days",
       cutoff: "cutoff",
       closures: { table: "closures", from: "from_date", to: "to_date", active: "active" },
     });
-    expect((rules("jobs", "ready_from")["stamp"] as Json)["on"]).toEqual(["create", { column: "proof_state", values: ["approved"] }]);
+    expect((rules("jobs", "ready_by")["stamp"] as Json)["on"]).toEqual(["create", { column: "proof_state", values: ["approved"] }, { columns: ["turnaround_days"] }]);
     expect(rules("orders", "ready_by")["rollup"]).toEqual({ from: "jobs", via: "order_id", latest: { of: "ready_by", by: "ready_by" } });
     const settings = manifest["settings"] as Json[];
     expect(settings.map((s) => [s["key"], s["default"]])).toEqual([["working_days", "mon,tue,wed,thu,fri"], ["cutoff", "14:00"]]);
