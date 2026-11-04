@@ -520,7 +520,6 @@ export function customiserSection(): SampleBundle {
       ready_by: day(j.due),
       stage: j.stage,
       artwork_checked: j.proofs.length > 0,
-      spoiled_sheets: 0,
     });
     // Harbour Bakery's card is printed on both sides: its design's back is a feature the job pays for.
     if (j.design !== undefined) {

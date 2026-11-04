@@ -9,7 +9,8 @@
  *             file) or sending one again, and putting an approved job on the
  *             press. Never a price, a customer or the settings.
  *   press     the works' screens: the jobs on the press, moving them through
- *             finishing to ready, and the sheets spoiled.
+ *             finishing to ready (and the order with its last job), and the
+ *             sheets spoiled.
  *   counter   the works' screens: the orders ready to hand over, marking them
  *             collected or dispatched with the DHL service and a tracking
  *             number, pricing a delivery over the bands and sending its
@@ -64,7 +65,15 @@ export const CUSTOMERS_OWN = ["may_email", "link_token", "client_key"];
 
 /** The rate card and the catalogue: every role reads them, the owner alone edits them. */
 const RATE_CARD = ["settings", "materials", "sizes", "finishes", "breaks", "packaging", "delivery_bands", "products", "options", "option_rules", "machines", "closures"];
-const ORDER_READS = ["orders", "jobs", "job_features", "artwork", "proofs"];
+const ORDER_READS = ["orders", "jobs", "job_features", "artwork", "proofs", "spoils"];
+
+/** What every role reads of Inventory, when it keeps the stock: which item a material is, and its stock. */
+const STOCK_READS = [
+  { addOn: "inventory", table: "links", actions: ["read"] },
+  { addOn: "inventory", table: "stock_points", actions: ["read"] },
+];
+/** What the owner and the counter read of DHL, when it is on: the collections it booked. */
+const SHIPMENT_READS = [{ addOn: "shipping-dhl", table: "shipments", actions: ["read"] }];
 
 /** The works' screens open records on these pages. */
 export const WORKS_PAGES = ["printing-orders", "printing-jobs", "printing-proofs", "printing-artwork", "printing-samples"];
@@ -86,7 +95,7 @@ export const ROLES = [
       orders: { writable: typed("orders", ...CUSTOMERS_OWN), creatable: typed("orders", ...CUSTOMERS_OWN) },
       saved_quotes: { writable: typed("saved_quotes", ...CUSTOMERS_OWN), creatable: typed("saved_quotes", ...CUSTOMERS_OWN) },
     },
-    tables: CUSTOMISER_READS,
+    tables: [...CUSTOMISER_READS, ...STOCK_READS, ...SHIPMENT_READS],
   },
   {
     key: "prepress",
@@ -113,7 +122,7 @@ export const ROLES = [
         writableValues: { state: ["superseded"] },
       },
     },
-    tables: CUSTOMISER_READS,
+    tables: [...CUSTOMISER_READS, ...STOCK_READS],
   },
   {
     key: "press",
@@ -123,15 +132,22 @@ export const ROLES = [
       "app:@:staff",
       ...[...RATE_CARD, ...ORDER_READS].flatMap((table) => grant(table, "read")),
       ...grant("jobs", "update"),
+      ...grant("spoils", "create"),
+      ...grant("orders", "update"),
       view("printing-jobs"),
     ],
     limits: {
-      jobs: { writable: ["stage", "spoiled_sheets", "works_note"], writableValues: { stage: ["finishing", "ready"] }, writableFrom: { stage: ["printing", "finishing"] } },
+      jobs: { writable: ["stage", "works_note"], writableValues: { stage: ["finishing", "ready"] }, writableFrom: { stage: ["printing", "finishing"] } },
+      // Sheets spoiled on a job's run, with a note.
+      spoils: { creatable: ["job_id", "qty", "note"] },
+      // The order ready to hand over, once its last job is.
+      orders: { writable: ["status"], writableValues: { status: ["ready"] }, writableFrom: { status: ["placed"] } },
     },
     tables: [
       { addOn: CUSTOMISER, table: "designs", actions: ["read"] },
       { addOn: CUSTOMISER, table: "design_versions", actions: ["read"] },
       { addOn: CUSTOMISER, table: "version_files", actions: ["read"] },
+      ...STOCK_READS,
     ],
   },
   {
@@ -159,6 +175,6 @@ export const ROLES = [
       jobs: { writable: ["stage"], writableValues: { stage: ["collected", "dispatched"] }, writableFrom: { stage: ["ready"] } },
       sample_requests: { writable: ["status"], writableValues: { status: ["posted"] } },
     },
-    tables: [{ addOn: CUSTOMISER, table: "designs", actions: ["read"] }],
+    tables: [{ addOn: CUSTOMISER, table: "designs", actions: ["read"] }, ...STOCK_READS, ...SHIPMENT_READS],
   },
 ];

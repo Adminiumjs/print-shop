@@ -2403,7 +2403,17 @@
           "initial": "placed",
           "moves": {
             "placed": [
-              "ready",
+              {
+                "to": "ready",
+                "requires": {
+                  "where": [
+                    {
+                      "column": "jobs_on_floor",
+                      "eq": 0
+                    }
+                  ]
+                }
+              },
               "cancelled"
             ],
             "ready": [
@@ -3173,6 +3183,21 @@
               "stamp": {
                 "set": "now",
                 "on": "create"
+              }
+            }
+          },
+          {
+            "ref": "jobs_on_floor",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Jobs still on the floor"
+            },
+            "rules": {
+              "rollup": {
+                "from": "jobs",
+                "via": "order_id",
+                "sum": "on_floor"
               }
             }
           },
@@ -6771,17 +6796,58 @@
             }
           },
           {
-            "ref": "spoiled_sheets",
+            "ref": "on_floor",
             "type": "int",
+            "nullable": true,
             "label": {
-              "en-US": "Spoiled sheets"
+              "en-US": "On the floor"
             },
-            "default": 0,
             "rules": {
-              "validation": {
-                "min": 0
+              "formula": {
+                "if": [
+                  {
+                    "or": [
+                      {
+                        "eq": [
+                          "stage",
+                          "prepress"
+                        ]
+                      },
+                      {
+                        "eq": [
+                          "stage",
+                          "printing"
+                        ]
+                      },
+                      {
+                        "eq": [
+                          "stage",
+                          "finishing"
+                        ]
+                      }
+                    ]
+                  },
+                  1,
+                  0
+                ]
               }
             }
+          },
+          {
+            "ref": "spoiled_sheets",
+            "type": "decimal",
+            "nullable": true,
+            "label": {
+              "en-US": "Spoiled"
+            },
+            "rules": {
+              "rollup": {
+                "from": "spoils",
+                "via": "job_id",
+                "sum": "qty"
+              }
+            },
+            "scale": 2
           },
           {
             "ref": "works_note",
@@ -7255,6 +7321,139 @@
                     "change_asked"
                   ]
                 }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "ref": "spoils",
+        "label": {
+          "en-US": "Spoilage"
+        },
+        "labelPlural": {
+          "en-US": "Spoilage"
+        },
+        "keyField": "qty",
+        "postings": [
+          {
+            "id": "spoiled",
+            "into": {
+              "addOn": "inventory",
+              "ledger": "stock",
+              "action": "use"
+            },
+            "needs": "stock",
+            "post": {
+              "on": {
+                "create": true
+              }
+            },
+            "map": {
+              "what": "material_id",
+              "quantity": "qty",
+              "kind": {
+                "value": "written_off"
+              }
+            }
+          }
+        ],
+        "columns": [
+          {
+            "ref": "id",
+            "type": "int",
+            "role": "pk"
+          },
+          {
+            "ref": "job_id",
+            "type": "fk",
+            "references": "jobs",
+            "label": {
+              "en-US": "Job"
+            },
+            "index": true
+          },
+          {
+            "ref": "order_id",
+            "type": "fk",
+            "references": "orders",
+            "label": {
+              "en-US": "Order"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "job_id",
+                "from": "order_id",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "material_id",
+            "type": "fk",
+            "references": "materials",
+            "label": {
+              "en-US": "Stock"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "job_id",
+                "from": "material_id",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "qty",
+            "type": "decimal",
+            "scale": 2,
+            "label": {
+              "en-US": "Spoiled"
+            },
+            "rules": {
+              "validation": {
+                "min": 0.01,
+                "max": 5000
+              }
+            }
+          },
+          {
+            "ref": "note",
+            "type": "text",
+            "maxLength": 200,
+            "label": {
+              "en-US": "Note"
+            },
+            "nullable": true
+          },
+          {
+            "ref": "spoiled_at",
+            "type": "timestamptz",
+            "label": {
+              "en-US": "Recorded"
+            },
+            "nullable": true,
+            "rules": {
+              "stamp": {
+                "set": "now",
+                "on": "create"
+              }
+            }
+          },
+          {
+            "ref": "spoiled_by",
+            "type": "text",
+            "maxLength": 80,
+            "label": {
+              "en-US": "Recorded by"
+            },
+            "nullable": true,
+            "rules": {
+              "stamp": {
+                "set": "user-name",
+                "on": "create"
               }
             }
           }
@@ -13148,6 +13347,10 @@
         "table:@proofs:create",
         "table:@proofs:update",
         "table:@proofs:delete",
+        "table:@spoils:read",
+        "table:@spoils:create",
+        "table:@spoils:update",
+        "table:@spoils:delete",
         "table:@saved_quotes:read",
         "table:@saved_quotes:create",
         "table:@saved_quotes:update",
@@ -13308,6 +13511,27 @@
           "actions": [
             "read"
           ]
+        },
+        {
+          "addOn": "inventory",
+          "table": "links",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "inventory",
+          "table": "stock_points",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "shipping-dhl",
+          "table": "shipments",
+          "actions": [
+            "read"
+          ]
         }
       ]
     },
@@ -13334,6 +13558,7 @@
         "table:@job_features:read",
         "table:@artwork:read",
         "table:@proofs:read",
+        "table:@spoils:read",
         "table:@orders:read_pii",
         "table:@jobs:update",
         "table:@proofs:create",
@@ -13415,6 +13640,20 @@
           "actions": [
             "read"
           ]
+        },
+        {
+          "addOn": "inventory",
+          "table": "links",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "inventory",
+          "table": "stock_points",
+          "actions": [
+            "read"
+          ]
         }
       ]
     },
@@ -13441,14 +13680,16 @@
         "table:@job_features:read",
         "table:@artwork:read",
         "table:@proofs:read",
+        "table:@spoils:read",
         "table:@jobs:update",
+        "table:@spoils:create",
+        "table:@orders:update",
         "page:@printing-jobs:view"
       ],
       "limits": {
         "jobs": {
           "writable": [
             "stage",
-            "spoiled_sheets",
             "works_note"
           ],
           "writableValues": {
@@ -13461,6 +13702,28 @@
             "stage": [
               "printing",
               "finishing"
+            ]
+          }
+        },
+        "spoils": {
+          "creatable": [
+            "job_id",
+            "qty",
+            "note"
+          ]
+        },
+        "orders": {
+          "writable": [
+            "status"
+          ],
+          "writableValues": {
+            "status": [
+              "ready"
+            ]
+          },
+          "writableFrom": {
+            "status": [
+              "placed"
             ]
           }
         }
@@ -13483,6 +13746,20 @@
         {
           "addOn": "customiser",
           "table": "version_files",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "inventory",
+          "table": "links",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "inventory",
+          "table": "stock_points",
           "actions": [
             "read"
           ]
@@ -13512,6 +13789,7 @@
         "table:@job_features:read",
         "table:@artwork:read",
         "table:@proofs:read",
+        "table:@spoils:read",
         "table:@sample_requests:read",
         "table:@orders:read_pii",
         "table:@sample_requests:read_pii",
@@ -13574,6 +13852,27 @@
         {
           "addOn": "customiser",
           "table": "designs",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "inventory",
+          "table": "links",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "inventory",
+          "table": "stock_points",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "shipping-dhl",
+          "table": "shipments",
           "actions": [
             "read"
           ]
