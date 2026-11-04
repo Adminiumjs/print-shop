@@ -189,7 +189,6 @@ export function fakePort(catalogue: Catalogue = sampleCatalogue()): FakePort {
         goods_total: fixed(goods),
         weight_kg: weight.toFixed(2),
         delivery_band_id: band?.id ?? null,
-        band_price: band?.price ?? null,
         delivery: fixed(delivery),
         delivery_to_quote: !collect && band === null ? 1 : 0,
         subtotal: fixed(subtotal),

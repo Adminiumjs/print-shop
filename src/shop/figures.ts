@@ -78,7 +78,8 @@ export function deliveryOf(order: Row | null | undefined, bands: readonly Band[]
   const id = order?.["delivery_band_id"];
   const band = id === null || id === undefined ? null : (bands.find((b) => String(b.id) === String(id)) ?? null);
   const weight = figure(order, "weight_kg");
-  return { band, price: figure(order, "band_price"), toQuote: order !== null && order !== undefined && band === null && weight !== null, weight };
+  // The band's price is the rate card's row; the order's own `band_price` is not among what it answers.
+  return { band, price: figure(order, "band_price") ?? band?.price ?? null, toQuote: order !== null && order !== undefined && band === null && weight !== null, weight };
 }
 
 /** The top of the weight bands, in kilograms: over it, delivery is quoted by hand. */
