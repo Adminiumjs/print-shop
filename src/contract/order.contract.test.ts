@@ -2,7 +2,7 @@
  * A CUSTOMER ORDERS FROM MARLOW PRESS ON A BUILT ADMINIUM, THROUGH THE SHOP'S OWN DOOR.
  *
  * The app and the Customiser it requires are installed on a BUILT Adminium
- * (`ADMINIUM_REPO`, the core at 0.3.43) as an operator installs them, the
+ * (`ADMINIUM_REPO`, the core at 0.3.44) as an operator installs them, the
  * sample added at the moment the comps pin the works to (10:20 on Wednesday
  * 5 August 2026 in Marlow), and the shop is opened the way its customer
  * build opens it: the surface config Adminium serves, the shop's door
@@ -26,9 +26,8 @@
  * The job's price is the rate card's calculated columns; on the stand-in
  * `price` and `weight_kg` the works types for now, a dry run answers no
  * figure for them, so this holds the bodies and the shapes that come back,
- * not the amounts. The ready-by is Adminium's working-day stamp, which 0.3.43
- * leaves empty on a create when its days are a formula (`READY_BY_GAP`, as
- * the app's install test; 0.3.44 fills it: Monday 10 August).
+ * not the amounts. The ready-by is Adminium's working-day stamp: Monday 10
+ * August (`READY_BY_GAP=1` holds an older core that left it empty).
  *
  * It runs with `CONTRACT=1` where a built Adminium and a built add-ons
  * checkout are, and says why it skipped otherwise. It runs on SQLite: the
@@ -46,7 +45,7 @@ import { cappedAt, deliveryOf, EACH, figure, partsOf } from "../shop/figures.ts"
 import { firstChoice, jobValues, optionsOf, stepsOf } from "../shop/config.ts";
 import { AdminiumShop } from "../shop/door.ts";
 import { isShopError, type Catalogue, type Row } from "../shop/port.ts";
-import { dryValues, orderBody, useShop, type ArtFile, type BasketLine } from "../shop/store.ts";
+import { orderBody, useShop, type ArtFile, type BasketLine } from "../shop/store.ts";
 import { addOnBundle, appBundle, boot, Caller, ENGINES, missing, missingAddOn, ok, PORTS_PER_ENGINE, until, type Engine, type Server } from "./harness.ts";
 
 const why = missing() ?? missingAddOn("customiser");
@@ -55,8 +54,8 @@ const PORT_BASE = Number(process.env["CONTRACT_PORT_BASE"] ?? 4990);
 const ADMIN = { email: process.env["E2E_ADMIN_EMAIL"] ?? "e2e@adminium.local", password: process.env["E2E_ADMIN_PASSWORD"] ?? "adminium-e2e-password" };
 /** 10:20 on Wednesday 5 August 2026 in Marlow (British Summer Time), before the two o'clock cut-off. */
 const WEDNESDAY = Date.parse("2026-08-05T09:20:00Z");
-/** 0.3.43 stamps no ready-by on a create whose days are a formula; 0.3.44 does. */
-const READY_BY_GAP = process.env["READY_BY_GAP"] !== "0";
+/** 0.3.43 stamped no ready-by on a create whose days are a formula; 0.3.44 does (set `READY_BY_GAP=1` for the older core). */
+const READY_BY_GAP = process.env["READY_BY_GAP"] === "1";
 const CUSTOMER = { name: "Harbour Bakery", email: "hello@harbourbakery.example", address_line1: "12 Quay Street", town: "Marlow", postcode: "SL7 1BT", may_email: true, language: "en-US" };
 
 /** A print-ready PDF for 85 × 55 mm cards, both sides, but in RGB: one warning to accept. */
@@ -156,7 +155,7 @@ describe.skipIf(why !== null)(`a customer orders on a built Adminium${why === nu
         const steps = stepsOf(catalogue, cards);
         const chips = await door.quote({ values: { delivery_method: "collect", language: "en-US" }, children: { jobs: steps.map((qty) => ({ values: jobValues(catalogue, cards, choice, qty) })) } });
         expect(chips.jobs.map((j) => Number(j["qty"]))).toEqual(steps);
-        const panel = await door.quote({ values: dryValues({ delivery_method: "deliver", language: "en-US" }), children: { jobs: [{ values: jobValues(catalogue, cards, choice, 500) }] } }).catch((e: unknown) => {
+        const panel = await door.quote({ values: { delivery_method: "deliver", language: "en-US" }, children: { jobs: [{ values: jobValues(catalogue, cards, choice, 500) }] } }).catch((e: unknown) => {
           throw new Error(`refused: ${JSON.stringify(isShopError(e) ? { ...e.refused, raw: undefined } : String(e))}`);
         });
         expect(panel.jobs).toHaveLength(1);

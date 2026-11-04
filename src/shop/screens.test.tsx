@@ -198,8 +198,8 @@ describe("the bodies the pages send", () => {
     const chips = asked.find((c) => c.body!.children.jobs.length > 1)!;
     expect(chips.body).toEqual({ values: { delivery_method: "collect", language: "en-US" }, children: { jobs: [25, 50, 100, 250, 500, 1000].map((qty) => ({ values: { ...job, qty } })) } });
     const panel = asked.find((c) => c.body!.children.jobs.length === 1)!;
-    // Delivered, before an address is typed: the stand-ins a quote carries for the address its columns require.
-    expect(panel.body).toEqual({ values: { delivery_method: "deliver", language: "en-US", address_line1: "Quote", town: "Quote", postcode: "Quote" }, children: { jobs: [{ values: { ...job, qty: 100 } }] } });
+    // Delivered, before an address is typed: Adminium quotes it with no address at all.
+    expect(panel.body).toEqual({ values: { delivery_method: "deliver", language: "en-US" }, children: { jobs: [{ values: { ...job, qty: 100 } }] } });
     // The quantity alone moves only the panel's question.
     port.calls.length = 0;
     await act(async () => document.querySelectorAll<HTMLButtonElement>(".mp-choice--qty")[4]!.click());

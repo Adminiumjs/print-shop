@@ -2,7 +2,7 @@
  * AFTER THE ORDER, ON A BUILT ADMINIUM, THROUGH THE SHOP'S OWN DOOR.
  *
  * The app and the Customiser it requires are installed on a BUILT Adminium
- * (`ADMINIUM_REPO`, the core at 0.3.43) as an operator installs them, the
+ * (`ADMINIUM_REPO`, the core at 0.3.44) as an operator installs them, the
  * sample added at the moment the comps pin the works to (10:20 on Wednesday
  * 5 August 2026 in Marlow), and the shop opened the way its customer build
  * opens it. Harbour Bakery orders 500 business cards; the works sends a
@@ -12,8 +12,9 @@
  * - the order's own link (the one the save handed the confirmation) opens
  *   that one order and no other, a link that is nobody's opens nothing; the
  *   proof's PDF is read through it, and the proof APPROVED by the customer's
- *   claimed write: Adminium lets the job go to press and stores its ready-by
- *   again from the approval (Monday 10 August);
+ *   claimed write on Thursday afternoon: Adminium lets the job go to press
+ *   and stores its ready-by again from the approval (Monday 10 August when
+ *   placed, Wednesday 12 August once approved past the cut-off);
  * - the lookup: a code asked for the address, read from the e-mail Adminium
  *   sent, a wrong one said as wrong, the right one typed back; the
  *   customer's own orders read (Harbour Bakery's, nobody else's); a second
@@ -49,8 +50,10 @@ const PORT_BASE = Number(process.env["CONTRACT_PORT_BASE"] ?? 4980);
 const ADMIN = { email: process.env["E2E_ADMIN_EMAIL"] ?? "e2e@adminium.local", password: process.env["E2E_ADMIN_PASSWORD"] ?? "adminium-e2e-password" };
 /** 10:20 on Wednesday 5 August 2026 in Marlow (British Summer Time), before the two o'clock cut-off. */
 const WEDNESDAY = Date.parse("2026-08-05T09:20:00Z");
-/** 0.3.43 stamps no ready-by on a create whose days are a formula; 0.3.44 does. */
-const READY_BY_GAP = process.env["READY_BY_GAP"] !== "0";
+/** 15:00 on Thursday 6 August, past the cut-off: when the customer approves the first proof. */
+const THURSDAY_LATE = Date.parse("2026-08-06T14:00:00Z");
+/** 0.3.43 stamped no ready-by on a create whose days are a formula; 0.3.44 does (set `READY_BY_GAP=1` for the older core). */
+const READY_BY_GAP = process.env["READY_BY_GAP"] === "1";
 const HARBOUR = { name: "Harbour Bakery", email: "hello@harbourbakery.example", address_line1: "12 Quay Street", town: "Marlow", postcode: "SL7 1BT", may_email: false, language: "en-US" };
 /** A one-page PDF: the proof as the works' prepress exports it. */
 const PDF = Buffer.from("%PDF-1.4\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 258 173] >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF\n", "latin1");
@@ -171,15 +174,22 @@ describe.skipIf(why !== null)(`after the order, on a built Adminium${why === nul
 
         const before = (await rows("jobs")).find((j) => String(j["id"]) === String(job["id"]))!;
         expect([before["proof_state"], Number(before["proof_ok"])]).toEqual(["sent", 0]);
+        // Placed at 10:20 on Wednesday, before the cut-off: three working days on, Monday 10 August.
+        if (READY_BY_GAP) expect(before["ready_by"] ?? null).toBeNull();
+        else expect(String(before["ready_by"]).slice(0, 10)).toBe("2026-08-10");
+        // The customer answers on Thursday afternoon, past the two o'clock cut-off: the work starts Friday.
+        await server.setClock(THURSDAY_LATE);
+        // A day on, the link in the e-mail is opened again: the session the first visit held has run out.
+        expect(await door.openShared(placed.link!.token)).toBe("opened");
         const answered = await door.answerProof("link", proof["id"] as number, { state: "approved" }).catch((e: unknown) => {
           throw new Error(`the approval was refused: ${said(e)}`);
         });
         expect(answered["state"]).toBe("approved");
         const after = (await rows("jobs")).find((j) => String(j["id"]) === String(job["id"]))!;
         expect([after["proof_state"], Number(after["proof_ok"]), Number(after["turnaround_days"])]).toEqual(["approved", 1, 3]);
-        // Approved at 10:20 on Wednesday, before the cut-off: three working days on, Monday 10 August.
-        if (READY_BY_GAP && after["ready_by"] == null) expect(before["ready_by"] ?? null).toBeNull();
-        else expect(String(after["ready_by"]).slice(0, 10)).toBe("2026-08-10");
+        // The ready-by is stored again from the approval: Friday and three working days on, Wednesday 12 August.
+        if (READY_BY_GAP) expect(after["ready_by"] ?? null).toBeNull();
+        else expect(String(after["ready_by"]).slice(0, 10)).toBe("2026-08-12");
         expect((await rows("proofs")).find((p) => String(p["id"]) === String(proof["id"]))!["answered_at"]).not.toBeNull();
 
         // A proof answered is answered: a second answer is refused.
