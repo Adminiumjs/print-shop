@@ -338,13 +338,9 @@ export class AdminiumAfter implements AfterPort {
 
 /** A client on a key, for the door to hand the pages: the shop's own options, a session it may hold. */
 export function keyClient(baseUrl: string, publishableKey: string, fetchImpl: typeof fetch | undefined, session?: { token: string; expiresAt: number }): PublicClient {
-  const made = createPublicClient({
-    baseUrl,
-    publishableKey,
-    ...(fetchImpl === undefined ? {} : { fetch: fetchImpl }),
-    humanCheck: false,
-    ...(session === undefined ? {} : { session: { token: session.token, expiresAt: session.expiresAt, level: "verified" as const } }),
-  });
+  const made = createPublicClient({ baseUrl, publishableKey, ...(fetchImpl === undefined ? {} : { fetch: fetchImpl }), humanCheck: false });
   if (made === null) throw new Error("The key could not be used.");
+  // Adopted as the order's own link is on placing: the session the server opened, held as it gave it.
+  if (session !== undefined) made.adoptSession({ token: session.token, expiresAt: session.expiresAt, level: "verified" });
   return made;
 }

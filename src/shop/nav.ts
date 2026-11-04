@@ -12,5 +12,7 @@ export type ShopNavEntry = SurfaceNavEntry<string> & { labelKey: MessageKey };
 export const SHOP_NAV = [
   { id: "home", path: "", view: "products", side: "customer", labelKey: "chrome.nav.products" },
   { id: "basket", path: "basket", view: "basket", side: "customer", labelKey: "chrome.nav.order" },
+  { id: "order", path: "order", view: "order", side: "customer", labelKey: "shop.nav.follow" },
+  { id: "reorder", path: "reorder", view: "reorder", side: "customer", labelKey: "shop.nav.reorder" },
   { id: "find-us", path: "find-us", view: "findUs", side: "customer", labelKey: "chrome.nav.findus" },
 ] as const satisfies readonly ShopNavEntry[];
