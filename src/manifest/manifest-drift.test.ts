@@ -1,0 +1,335 @@
+/**
+ * `manifest.json` is written from `src/manifest/` (`npm run manifest`), and
+ * this is what keeps the two from drifting: an edit to a module that was not
+ * written out, or a hand edit to the file, fails here with the fix named.
+ *
+ * It also holds the manifest's own promises that the validator cannot see:
+ * every total and date is Adminium's; a job's options are its own product's;
+ * a customer reads nothing of anybody else's and nothing the works keeps to
+ * itself; the Customiser is bound as its README asks; the works' roles write
+ * only what their work needs.
+ */
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+import { describe, expect, it } from "vitest";
+
+import { buildManifest, CUSTOMER_ROUTES, manifestText } from "./build.ts";
+import { untranslated } from "./labels.ts";
+import { DESIGN_POSTING } from "./postings.ts";
+import { CONFIG_WRITABLE, PUBLIC_REFS } from "./public.ts";
+import { DECIDING_RULES } from "./roles.ts";
+import { PRICE_PLACEHOLDERS } from "./tables.ts";
+import UNTRANSLATED from "./untranslated-labels.json" with { type: "json" };
+
+const FILE = join(__dirname, "..", "..", "manifest.json");
+
+type Json = Record<string, unknown>;
+type Entry = Json & { table: string; methods: string[]; key?: string; select?: string[]; writable?: string[] };
+const manifest = buildManifest() as Json & {
+  requiredSchema: { prefixed: boolean; tables: (Json & { ref: string; columns: (Json & { ref: string })[] })[] };
+  publicAccess: Entry[];
+  roles: (Json & { key: string; permissions: string[]; limits?: Record<string, Json>; tables?: Json[] })[];
+  addOns: { requires: Json[]; suggests: Json[] };
+  people: (Json & { copies: Json[] })[];
+  outbox: Json & { classes: Record<string, string>; kinds: Record<string, string> };
+};
+const table = (ref: string) => manifest.requiredSchema.tables.find((t) => t.ref === ref)!;
+const column = (t: string, c: string) => table(t).columns.find((col) => col.ref === c)!;
+const rules = (t: string, c: string) => (column(t, c)["rules"] ?? {}) as Json;
+const role = (key: string) => manifest.roles.find((r) => r.key === key)!;
+const create = (t: string) => manifest.publicAccess.find((e) => e.table === t && e.methods.includes("POST"))!;
+
+describe("manifest.json is what src/manifest/ writes", () => {
+  it("is byte for byte the modules' output — run `npm run manifest` after changing them", () => {
+    expect(readFileSync(FILE, "utf8") === manifestText()).toBe(true);
+  });
+
+  it("is prefixed, keyed printing, at 0.1.0, and needs the engine that reads its rules", () => {
+    expect(manifest.requiredSchema.prefixed).toBe(true);
+    expect(manifest["key"]).toBe("printing");
+    expect(manifest["version"]).toBe("0.1.0");
+    expect((manifest["compatibility"] as Json)["minAdminiumVersion"]).toBe("0.3.43");
+  });
+
+  it("holds its English-only labels to the list recorded, so a new one cannot slip in untranslated", () => {
+    buildManifest();
+    expect(untranslated()).toEqual(UNTRANSLATED);
+  });
+});
+
+describe("the tables of the rate card, the orders and the works", () => {
+  it("has every table, by its ref", () => {
+    expect(manifest.requiredSchema.tables.map((t) => t.ref)).toEqual([
+      "settings",
+      "materials",
+      "sizes",
+      "finishes",
+      "breaks",
+      "packaging",
+      "delivery_bands",
+      "products",
+      "options",
+      "option_rules",
+      "machines",
+      "closures",
+      "customers",
+      "orders",
+      "jobs",
+      "job_features",
+      "artwork",
+      "proofs",
+      "saved_quotes",
+      "quote_lines",
+      "sample_requests",
+      "messages",
+    ]);
+  });
+
+  it("keeps the price placeholders as plain columns the works types, which every total above them reads", () => {
+    for (const name of PRICE_PLACEHOLDERS) {
+      const [t, c] = name.split(".") as [string, string];
+      expect(DECIDING_RULES.filter((rule) => rules(t, c)[rule] !== undefined), name).toEqual([]);
+    }
+    expect(rules("orders", "goods_total")["rollup"]).toEqual({ from: "jobs", via: "order_id", sum: "price" });
+    expect(rules("orders", "weight_kg")["rollup"]).toEqual({ from: "jobs", via: "order_id", sum: "weight_kg" });
+    expect(rules("saved_quotes", "goods_total")["rollup"]).toEqual({ from: "quote_lines", via: "quote_id", sum: "price" });
+  });
+});
+
+describe("every total, number and date is Adminium's", () => {
+  it("holds a job's options to its own product's, a lamination to a coated stock and a spot UV to a lamination", () => {
+    for (const t of ["jobs", "quote_lines"]) {
+      for (const [link, kind] of [["material_option_id", "material"], ["size_option_id", "size"], ["sides_option_id", "sides"], ["corners_option_id", "corners"]] as const) {
+        expect(rules(t, link)["linkable"]).toEqual({
+          where: [{ column: "kind", eq: kind }, { column: "active", eq: true }],
+          same: [{ column: "product_id", as: "product_id" }],
+        });
+      }
+      expect((rules(t, "lamination_option_id")["linkable"] as Json)["same"]).toContainEqual({ column: "coated", as: "material_option_id.coated" });
+      expect((rules(t, "spot_uv_option_id")["linkable"] as Json)["same"]).toContainEqual({ column: "coated", as: "lamination_option_id.coated" });
+      expect(rules(t, "material_id")["copy"]).toEqual({ via: "material_option_id", from: "material_id", mode: "always" });
+    }
+    expect(rules("job_features", "option_id")["linkable"]).toEqual({
+      where: [{ column: "kind", eq: "feature" }, { column: "active", eq: true }],
+      same: [{ column: "product_id", as: "job_id.product_id" }],
+    });
+  });
+
+  it("dates a job's ready-by in working days, with the cut-off and the closures, counted again on approval", () => {
+    const set = ((rules("jobs", "ready_by")["stamp"] as Json)["set"] as Json)["addWorkingDays"];
+    expect(set).toEqual({
+      from: "ready_from",
+      days: "turnaround_days",
+      weekdays: "working_days",
+      cutoff: "cutoff",
+      closures: { table: "closures", from: "from_date", to: "to_date", active: "active" },
+    });
+    expect((rules("jobs", "ready_from")["stamp"] as Json)["on"]).toEqual(["create", { column: "proof_state", values: ["approved"] }]);
+    expect(rules("orders", "ready_by")["rollup"]).toEqual({ from: "jobs", via: "order_id", latest: { of: "ready_by", by: "ready_by" } });
+    const settings = manifest["settings"] as Json[];
+    expect(settings.map((s) => [s["key"], s["default"]])).toEqual([["working_days", "mon,tue,wed,thu,fri"], ["cutoff", "14:00"]]);
+  });
+
+  it("numbers orders MP- and saved quotes MQ- without gaps, each its own series", () => {
+    expect(rules("orders", "number_seq")["sequence"]).toEqual({ gapless: true, startSetting: { table: "settings", column: "first_order_number" } });
+    expect(rules("orders", "number")["format"]).toEqual({ from: "number_seq", prefixSetting: { table: "settings", column: "ref_prefix" } });
+    expect(rules("saved_quotes", "number_seq")["sequence"]).toEqual({ gapless: true, startSetting: { table: "settings", column: "first_quote_number" } });
+    expect(rules("saved_quotes", "number")["format"]).toEqual({ from: "number_seq", prefixSetting: { table: "settings", column: "quote_prefix" } });
+  });
+
+  it("charges one delivery band on the basket's weight, and leaves an order over the top band to quote", () => {
+    expect(rules("orders", "delivery_band_id")["band"]).toEqual({
+      table: "delivery_bands",
+      min: "min_kg",
+      max: "max_kg",
+      value: "weight_kg",
+      scope: [{ column: "tube", equals: "tube" }],
+      over: "empty",
+    });
+    expect(rules("orders", "tax_rate")["default"]).toEqual({ from: { table: "settings", column: "tax_rate" } });
+  });
+
+  it("keeps nothing from the press before its proof is approved", () => {
+    const moves = (table("jobs")["states"] as Json)["moves"] as Record<string, unknown[]>;
+    expect(moves["prepress"]![0]).toEqual({ to: "printing", requires: { where: [{ column: "proof_ok", eq: 1 }] } });
+  });
+
+  it("takes artwork from a guest as PDF, TIFF or JPEG, up to 100 MB", () => {
+    expect((rules("artwork", "file")["file"] as Json)).toEqual({
+      accept: ["pdf", "jpeg", "tiff"],
+      maxBytes: 104857600,
+      upload: { kinds: ["pdf", "jpg", "tiff"], maxBytes: 104857600 },
+    });
+    const artwork = ((create("orders")["children"] as Json)["jobs"] as Json)["children"] as Record<string, Json>;
+    expect(artwork["artwork"]!["uploads"]).toEqual(["file"]);
+  });
+});
+
+describe("the Customiser is bound as its README asks", () => {
+  it("requires it at the release that carries it, suggests neither Design Studio nor the Canva import, and names the page its saved-design mail opens", () => {
+    expect(manifest.addOns.requires).toEqual([expect.objectContaining({ key: "customiser", range: "^1.0.16" })]);
+    expect(manifest.addOns.suggests.map((s) => s["key"])).toEqual(["shipping-dhl", "inventory", "invoices", "holiday-calendars"]);
+    expect(CUSTOMER_ROUTES.customiserDesign).toBe("/design");
+  });
+
+  it("links a product to its base, a feature option to its feature, and a job to its design by the design's code only", () => {
+    expect(rules("products", "base_id")["addOnLink"]).toEqual({ addOn: "customiser", table: "bases" });
+    expect(rules("options", "feature_id")["addOnLink"]).toEqual({ addOn: "customiser", table: "features" });
+    expect(rules("jobs", "design_id")).toEqual({
+      addOnLink: { addOn: "customiser", table: "designs" },
+      lookup: { from: "design_code", table: { addOn: "customiser", table: "designs" }, column: "code" },
+    });
+    const jobs = (create("orders")["children"] as Json)["jobs"] as Json;
+    expect(jobs["writable"]).toContain("design_code");
+    expect(jobs["writable"]).not.toContain("design_id");
+  });
+
+  it("checks the design a job names against the features it pays for, and posts it when the job is made", () => {
+    expect(table("jobs")["check"]).toEqual({ by: { addOn: "customiser" }, design: "design_id", paid: { table: "job_features", via: "job_id", feature: "feature" } });
+    expect(table("jobs")["postings"]).toEqual([DESIGN_POSTING]);
+  });
+
+  it("names its feature options in the table the Customiser reads prices from, `printing:options`", () => {
+    expect(column("options", "price")["type"]).toBe("decimal");
+    expect(column("options", "feature_id")["rules"]).toEqual({ addOnLink: { addOn: "customiser", table: "features" } });
+  });
+
+  it("copies a person onto the designs their jobs name", () => {
+    const copies = manifest.people[0]!.copies.filter((c) => c["addOn"] === "customiser");
+    expect(copies).toEqual([
+      { addOn: "customiser", table: "designs", column: "email", holds: "email", via: "jobs.design_id" },
+      { addOn: "customiser", table: "designs", column: "values", holds: "details", via: "jobs.design_id" },
+    ]);
+  });
+});
+
+describe("a customer reads nothing of anyone else's, and nothing the works keeps", () => {
+  const NEVER = ["link_token", "client_key", "customer_id", "number_seq", "number_code", "handed_over_by", "printed_by", "sent_by", "posted_by", "works_note", "may_email", "spoiled_sheets", "address_key"];
+  const selects = (e: Json): string[] => [
+    ...((e["select"] as string[] | undefined) ?? []),
+    ...Object.values((e["children"] ?? {}) as Record<string, Json>).flatMap((child) => [
+      ...((child["select"] as string[] | undefined) ?? []),
+      ...Object.values((child["children"] ?? {}) as Record<string, Json>).flatMap((grand) => (grand["select"] as string[] | undefined) ?? []),
+    ]),
+  ];
+
+  it("never selects a link code, a retry key, a stamp of who, or a works note", () => {
+    for (const entry of manifest.publicAccess) {
+      for (const name of NEVER) expect(selects(entry), `${entry.table} ${entry.methods.join(",")}`).not.toContain(name);
+    }
+  });
+
+  it("never lets a customer write a price, a weight or the tube", () => {
+    for (const writable of [CONFIG_WRITABLE, (create("orders")["writable"] as string[]), (create("saved_quotes")["writable"] as string[])]) {
+      for (const name of ["price", "weight_kg", "tube"]) expect(writable).not.toContain(name);
+    }
+  });
+
+  it("reads orders and quotes only through a signed-in customer, or one by its own link", () => {
+    for (const entry of manifest.publicAccess.filter((e) => ["orders", "saved_quotes"].includes(e.table) && e.methods.includes("GET"))) {
+      const claimed = entry["claimedBy"] !== undefined && entry["level"] === "verified";
+      const own = (entry.key === "order" || entry.key === "quote") && (entry["claim"] as Json | undefined)?.["own"] === true;
+      expect(claimed || own, `${entry.table} ${entry.key ?? "customer"}`).toBe(true);
+    }
+  });
+
+  it("answers a proof only to approve it or ask for a change, while it waits", () => {
+    const answers = manifest.publicAccess.filter((e) => e.table === "proofs");
+    expect(answers.map((e) => e.key ?? "customer")).toEqual(["customer", "order"]);
+    for (const entry of answers) {
+      expect(entry["writable"]).toEqual(["state", "change_note"]);
+      expect(entry["writableValues"]).toEqual({ state: ["approved", "change_asked"] });
+      expect(entry["writableWhen"]).toEqual({ state: ["sent"] });
+    }
+  });
+
+  it("answers a delivery quote only to accept it or collect instead, while it is sent", () => {
+    const answers = manifest.publicAccess.filter((e) => e.table === "orders" && e.methods.includes("PATCH"));
+    expect(answers.map((e) => e.key ?? "customer")).toEqual(["customer", "order"]);
+    for (const entry of answers) {
+      expect(entry["writableValues"]).toEqual({ delivery_quote_state: ["accepted"], delivery_method: ["collect"] });
+      expect(entry["writableWhen"]).toEqual({ delivery_quote_state: ["sent"] });
+    }
+  });
+
+  it("places an order with a retry key, a quote first, and a refusal if the total moved", () => {
+    const placed = create("orders");
+    expect([placed["dryRun"], placed["expect"], placed["clientKey"], placed["humanCheck"]]).toEqual([true, "total", "client_key", true]);
+    expect((placed["consent"] as Json)["column"]).toBe("may_email");
+  });
+
+  it("sends one sample pack to an address", () => {
+    expect(column("sample_requests", "address_key")["unique"]).toBe(true);
+    expect(rules("sample_requests", "address_key")).toEqual({ formula: { join: ["postcode", "address_line1"] }, normalize: "code" });
+  });
+});
+
+describe("the customer side's pages call each entry by the ref Adminium gives it", () => {
+  it("names every entry, in order, as Adminium names them", () => {
+    const taken = new Set<string>();
+    const refs = manifest.publicAccess.map((entry) => {
+      const real = `printing_${entry.table}`;
+      const reached = entry["claimedBy"] !== undefined || entry["visibleWith"] !== undefined;
+      const base = entry["claim"] !== undefined || (reached && entry["level"] !== "verified") ? `${real}_claimed` : reached ? `${real}_verified` : real;
+      let ref = base;
+      for (let n = 2; taken.has(ref); n += 1) ref = `${base}_${String(n)}`;
+      taken.add(ref);
+      return ref;
+    });
+    expect(Object.values(PUBLIC_REFS)).toEqual(refs);
+  });
+});
+
+describe("the e-mails", () => {
+  it("sends the customer service mail only, and copies to the works unclassed", () => {
+    expect(manifest.outbox.classes).toEqual({
+      "order-received": "service",
+      "proof-ready": "service",
+      "proof-approved": "service",
+      "order-ready": "service",
+      "order-dispatched": "service",
+      "quote-saved": "service",
+      "sample-pack-sent": "service",
+      "delivery-quote": "service",
+    });
+    expect(Object.keys(manifest.outbox.kinds)).toContain("change-asked");
+    expect(Object.keys(manifest.outbox.kinds)).toContain("warnings-accepted");
+  });
+});
+
+describe("the works writes only what its work needs", () => {
+  it("keeps prepress, press and counter on the works' screens", () => {
+    for (const key of ["prepress", "press", "counter"]) expect(role(key)["screensOnly"], key).toBe(true);
+    expect(role("owner")["screensOnly"]).toBeUndefined();
+  });
+
+  it("reads the design a job names, for every role that sees jobs", () => {
+    for (const key of ["owner", "prepress", "press", "counter"]) {
+      expect(role(key).tables, key).toEqual(expect.arrayContaining([{ addOn: "customiser", table: "designs", actions: ["read"] }]));
+    }
+  });
+
+  it("never lets a role write a total, a date Adminium works out, or the customer's own tick", () => {
+    for (const key of ["owner", "prepress", "press", "counter"]) {
+      for (const [ref, limit] of Object.entries(role(key).limits ?? {})) {
+        for (const list of ["writable", "creatable"] as const) {
+          const named = (limit[list] as string[] | undefined) ?? [];
+          for (const c of named) {
+            const r = rules(ref, c);
+            expect(DECIDING_RULES.filter((k) => r[k] !== undefined), `${key} ${ref}.${c}`).toEqual([]);
+          }
+          if (ref === "orders" || ref === "saved_quotes") expect(named, key).not.toContain("may_email");
+        }
+      }
+    }
+  });
+
+  it("leaves the rate card to the owner", () => {
+    for (const key of ["prepress", "press", "counter"]) {
+      for (const t of ["settings", "materials", "sizes", "finishes", "breaks", "packaging", "delivery_bands", "products", "options", "option_rules"]) {
+        expect(role(key).permissions, `${key} ${t}`).not.toContain(`table:@${t}:update`);
+      }
+    }
+  });
+});

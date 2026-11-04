@@ -1,0 +1,1011 @@
+/**
+ * The works' tables, as the manifest asks Adminium to make them.
+ *
+ * Three groups:
+ *
+ *   - **the rate card**, which anybody may read (it is a price list) and only
+ *     the owner edits: `settings` (the works and the card's single figures:
+ *     setup, tax, express, the printed proof, the working days a job takes),
+ *     `materials`, `sizes`, `finishes`, `breaks`, `packaging`,
+ *     `delivery_bands`; with the catalogue, `products`, the `options` each
+ *     product offers (its materials, sizes, sides and finishes, and the
+ *     Customiser's priced features) and the `option_rules` that say which
+ *     finish is not offered on what;
+ *   - **orders**: `customers`, `orders` (one basket, one delivery, one tax),
+ *     their `jobs` (one a configured line), the features a job pays for, the
+ *     customer's `artwork` and the works' `proofs`; `saved_quotes` and their
+ *     `quote_lines`; `sample_requests`;
+ *   - **the works**: `machines`, `closures`, and the outbox, `messages`.
+ *
+ * Every figure a customer or the works reads is decided here, by Adminium,
+ * never by a page:
+ *
+ *   - a job's options are rows of its own product's (`linkable.same`), and a
+ *     lamination only on a coated stock, a spot UV only on a lamination;
+ *   - an order's number runs without gaps, `MP-4127` and on, a saved quote's
+ *     its own, `MQ-2042` and on, each from the settings' first number and
+ *     prefix;
+ *   - a job's ready-by is so many working days after the order came in
+ *     (`addWorkingDays`: the works' days and its two o'clock cut-off are
+ *     settings, its closures a table): the standard days or the express
+ *     days, the printed proof's post days, a working day for each change
+ *     asked; counted again from the moment its proof is approved;
+ *   - an order's delivery is one band on the basket's weight, collection
+ *     costs nothing, and over the top band the works quotes it by hand; its
+ *     tax is the settings' rate on the goods and the delivery;
+ *   - a job naming a design in the Customiser has the design checked inside
+ *     the save (`check`) and snapshotted when the order is made (the `design`
+ *     posting); nothing is printed before its proof is approved.
+ *
+ * A job's own price and weight are, for now, columns the works may type
+ * (`price`, `weight_kg` on `jobs` and on `quote_lines`, and an order's
+ * `tube`): the calculated columns that work them out from the rate card take
+ * their place, and every total above them already reads them.
+ *
+ * Stock is the works' sheets and rolls, kept by Inventory; a job without it
+ * counts its own spoiled sheets.
+ */
+import { l, type Labels } from "./labels.ts";
+import { KIND_NAMES } from "./outbox.ts";
+import { DESIGN_POSTING, CUSTOMISER } from "./postings.ts";
+import { CUTOFF, WORKING_DAYS } from "./settings.ts";
+
+type Tone = "pos" | "warn" | "danger" | "info" | "neutral" | "accent";
+
+export interface Column {
+  ref: string;
+  type: "int" | "text" | "decimal" | "money" | "bool" | "enum" | "date" | "timestamptz" | "fk" | "json";
+  role?: "pk" | "created_at";
+  semantic?: "name" | "email" | "image" | "money";
+  nullable?: true;
+  enum?: string[];
+  references?: string;
+  default?: string | number | boolean;
+  maxLength?: number;
+  unique?: true;
+  index?: true;
+  scale?: number | "currency";
+  rules?: Record<string, unknown>;
+  label?: Labels | Record<string, string>;
+}
+
+export interface Table {
+  ref: string;
+  label: Labels | Record<string, string>;
+  labelPlural: Labels | Record<string, string>;
+  keyField?: string;
+  unique?: string[][];
+  states?: Record<string, unknown>;
+  postings?: Record<string, unknown>[];
+  check?: Record<string, unknown>;
+  keep?: { law: "tax" | "health" | "contract" | "safety" };
+  columns: Column[];
+}
+
+/** The record of a sale and its money, kept for the tax years whoever asks to be forgotten. */
+const KEPT_FOR_TAX = { law: "tax" } as const;
+
+// ── column makers ───────────────────────────────────────────────────────────
+
+const id: Column = { ref: "id", type: "int", role: "pk" };
+const opt = { nullable: true } as const;
+
+function text(ref: string, maxLength: number, label: string, more: Partial<Column> = {}): Column {
+  return { ref, type: "text", maxLength, label: l(label), ...more };
+}
+function int(ref: string, label: string, more: Partial<Column> = {}): Column {
+  return { ref, type: "int", label: l(label), ...more };
+}
+function bool(ref: string, label: string, value: boolean): Column {
+  return { ref, type: "bool", default: value, label: l(label) };
+}
+function fk(ref: string, references: string, label: string, more: Partial<Column> = {}): Column {
+  return { ref, type: "fk", references, label: l(label), ...more };
+}
+function date(ref: string, label: string, more: Partial<Column> = {}): Column {
+  return { ref, type: "date", label: l(label), ...more };
+}
+function at(ref: string, label: string, more: Partial<Column> = {}): Column {
+  return { ref, type: "timestamptz", label: l(label), ...more };
+}
+function num(ref: string, scale: number, label: string, more: Partial<Column> = {}): Column {
+  return { ref, type: "decimal", scale, label: l(label), ...more };
+}
+/** A price somebody types: the works', in the connection's currency. */
+function price(ref: string, label: string, more: Partial<Column> = {}): Column {
+  return { ref, type: "decimal", scale: "currency", label: l(label), ...more };
+}
+/** Money Adminium works out: empty until it has what it needs. */
+function money(ref: string, label: string, rules: Record<string, unknown>): Column {
+  return { ref, type: "decimal", scale: "currency", nullable: true, label: l(label), rules };
+}
+/** A whole number or decimal Adminium works out. */
+function figure(ref: string, type: "int" | "decimal", label: string, rules: Record<string, unknown>, scale?: number): Column {
+  return { ref, type, nullable: true, label: l(label), rules, ...(scale === undefined ? {} : { scale }) };
+}
+/** An enum, each value labelled, with tones where a list shows it as a chip. */
+function choice(
+  ref: string,
+  label: string,
+  values: Record<string, string>,
+  more: Partial<Column> & { tones?: Record<string, Tone> } = {},
+): Column {
+  const { tones, rules, ...rest } = more;
+  return {
+    ref,
+    type: "enum",
+    enum: Object.keys(values),
+    label: l(label),
+    ...rest,
+    rules: {
+      ...rules,
+      enumLabels: {
+        labels: Object.fromEntries(Object.entries(values).map(([value, word]) => [value, l(word)])),
+        ...(tones === undefined ? {} : { tones }),
+      },
+    },
+  };
+}
+/** A row of the Customiser's, by its key. No database link: the add-on keeps its own tables. */
+function link(ref: string, table: string, label: string, rules: Record<string, unknown> = {}): Column {
+  return { ref, type: "int", nullable: true, label: l(label), rules: { addOnLink: { addOn: CUSTOMISER, table }, ...rules } };
+}
+/** A picture somebody uploads for the row, shown on the customer side where an entry says so. */
+function picture(ref: string, label: string): Column {
+  return { ref, type: "text", maxLength: 64, nullable: true, semantic: "image", label: l(label), rules: { file: { accept: ["png", "jpeg", "webp"], maxBytes: 5242880 } } };
+}
+const stamp = (set: unknown, on: unknown) => ({ stamp: { set, on } });
+const onCreate = "create";
+const onState = (column: string, ...values: string[]) => ({ column, values });
+const setting = (column: string) => ({ table: "settings", column });
+const fromSetting = (column: string) => ({ default: { from: setting(column) } });
+
+// ── the words the tables share ──────────────────────────────────────────────
+
+/** The eight languages an order or a request may be written in, by their own names. */
+export const LANGUAGES: Record<string, string> = {
+  "en-US": "English",
+  "de-DE": "Deutsch",
+  "fr-FR": "Français",
+  "da-DK": "Dansk",
+  "cs-CZ": "Čeština",
+  "ar-EG": "العربية",
+  "zh-CN": "简体中文",
+  "zh-TW": "繁體中文",
+};
+
+/** A language column: the emails read their language from it. */
+function language(ref: string): Column {
+  return {
+    ref,
+    type: "text",
+    maxLength: 16,
+    nullable: true,
+    label: l("Language"),
+    rules: { options: { values: Object.entries(LANGUAGES).map(([value, label]) => ({ value, label })) } },
+  };
+}
+
+/** A product's family, as the products page groups and tints it. */
+export const FAMILIES: Record<string, string> = {
+  card: "Cards",
+  paper: "Paper",
+  mail: "Envelopes",
+  sticker: "Stickers",
+  image: "Posters and prints",
+  banner: "Banners",
+};
+
+/** How a product is printed: on press sheets in breaks, or by the square metre from a roll. */
+export const PRODUCT_KINDS: Record<string, string> = { sheet: "Sheet work", large: "Large format" };
+
+/** A stock's kind: SRA3 press sheets, or a roll for large format. */
+export const MATERIAL_KINDS: Record<string, string> = { sheet: "Sheet", roll: "Roll" };
+
+/** The groups of finishes: a job takes at most one of each. */
+export const FINISH_GROUPS: Record<string, string> = {
+  lamination: "Lamination",
+  spot_uv: "Spot UV",
+  corners: "Round corners",
+  edges: "Banner edges",
+  canvas: "Canvas finish",
+};
+
+/** How a finish is charged. */
+export const FINISH_BASES: Record<string, string> = {
+  sheet: "A press sheet",
+  per_250: "Every 250 pieces",
+  metre: "A metre of edge",
+  piece: "A piece",
+  m2: "A square metre",
+  none: "No charge",
+};
+
+/**
+ * The kinds of a product's own options. A material, a size, the sides and a
+ * finish of each group are the configurator's choices; a feature is one of the
+ * Customiser's priced features (printing the back of a ready-made design),
+ * named by its code.
+ */
+export const OPTION_KINDS: Record<string, string> = {
+  material: "Material",
+  size: "Size",
+  sides: "Sides",
+  lamination: "Lamination",
+  spot_uv: "Spot UV",
+  corners: "Round corners",
+  edges: "Banner edges",
+  canvas: "Canvas finish",
+  feature: "Customising feature",
+};
+
+/** What makes a finish not offered: the rule's test, read with the finish's group. */
+export const RULE_TESTS: Record<string, string> = {
+  uncoated: "On an uncoated stock",
+  roll: "On a roll",
+  no_lamination: "Without a lamination",
+  over_gsm: "On a stock heavier than",
+};
+
+/** How a packaging is charged. */
+export const PACKAGING_BASES: Record<string, string> = { included: "Included", unit: "A piece", per_500: "Every 500 pieces" };
+
+/** The two looks of a lamination, at the same price. */
+export const LOOKS: Record<string, string> = { gloss: "Gloss", matt: "Matt" };
+
+/** How an order reaches its customer. */
+export const DELIVERY_METHODS: Record<string, string> = { deliver: "Delivery", collect: "Collection from the works" };
+
+/** Where a job is on the works' floor. */
+export const STAGES = ["prepress", "printing", "finishing", "ready", "collected", "dispatched", "cancelled"] as const;
+const STAGE_LABELS: Record<(typeof STAGES)[number], string> = {
+  prepress: "Prepress",
+  printing: "Printing",
+  finishing: "Finishing",
+  ready: "Ready",
+  collected: "Collected",
+  dispatched: "Dispatched",
+  cancelled: "Cancelled",
+};
+
+const ORDER_STATUSES: Record<string, string> = {
+  placed: "Placed",
+  ready: "Ready",
+  collected: "Collected",
+  dispatched: "Dispatched",
+  cancelled: "Cancelled",
+};
+
+/** A proof's answer. A proof sent again supersedes the one before it. */
+export const PROOF_STATES = ["sent", "approved", "change_asked", "superseded"] as const;
+const PROOF_STATE_LABELS: Record<(typeof PROOF_STATES)[number], string> = {
+  sent: "Waiting",
+  approved: "Approved",
+  change_asked: "Change asked",
+  superseded: "Sent again",
+};
+
+/** Where a delivery the works prices by hand stands. */
+const DELIVERY_QUOTE_STATES: Record<string, string> = { to_quote: "To quote", sent: "Quote sent", accepted: "Accepted" };
+
+// ── formulas ────────────────────────────────────────────────────────────────
+
+const yes = (column: string) => ({ eq: [column, true] });
+/** The working days a job's own work takes: express or standard. */
+const WORK_DAYS = { if: [yes("express"), { coalesce: ["express_days", 1] }, { coalesce: ["standard_days", 3] }] };
+/**
+ * The days a job waits on its proof, until it is approved: the post days when
+ * the proof goes by post (the customer ordered it, or the works posts one),
+ * and a working day for each change asked.
+ */
+const PROOF_WAIT_DAYS = {
+  if: [
+    { eq: ["proof_state", "approved"] },
+    0,
+    {
+      add: [
+        { if: [{ or: [yes("proof_by_post"), { gt: ["posted_proofs", 0] }] }, { coalesce: ["proof_post_days", 2] }, 0] },
+        { mul: [{ coalesce: ["changes", 0] }, { coalesce: ["change_days", 1] }] },
+      ],
+    },
+  ],
+};
+/** Whether a job may go to press: only once its latest proof is approved. */
+const PROOF_OK = { if: [{ eq: ["proof_state", "approved"] }, 1, 0] };
+
+/** An order's delivery: nothing to collect; the works' quote once the customer accepts it; else the band's price. */
+const DELIVERY = {
+  if: [
+    { eq: ["delivery_method", "collect"] },
+    0,
+    { if: [{ eq: ["delivery_quote_state", "accepted"] }, { coalesce: ["delivery_quote", 0] }, { coalesce: ["band_price", 0] }] },
+  ],
+};
+/** A saved quote's delivery: nothing to collect, else the band's price. */
+const QUOTE_DELIVERY = { if: [{ eq: ["delivery_method", "collect"] }, 0, { coalesce: ["band_price", 0] }] };
+/** Delivered, and over every band: the works prices the delivery by hand. */
+const DELIVERY_TO_QUOTE = { if: [{ and: [{ eq: ["delivery_method", "deliver"] }, { isNull: "delivery_band_id" }] }, 1, 0] };
+const SUBTOTAL = { add: [{ coalesce: ["goods_total", 0] }, { coalesce: ["delivery", 0] }] };
+/** Tax on the goods and the delivery, at the settings' rate, rounded to the penny. */
+const TAX = { round: [{ div: [{ mul: [{ coalesce: ["subtotal", 0] }, { coalesce: ["tax_rate", 0] }] }, 100] }, 2] };
+const TOTAL = { add: [{ coalesce: ["subtotal", 0] }, { coalesce: ["tax", 0] }] };
+
+// ── a job's configuration, shared by a job and a saved quote's line ─────────
+
+/** An option of the line's own product, of one kind. */
+function option(ref: string, kind: string, label: string, same: Record<string, unknown>[] = []): Column {
+  return fk(ref, "options", label, {
+    ...opt,
+    rules: { linkable: { where: [{ column: "kind", eq: kind }, { column: "active", eq: true }], same: [{ column: "product_id", as: "product_id" }, ...same] } },
+  });
+}
+const always = (via: string, from: string) => ({ copy: { via, from, mode: "always" } });
+
+/**
+ * What the customer chose: the product, how many, and its options, each a row
+ * of that product's own. A lamination names a coated surface and goes only on
+ * a stock whose option says it is coated; a spot UV goes only on a lamination.
+ * A large-format job gives its own width and height.
+ *
+ * The line's price and weight follow: for now columns the works may type, until
+ * the rate card's calculated columns take their place.
+ */
+function configuration(): Column[] {
+  return [
+    fk("product_id", "products", "Product", { rules: { linkable: { where: [{ column: "published", eq: true }] } } }),
+    text("product_name", 80, "Product name", { ...opt, rules: always("product_id", "name") }),
+    choice("product_kind", "Printed as", PRODUCT_KINDS, { ...opt, rules: always("product_id", "kind") }),
+    int("qty", "Quantity", { default: 1, rules: { validation: { min: 1, max: 100000 } } }),
+    option("material_option_id", "material", "Material"),
+    fk("material_id", "materials", "Stock", { ...opt, rules: always("material_option_id", "material_id") }),
+    option("size_option_id", "size", "Size"),
+    fk("size_id", "sizes", "Preset size", { ...opt, rules: always("size_option_id", "size_id") }),
+    // A large-format job's own size; a sheet job's is its preset's.
+    int("width_mm", "Width (mm)", { ...opt, rules: { validation: { min: 50, max: 5000 } } }),
+    int("height_mm", "Height (mm)", { ...opt, rules: { validation: { min: 50, max: 5000 } } }),
+    option("sides_option_id", "sides", "Sides"),
+    figure("sides", "int", "Printed sides", always("sides_option_id", "sides")),
+    option("lamination_option_id", "lamination", "Lamination", [{ column: "coated", as: "material_option_id.coated" }]),
+    choice("look", "Look", LOOKS, opt),
+    option("spot_uv_option_id", "spot_uv", "Spot UV", [{ column: "coated", as: "lamination_option_id.coated" }]),
+    option("corners_option_id", "corners", "Round corners"),
+    option("edges_option_id", "edges", "Banner edges"),
+    option("canvas_option_id", "canvas", "Canvas finish"),
+    fk("packaging_id", "packaging", "Packaging", {
+      ...opt,
+      rules: { linkable: { where: [{ column: "active", eq: true }], same: [{ column: "product_kind", as: "product_id.kind" }] } },
+    }),
+    bool("proof_by_post", "Printed proof by post", false),
+    bool("express", "Express", false),
+    // Until the rate card prices the line: the works' figure, ex tax, and the parcel weight.
+    price("price", "Price (ex tax)", { ...opt, rules: { validation: { min: 0 } } }),
+    num("weight_kg", 2, "Weight (kg)", { ...opt, rules: { validation: { min: 0 } } }),
+  ];
+}
+
+/** The money columns an order and a saved quote share: goods, one delivery, tax, total. */
+function basketMoney(lines: string, via: string, delivery: Record<string, unknown>): Column[] {
+  return [
+    choice("delivery_method", "Getting it", DELIVERY_METHODS, { default: "collect" }),
+    figure("item_count", "int", "Jobs", { rollup: { from: lines, via, count: true } }),
+    money("goods_total", "Goods (ex tax)", { rollup: { from: lines, via, sum: "price" } }),
+    figure("weight_kg", "decimal", "Weight (kg)", { rollup: { from: lines, via, sum: "weight_kg" } }, 2),
+    // Whether the order goes rolled in a tube: until the rate card decides it, the works' word.
+    int("tube", "In a tube", { default: 0, rules: { validation: { min: 0, max: 1 } } }),
+    fk("delivery_band_id", "delivery_bands", "Delivery band", {
+      ...opt,
+      rules: { band: { table: "delivery_bands", min: "min_kg", max: "max_kg", value: "weight_kg", scope: [{ column: "tube", equals: "tube" }], over: "empty" } },
+    }),
+    money("band_price", "Band price", always("delivery_band_id", "price")),
+    money("delivery", "Delivery", { formula: delivery }),
+    figure("delivery_to_quote", "int", "Delivery to quote", { formula: DELIVERY_TO_QUOTE }),
+    money("subtotal", "Subtotal (ex tax)", { formula: SUBTOTAL }),
+    figure("tax_rate", "decimal", "Tax rate (%)", fromSetting("tax_rate"), 2),
+    money("tax", "Tax", { formula: TAX }),
+    money("total", "Total", { formula: TOTAL }),
+  ];
+}
+
+// ── the tables ──────────────────────────────────────────────────────────────
+
+export const TABLES: Table[] = [
+  // ── the rate card ────────────────────────────────────────────────────────
+  {
+    ref: "settings",
+    label: l("Works settings"),
+    labelPlural: l("Works settings"),
+    keyField: "works_name",
+    columns: [
+      id,
+      text("works_name", 80, "Works name"),
+      // A business's own address, phone and e-mail, shown on its pages: not a person's.
+      text("address", 160, "Address", { ...opt, rules: { personal: false } }),
+      text("phone", 32, "Phone", { ...opt, rules: { personal: false, validation: { format: "phone" } } }),
+      text("email", 254, "Works e-mail", { ...opt, rules: { personal: false, validation: { format: "email" } } }),
+      text("hours", 80, "Opening hours", opt),
+      text("about", 400, "About the works", opt),
+      // The order and quote numbers: their prefixes and the first number of each series.
+      text("ref_prefix", 8, "Order number prefix", { default: "MP-" }),
+      int("first_order_number", "First order number", { default: 1001, rules: { validation: { min: 1 } } }),
+      text("quote_prefix", 8, "Quote number prefix", { default: "MQ-" }),
+      int("first_quote_number", "First quote number", { default: 1001, rules: { validation: { min: 1 } } }),
+      num("tax_rate", 2, "Tax rate (%)", { default: 20, rules: { validation: { min: 0, max: 50 } } }),
+      // The rate card's single figures.
+      price("setup", "Setup, per job", { default: 0, rules: { validation: { min: 0 } } }),
+      int("standard_days", "Standard turnaround (working days)", { default: 3, rules: { validation: { min: 0, max: 60 } } }),
+      int("express_days", "Express turnaround (working days)", { default: 1, rules: { validation: { min: 0, max: 60 } } }),
+      num("express_percent", 2, "Express (+%)", { default: 35, rules: { validation: { min: 0, max: 200 } } }),
+      price("proof_post_price", "Printed proof by post", { default: 0, rules: { validation: { min: 0 } } }),
+      int("proof_post_days", "Printed proof adds (working days)", { default: 2, rules: { validation: { min: 0, max: 30 } } }),
+      int("change_days", "A change asked adds (working days)", { default: 1, rules: { validation: { min: 0, max: 30 } } }),
+      // The press sheet every sheet job is imposed on (SRA3), and the large-format work's least charge.
+      int("sheet_width_mm", "Press sheet width (mm)", { default: 320, rules: { validation: { min: 50, max: 2000 } } }),
+      int("sheet_height_mm", "Press sheet height (mm)", { default: 450, rules: { validation: { min: 50, max: 2000 } } }),
+      price("large_format_minimum", "Large-format minimum charge", { default: 0, rules: { validation: { min: 0 } } }),
+      // A large-format job rolls into a tube up to this length; a longer one goes by weight.
+      int("tube_max_mm", "Rolled in a tube up to (mm)", { default: 1500, rules: { validation: { min: 100, max: 5000 } } }),
+      // What the packing adds to a parcel: a sheet job's, a large-format job's, a stretched canvas's frame.
+      num("sheet_packing_kg", 2, "Packing, sheet work (kg)", { default: 0.2, rules: { validation: { min: 0, max: 50 } } }),
+      num("roll_packing_kg", 2, "Packing, large format (kg)", { default: 0.3, rules: { validation: { min: 0, max: 50 } } }),
+      int("frame_grams", "A canvas frame weighs (g)", { default: 900, rules: { validation: { min: 0, max: 20000 } } }),
+      // The artwork the customer sends: the largest file, and the resolution the checks ask for.
+      int("artwork_max_mb", "Artwork files up to (MB)", { default: 100, rules: { validation: { min: 1, max: 100 } } }),
+      int("min_dpi", "Least resolution (dpi)", { default: 150, rules: { validation: { min: 72, max: 1200 } } }),
+      bool("taking_orders", "Taking orders", true),
+      bool("sample_packs", "Sending sample packs", true),
+    ],
+  },
+  {
+    ref: "materials",
+    label: l("Material"),
+    labelPlural: l("Materials"),
+    keyField: "name",
+    columns: [
+      id,
+      text("code", 32, "Code", { unique: true }),
+      text("name", 80, "Name"),
+      text("short_name", 40, "Short name", opt),
+      text("spec", 80, "Spec", opt),
+      choice("kind", "Kind", MATERIAL_KINDS),
+      bool("coated", "Coated", false),
+      int("gsm", "Weight (gsm)", { rules: { validation: { min: 1, max: 2000 } } }),
+      // A sheet stock's price a press sheet; a roll's a square metre.
+      price("rate", "Rate", { rules: { validation: { min: 0 } } }),
+      int("roll_width_mm", "Roll width (mm)", { ...opt, rules: { validation: { min: 100, max: 5000 } } }),
+      bool("active", "In use", true),
+      int("position", "Position", opt),
+    ],
+  },
+  {
+    // The preset sheet sizes, with how many print on one press sheet.
+    ref: "sizes",
+    label: l("Size"),
+    labelPlural: l("Sizes"),
+    keyField: "name",
+    columns: [
+      id,
+      text("code", 32, "Code", { unique: true }),
+      text("name", 80, "Name"),
+      int("width_mm", "Width (mm)", { rules: { validation: { min: 1, max: 2000 } } }),
+      int("height_mm", "Height (mm)", { rules: { validation: { min: 1, max: 2000 } } }),
+      // Up on a press sheet: the best of upright and turned, and each, for the ticket's imposition line.
+      int("up", "Up on a sheet", { rules: { validation: { min: 1, max: 200 } } }),
+      int("up_upright", "Up, upright", { ...opt, rules: { validation: { min: 0, max: 200 } } }),
+      int("up_rotated", "Up, turned", { ...opt, rules: { validation: { min: 0, max: 200 } } }),
+      // Printed straight onto the piece (an envelope), not cut from a sheet.
+      bool("direct", "Printed direct", false),
+      bool("active", "In use", true),
+      int("position", "Position", opt),
+    ],
+  },
+  {
+    ref: "finishes",
+    label: l("Finish"),
+    labelPlural: l("Finishes"),
+    keyField: "name",
+    columns: [
+      id,
+      text("code", 32, "Code", { unique: true }),
+      text("name", 80, "Name"),
+      choice("group", "Group", FINISH_GROUPS),
+      choice("basis", "Charged by", FINISH_BASES),
+      price("price", "Price", { default: 0, rules: { validation: { min: 0 } } }),
+      // How many of the basis a piece takes: a banner has two pole pockets.
+      int("count", "A piece takes", { default: 1, rules: { validation: { min: 1, max: 20 } } }),
+      bool("active", "Offered", true),
+      int("position", "Position", opt),
+    ],
+  },
+  {
+    // The quantity breaks: a sheet job's print and material at a multiplier from a quantity on.
+    ref: "breaks",
+    label: l("Quantity break"),
+    labelPlural: l("Quantity breaks"),
+    keyField: "min_qty",
+    columns: [
+      id,
+      int("min_qty", "From (quantity)", { unique: true, rules: { validation: { min: 1, max: 1000000 } } }),
+      num("multiplier", 4, "Multiplier", { rules: { validation: { min: 0, max: 1 } } }),
+    ],
+  },
+  {
+    ref: "packaging",
+    label: l("Packaging"),
+    labelPlural: l("Packaging"),
+    keyField: "name",
+    columns: [
+      id,
+      text("code", 32, "Code", { unique: true }),
+      text("name", 80, "Name"),
+      choice("basis", "Charged by", PACKAGING_BASES),
+      price("price", "Price", { default: 0, rules: { validation: { min: 0 } } }),
+      // Which work it packs: sheet work is packed; large format goes rolled or boxed as it is.
+      choice("product_kind", "Packs", PRODUCT_KINDS, { default: "sheet" }),
+      bool("active", "Offered", true),
+      int("position", "Position", opt),
+    ],
+  },
+  {
+    // One delivery for the whole order, by its weight; the tube for rolled large format.
+    ref: "delivery_bands",
+    label: l("Delivery band"),
+    labelPlural: l("Delivery bands"),
+    keyField: "name",
+    unique: [["tube", "min_kg"]],
+    columns: [
+      id,
+      text("code", 32, "Code", { unique: true }),
+      text("name", 80, "Name"),
+      int("tube", "Rolled in a tube", { default: 0, rules: { validation: { min: 0, max: 1 } } }),
+      num("min_kg", 2, "From (kg)", { default: 0, rules: { validation: { min: 0 } } }),
+      num("max_kg", 2, "Up to (kg)", { ...opt, rules: { validation: { min: 0 } } }),
+      price("price", "Price", { rules: { validation: { min: 0 } } }),
+      int("position", "Position", opt),
+    ],
+  },
+  {
+    ref: "products",
+    label: l("Product"),
+    labelPlural: l("Products"),
+    keyField: "name",
+    columns: [
+      id,
+      text("code", 32, "Code", { unique: true }),
+      text("name", 80, "Name"),
+      choice("family", "Family", FAMILIES),
+      choice("kind", "Printed as", PRODUCT_KINDS),
+      text("line", 160, "What it is", opt),
+      // The quantity its "from" price is for.
+      int("from_qty", "Priced from (quantity)", { default: 1, rules: { validation: { min: 1, max: 100000 } } }),
+      // A large-format product's size to start from, and the largest it is made.
+      int("default_width_mm", "Starting width (mm)", { ...opt, rules: { validation: { min: 50, max: 5000 } } }),
+      int("default_height_mm", "Starting height (mm)", { ...opt, rules: { validation: { min: 50, max: 5000 } } }),
+      int("max_width_mm", "Largest width (mm)", { ...opt, rules: { validation: { min: 50, max: 5000 } } }),
+      int("max_height_mm", "Largest height (mm)", { ...opt, rules: { validation: { min: 50, max: 5000 } } }),
+      text("icon", 32, "Icon", opt),
+      picture("photo", "Photo"),
+      // The Customiser's base this product is designed on: set, the product page offers "Choose a design" and "Start from blank".
+      link("base_id", "bases", "Customiser base"),
+      bool("published", "In the shop", true),
+      int("position", "Position", opt),
+    ],
+  },
+  {
+    // One table for every option of a product: its materials, sizes, sides, finishes, and the Customiser's priced features.
+    ref: "options",
+    label: l("Option"),
+    labelPlural: l("Options"),
+    keyField: "name",
+    unique: [["product_id", "kind", "code"]],
+    columns: [
+      id,
+      fk("product_id", "products", "Product"),
+      choice("kind", "Kind", OPTION_KINDS),
+      text("code", 32, "Code", { rules: { normalize: "trim" } }),
+      text("name", 80, "Name"),
+      fk("material_id", "materials", "Stock", { ...opt, rules: { requiredWhen: { column: "kind", in: ["material"] } } }),
+      fk("size_id", "sizes", "Preset size", { ...opt, rules: { requiredWhen: { column: "kind", in: ["size"] } } }),
+      int("sides", "Printed sides", { ...opt, rules: { validation: { min: 1, max: 2 }, requiredWhen: { column: "kind", in: ["sides"] } } }),
+      fk("finish_id", "finishes", "Finish", { ...opt, rules: { requiredWhen: { column: "kind", in: ["lamination", "spot_uv", "corners", "edges", "canvas"] } } }),
+      // A material: the stock is coated. A lamination or a spot UV: it needs a coated surface under it.
+      bool("coated", "Coated surface", false),
+      // A feature: its price, flat for the job, and the Customiser's feature it pays for, by its code.
+      price("price", "Price", { default: 0, rules: { validation: { min: 0 } } }),
+      text("feature_code", 40, "Feature code", { ...opt, rules: { requiredWhen: { column: "kind", in: ["feature"] } } }),
+      link("feature_id", "features", "Customiser feature"),
+      // The choice the configurator starts on, of its kind.
+      bool("preselected", "Chosen first", false),
+      bool("active", "Offered", true),
+      int("position", "Position", opt),
+    ],
+  },
+  {
+    // Which finish is not offered on what, in the words the configurator shows beside it.
+    ref: "option_rules",
+    label: l("Option rule"),
+    labelPlural: l("Option rules"),
+    keyField: "reason",
+    columns: [
+      id,
+      choice("finish_group", "Finish", FINISH_GROUPS),
+      choice("test", "Not offered", RULE_TESTS),
+      int("gsm", "Heavier than (gsm)", { ...opt, rules: { validation: { min: 1, max: 2000 }, requiredWhen: { column: "test", in: ["over_gsm"] } } }),
+      text("reason", 200, "Reason shown"),
+      bool("active", "In effect", true),
+      int("position", "Position", opt),
+    ],
+  },
+
+  // ── the works ────────────────────────────────────────────────────────────
+  {
+    ref: "machines",
+    label: l("Machine"),
+    labelPlural: l("Machines"),
+    keyField: "name",
+    columns: [
+      id,
+      text("code", 32, "Code", { unique: true }),
+      text("name", 80, "Name"),
+      choice("kind", "Kind", { press: "Sheet press", wide: "Wide format", finishing: "Finishing" }),
+      text("detail", 120, "Detail", opt),
+      bool("active", "In use", true),
+      int("position", "Position", opt),
+    ],
+  },
+  {
+    ref: "closures",
+    label: l("Closure"),
+    labelPlural: l("Closures"),
+    keyField: "reason",
+    columns: [
+      id,
+      date("from_date", "From"),
+      date("to_date", "To"),
+      text("reason", 120, "Reason", opt),
+      // Switched off, a closure is kept but no longer closes the works.
+      bool("active", "In effect", true),
+    ],
+  },
+
+  // ── customers and orders ─────────────────────────────────────────────────
+  {
+    ref: "customers",
+    label: l("Customer"),
+    labelPlural: l("Customers"),
+    keyField: "email",
+    columns: [
+      id,
+      text("email", 254, "E-mail", { ...opt, unique: true, semantic: "email", rules: { normalize: "email", validation: { format: "email" } } }),
+      text("name", 80, "Name or business", opt),
+      language("language"),
+      // "News from the print works": kept in step with Adminium's consent log, set by the tick at checkout.
+      bool("may_email", "News from the print works", false),
+      at("forgotten_at", "Details deleted", opt),
+      at("created_at", "First order", { ...opt, rules: stamp("now", onCreate) }),
+    ],
+  },
+  {
+    ref: "orders",
+    keep: KEPT_FOR_TAX,
+    label: l("Order"),
+    labelPlural: l("Orders"),
+    keyField: "number",
+    states: {
+      column: "status",
+      initial: "placed",
+      moves: {
+        placed: ["ready", "cancelled"],
+        ready: ["collected", "dispatched", "placed"],
+      },
+      lock: { when: ["collected", "dispatched", "cancelled"], except: ["link_stopped", "tracking"] },
+    },
+    columns: [
+      id,
+      int("number_seq", "Number (running)", { ...opt, rules: { sequence: { gapless: true, startSetting: setting("first_order_number") } } }),
+      text("number", 16, "Number", { ...opt, unique: true, rules: { format: { from: "number_seq", prefixSetting: setting("ref_prefix") } } }),
+      // The number as a typed code is read: what the order lookup finds it by.
+      text("number_code", 16, "Number as typed", { ...opt, unique: true, rules: { formula: { join: ["number", " "] }, normalize: "code" } }),
+      choice("status", "Status", ORDER_STATUSES, {
+        default: "placed",
+        tones: { placed: "info", ready: "accent", collected: "pos", dispatched: "pos", cancelled: "danger" },
+      }),
+      // Who it is for: the customer's own details, kept with the order. An address only for a delivery.
+      text("name", 80, "Name or business", { semantic: "name" }),
+      text("email", 254, "E-mail", { semantic: "email", rules: { validation: { format: "email" } } }),
+      text("address_line1", 120, "Address", { ...opt, rules: { requiredWhen: { column: "delivery_method", in: ["deliver"] } } }),
+      text("address_line2", 120, "Address, second line", opt),
+      text("town", 80, "Town", { ...opt, rules: { requiredWhen: { column: "delivery_method", in: ["deliver"] } } }),
+      text("postcode", 16, "Postcode", { ...opt, rules: { requiredWhen: { column: "delivery_method", in: ["deliver"] } } }),
+      language("language"),
+      fk("customer_id", "customers", "Customer", opt),
+      ...basketMoney("jobs", "order_id", DELIVERY),
+      // The DHL service the customer chose, which Dispatch books when DHL is on.
+      text("dhl_service", 32, "DHL service", opt),
+      // Over the delivery bands: the works types the delivery's price and sends it; the customer accepts it.
+      price("delivery_quote", "Delivery quote", { ...opt, rules: { validation: { min: 0 } } }),
+      choice("delivery_quote_state", "Delivery quote", DELIVERY_QUOTE_STATES, { ...opt, tones: { to_quote: "warn", sent: "info", accepted: "pos" } }),
+      at("delivery_quote_sent_at", "Delivery quote sent", { ...opt, rules: stamp("now", onState("delivery_quote_state", "sent")) }),
+      at("delivery_quote_accepted_at", "Delivery quote accepted", { ...opt, rules: stamp("now", onState("delivery_quote_state", "accepted")) }),
+      // Artwork warnings the customer accepted at checkout, on all its jobs.
+      figure("warnings_accepted", "int", "Warnings accepted", { rollup: { from: "jobs", via: "order_id", sum: "warnings_accepted" } }),
+      figure("has_warnings", "int", "Has accepted warnings", { formula: { if: [{ gt: ["warnings_accepted", 0] }, 1, 0] } }),
+      at("placed_at", "Placed", { ...opt, rules: stamp("now", onCreate) }),
+      // The day the last of its jobs is ready: its latest job's.
+      date("ready_by", "Ready by", { ...opt, rules: { rollup: { from: "jobs", via: "order_id", latest: { of: "ready_by", by: "ready_by" } } } }),
+      at("ready_at", "Ready", { ...opt, rules: stamp("now", onState("status", "ready")) }),
+      at("collected_at", "Collected", { ...opt, rules: stamp("now", onState("status", "collected")) }),
+      at("dispatched_at", "Dispatched", { ...opt, rules: stamp("now", onState("status", "dispatched")) }),
+      text("handed_over_by", 80, "Handed over by", { ...opt, rules: stamp("user-name", onState("status", "collected", "dispatched")) }),
+      // A tracking number comes only through DHL.
+      text("tracking", 64, "Tracking number", opt),
+      at("cancelled_at", "Cancelled", { ...opt, rules: stamp("now", onState("status", "cancelled")) }),
+      text("cancel_reason", 160, "Why it was cancelled", opt),
+      // The order's own link, e-mailed to the customer: no staff screen reads or copies it.
+      text("link_token", 16, "Link code", { ...opt, rules: { code: { length: 16, hiddenFromStaff: true } } }),
+      // The link works for a year after the order.
+      at("link_expires", "Link works until", { ...opt, rules: stamp({ moment: { column: "placed_at", plus: { days: 365 } } }, { columns: ["placed_at"] }) }),
+      bool("link_stopped", "Link stopped", false),
+      // The customer's retry key: a retried order lands on the same row.
+      text("client_key", 64, "Retry key", { ...opt, unique: true }),
+      // The tick the customer gave at checkout: theirs, written by nobody else.
+      bool("may_email", "News from the print works", false),
+    ],
+  },
+  {
+    // One configured line of an order: what is printed, its options, its ready-by and where it is on the floor.
+    ref: "jobs",
+    keep: KEPT_FOR_TAX,
+    label: l("Job"),
+    labelPlural: l("Jobs"),
+    keyField: "product_name",
+    states: {
+      column: "stage",
+      initial: "prepress",
+      moves: {
+        // Nothing goes to press before its proof is approved.
+        prepress: [{ to: "printing", requires: { where: [{ column: "proof_ok", eq: 1 }] } }, "cancelled"],
+        printing: ["finishing", "ready", { to: "prepress", roles: ["owner"] }],
+        finishing: ["ready", { to: "printing", roles: ["owner"] }],
+        ready: ["collected", "dispatched", { to: "finishing", roles: ["owner"] }],
+      },
+    },
+    check: { by: { addOn: CUSTOMISER }, design: "design_id", paid: { table: "job_features", via: "job_id", feature: "feature" } },
+    postings: [DESIGN_POSTING],
+    columns: [
+      id,
+      fk("order_id", "orders", "Order", { index: true }),
+      int("position", "Position", opt),
+      ...configuration(),
+      // A design in the Customiser, found by its code: the customer's browser sends the code, Adminium fills the link.
+      text("design_code", 40, "Design code", opt),
+      link("design_id", "designs", "Design", { lookup: { from: "design_code", table: { addOn: CUSTOMISER, table: "designs" }, column: "code" } }),
+      // How long the work takes, as the rate card said when the job came in.
+      figure("standard_days", "int", "Standard days", fromSetting("standard_days")),
+      figure("express_days", "int", "Express days", fromSetting("express_days")),
+      figure("proof_post_days", "int", "Proof post days", fromSetting("proof_post_days")),
+      figure("change_days", "int", "Days a change adds", fromSetting("change_days")),
+      // Its proofs: the latest one's answer, the changes asked, and the proofs the works posted.
+      choice("proof_state", "Proof", PROOF_STATE_LABELS, { ...opt, rules: { rollup: { from: "proofs", via: "job_id", latest: { of: "state", by: "version" } } } }),
+      figure("changes", "int", "Changes asked", { rollup: { from: "proofs", via: "job_id", count: true, where: { column: "state", eq: "change_asked" } } }),
+      figure("posted_proofs", "int", "Proofs by post", { rollup: { from: "proofs", via: "job_id", count: true, where: { column: "kind", eq: "post" } } }),
+      figure("proof_ok", "int", "Ready for press", { formula: PROOF_OK }),
+      figure("turnaround_days", "int", "Working days to ready", { formula: { add: [WORK_DAYS, PROOF_WAIT_DAYS] } }),
+      // Counted from the order coming in, and again from the moment its proof is approved.
+      at("ready_from", "Counted from", { ...opt, rules: stamp("now", [onCreate, onState("proof_state", "approved")]) }),
+      date("ready_by", "Ready by", {
+        ...opt,
+        rules: stamp(
+          {
+            addWorkingDays: {
+              from: "ready_from",
+              days: "turnaround_days",
+              weekdays: WORKING_DAYS,
+              cutoff: CUTOFF,
+              closures: { table: "closures", from: "from_date", to: "to_date", active: "active" },
+            },
+          },
+          { columns: ["ready_from", "turnaround_days"] },
+        ),
+      }),
+      // Its artwork: how many files, and the warnings the customer accepted on them.
+      figure("artwork_count", "int", "Artwork files", { rollup: { from: "artwork", via: "job_id", count: true } }),
+      figure("warnings_accepted", "int", "Warnings accepted", { rollup: { from: "artwork", via: "job_id", count: true, where: { column: "accepted", eq: true } } }),
+      choice("stage", "Stage", STAGE_LABELS, {
+        default: "prepress",
+        tones: { prepress: "info", printing: "warn", finishing: "accent", ready: "pos", collected: "neutral", dispatched: "neutral", cancelled: "danger" },
+      }),
+      // Prepress has looked the files over: the customer's stage strip says "Artwork checked".
+      bool("artwork_checked", "Artwork checked", false),
+      at("artwork_checked_at", "Artwork checked", { ...opt, rules: stamp("now", { column: "artwork_checked", values: [true] }) }),
+      at("printing_at", "On the press", { ...opt, rules: stamp("now", onState("stage", "printing")) }),
+      at("finishing_at", "Into finishing", { ...opt, rules: stamp("now", onState("stage", "finishing")) }),
+      at("ready_at", "Ready", { ...opt, rules: stamp("now", onState("stage", "ready")) }),
+      text("printed_by", 80, "Printed by", { ...opt, rules: stamp("user-name", onState("stage", "printing")) }),
+      at("handed_over_at", "Handed over", { ...opt, rules: stamp("now", onState("stage", "collected", "dispatched")) }),
+      // Sheets spoiled on the press, when Inventory is not keeping the stock.
+      int("spoiled_sheets", "Spoiled sheets", { default: 0, rules: { validation: { min: 0 } } }),
+      text("works_note", 280, "Works note", opt),
+    ],
+  },
+  {
+    // The Customiser's priced features a job pays for: one a row, each named by its option.
+    ref: "job_features",
+    keep: KEPT_FOR_TAX,
+    label: l("Feature on a job"),
+    labelPlural: l("Features on jobs"),
+    keyField: "feature",
+    unique: [["job_id", "option_id"]],
+    columns: [
+      id,
+      fk("job_id", "jobs", "Job"),
+      fk("option_id", "options", "Option", {
+        rules: { linkable: { where: [{ column: "kind", eq: "feature" }, { column: "active", eq: true }], same: [{ column: "product_id", as: "job_id.product_id" }] } },
+      }),
+      text("feature", 40, "Feature", { ...opt, rules: always("option_id", "feature_code") }),
+      // The Customiser's feature itself, for the works' screens: a link into an add-on is a person's to name, never a copy.
+      link("feature_id", "features", "Customiser feature"),
+      text("name", 80, "Name", { ...opt, rules: always("option_id", "name") }),
+      money("price", "Price", always("option_id", "price")),
+    ],
+  },
+  {
+    // A file the customer sent for a job, with the checks their browser showed them and whether they accepted its warnings.
+    ref: "artwork",
+    label: l("Artwork"),
+    labelPlural: l("Artwork"),
+    keyField: "name",
+    columns: [
+      id,
+      fk("job_id", "jobs", "Job", { index: true }),
+      text("name", 160, "File name"),
+      text("file", 64, "File", {
+        ...opt,
+        rules: { file: { accept: ["pdf", "jpeg", "tiff"], maxBytes: 104857600, upload: { kinds: ["pdf", "jpg", "tiff"], maxBytes: 104857600 } } },
+      }),
+      choice("side", "Side", { front: "Front", back: "Back", both: "Both sides" }, opt),
+      // What the checks said, as shown: each row's level and words. Advice: a person checks every file.
+      { ref: "checks", type: "json", nullable: true, label: l("Checks shown") },
+      bool("accepted", "Warnings accepted", false),
+      at("uploaded_at", "Sent", { ...opt, rules: stamp("now", onCreate) }),
+    ],
+  },
+  {
+    // A proof of a job: a PDF the works sends, numbered per job. The customer approves it or asks for a change.
+    ref: "proofs",
+    label: l("Proof"),
+    labelPlural: l("Proofs"),
+    keyField: "version",
+    states: {
+      column: "state",
+      initial: "sent",
+      moves: {
+        sent: ["approved", "change_asked", "superseded"],
+        change_asked: ["superseded"],
+      },
+    },
+    columns: [
+      id,
+      fk("order_id", "orders", "Order"),
+      fk("job_id", "jobs", "Job", { index: true }),
+      int("version", "Proof", { ...opt, rules: { sequence: { gapless: true, scope: "job_id", sample: true } } }),
+      // By e-mail, or printed and posted: the order's choice, or the works' own at its cost.
+      choice("kind", "Sent", { email: "By e-mail", post: "Printed, by post" }, { default: "email" }),
+      text("file", 64, "Proof PDF", { ...opt, rules: { file: { accept: ["pdf"], maxBytes: 104857600 } } }),
+      // The Customiser's version of the design this proof shows, when the job has one.
+      link("design_version_id", "design_versions", "Design version"),
+      text("note", 280, "Note to the customer", opt),
+      choice("state", "Answer", PROOF_STATE_LABELS, { default: "sent", tones: { sent: "info", approved: "pos", change_asked: "warn", superseded: "neutral" } }),
+      // What the customer asked to change, in their words.
+      text("change_note", 400, "What to change", opt),
+      at("sent_at", "Sent", { ...opt, rules: stamp("now", onCreate) }),
+      text("sent_by", 80, "Sent by", { ...opt, rules: stamp("user-name", onCreate) }),
+      at("answered_at", "Answered", { ...opt, rules: stamp("now", onState("state", "approved", "change_asked")) }),
+    ],
+  },
+  {
+    // A quote the customer saved: its own MQ- number, the same rate card and the same totals as an order.
+    ref: "saved_quotes",
+    label: l("Saved quote"),
+    labelPlural: l("Saved quotes"),
+    keyField: "number",
+    columns: [
+      id,
+      int("number_seq", "Number (running)", { ...opt, rules: { sequence: { gapless: true, startSetting: setting("first_quote_number") } } }),
+      text("number", 16, "Number", { ...opt, unique: true, rules: { format: { from: "number_seq", prefixSetting: setting("quote_prefix") } } }),
+      // The customer's own name for it; they may rename it.
+      text("label", 80, "Name", opt),
+      text("name", 80, "Name or business", { ...opt, semantic: "name" }),
+      text("email", 254, "E-mail", { semantic: "email", rules: { validation: { format: "email" } } }),
+      language("language"),
+      fk("customer_id", "customers", "Customer", opt),
+      ...basketMoney("quote_lines", "quote_id", QUOTE_DELIVERY),
+      at("created_at", "Saved", { ...opt, rules: stamp("now", onCreate) }),
+      // The quote's own link, e-mailed to the customer.
+      text("link_token", 16, "Link code", { ...opt, rules: { code: { length: 16, hiddenFromStaff: true } } }),
+      at("link_expires", "Link works until", { ...opt, rules: stamp({ moment: { column: "created_at", plus: { days: 365 } } }, { columns: ["created_at"] }) }),
+      bool("link_stopped", "Link stopped", false),
+      text("client_key", 64, "Retry key", { ...opt, unique: true }),
+    ],
+  },
+  {
+    ref: "quote_lines",
+    label: l("Quote line"),
+    labelPlural: l("Quote lines"),
+    keyField: "product_name",
+    columns: [id, fk("quote_id", "saved_quotes", "Quote", { index: true }), int("position", "Position", opt), ...configuration()],
+  },
+  {
+    // A free pack of the works' papers and finishes: one to an address.
+    ref: "sample_requests",
+    label: l("Sample pack"),
+    labelPlural: l("Sample packs"),
+    keyField: "name",
+    states: { column: "status", initial: "new", moves: { new: ["posted"] } },
+    columns: [
+      id,
+      choice("status", "Status", { new: "To post", posted: "Posted" }, { default: "new", tones: { new: "info", posted: "pos" } }),
+      text("name", 80, "Name or business", { semantic: "name" }),
+      text("email", 254, "E-mail", { semantic: "email", rules: { validation: { format: "email" } } }),
+      text("address_line1", 120, "Address", { rules: { normalize: "trim" } }),
+      text("address_line2", 120, "Address, second line", opt),
+      text("town", 80, "Town"),
+      text("postcode", 16, "Postcode", { rules: { normalize: "code" } }),
+      // The address as one code, upper case without spaces: a second pack to it is refused.
+      text("address_key", 160, "Address as a code", { ...opt, unique: true, rules: { formula: { join: ["postcode", "address_line1"] }, normalize: "code" } }),
+      language("language"),
+      at("created_at", "Asked", { ...opt, rules: stamp("now", onCreate) }),
+      at("posted_at", "Posted", { ...opt, rules: stamp("now", onState("status", "posted")) }),
+      text("posted_by", 80, "Posted by", { ...opt, rules: stamp("user-name", onState("status", "posted")) }),
+      text("client_key", 64, "Retry key", { ...opt, unique: true }),
+    ],
+  },
+  {
+    ref: "messages",
+    label: l("E-mail"),
+    labelPlural: l("E-mails"),
+    keyField: "kind",
+    columns: [
+      id,
+      choice("kind", "Kind", KIND_NAMES),
+      choice("status", "Status", { queued: "Going out", sent: "Sent", failed: "Not sent", skipped: "Skipped" }, {
+        default: "queued",
+        tones: { queued: "info", sent: "pos", failed: "danger", skipped: "neutral" },
+      }),
+      text("to_address", 254, "Sent to", { ...opt, semantic: "email" }),
+      text("language", 16, "Language", opt),
+      fk("order_id", "orders", "Order", opt),
+      fk("proof_id", "proofs", "Proof", opt),
+      fk("quote_id", "saved_quotes", "Quote", opt),
+      fk("sample_id", "sample_requests", "Sample pack", opt),
+      fk("customer_id", "customers", "Customer", opt),
+      at("due", "Due", opt),
+      at("created_at", "Created", { ...opt, rules: stamp("now", onCreate) }),
+      at("sent_at", "Sent", opt),
+      text("error", 500, "What went wrong", opt),
+      text("repeat_key", 64, "Resend key", opt),
+      choice("skip_reason", "Why it was skipped", {
+        overtaken: "A later e-mail took its place",
+        paid: "Paid",
+        void: "Void",
+        "no-longer-needed": "No longer needed",
+        "by-hand": "Skipped by hand",
+      }, opt),
+    ],
+  },
+];
+
+export const TABLE_REFS = TABLES.map((t) => t.ref);
+
+/**
+ * The columns that stand in for the rate card's calculated columns until they
+ * are written: each is typed by the works for now, and every total above it
+ * already reads it.
+ */
+export const PRICE_PLACEHOLDERS = [
+  "jobs.price",
+  "jobs.weight_kg",
+  "quote_lines.price",
+  "quote_lines.weight_kg",
+  "orders.tube",
+  "saved_quotes.tube",
+] as const;

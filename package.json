@@ -14,10 +14,10 @@
     "test": "vitest run",
     "add-ons:status": "bash scripts/sync-add-ons.sh status",
     "add-ons:sync": "bash scripts/sync-add-ons.sh sync",
-    "demo:status": "node db/demo.mjs status",
-    "demo:import": "node db/demo.mjs import",
-    "demo:wipe": "node db/demo.mjs wipe",
-    "demo:reset": "node db/demo.mjs reset"
+    "typecheck": "tsc -b",
+    "manifest": "vite-node scripts/write-manifest.ts",
+    "manifest:check": "vite-node scripts/check-manifest.ts",
+    "sample": "vite-node scripts/write-sample.ts"
   },
   "dependencies": {
     "@adminiumjs/public-client": "^0.2.2",
