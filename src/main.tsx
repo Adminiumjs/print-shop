@@ -18,6 +18,7 @@ import "./styles/screens.css";
 import { I18nProvider } from "./i18n/index.tsx";
 import { setDataSource } from "./data/source.ts";
 import { clientFromEnv, loadSnapshot, snapshotSource } from "./data/adminiumSource.ts";
+import { SURFACE_SIDE } from "./surface.ts";
 
 const container = document.getElementById("root");
 if (!container) throw new Error("Missing #root — check index.html");
@@ -41,6 +42,13 @@ if (!container) throw new Error("Missing #root — check index.html");
  * working app.
  */
 async function boot(): Promise<void> {
+  // The shop's own build (`build:surface:customer`): the customer's side alone.
+  if (SURFACE_SIDE === "customer") {
+    const { bootShop } = await import("./shop/boot.tsx");
+    await bootShop(container as HTMLElement);
+    return;
+  }
+
   const client = clientFromEnv();
   if (client !== null) {
     const snap = await loadSnapshot(client);

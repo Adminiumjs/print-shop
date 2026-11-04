@@ -13,3 +13,6 @@ dist
 .env
 .env.*
 !.env.example
+
+# The hosted surfaces `build:surface:*` writes.
+dist-surface

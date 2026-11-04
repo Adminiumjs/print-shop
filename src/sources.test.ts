@@ -827,13 +827,21 @@ describe('the host names no company', () => {
   /** The three lines `registry.ts` is allowed to have, and no others. */
   const IMPORT_LINE = /^import \{ register as \w+ \} from '\.\/vendor\/[a-z-]+\/index\.ts';$/;
 
+  /**
+   * The one sentence the owner ruled the customer side says by name (plan 73
+   * §0.4 Q-T1, "Made it in Canva? Download it as PDF Print"): the artwork
+   * step's two `shop.artwork.export.*` lines, in each language. It points the
+   * customer at an export, and no Canva integration ships.
+   */
+  const RULED_LINE = /^"shop\.artwork\.export\.(title|body)": /;
+
   it('mentions one only where an add-on bundle is imported', () => {
     const own = SHIPPED.filter((file) => !file.includes(`/vendor/`));
     const offenders = own.flatMap((file) =>
       codeOf(file)
         .split('\n')
         .map((line) => line.trim())
-        .filter((line) => COMPANIES.test(line) && !IMPORT_LINE.test(line))
+        .filter((line) => COMPANIES.test(line) && !IMPORT_LINE.test(line) && !(relative(file) === "i18n/strings/shop.ts" && RULED_LINE.test(line)))
         .map((line) => `${relative(file)} · ${line}`),
     );
     expect(offenders).toEqual([]);
