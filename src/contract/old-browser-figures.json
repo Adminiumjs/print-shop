@@ -1,0 +1,1360 @@
+{
+ "100 stickers vinyl a6 1-sided delivered": {
+  "workCents": 51566,
+  "weightKg": 0,
+  "deliveryCents": 650,
+  "taxCents": 10443,
+  "totalCents": 62659
+ },
+ "250 stickers vinyl a5 1-sided shrink delivered": {
+  "workCents": 165271,
+  "weightKg": 0,
+  "deliveryCents": 650,
+  "taxCents": 33184,
+  "totalCents": 199105
+ },
+ "999 stickers vinyl a6 1-sided collected": {
+  "workCents": 385917,
+  "weightKg": 0,
+  "deliveryCents": 0,
+  "taxCents": 77183,
+  "totalCents": 463100
+ },
+ "999 flyers silk130 a5 2-sided delivered": {
+  "workCents": 23415,
+  "weightKg": 5.05,
+  "deliveryCents": 980,
+  "taxCents": 4879,
+  "totalCents": 29274
+ },
+ "249 flyers silk170 a5 1-sided collected": {
+  "workCents": 7039,
+  "weightKg": 1.67,
+  "deliveryCents": 0,
+  "taxCents": 1408,
+  "totalCents": 8447
+ },
+ "499 flyers silk170 a6 2-sided matt boxed collected": {
+  "workCents": 18559,
+  "weightKg": 2.22,
+  "deliveryCents": 0,
+  "taxCents": 3712,
+  "totalCents": 22271
+ },
+ "99 business-cards silk350 bcard 2-sided express collected": {
+  "workCents": 3436,
+  "weightKg": 0.27,
+  "deliveryCents": 0,
+  "taxCents": 687,
+  "totalCents": 4123
+ },
+ "999 letterheads silk130 a4 1-sided proof collected": {
+  "workCents": 34680,
+  "weightKg": 10.11,
+  "deliveryCents": 0,
+  "taxCents": 6936,
+  "totalCents": 41616
+ },
+ "5000 flyers uncoated300 a4 2-sided delivered": {
+  "workCents": 230900,
+  "weightKg": 116.64,
+  "deliveryCents": 1640,
+  "taxCents": 46508,
+  "totalCents": 279048
+ },
+ "5000 letterheads silk130 a4 1-sided delivered": {
+  "workCents": 141000,
+  "weightKg": 50.54,
+  "deliveryCents": 1640,
+  "taxCents": 28528,
+  "totalCents": 171168
+ },
+ "2000 posters silk170 a3 1-sided delivered": {
+  "workCents": 116640,
+  "weightKg": 52.88,
+  "deliveryCents": 1640,
+  "taxCents": 23656,
+  "totalCents": 141936
+ },
+ "20 pvc-banners pvc510 1300×4500 1-sided hemmed delivered": {
+  "workCents": 468600,
+  "weightKg": 68.62,
+  "deliveryCents": 1400,
+  "taxCents": 94000,
+  "totalCents": 564000
+ },
+ "500 business-cards silk350 bcard 2-sided gloss boxed delivered": {
+  "workCents": 6136,
+  "weightKg": 1.31,
+  "deliveryCents": 650,
+  "taxCents": 1357,
+  "totalCents": 8143
+ },
+ "250 business-cards silk350 bcard 1-sided soft collected": {
+  "workCents": 3588,
+  "weightKg": 0.65,
+  "deliveryCents": 0,
+  "taxCents": 718,
+  "totalCents": 4306
+ },
+ "250 folded-cards silk350 a6 2-sided soft boxed delivered": {
+  "workCents": 12325,
+  "weightKg": 2.29,
+  "deliveryCents": 980,
+  "taxCents": 2661,
+  "totalCents": 15966
+ },
+ "100 folded-cards silk170 a5 1-sided gloss collected": {
+  "workCents": 5254,
+  "weightKg": 0.66,
+  "deliveryCents": 0,
+  "taxCents": 1051,
+  "totalCents": 6305
+ },
+ "1 pvc-banners pvc510 400×300 1-sided plain delivered": {
+  "workCents": 3500,
+  "weightKg": 0.07,
+  "deliveryCents": 1400,
+  "taxCents": 980,
+  "totalCents": 5880
+ },
+ "1 canvas canvas380 300×300 1-sided rolled proof collected": {
+  "workCents": 3500,
+  "weightKg": 0.04,
+  "deliveryCents": 0,
+  "taxCents": 700,
+  "totalCents": 4200
+ },
+ "2 canvas canvas380 600×800 1-sided stretched delivered": {
+  "workCents": 8328,
+  "weightKg": 0.42,
+  "deliveryCents": 1400,
+  "taxCents": 1946,
+  "totalCents": 11674
+ },
+ "1 rollups pvc510 850×2000 1-sided plain delivered": {
+  "workCents": 6560,
+  "weightKg": 1,
+  "deliveryCents": 1400,
+  "taxCents": 1592,
+  "totalCents": 9552
+ },
+ "3 pvc-banners pvc510 1234×567 1-sided hemmed express delivered": {
+  "workCents": 19117,
+  "weightKg": 1.23,
+  "deliveryCents": 1400,
+  "taxCents": 4103,
+  "totalCents": 24620
+ },
+ "6 pvc-banners mesh270 600×1400 1-sided pockets delivered": {
+  "workCents": 28728,
+  "weightKg": 1.56,
+  "deliveryCents": 1400,
+  "taxCents": 6026,
+  "totalCents": 36154
+ },
+ "2 rollups mesh270 600×1600 1-sided plain express collected": {
+  "workCents": 10724,
+  "weightKg": 0.6,
+  "deliveryCents": 0,
+  "taxCents": 2145,
+  "totalCents": 12869
+ },
+ "250 letterheads silk130 a4 2-sided shrink express delivered": {
+  "workCents": 20139,
+  "weightKg": 2.53,
+  "deliveryCents": 980,
+  "taxCents": 4224,
+  "totalCents": 25343
+ },
+ "250 business-cards silk350 bcard 2-sided boxed proof delivered": {
+  "workCents": 4889,
+  "weightKg": 0.65,
+  "deliveryCents": 650,
+  "taxCents": 1108,
+  "totalCents": 6647
+ },
+ "20 rollups pvc510 1000×2100 1-sided hemmed delivered": {
+  "workCents": 193800,
+  "weightKg": 24.63,
+  "deliveryCents": 1400,
+  "taxCents": 39040,
+  "totalCents": 234240
+ },
+ "150 comp-slips silk170 dl 1-sided boxed express delivered": {
+  "workCents": 7303,
+  "weightKg": 1,
+  "deliveryCents": 650,
+  "taxCents": 1591,
+  "totalCents": 9544
+ },
+ "3 canvas canvas380 900×1200 1-sided rolled delivered": {
+  "workCents": 16704,
+  "weightKg": 1.42,
+  "deliveryCents": 1400,
+  "taxCents": 3621,
+  "totalCents": 21725
+ },
+ "100 comp-slips silk170 dl 2-sided boxed proof delivered": {
+  "workCents": 6264,
+  "weightKg": 0.66,
+  "deliveryCents": 650,
+  "taxCents": 1383,
+  "totalCents": 8297
+ },
+ "750 comp-slips silk130 dl 1-sided bundled proof express delivered": {
+  "workCents": 20131,
+  "weightKg": 3.8,
+  "deliveryCents": 980,
+  "taxCents": 4222,
+  "totalCents": 25333
+ },
+ "3 rollups pvc510 850×2000 1-sided plain delivered": {
+  "workCents": 16080,
+  "weightKg": 2.99,
+  "deliveryCents": 1400,
+  "taxCents": 3496,
+  "totalCents": 20976
+ },
+ "1000 envelopes silk130 dlenv 1-sided boxed delivered": {
+  "workCents": 21297,
+  "weightKg": 6.75,
+  "deliveryCents": 980,
+  "taxCents": 4455,
+  "totalCents": 26732
+ },
+ "10 rollups pvc510 900×1500 1-sided hemmed collected": {
+  "workCents": 68400,
+  "weightKg": 7.92,
+  "deliveryCents": 0,
+  "taxCents": 13680,
+  "totalCents": 82080
+ },
+ "3 canvas canvas380 300×300 1-sided stretched collected": {
+  "workCents": 3636,
+  "weightKg": 0.12,
+  "deliveryCents": 0,
+  "taxCents": 727,
+  "totalCents": 4363
+ },
+ "499 flyers silk170 a4 2-sided bundled collected": {
+  "workCents": 26590,
+  "weightKg": 6.61,
+  "deliveryCents": 0,
+  "taxCents": 5318,
+  "totalCents": 31908
+ },
+ "999 letterheads silk130 a4 1-sided shrink proof collected": {
+  "workCents": 38676,
+  "weightKg": 10.11,
+  "deliveryCents": 0,
+  "taxCents": 7735,
+  "totalCents": 46411
+ },
+ "10 canvas canvas380 900×1200 1-sided stretched collected": {
+  "workCents": 75240,
+  "weightKg": 4.72,
+  "deliveryCents": 0,
+  "taxCents": 15048,
+  "totalCents": 90288
+ },
+ "5 pvc-banners pvc510 1200×2000 1-sided plain delivered": {
+  "workCents": 35400,
+  "weightKg": 7.04,
+  "deliveryCents": 1400,
+  "taxCents": 7360,
+  "totalCents": 44160
+ },
+ "999 flyers silk170 a6 1-sided matt shrink delivered": {
+  "workCents": 25893,
+  "weightKg": 4.42,
+  "deliveryCents": 980,
+  "taxCents": 5375,
+  "totalCents": 32248
+ },
+ "150 comp-slips silk130 dl 1-sided boxed express collected": {
+  "workCents": 7174,
+  "weightKg": 0.77,
+  "deliveryCents": 0,
+  "taxCents": 1435,
+  "totalCents": 8609
+ },
+ "20 pvc-banners mesh270 1234×567 1-sided hemmed proof delivered": {
+  "workCents": 91003,
+  "weightKg": 4.35,
+  "deliveryCents": 1400,
+  "taxCents": 18481,
+  "totalCents": 110884
+ },
+ "499 letterheads silk170 a4 1-sided boxed delivered": {
+  "workCents": 20565,
+  "weightKg": 6.61,
+  "deliveryCents": 980,
+  "taxCents": 4309,
+  "totalCents": 25854
+ },
+ "3 rollups pvc510 800×2000 1-sided plain proof collected": {
+  "workCents": 16440,
+  "weightKg": 2.82,
+  "deliveryCents": 0,
+  "taxCents": 3288,
+  "totalCents": 19728
+ },
+ "1 rollups pvc510 850×2000 1-sided hemmed express delivered": {
+  "workCents": 13473,
+  "weightKg": 1,
+  "deliveryCents": 1400,
+  "taxCents": 2975,
+  "totalCents": 17848
+ },
+ "250 business-cards uncoated300 bcard 2-sided corners shrink proof collected": {
+  "workCents": 6003,
+  "weightKg": 0.56,
+  "deliveryCents": 0,
+  "taxCents": 1201,
+  "totalCents": 7204
+ },
+ "249 folded-cards silk170 a5 2-sided shrink express collected": {
+  "workCents": 13347,
+  "weightKg": 1.67,
+  "deliveryCents": 0,
+  "taxCents": 2669,
+  "totalCents": 16016
+ },
+ "2 canvas canvas380 900×1200 1-sided stretched express delivered": {
+  "workCents": 22259,
+  "weightKg": 0.94,
+  "deliveryCents": 1400,
+  "taxCents": 4732,
+  "totalCents": 28391
+ },
+ "50 folded-cards uncoated300 a6 2-sided bundled delivered": {
+  "workCents": 3109,
+  "weightKg": 0.42,
+  "deliveryCents": 650,
+  "taxCents": 752,
+  "totalCents": 4511
+ },
+ "2000 envelopes silk130 c5 1-sided bundled delivered": {
+  "workCents": 57480,
+  "weightKg": 20.22,
+  "deliveryCents": 1640,
+  "taxCents": 11824,
+  "totalCents": 70944
+ },
+ "1 canvas canvas380 900×1200 1-sided stretched collected": {
+  "workCents": 9144,
+  "weightKg": 0.47,
+  "deliveryCents": 0,
+  "taxCents": 1829,
+  "totalCents": 10973
+ },
+ "750 flyers silk130 a6 2-sided gloss boxed express delivered": {
+  "workCents": 27517,
+  "weightKg": 2.53,
+  "deliveryCents": 980,
+  "taxCents": 5699,
+  "totalCents": 34196
+ },
+ "150 envelopes uncoated300 c5 1-sided boxed express delivered": {
+  "workCents": 13499,
+  "weightKg": 3.5,
+  "deliveryCents": 980,
+  "taxCents": 2896,
+  "totalCents": 17375
+ },
+ "2 canvas canvas380 1000×1400 1-sided rolled collected": {
+  "workCents": 14680,
+  "weightKg": 1.22,
+  "deliveryCents": 0,
+  "taxCents": 2936,
+  "totalCents": 17616
+ },
+ "3 canvas canvas380 333×777 1-sided rolled delivered": {
+  "workCents": 5371,
+  "weightKg": 0.34,
+  "deliveryCents": 1400,
+  "taxCents": 1354,
+  "totalCents": 8125
+ },
+ "750 comp-slips silk130 dl 1-sided shrink collected": {
+  "workCents": 16712,
+  "weightKg": 3.8,
+  "deliveryCents": 0,
+  "taxCents": 3342,
+  "totalCents": 20054
+ },
+ "300 comp-slips silk130 dl 1-sided shrink express delivered": {
+  "workCents": 11244,
+  "weightKg": 1.52,
+  "deliveryCents": 650,
+  "taxCents": 2379,
+  "totalCents": 14273
+ },
+ "5000 letterheads uncoated300 a4 2-sided bundled collected": {
+  "workCents": 230900,
+  "weightKg": 116.64,
+  "deliveryCents": 0,
+  "taxCents": 46180,
+  "totalCents": 277080
+ },
+ "100 business-cards silk350 bcard 1-sided boxed collected": {
+  "workCents": 2783,
+  "weightKg": 0.27,
+  "deliveryCents": 0,
+  "taxCents": 557,
+  "totalCents": 3340
+ },
+ "500 business-cards silk350 bcard 1-sided shrink collected": {
+  "workCents": 5811,
+  "weightKg": 1.31,
+  "deliveryCents": 0,
+  "taxCents": 1162,
+  "totalCents": 6973
+ },
+ "999 folded-cards silk170 a6 1-sided boxed proof express delivered": {
+  "workCents": 19996,
+  "weightKg": 4.42,
+  "deliveryCents": 980,
+  "taxCents": 4195,
+  "totalCents": 25171
+ },
+ "1 pvc-banners pvc510 600×1400 1-sided plain collected": {
+  "workCents": 4152,
+  "weightKg": 0.49,
+  "deliveryCents": 0,
+  "taxCents": 830,
+  "totalCents": 4982
+ },
+ "25 comp-slips silk170 dl 2-sided shrink collected": {
+  "workCents": 2838,
+  "weightKg": 0.19,
+  "deliveryCents": 0,
+  "taxCents": 568,
+  "totalCents": 3406
+ },
+ "300 letterheads silk170 usletter 1-sided boxed delivered": {
+  "workCents": 24228,
+  "weightKg": 7.93,
+  "deliveryCents": 980,
+  "taxCents": 5042,
+  "totalCents": 30250
+ },
+ "99 posters silk130 a3 1-sided matt bundled collected": {
+  "workCents": 15989,
+  "weightKg": 2,
+  "deliveryCents": 0,
+  "taxCents": 3198,
+  "totalCents": 19187
+ },
+ "249 flyers silk170 a5 1-sided bundled delivered": {
+  "workCents": 7039,
+  "weightKg": 1.67,
+  "deliveryCents": 650,
+  "taxCents": 1538,
+  "totalCents": 9227
+ },
+ "150 business-cards silk350 bcard 2-sided bundled proof delivered": {
+  "workCents": 4088,
+  "weightKg": 0.44,
+  "deliveryCents": 650,
+  "taxCents": 948,
+  "totalCents": 5686
+ },
+ "750 comp-slips silk170 dl 2-sided bundled collected": {
+  "workCents": 18427,
+  "weightKg": 4.97,
+  "deliveryCents": 0,
+  "taxCents": 3685,
+  "totalCents": 22112
+ },
+ "249 flyers silk130 a5 2-sided shrink express collected": {
+  "workCents": 13133,
+  "weightKg": 1.27,
+  "deliveryCents": 0,
+  "taxCents": 2627,
+  "totalCents": 15760
+ },
+ "5 canvas canvas380 300×300 1-sided stretched proof delivered": {
+  "workCents": 6060,
+  "weightKg": 0.2,
+  "deliveryCents": 1400,
+  "taxCents": 1492,
+  "totalCents": 8952
+ },
+ "250 stickers silk170 a6 1-sided boxed collected": {
+  "workCents": 5327,
+  "weightKg": 1.11,
+  "deliveryCents": 0,
+  "taxCents": 1065,
+  "totalCents": 6392
+ },
+ "3 canvas canvas380 300×300 1-sided rolled delivered": {
+  "workCents": 3500,
+  "weightKg": 0.12,
+  "deliveryCents": 1400,
+  "taxCents": 980,
+  "totalCents": 5880
+ },
+ "2000 posters silk130 a4 1-sided matt shrink delivered": {
+  "workCents": 120480,
+  "weightKg": 20.22,
+  "deliveryCents": 1640,
+  "taxCents": 24424,
+  "totalCents": 146544
+ },
+ "499 business-cards silk350 bcard 2-sided gloss shrink proof express delivered": {
+  "workCents": 12411,
+  "weightKg": 1.31,
+  "deliveryCents": 650,
+  "taxCents": 2612,
+  "totalCents": 15673
+ },
+ "20 pvc-banners pvc510 1300×4500 1-sided plain delivered": {
+  "workCents": 329400,
+  "weightKg": 68.62,
+  "deliveryCents": 1400,
+  "taxCents": 66160,
+  "totalCents": 396960
+ },
+ "100 stickers vinyl a5 1-sided shrink collected": {
+  "workCents": 75385,
+  "weightKg": 0,
+  "deliveryCents": 0,
+  "taxCents": 15077,
+  "totalCents": 90462
+ },
+ "499 letterheads silk130 usletter 2-sided boxed collected": {
+  "workCents": 50623,
+  "weightKg": 10.09,
+  "deliveryCents": 0,
+  "taxCents": 10125,
+  "totalCents": 60748
+ },
+ "5000 envelopes silk130 c5 1-sided shrink collected": {
+  "workCents": 161000,
+  "weightKg": 50.54,
+  "deliveryCents": 0,
+  "taxCents": 32200,
+  "totalCents": 193200
+ },
+ "10 rollups mesh270 800×2000 1-sided plain delivered": {
+  "workCents": 53000,
+  "weightKg": 4.97,
+  "deliveryCents": 1400,
+  "taxCents": 10880,
+  "totalCents": 65280
+ },
+ "2 canvas canvas380 1000×1400 1-sided rolled proof delivered": {
+  "workCents": 15880,
+  "weightKg": 1.22,
+  "deliveryCents": 1400,
+  "taxCents": 3456,
+  "totalCents": 20736
+ },
+ "1 rollups mesh270 600×1600 1-sided plain delivered": {
+  "workCents": 4872,
+  "weightKg": 0.3,
+  "deliveryCents": 1400,
+  "taxCents": 1254,
+  "totalCents": 7526
+ },
+ "99 letterheads uncoated300 usletter 1-sided shrink express delivered": {
+  "workCents": 18089,
+  "weightKg": 4.62,
+  "deliveryCents": 980,
+  "taxCents": 3814,
+  "totalCents": 22883
+ },
+ "500 comp-slips silk170 dl 2-sided bundled proof delivered": {
+  "workCents": 14055,
+  "weightKg": 3.3,
+  "deliveryCents": 980,
+  "taxCents": 3007,
+  "totalCents": 18042
+ },
+ "150 comp-slips silk130 dl 1-sided shrink collected": {
+  "workCents": 5464,
+  "weightKg": 0.77,
+  "deliveryCents": 0,
+  "taxCents": 1093,
+  "totalCents": 6557
+ },
+ "5 pvc-banners mesh270 400×300 1-sided plain delivered": {
+  "workCents": 3720,
+  "weightKg": 0.19,
+  "deliveryCents": 1400,
+  "taxCents": 1024,
+  "totalCents": 6144
+ },
+ "500 business-cards uncoated300 bcard 1-sided bundled delivered": {
+  "workCents": 3748,
+  "weightKg": 1.12,
+  "deliveryCents": 650,
+  "taxCents": 880,
+  "totalCents": 5278
+ },
+ "1000 comp-slips silk130 dl 1-sided bundled proof collected": {
+  "workCents": 16920,
+  "weightKg": 5.05,
+  "deliveryCents": 0,
+  "taxCents": 3384,
+  "totalCents": 20304
+ },
+ "150 comp-slips silk130 dl 1-sided bundled collected": {
+  "workCents": 4864,
+  "weightKg": 0.77,
+  "deliveryCents": 0,
+  "taxCents": 973,
+  "totalCents": 5837
+ },
+ "100 envelopes uncoated300 c5 1-sided boxed express collected": {
+  "workCents": 10012,
+  "weightKg": 2.33,
+  "deliveryCents": 0,
+  "taxCents": 2002,
+  "totalCents": 12014
+ },
+ "1 pvc-banners pvc510 1000×3000 1-sided pockets delivered": {
+  "workCents": 12000,
+  "weightKg": 1.76,
+  "deliveryCents": 1400,
+  "taxCents": 2680,
+  "totalCents": 16080
+ },
+ "1 rollups pvc510 1000×2100 1-sided plain delivered": {
+  "workCents": 7680,
+  "weightKg": 1.23,
+  "deliveryCents": 1400,
+  "taxCents": 1816,
+  "totalCents": 10896
+ },
+ "100 business-cards silk350 bcard 1-sided soft bundled delivered": {
+  "workCents": 2608,
+  "weightKg": 0.27,
+  "deliveryCents": 650,
+  "taxCents": 652,
+  "totalCents": 3910
+ },
+ "5000 comp-slips silk170 dl 1-sided boxed delivered": {
+  "workCents": 78075,
+  "weightKg": 33.05,
+  "deliveryCents": 1640,
+  "taxCents": 15943,
+  "totalCents": 95658
+ },
+ "300 business-cards silk350 bcard 1-sided matt shrink delivered": {
+  "workCents": 5235,
+  "weightKg": 0.82,
+  "deliveryCents": 650,
+  "taxCents": 1177,
+  "totalCents": 7062
+ },
+ "1 pvc-banners pvc510 1234×567 1-sided pockets express delivered": {
+  "workCents": 7505,
+  "weightKg": 0.41,
+  "deliveryCents": 1400,
+  "taxCents": 1781,
+  "totalCents": 10686
+ },
+ "249 envelopes silk130 c5 1-sided shrink express delivered": {
+  "workCents": 17383,
+  "weightKg": 2.53,
+  "deliveryCents": 980,
+  "taxCents": 3673,
+  "totalCents": 22036
+ },
+ "250 folded-cards silk170 a5 1-sided gloss boxed proof express collected": {
+  "workCents": 15567,
+  "weightKg": 1.67,
+  "deliveryCents": 0,
+  "taxCents": 3113,
+  "totalCents": 18680
+ },
+ "249 folded-cards uncoated300 a6 1-sided shrink delivered": {
+  "workCents": 7136,
+  "weightKg": 1.96,
+  "deliveryCents": 650,
+  "taxCents": 1557,
+  "totalCents": 9343
+ },
+ "5 rollups pvc510 1000×2100 1-sided hemmed delivered": {
+  "workCents": 49800,
+  "weightKg": 6.16,
+  "deliveryCents": 1400,
+  "taxCents": 10240,
+  "totalCents": 61440
+ },
+ "499 comp-slips silk170 dl 1-sided boxed express delivered": {
+  "workCents": 15401,
+  "weightKg": 3.3,
+  "deliveryCents": 980,
+  "taxCents": 3276,
+  "totalCents": 19657
+ },
+ "10 rollups mesh270 900×1500 1-sided hemmed proof delivered": {
+  "workCents": 75000,
+  "weightKg": 4.19,
+  "deliveryCents": 1400,
+  "taxCents": 15280,
+  "totalCents": 91680
+ },
+ "500 stickers vinyl a5 1-sided bundled delivered": {
+  "workCents": 289313,
+  "weightKg": 0,
+  "deliveryCents": 650,
+  "taxCents": 57993,
+  "totalCents": 347956
+ },
+ "25 letterheads uncoated300 a4 1-sided shrink express delivered": {
+  "workCents": 4724,
+  "weightKg": 0.61,
+  "deliveryCents": 650,
+  "taxCents": 1075,
+  "totalCents": 6449
+ },
+ "500 posters silk170 a3 1-sided shrink express delivered": {
+  "workCents": 49235,
+  "weightKg": 13.22,
+  "deliveryCents": 1640,
+  "taxCents": 10175,
+  "totalCents": 61050
+ },
+ "50 flyers silk170 a5 2-sided gloss shrink delivered": {
+  "workCents": 4317,
+  "weightKg": 0.34,
+  "deliveryCents": 650,
+  "taxCents": 993,
+  "totalCents": 5960
+ },
+ "499 letterheads silk130 a4 1-sided shrink proof collected": {
+  "workCents": 22756,
+  "weightKg": 5.05,
+  "deliveryCents": 0,
+  "taxCents": 4551,
+  "totalCents": 27307
+ },
+ "100 posters silk170 a4 1-sided bundled delivered": {
+  "workCents": 5958,
+  "weightKg": 1.32,
+  "deliveryCents": 650,
+  "taxCents": 1322,
+  "totalCents": 7930
+ },
+ "10 rollups pvc510 600×1600 1-sided plain proof collected": {
+  "workCents": 29880,
+  "weightKg": 5.63,
+  "deliveryCents": 0,
+  "taxCents": 5976,
+  "totalCents": 35856
+ },
+ "99 posters silk170 a3 1-sided boxed delivered": {
+  "workCents": 11267,
+  "weightKg": 2.62,
+  "deliveryCents": 980,
+  "taxCents": 2449,
+  "totalCents": 14696
+ },
+ "150 folded-cards silk350 a5 1-sided gloss boxed delivered": {
+  "workCents": 8394,
+  "weightKg": 2.07,
+  "deliveryCents": 980,
+  "taxCents": 1875,
+  "totalCents": 11249
+ },
+ "20 canvas canvas380 1000×1400 1-sided rolled collected": {
+  "workCents": 130600,
+  "weightKg": 12.24,
+  "deliveryCents": 0,
+  "taxCents": 26120,
+  "totalCents": 156720
+ },
+ "20 rollups pvc510 1000×2100 1-sided plain proof express delivered": {
+  "workCents": 162810,
+  "weightKg": 24.63,
+  "deliveryCents": 1400,
+  "taxCents": 32842,
+  "totalCents": 197052
+ },
+ "99 stickers vinyl a5 1-sided boxed collected": {
+  "workCents": 82405,
+  "weightKg": 0,
+  "deliveryCents": 0,
+  "taxCents": 16481,
+  "totalCents": 98886
+ },
+ "300 letterheads uncoated300 usletter 2-sided bundled express delivered": {
+  "workCents": 49783,
+  "weightKg": 14,
+  "deliveryCents": 1640,
+  "taxCents": 10285,
+  "totalCents": 61708
+ },
+ "750 stickers silk170 a5 1-sided matt bundled delivered": {
+  "workCents": 24424,
+  "weightKg": 4.97,
+  "deliveryCents": 980,
+  "taxCents": 5081,
+  "totalCents": 30485
+ },
+ "250 flyers uncoated300 a4 1-sided shrink delivered": {
+  "workCents": 14178,
+  "weightKg": 5.83,
+  "deliveryCents": 980,
+  "taxCents": 3032,
+  "totalCents": 18190
+ },
+ "750 comp-slips silk170 dl 2-sided shrink collected": {
+  "workCents": 21427,
+  "weightKg": 4.97,
+  "deliveryCents": 0,
+  "taxCents": 4285,
+  "totalCents": 25712
+ },
+ "500 letterheads uncoated300 usletter 2-sided boxed collected": {
+  "workCents": 54390,
+  "weightKg": 23.33,
+  "deliveryCents": 0,
+  "taxCents": 10878,
+  "totalCents": 65268
+ },
+ "300 stickers silk170 a5 1-sided gloss boxed collected": {
+  "workCents": 11870,
+  "weightKg": 1.98,
+  "deliveryCents": 0,
+  "taxCents": 2374,
+  "totalCents": 14244
+ },
+ "150 envelopes silk130 c5 1-sided shrink delivered": {
+  "workCents": 8448,
+  "weightKg": 1.52,
+  "deliveryCents": 650,
+  "taxCents": 1820,
+  "totalCents": 10918
+ },
+ "750 comp-slips silk130 dl 2-sided shrink collected": {
+  "workCents": 21055,
+  "weightKg": 3.8,
+  "deliveryCents": 0,
+  "taxCents": 4211,
+  "totalCents": 25266
+ },
+ "1000 folded-cards uncoated300 a5 1-sided bundled delivered": {
+  "workCents": 19635,
+  "weightKg": 11.66,
+  "deliveryCents": 1640,
+  "taxCents": 4255,
+  "totalCents": 25530
+ },
+ "499 posters silk170 a3 1-sided matt bundled delivered": {
+  "workCents": 65802,
+  "weightKg": 13.19,
+  "deliveryCents": 1640,
+  "taxCents": 13488,
+  "totalCents": 80930
+ },
+ "500 stickers silk170 a5 1-sided gloss shrink proof express delivered": {
+  "workCents": 27058,
+  "weightKg": 3.3,
+  "deliveryCents": 980,
+  "taxCents": 5608,
+  "totalCents": 33646
+ },
+ "99 flyers silk170 a6 1-sided matt bundled delivered": {
+  "workCents": 4283,
+  "weightKg": 0.45,
+  "deliveryCents": 650,
+  "taxCents": 987,
+  "totalCents": 5920
+ },
+ "50 posters silk130 a4 1-sided matt boxed express collected": {
+  "workCents": 7875,
+  "weightKg": 0.51,
+  "deliveryCents": 0,
+  "taxCents": 1575,
+  "totalCents": 9450
+ },
+ "500 letterheads silk170 a4 1-sided shrink proof express delivered": {
+  "workCents": 28802,
+  "weightKg": 6.61,
+  "deliveryCents": 980,
+  "taxCents": 5956,
+  "totalCents": 35738
+ },
+ "300 folded-cards uncoated300 a6 1-sided boxed express delivered": {
+  "workCents": 9181,
+  "weightKg": 2.33,
+  "deliveryCents": 980,
+  "taxCents": 2032,
+  "totalCents": 12193
+ },
+ "25 stickers silk170 a5 1-sided boxed delivered": {
+  "workCents": 2943,
+  "weightKg": 0.19,
+  "deliveryCents": 650,
+  "taxCents": 719,
+  "totalCents": 4312
+ },
+ "20 pvc-banners mesh270 400×300 1-sided plain delivered": {
+  "workCents": 9480,
+  "weightKg": 0.75,
+  "deliveryCents": 1400,
+  "taxCents": 2176,
+  "totalCents": 13056
+ },
+ "2000 letterheads silk130 a4 2-sided boxed express delivered": {
+  "workCents": 107433,
+  "weightKg": 20.22,
+  "deliveryCents": 1640,
+  "taxCents": 21815,
+  "totalCents": 130888
+ },
+ "5 pvc-banners pvc510 1234×567 1-sided plain collected": {
+  "workCents": 11595,
+  "weightKg": 2.05,
+  "deliveryCents": 0,
+  "taxCents": 2319,
+  "totalCents": 13914
+ },
+ "750 envelopes silk130 c5 1-sided bundled delivered": {
+  "workCents": 25561,
+  "weightKg": 7.58,
+  "deliveryCents": 980,
+  "taxCents": 5308,
+  "totalCents": 31849
+ },
+ "150 folded-cards silk350 a6 2-sided bundled delivered": {
+  "workCents": 5202,
+  "weightKg": 1.36,
+  "deliveryCents": 650,
+  "taxCents": 1170,
+  "totalCents": 7022
+ },
+ "100 flyers silk130 a5 2-sided boxed delivered": {
+  "workCents": 5001,
+  "weightKg": 0.51,
+  "deliveryCents": 650,
+  "taxCents": 1130,
+  "totalCents": 6781
+ },
+ "750 folded-cards uncoated300 a6 2-sided boxed proof delivered": {
+  "workCents": 16935,
+  "weightKg": 5.83,
+  "deliveryCents": 980,
+  "taxCents": 3583,
+  "totalCents": 21498
+ },
+ "3 rollups mesh270 850×2000 1-sided hemmed delivered": {
+  "workCents": 28380,
+  "weightKg": 1.58,
+  "deliveryCents": 1400,
+  "taxCents": 5956,
+  "totalCents": 35736
+ },
+ "50 business-cards silk350 bcard 2-sided bundled proof collected": {
+  "workCents": 3447,
+  "weightKg": 0.16,
+  "deliveryCents": 0,
+  "taxCents": 689,
+  "totalCents": 4136
+ },
+ "750 folded-cards uncoated300 a5 1-sided bundled proof express delivered": {
+  "workCents": 24654,
+  "weightKg": 8.77,
+  "deliveryCents": 980,
+  "taxCents": 5127,
+  "totalCents": 30761
+ },
+ "249 folded-cards silk170 a6 1-sided gloss shrink express delivered": {
+  "workCents": 11609,
+  "weightKg": 1.11,
+  "deliveryCents": 650,
+  "taxCents": 2452,
+  "totalCents": 14711
+ },
+ "5 canvas canvas380 600×800 1-sided rolled proof express collected": {
+  "workCents": 18954,
+  "weightKg": 1.05,
+  "deliveryCents": 0,
+  "taxCents": 3791,
+  "totalCents": 22745
+ },
+ "999 folded-cards silk170 a5 1-sided soft bundled delivered": {
+  "workCents": 31885,
+  "weightKg": 6.61,
+  "deliveryCents": 980,
+  "taxCents": 6573,
+  "totalCents": 39438
+ },
+ "500 letterheads silk130 usletter 2-sided boxed delivered": {
+  "workCents": 45480,
+  "weightKg": 10.11,
+  "deliveryCents": 1640,
+  "taxCents": 9424,
+  "totalCents": 56544
+ },
+ "1000 envelopes uncoated300 c5 1-sided bundled proof collected": {
+  "workCents": 38670,
+  "weightKg": 23.33,
+  "deliveryCents": 0,
+  "taxCents": 7734,
+  "totalCents": 46404
+ },
+ "2000 business-cards uncoated300 bcard 1-sided bundled collected": {
+  "workCents": 8649,
+  "weightKg": 4.48,
+  "deliveryCents": 0,
+  "taxCents": 1730,
+  "totalCents": 10379
+ },
+ "25 stickers silk170 a5 1-sided gloss shrink delivered": {
+  "workCents": 2978,
+  "weightKg": 0.19,
+  "deliveryCents": 650,
+  "taxCents": 726,
+  "totalCents": 4354
+ },
+ "100 comp-slips silk130 dl 1-sided shrink delivered": {
+  "workCents": 4216,
+  "weightKg": 0.51,
+  "deliveryCents": 650,
+  "taxCents": 973,
+  "totalCents": 5839
+ },
+ "2 rollups pvc510 850×2000 1-sided hemmed express collected": {
+  "workCents": 24516,
+  "weightKg": 1.99,
+  "deliveryCents": 0,
+  "taxCents": 4903,
+  "totalCents": 29419
+ },
+ "99 comp-slips silk130 dl 1-sided shrink delivered": {
+  "workCents": 4404,
+  "weightKg": 0.51,
+  "deliveryCents": 650,
+  "taxCents": 1011,
+  "totalCents": 6065
+ },
+ "20 rollups mesh270 1000×2100 1-sided hemmed delivered": {
+  "workCents": 210600,
+  "weightKg": 13.04,
+  "deliveryCents": 1400,
+  "taxCents": 42400,
+  "totalCents": 254400
+ },
+ "2000 folded-cards uncoated300 a5 2-sided shrink express collected": {
+  "workCents": 75087,
+  "weightKg": 23.33,
+  "deliveryCents": 0,
+  "taxCents": 15017,
+  "totalCents": 90104
+ },
+ "5000 business-cards silk350 bcard 1-sided soft boxed collected": {
+  "workCents": 37050,
+  "weightKg": 13.01,
+  "deliveryCents": 0,
+  "taxCents": 7410,
+  "totalCents": 44460
+ },
+ "10 pvc-banners mesh270 1350×500 1-sided hemmed delivered": {
+  "workCents": 45600,
+  "weightKg": 2.1,
+  "deliveryCents": 1400,
+  "taxCents": 9400,
+  "totalCents": 56400
+ },
+ "5 canvas canvas380 900×1200 1-sided rolled delivered": {
+  "workCents": 26640,
+  "weightKg": 2.36,
+  "deliveryCents": 1400,
+  "taxCents": 5608,
+  "totalCents": 33648
+ },
+ "50 posters silk130 a4 1-sided shrink delivered": {
+  "workCents": 4208,
+  "weightKg": 0.51,
+  "deliveryCents": 650,
+  "taxCents": 972,
+  "totalCents": 5830
+ },
+ "100 business-cards silk350 bcard 1-sided corners shrink proof collected": {
+  "workCents": 4533,
+  "weightKg": 0.27,
+  "deliveryCents": 0,
+  "taxCents": 907,
+  "totalCents": 5440
+ },
+ "150 stickers silk170 a6 1-sided bundled delivered": {
+  "workCents": 3879,
+  "weightKg": 0.66,
+  "deliveryCents": 650,
+  "taxCents": 906,
+  "totalCents": 5435
+ },
+ "300 flyers silk130 a5 1-sided shrink delivered": {
+  "workCents": 8329,
+  "weightKg": 1.52,
+  "deliveryCents": 650,
+  "taxCents": 1796,
+  "totalCents": 10775
+ },
+ "5 rollups mesh270 800×2000 1-sided hemmed proof collected": {
+  "workCents": 45400,
+  "weightKg": 2.48,
+  "deliveryCents": 0,
+  "taxCents": 9080,
+  "totalCents": 54480
+ },
+ "99 folded-cards uncoated300 a5 1-sided shrink express delivered": {
+  "workCents": 6784,
+  "weightKg": 1.17,
+  "deliveryCents": 650,
+  "taxCents": 1487,
+  "totalCents": 8921
+ },
+ "499 letterheads silk130 usletter 2-sided shrink delivered": {
+  "workCents": 52169,
+  "weightKg": 10.09,
+  "deliveryCents": 1640,
+  "taxCents": 10762,
+  "totalCents": 64571
+ },
+ "10 canvas canvas380 900×1200 1-sided rolled express delivered": {
+  "workCents": 69498,
+  "weightKg": 4.72,
+  "deliveryCents": 1400,
+  "taxCents": 14180,
+  "totalCents": 85078
+ },
+ "999 envelopes uncoated300 dlenv 1-sided boxed delivered": {
+  "workCents": 29733,
+  "weightKg": 15.54,
+  "deliveryCents": 1640,
+  "taxCents": 6275,
+  "totalCents": 37648
+ },
+ "10 rollups mesh270 1000×2100 1-sided plain proof collected": {
+  "workCents": 70200,
+  "weightKg": 6.52,
+  "deliveryCents": 0,
+  "taxCents": 14040,
+  "totalCents": 84240
+ },
+ "99 posters silk130 a3 1-sided matt shrink proof collected": {
+  "workCents": 17585,
+  "weightKg": 2,
+  "deliveryCents": 0,
+  "taxCents": 3517,
+  "totalCents": 21102
+ },
+ "2 canvas canvas380 333×777 1-sided stretched proof delivered": {
+  "workCents": 6518,
+  "weightKg": 0.23,
+  "deliveryCents": 1400,
+  "taxCents": 1584,
+  "totalCents": 9502
+ },
+ "5000 comp-slips silk170 dl 2-sided shrink express delivered": {
+  "workCents": 160583,
+  "weightKg": 33.05,
+  "deliveryCents": 1640,
+  "taxCents": 32445,
+  "totalCents": 194668
+ },
+ "999 letterheads silk170 a4 2-sided bundled express collected": {
+  "workCents": 62127,
+  "weightKg": 13.22,
+  "deliveryCents": 0,
+  "taxCents": 12425,
+  "totalCents": 74552
+ },
+ "100 comp-slips silk170 dl 2-sided bundled delivered": {
+  "workCents": 4614,
+  "weightKg": 0.66,
+  "deliveryCents": 650,
+  "taxCents": 1053,
+  "totalCents": 6317
+ },
+ "1 pvc-banners mesh270 1350×500 1-sided pockets delivered": {
+  "workCents": 5760,
+  "weightKg": 0.21,
+  "deliveryCents": 1400,
+  "taxCents": 1432,
+  "totalCents": 8592
+ },
+ "2000 letterheads silk130 a4 1-sided shrink delivered": {
+  "workCents": 65480,
+  "weightKg": 20.22,
+  "deliveryCents": 1640,
+  "taxCents": 13424,
+  "totalCents": 80544
+ },
+ "100 folded-cards silk170 a6 2-sided gloss boxed express delivered": {
+  "workCents": 6884,
+  "weightKg": 0.45,
+  "deliveryCents": 650,
+  "taxCents": 1507,
+  "totalCents": 9041
+ },
+ "250 folded-cards silk350 a6 2-sided shrink collected": {
+  "workCents": 7835,
+  "weightKg": 2.29,
+  "deliveryCents": 0,
+  "taxCents": 1567,
+  "totalCents": 9402
+ },
+ "5 rollups pvc510 850×2000 1-sided hemmed delivered": {
+  "workCents": 42700,
+  "weightKg": 4.99,
+  "deliveryCents": 1400,
+  "taxCents": 8820,
+  "totalCents": 52920
+ },
+ "2 rollups pvc510 600×1600 1-sided plain collected": {
+  "workCents": 7176,
+  "weightKg": 1.13,
+  "deliveryCents": 0,
+  "taxCents": 1435,
+  "totalCents": 8611
+ },
+ "499 envelopes uncoated300 dlenv 1-sided bundled delivered": {
+  "workCents": 17000,
+  "weightKg": 7.79,
+  "deliveryCents": 980,
+  "taxCents": 3596,
+  "totalCents": 21576
+ },
+ "2000 comp-slips silk130 dl 1-sided bundled proof collected": {
+  "workCents": 30840,
+  "weightKg": 10.11,
+  "deliveryCents": 0,
+  "taxCents": 6168,
+  "totalCents": 37008
+ },
+ "999 business-cards uncoated300 bcard 1-sided corners bundled delivered": {
+  "workCents": 8097,
+  "weightKg": 2.24,
+  "deliveryCents": 980,
+  "taxCents": 1815,
+  "totalCents": 10892
+ },
+ "2000 comp-slips silk170 dl 1-sided bundled proof delivered": {
+  "workCents": 31710,
+  "weightKg": 13.22,
+  "deliveryCents": 1640,
+  "taxCents": 6670,
+  "totalCents": 40020
+ },
+ "999 folded-cards silk170 a5 1-sided gloss shrink delivered": {
+  "workCents": 35881,
+  "weightKg": 6.61,
+  "deliveryCents": 980,
+  "taxCents": 7372,
+  "totalCents": 44233
+ },
+ "1000 folded-cards silk350 a5 1-sided boxed delivered": {
+  "workCents": 21115,
+  "weightKg": 13.61,
+  "deliveryCents": 1640,
+  "taxCents": 4551,
+  "totalCents": 27306
+ },
+ "499 comp-slips silk130 dl 2-sided bundled delivered": {
+  "workCents": 13918,
+  "weightKg": 2.53,
+  "deliveryCents": 980,
+  "taxCents": 2980,
+  "totalCents": 17878
+ },
+ "20 pvc-banners pvc510 1234×567 1-sided hemmed collected": {
+  "workCents": 84206,
+  "weightKg": 8.21,
+  "deliveryCents": 0,
+  "taxCents": 16841,
+  "totalCents": 101047
+ },
+ "499 comp-slips silk130 dl 1-sided shrink proof express delivered": {
+  "workCents": 18734,
+  "weightKg": 2.53,
+  "deliveryCents": 980,
+  "taxCents": 3943,
+  "totalCents": 23657
+ },
+ "25 comp-slips silk130 dl 1-sided boxed delivered": {
+  "workCents": 2922,
+  "weightKg": 0.14,
+  "deliveryCents": 650,
+  "taxCents": 714,
+  "totalCents": 4286
+ },
+ "250 comp-slips silk130 dl 2-sided shrink collected": {
+  "workCents": 8907,
+  "weightKg": 1.27,
+  "deliveryCents": 0,
+  "taxCents": 1781,
+  "totalCents": 10688
+ },
+ "249 flyers uncoated300 a4 2-sided shrink delivered": {
+  "workCents": 19386,
+  "weightKg": 5.83,
+  "deliveryCents": 980,
+  "taxCents": 4073,
+  "totalCents": 24439
+ },
+ "250 posters silk170 a4 1-sided matt bundled collected": {
+  "workCents": 17833,
+  "weightKg": 3.3,
+  "deliveryCents": 0,
+  "taxCents": 3567,
+  "totalCents": 21400
+ },
+ "5 rollups pvc510 800×2000 1-sided hemmed delivered": {
+  "workCents": 41000,
+  "weightKg": 4.69,
+  "deliveryCents": 1400,
+  "taxCents": 8480,
+  "totalCents": 50880
+ },
+ "500 envelopes silk130 c5 1-sided boxed proof collected": {
+  "workCents": 19290,
+  "weightKg": 5.05,
+  "deliveryCents": 0,
+  "taxCents": 3858,
+  "totalCents": 23148
+ },
+ "499 stickers silk170 a6 1-sided shrink proof express delivered": {
+  "workCents": 15052,
+  "weightKg": 2.22,
+  "deliveryCents": 980,
+  "taxCents": 3206,
+  "totalCents": 19238
+ },
+ "250 envelopes silk130 c5 1-sided shrink collected": {
+  "workCents": 11681,
+  "weightKg": 2.53,
+  "deliveryCents": 0,
+  "taxCents": 2336,
+  "totalCents": 14017
+ },
+ "150 comp-slips silk130 dl 2-sided shrink express collected": {
+  "workCents": 8884,
+  "weightKg": 0.77,
+  "deliveryCents": 0,
+  "taxCents": 1777,
+  "totalCents": 10661
+ },
+ "300 envelopes silk130 dlenv 1-sided bundled proof delivered": {
+  "workCents": 10104,
+  "weightKg": 2.02,
+  "deliveryCents": 980,
+  "taxCents": 2217,
+  "totalCents": 13301
+ },
+ "99 flyers silk170 a5 1-sided gloss boxed delivered": {
+  "workCents": 5902,
+  "weightKg": 0.66,
+  "deliveryCents": 650,
+  "taxCents": 1310,
+  "totalCents": 7862
+ }
+}
