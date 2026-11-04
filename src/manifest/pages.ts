@@ -12,6 +12,7 @@
  * stamp) shows in a form and cannot be typed over.
  */
 import { l, titles } from "./labels.ts";
+import { FINISH_LINES } from "./tables.ts";
 
 export const NAV_GROUPS = [
   { key: "orders", label: l("Orders"), order: 1 },
@@ -53,6 +54,15 @@ const CONFIG_FIELDS: Field[] = [
   ref("packaging_id"),
   toggle("proof_by_post"),
   toggle("express"),
+];
+
+/**
+ * How the rate card priced a line, in its form: each amount of the breakdown
+ * and its price, then what they were counted from. Adminium's, never typed.
+ */
+const PRICE_SECTIONS: Field[][] = [
+  [money("setup"), money("print_charge"), money("material_charge"), ...FINISH_LINES.map(({ group }) => money(`${group}_charge`)), money("minimum_charge"), money("packaging_charge"), money("proof_charge"), money("express_charge"), money("cap_charge"), money("price")],
+  [number("up"), number("sheets"), money("print_rate"), number("sheet_rate"), money("material_rate"), number("multiplier"), number("next_qty"), money("next_work"), number("area_each"), number("area_total"), number("perimeter_m"), number("weight_kg"), number("rolls")],
 ];
 
 /** An order's or a quote's money, in its form. */
@@ -116,7 +126,8 @@ const SPECS: PageSpec[] = [
     config: form(
       [title("product_name"), ref("order_id"), f("stage", { control: "segmented" }), f("ready_by", { control: "date" })],
       CONFIG_FIELDS,
-      [money("price"), number("weight_kg"), f("design_code")],
+      ...PRICE_SECTIONS,
+      [f("design_code")],
       [f("proof_state", { control: "segmented" }), number("changes"), number("turnaround_days"), toggle("artwork_checked"), number("artwork_count"), number("warnings_accepted")],
       [when("printing_at"), f("printed_by"), when("finishing_at"), when("ready_at"), when("handed_over_at"), number("spoiled_sheets"), wide("works_note", "text")],
     ),
@@ -202,7 +213,8 @@ const SPECS: PageSpec[] = [
     table: "options",
     config: form(
       [title("name"), ref("product_id"), f("kind", { control: "select" }), f("code")],
-      [ref("material_id"), ref("size_id"), number("sides"), ref("finish_id"), toggle("coated")],
+      [ref("material_id"), ref("size_id"), number("sides"), ref("finish_id"), toggle("coated"), toggle("framed")],
+      [money("finish_price"), f("finish_basis"), number("finish_count"), money("unit_price")],
       [money("price"), f("feature_code")],
       [toggle("preselected"), toggle("active"), f("position", { control: "stepper" })],
     ),
@@ -226,7 +238,7 @@ const SPECS: PageSpec[] = [
     icon: "ruler",
     order: 4,
     table: "sizes",
-    config: form([title("name"), f("code"), number("width_mm"), number("height_mm"), number("up"), number("up_upright"), number("up_rotated"), toggle("direct"), toggle("active"), f("position", { control: "stepper" })]),
+    config: form([title("name"), f("code"), number("width_mm"), number("height_mm"), number("up"), number("up_upright"), number("up_rotated"), number("area_mm2"), toggle("direct"), toggle("active"), f("position", { control: "stepper" })]),
   },
   {
     ref: "printing-finishes",
@@ -244,7 +256,7 @@ const SPECS: PageSpec[] = [
     icon: "chart-no-axes-column-decreasing",
     order: 6,
     table: "breaks",
-    config: form([number("min_qty"), number("multiplier")]),
+    config: form([number("min_qty"), number("multiplier"), ref("next_id")]),
   },
   {
     ref: "printing-packaging",
@@ -339,8 +351,8 @@ const SPECS: PageSpec[] = [
     config: form(
       [title("works_name"), f("phone", { control: "phone" }), f("email", { control: "email" }), wide("address", "text"), f("hours"), wide("about")],
       [f("ref_prefix"), number("first_order_number"), f("quote_prefix"), number("first_quote_number"), number("tax_rate"), toggle("taking_orders"), toggle("sample_packs")],
-      [money("setup"), number("standard_days"), number("express_days"), number("express_percent"), money("proof_post_price"), number("proof_post_days"), number("change_days")],
-      [number("sheet_width_mm"), number("sheet_height_mm"), money("large_format_minimum"), number("tube_max_mm"), number("sheet_packing_kg"), number("roll_packing_kg"), number("frame_grams")],
+      [money("setup"), money("print_single"), money("print_double"), number("standard_days"), number("express_days"), number("express_percent"), money("proof_post_price"), number("proof_post_days"), number("change_days")],
+      [number("sheet_width_mm"), number("sheet_height_mm"), number("sheet_mm2"), money("large_format_minimum"), number("tube_max_mm"), number("sheet_packing_kg"), number("roll_packing_kg"), number("frame_grams")],
       [number("artwork_max_mb"), number("min_dpi")],
     ),
   },

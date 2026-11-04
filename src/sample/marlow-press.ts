@@ -34,10 +34,10 @@
  * proof waiting (nothing is printed before a yes), and MP-4113's ready-by is
  * counted from its approval.
  *
- * Every total the screens show is Adminium's: an order's goods, its delivery
- * band and price, its tax and total. A job's own price and weight are, for
- * now, the comp's quote of it, ex tax and without its delivery (`JOB_FIGURES`),
- * until the rate card's calculated columns work them out. What Adminium never
+ * Every figure the screens show is Adminium's: each job's price and weight,
+ * worked out from the rate card as the job goes in (they come to the comp's
+ * own quote of it, `JOB_FIGURES`), an order's goods, its delivery band and
+ * price, its tax and total. What Adminium never
  * works out for history is written here: each job's ready-by (a stamp, which
  * sample data never fires).
  *
@@ -130,6 +130,8 @@ const SETTINGS: Row = {
   first_quote_number: 2042,
   tax_rate: 20,
   setup: 18,
+  print_single: 0.85,
+  print_double: 1.2,
   standard_days: 3,
   express_days: 1,
   express_percent: 35,
@@ -333,9 +335,9 @@ interface Job {
 
 /**
  * The comp's quote of each job and saved quote, ex tax and without its
- * delivery, and its weight: what the works' placeholder columns hold until
- * the rate card works them out (`quote()`, data 260-382, run at the pinned
- * clock).
+ * delivery, and its weight (`quote()`, data 260-382, run at the pinned clock):
+ * what Adminium's own price of the sample comes to, which the contract holds
+ * it to.
  */
 export const JOB_FIGURES: Record<string, { price: number; weight: number }> = {
   "MP-4126": { price: 70.96, weight: 1.02 },
@@ -481,7 +483,11 @@ export function sampleBundle(): SampleBundle {
         ref: "finishes",
         rows: FINISHES.map((f, i) => ({ "@label": `finish:${f.code}`, code: f.code, name: f.name, group: f.group, basis: f.basis, price: f.price, count: "count" in f ? f.count : 1, active: true, position: i + 1 })),
       },
-      { ref: "breaks", rows: BREAKS.map((b) => ({ min_qty: b.min, multiplier: b.multiplier })) },
+      // Each break names the one above it, so the top break goes in first.
+      {
+        ref: "breaks",
+        rows: BREAKS.map((b, i) => ({ "@label": `break:${String(b.min)}`, min_qty: b.min, multiplier: b.multiplier, next_id: i + 1 < BREAKS.length ? { "@ref": `break:${String(BREAKS[i + 1]!.min)}` } : null })).reverse(),
+      },
       { ref: "packaging", rows: PACKAGING.map((p, i) => ({ "@label": `packaging:${p.code}`, code: p.code, name: p.name, basis: p.basis, price: p.price, product_kind: "sheet", active: true, position: i + 1 })) },
       { ref: "delivery_bands", rows: DELIVERY_BANDS.map((b, i) => ({ code: b.code, name: b.name, tube: b.tube, min_kg: b.min, max_kg: b.max, price: b.price, position: i + 1 })) },
       { ref: "option_rules", rows: OPTION_RULES.map((r, i) => ({ finish_group: r.group, test: r.test, gsm: r.gsm ?? null, reason: r.reason, active: true, position: i + 1 })) },
@@ -509,7 +515,6 @@ export function sampleBundle(): SampleBundle {
             language: "en-US",
             customer_id: { "@ref": customerLabel(j.customer) },
             delivery_method: delivered ? "deliver" : "collect",
-            tube: 0,
             placed_at: wall(j.ordered, PLACED_AT),
             ready_at: j.stage === "ready" ? wall(j.due, "16:00") : null,
             may_email: false,
@@ -527,7 +532,6 @@ export function sampleBundle(): SampleBundle {
           language: "en-US",
           customer_id: { "@ref": customerLabel(q.customer) },
           delivery_method: isDelivered(q.cfg) ? "deliver" : "collect",
-          tube: 0,
           created_at: wall(q.created, "15:00"),
         })),
       },
@@ -569,7 +573,7 @@ function designCode(label: string): string {
 }
 
 /** A configuration as a job's or a quote line's columns, each option a row of the product's own. */
-function configRow(cfg: Config, figures: { price: number; weight: number }): Row {
+function configRow(cfg: Config): Row {
   const p = productById.get(cfg.productId)!;
   const opt = (kind: string, code: string | undefined): Row | null => (code === undefined ? null : { "@ref": optionLabel(p.id, kind, code) });
   const sheet = p.sizes.length > 0;
@@ -590,8 +594,6 @@ function configRow(cfg: Config, figures: { price: number; weight: number }): Row
     packaging_id: sheet ? { "@ref": `packaging:${cfg.packaging ?? "bundled"}` } : null,
     proof_by_post: false,
     express: false,
-    price: figures.price,
-    weight_kg: figures.weight,
   };
 }
 
@@ -611,7 +613,8 @@ export function customiserSection(): SampleBundle {
     for (const f of finishOptions(p)) {
       const finish = FINISHES.find((x) => x.code === f.code)!;
       // A lamination and a spot UV need a coated surface under them.
-      push(f.kind, f.code, finish.name, { finish_id: { "@ref": `finish:${f.code}` }, coated: f.kind === "lamination" || f.kind === "spot_uv", preselected: f.code === "plain" || f.code === "rolled" });
+      // A lamination and a spot UV need a coated surface under them; a canvas on a frame stays flat.
+      push(f.kind, f.code, finish.name, { finish_id: { "@ref": `finish:${f.code}` }, coated: f.kind === "lamination" || f.kind === "spot_uv", framed: f.code === "stretched", preselected: f.code === "plain" || f.code === "rolled" });
     }
     for (const feature of p.features ?? []) push("feature", feature.code, feature.name, { price: 0, feature_code: feature.code, feature_id: { "@ref": feature.label } });
   }
@@ -620,12 +623,11 @@ export function customiserSection(): SampleBundle {
   const features: Row[] = [];
   const proofs: Row[] = [];
   for (const j of JOBS) {
-    const ref = `MP-${String(j.ref)}`;
     jobs.push({
       "@label": jobLabel(j.ref),
       order_id: { "@ref": orderLabel(j.ref) },
       position: 1,
-      ...configRow(j.cfg, JOB_FIGURES[ref]!),
+      ...configRow(j.cfg),
       design_code: j.design === undefined ? null : designCode(j.design),
       design_id: j.design === undefined ? null : { "@ref": j.design },
       ready_by: day(j.due),
@@ -653,7 +655,7 @@ export function customiserSection(): SampleBundle {
     }
   }
 
-  const quoteLines = SAVED_QUOTES.map((q) => ({ quote_id: { "@ref": `quote:${q.ref}` }, position: 1, ...configRow(q.cfg, JOB_FIGURES[q.ref]!), design_code: null, design_id: null }));
+  const quoteLines = SAVED_QUOTES.map((q) => ({ quote_id: { "@ref": `quote:${q.ref}` }, position: 1, ...configRow(q.cfg), design_code: null, design_id: null }));
 
   return {
     format: "adminium.sample/1",

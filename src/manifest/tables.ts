@@ -38,10 +38,11 @@
  *     the save (`check`) and snapshotted when the order is made (the `design`
  *     posting); nothing is printed before its proof is approved.
  *
- * A job's own price and weight are, for now, columns the works may type
- * (`price`, `weight_kg` on `jobs` and on `quote_lines`, and an order's
- * `tube`): the calculated columns that work them out from the rate card take
- * their place, and every total above them already reads them.
+ *   - a job's price and weight (and a saved quote's line's) are worked out
+ *     from the rate card in the line itself (`pricing()`): sheets, the
+ *     break, every finish by its basis, packing, the printed proof, express,
+ *     never more than the next break; an order's goods add them up, and it
+ *     goes in a tube only when all its large format rolls.
  *
  * Stock is the works' sheets and rolls, kept by Inventory; a job without it
  * counts its own spoiled sheets.
@@ -378,9 +379,174 @@ function configuration(): Column[] {
     }),
     bool("proof_by_post", "Printed proof by post", false),
     bool("express", "Express", false),
-    // Until the rate card prices the line: the works' figure, ex tax, and the parcel weight.
-    price("price", "Price (ex tax)", { ...opt, rules: { validation: { min: 0 } } }),
-    num("weight_kg", 2, "Weight (kg)", { ...opt, rules: { validation: { min: 0 } } }),
+    ...pricing(),
+  ];
+}
+
+// ── a line's price, worked out from the rate card ───────────────────────────
+
+const isSheet = { eq: ["product_kind", "sheet"] };
+const isLarge = { eq: ["product_kind", "large"] };
+const zero = (value: unknown) => ({ coalesce: [value, 0] });
+const cents = (expr: unknown) => ({ round: [expr, 2] });
+/** Rounded up: a run of 250 pieces at 24 a sheet takes 11 sheets. */
+const ceilOf = (a: unknown, b: unknown) => ({ ceil: [{ div: [a, b] }, 0] });
+
+/** The line's figures a finish is charged by, at a quantity: its sheets, its pieces, its edges and its area. */
+interface Units {
+  sheets: unknown;
+  qty: unknown;
+  metres: unknown;
+  area: unknown;
+}
+/**
+ * How many of a finish's basis a line takes: its press sheets, every 250
+ * pieces begun, its metres of edge, its pieces, its square metres; nothing
+ * for a finish that costs nothing.
+ */
+function unitsOf(basis: string, u: Units): unknown {
+  return {
+    if: [
+      { eq: [basis, "sheet"] },
+      u.sheets,
+      { if: [{ eq: [basis, "per_250"] }, ceilOf(u.qty, 250), { if: [{ eq: [basis, "metre"] }, u.metres, { if: [{ eq: [basis, "piece"] }, u.qty, { if: [{ eq: [basis, "m2"] }, u.area, 0] }] }] }] },
+    ],
+  };
+}
+/** A sheet finish's units at the next break: its sheets, every 250 begun, its pieces. */
+const nextUnitsOf = (basis: string) => ({
+  if: [{ eq: [basis, "sheet"] }, "next_sheets", { if: [{ eq: [basis, "per_250"] }, ceilOf("next_qty", 250), { if: [{ eq: [basis, "piece"] }, "next_qty", 0] }] }],
+});
+/** A packaging's units at a quantity: every piece, every 500 begun, or none (included). */
+const packUnits = (qty: unknown) => ({ if: [{ eq: ["packaging_basis", "unit"] }, qty, { if: [{ eq: ["packaging_basis", "per_500"] }, ceilOf(qty, 500), 0] }] });
+
+/** The finish groups a line may take one of each of, and the option column that names it. */
+export const FINISH_LINES = [
+  { group: "lamination", option: "lamination_option_id", label: "Lamination" },
+  { group: "spot_uv", option: "spot_uv_option_id", label: "Spot UV" },
+  { group: "corners", option: "corners_option_id", label: "Round corners" },
+  { group: "edges", option: "edges_option_id", label: "Banner edges" },
+  { group: "canvas", option: "canvas_option_id", label: "Canvas finish" },
+] as const;
+/** The finishes a sheet line takes: what the next break's price counts again. */
+const SHEET_FINISHES = ["lamination", "spot_uv", "corners"] as const;
+
+const NOW_UNITS: Units = { sheets: "sheets", qty: "qty", metres: { mul: ["perimeter_m", "qty"] }, area: "area_total" };
+
+/** The work before express: setup, the run, its finishing, its packing and a printed proof. */
+const BEFORE_EXPRESS = { add: [zero("setup"), zero("print_charge"), "material_charge", "finishing", zero("packaging_charge"), "proof_charge"] };
+/** Express adds its percentage of the work, rounded to the penny. */
+const expressOn = (work: unknown) => ({ if: [yes("express"), cents({ div: [{ mul: [work, zero("express_percent")] }, 100] }), 0] });
+/** The next break's work, priced as the line would be at its quantity: setup, run, finishes, packing and proof, then express. */
+const NEXT_BEFORE_EXPRESS = { add: [zero("setup"), "next_run", "next_extras", "proof_charge"] };
+
+/**
+ * What a configured line costs, ex tax and without its delivery, and what it
+ * weighs, each figure Adminium's and each shown on the quote's breakdown. The
+ * rate card is read into the line as it stood when the line was written
+ * (the settings' single figures, the stock's rate, the size's up-count, the
+ * finishes' prices), so a rate changed later never re-prices a job already
+ * taken.
+ *
+ * A sheet job is imposed on press sheets: `up` pieces a sheet (the size's own
+ * count), `sheets` the quantity over it rounded up. Its print and its stock are
+ * per sheet at the quantity break's multiplier; a roll stock on a sheet
+ * product (vinyl stickers) is charged for the printed area of each sheet, not
+ * for a square metre a sheet. Its finishes are by their basis; its packing by
+ * the piece or the box. A large-format job is its own size: its stock by the
+ * square metre, its edges by the metre or the piece, a canvas frame by the
+ * square metre, and never less than the large-format minimum on that work.
+ * A printed proof by post and express (a percentage of all the work) go on
+ * top. A sheet line never costs more than the next break's quantity would:
+ * 999 flyers cost what 1000 do (`cap_charge` takes the difference off).
+ *
+ * The weight is the finished pieces' paper and the packing (a sheet job), or
+ * the printed area, the frames and the tube or box (large format); whether
+ * the line rolls into a tube (`rolls`) is large format that is not on a frame
+ * and is no longer than the tube takes. The order sums both.
+ */
+function pricing(): Column[] {
+  const finishColumns = FINISH_LINES.flatMap(({ group, option: via, label }) => [
+    money(`${group}_price`, `${label} price`, always(via, "unit_price")),
+    choice(`${group}_basis`, `${label} charged by`, FINISH_BASES, { ...opt, rules: always(via, "finish_basis") }),
+  ]);
+  const finishCharges = FINISH_LINES.map(({ group, label }) => money(`${group}_charge`, label, { formula: cents({ mul: [`${group}_price`, unitsOf(`${group}_basis`, NOW_UNITS)] }) }));
+  return [
+    // The rate card's single figures, as they stood when the line was written.
+    money("setup", "Setup", fromSetting("setup")),
+    money("print_one", "Printing a sheet, one side", fromSetting("print_single")),
+    money("print_two", "Printing a sheet, both sides", fromSetting("print_double")),
+    figure("sheet_mm2", "int", "Press sheet area (mm²)", fromSetting("sheet_mm2")),
+    money("proof_price", "Printed proof price", fromSetting("proof_post_price")),
+    figure("express_percent", "decimal", "Express (+%)", fromSetting("express_percent"), 2),
+    money("lf_minimum", "Large-format minimum", fromSetting("large_format_minimum")),
+    figure("sheet_packing_kg", "decimal", "Packing, sheet work (kg)", fromSetting("sheet_packing_kg"), 2),
+    figure("roll_packing_kg", "decimal", "Packing, large format (kg)", fromSetting("roll_packing_kg"), 2),
+    figure("frame_grams", "int", "A frame weighs (g)", fromSetting("frame_grams")),
+    figure("tube_max_mm", "int", "A tube takes up to (mm)", fromSetting("tube_max_mm")),
+    // The stock, the size and the quantity break.
+    money("material_rate", "Stock rate", always("material_id", "rate")),
+    choice("material_kind", "Stock kind", MATERIAL_KINDS, { ...opt, rules: always("material_id", "kind") }),
+    figure("gsm", "int", "Stock weight (gsm)", always("material_id", "gsm")),
+    figure("up", "int", "Up on a sheet", always("size_id", "up")),
+    figure("piece_mm2", "int", "A piece's area (mm²)", always("size_id", "area_mm2")),
+    fk("break_id", "breaks", "Quantity break", { ...opt, rules: { band: { table: "breaks", min: "min_qty", value: "qty" } } }),
+    figure("multiplier", "decimal", "Break multiplier", always("break_id", "multiplier"), 4),
+    fk("next_break_id", "breaks", "Next break", { ...opt, rules: always("break_id", "next_id") }),
+    figure("next_qty", "int", "Next break from", always("next_break_id", "min_qty")),
+    figure("next_multiplier", "decimal", "Next break multiplier", always("next_break_id", "multiplier"), 4),
+    ...finishColumns,
+    money("packaging_price", "Packaging price", always("packaging_id", "price")),
+    choice("packaging_basis", "Packaging charged by", PACKAGING_BASES, { ...opt, rules: always("packaging_id", "basis") }),
+    { ref: "framed", type: "bool", nullable: true, label: l("On a frame"), rules: always("canvas_option_id", "framed") },
+    // The run.
+    money("print_rate", "Printing a sheet", { formula: { if: [{ eq: ["sides", 2] }, "print_two", "print_one"] } }),
+    figure("sheets", "int", "Press sheets", { formula: ceilOf("qty", "up") }),
+    // A sheet of a roll stock is charged for the area it prints.
+    figure("sheet_rate", "decimal", "Stock a sheet", { formula: { if: [{ eq: ["material_kind", "roll"] }, { div: [{ mul: ["material_rate", "sheet_mm2"] }, 1000000] }, "material_rate"] } }, 4),
+    figure("area_each", "decimal", "Area each (m²)", { formula: cents({ div: [{ mul: ["width_mm", "height_mm"] }, 1000000] }) }, 2),
+    figure("area_total", "decimal", "Area (m²)", { formula: cents({ mul: ["area_each", "qty"] }) }, 2),
+    figure("perimeter_m", "decimal", "Edge each (m)", { formula: cents({ div: [{ mul: [2, { add: ["width_mm", "height_mm"] }] }, 1000] }) }, 2),
+    money("print_charge", "Print", { formula: cents({ mul: ["sheets", "print_rate", { coalesce: ["multiplier", 1] }] }) }),
+    money("material_charge", "Material", {
+      formula: { if: [isSheet, cents({ mul: ["sheets", "sheet_rate", { coalesce: ["multiplier", 1] }] }), cents({ mul: ["area_total", "material_rate"] })] },
+    }),
+    // Its finishing, and the large-format minimum on the work of the roll.
+    ...finishCharges,
+    money("minimum_charge", "Large-format minimum", {
+      formula: { if: [isLarge, { max: [0, { sub: ["lf_minimum", { add: [zero("material_charge"), zero("edges_charge"), zero("canvas_charge")] }] }] }, 0] },
+    }),
+    money("finishing", "Finishing", { formula: { add: [...FINISH_LINES.map(({ group }) => zero(`${group}_charge`)), "minimum_charge"] } }),
+    money("packaging_charge", "Packaging", { formula: cents({ mul: ["packaging_price", packUnits("qty")] }) }),
+    money("proof_charge", "Printed proof", { formula: { if: [yes("proof_by_post"), zero("proof_price"), 0] } }),
+    money("before_express", "Work before express", { formula: BEFORE_EXPRESS }),
+    money("express_charge", "Express", { formula: expressOn("before_express") }),
+    money("work", "Work", { formula: { add: ["before_express", "express_charge"] } }),
+    // The next break's price, worked out as the line's own: a line never costs more.
+    figure("next_sheets", "int", "Sheets at the next break", { formula: ceilOf("next_qty", "up") }),
+    money("next_run", "Run at the next break", {
+      formula: { add: [cents({ mul: ["next_sheets", "print_rate", "next_multiplier"] }), cents({ mul: ["next_sheets", "sheet_rate", "next_multiplier"] })] },
+    }),
+    money("next_extras", "Finishing and packing at the next break", {
+      formula: { add: [...SHEET_FINISHES.map((group) => zero({ mul: [`${group}_price`, nextUnitsOf(`${group}_basis`)] })), zero({ mul: ["packaging_price", packUnits("next_qty")] })] },
+    }),
+    money("next_work", "Work at the next break", { formula: { add: [NEXT_BEFORE_EXPRESS, expressOn(NEXT_BEFORE_EXPRESS)] } }),
+    money("cap_charge", "Capped at the next break", { formula: { if: [{ and: [isSheet, { lt: ["next_work", "work"] }] }, { sub: ["next_work", "work"] }, 0] } }),
+    money("price", "Price (ex tax)", { formula: { add: ["work", "cap_charge"] } }),
+    // What it weighs, and how it travels.
+    figure("weight_kg", "decimal", "Weight (kg)", {
+      formula: {
+        if: [
+          isSheet,
+          cents({ add: [{ div: [{ mul: ["qty", "piece_mm2", "gsm"] }, 1000000000] }, zero("sheet_packing_kg")] }),
+          cents({ add: [{ div: [{ add: [{ mul: ["area_total", "gsm"] }, { if: [{ eq: ["framed", true] }, { mul: ["qty", zero("frame_grams")] }, 0] }] }, 1000] }, zero("roll_packing_kg")] }),
+        ],
+      },
+    }, 2),
+    figure("rolls", "int", "Rolls into a tube", {
+      formula: { if: [isLarge, { if: [{ eq: ["framed", true] }, 0, { if: [{ lte: [{ max: ["width_mm", "height_mm"] }, "tube_max_mm"] }, 1, 0] }] }, 0] },
+    }),
+    figure("flat", "int", "Large format, not rolled", { formula: { if: [isLarge, { sub: [1, "rolls"] }, 0] } }),
   ];
 }
 
@@ -391,8 +557,10 @@ function basketMoney(lines: string, via: string, delivery: Record<string, unknow
     figure("item_count", "int", "Jobs", { rollup: { from: lines, via, count: true } }),
     money("goods_total", "Goods (ex tax)", { rollup: { from: lines, via, sum: "price" } }),
     figure("weight_kg", "decimal", "Weight (kg)", { rollup: { from: lines, via, sum: "weight_kg" } }, 2),
-    // Whether the order goes rolled in a tube: until the rate card decides it, the works' word.
-    int("tube", "In a tube", { default: 0, rules: { validation: { min: 0, max: 1 } } }),
+    // Rolled in a tube when it holds large format and every large-format line rolls; else one box by weight.
+    figure("rolled_lines", "int", "Lines that roll", { rollup: { from: lines, via, sum: "rolls" } }),
+    figure("flat_lines", "int", "Large format that doesn't roll", { rollup: { from: lines, via, sum: "flat" } }),
+    figure("tube", "int", "In a tube", { formula: { if: [{ and: [{ gt: [zero("rolled_lines"), 0] }, { lte: [zero("flat_lines"), 0] }] }, 1, 0] } }),
     fk("delivery_band_id", "delivery_bands", "Delivery band", {
       ...opt,
       rules: { band: { table: "delivery_bands", min: "min_kg", max: "max_kg", value: "weight_kg", scope: [{ column: "tube", equals: "tube" }], over: "empty" } },
@@ -433,6 +601,9 @@ export const TABLES: Table[] = [
       num("tax_rate", 2, "Tax rate (%)", { default: 20, rules: { validation: { min: 0, max: 50 } } }),
       // The rate card's single figures.
       price("setup", "Setup, per job", { default: 0, rules: { validation: { min: 0 } } }),
+      // Printing a press sheet, by its sides.
+      price("print_single", "Printing a press sheet, one side", { default: 0, rules: { validation: { min: 0 } } }),
+      price("print_double", "Printing a press sheet, both sides", { default: 0, rules: { validation: { min: 0 } } }),
       int("standard_days", "Standard turnaround (working days)", { default: 3, rules: { validation: { min: 0, max: 60 } } }),
       int("express_days", "Express turnaround (working days)", { default: 1, rules: { validation: { min: 0, max: 60 } } }),
       num("express_percent", 2, "Express (+%)", { default: 35, rules: { validation: { min: 0, max: 200 } } }),
@@ -442,6 +613,8 @@ export const TABLES: Table[] = [
       // The press sheet every sheet job is imposed on (SRA3), and the large-format work's least charge.
       int("sheet_width_mm", "Press sheet width (mm)", { default: 320, rules: { validation: { min: 50, max: 2000 } } }),
       int("sheet_height_mm", "Press sheet height (mm)", { default: 450, rules: { validation: { min: 50, max: 2000 } } }),
+      // What a sheet prints, for a roll stock run on the sheet press.
+      figure("sheet_mm2", "int", "Press sheet area (mm²)", { formula: { mul: ["sheet_width_mm", "sheet_height_mm"] } }),
       price("large_format_minimum", "Large-format minimum charge", { default: 0, rules: { validation: { min: 0 } } }),
       // A large-format job rolls into a tube up to this length; a longer one goes by weight.
       int("tube_max_mm", "Rolled in a tube up to (mm)", { default: 1500, rules: { validation: { min: 100, max: 5000 } } }),
@@ -493,6 +666,8 @@ export const TABLES: Table[] = [
       int("up", "Up on a sheet", { rules: { validation: { min: 1, max: 200 } } }),
       int("up_upright", "Up, upright", { ...opt, rules: { validation: { min: 0, max: 200 } } }),
       int("up_rotated", "Up, turned", { ...opt, rules: { validation: { min: 0, max: 200 } } }),
+      // A piece's area, for its weight.
+      figure("area_mm2", "int", "Area (mm²)", { formula: { mul: ["width_mm", "height_mm"] } }),
       // Printed straight onto the piece (an envelope), not cut from a sheet.
       bool("direct", "Printed direct", false),
       bool("active", "In use", true),
@@ -527,6 +702,8 @@ export const TABLES: Table[] = [
       id,
       int("min_qty", "From (quantity)", { unique: true, rules: { validation: { min: 1, max: 1000000 } } }),
       num("multiplier", 4, "Multiplier", { rules: { validation: { min: 0, max: 1 } } }),
+      // The break above it: a line never costs more than that break's quantity would.
+      fk("next_id", "breaks", "Next break up", opt),
     ],
   },
   {
@@ -610,6 +787,13 @@ export const TABLES: Table[] = [
       fk("finish_id", "finishes", "Finish", { ...opt, rules: { requiredWhen: { column: "kind", in: ["lamination", "spot_uv", "corners", "edges", "canvas"] } } }),
       // A material: the stock is coated. A lamination or a spot UV: it needs a coated surface under it.
       bool("coated", "Coated surface", false),
+      // A canvas finish on a frame: it can't be rolled into a tube, and the frame adds weight.
+      bool("framed", "On a frame", false),
+      // A finish's price and basis, kept in step with the finish; its price a piece takes (two pole pockets).
+      money("finish_price", "Finish price", { copy: { via: "finish_id", from: "price", mode: "always", follow: true } }),
+      choice("finish_basis", "Finish charged by", FINISH_BASES, { ...opt, rules: { copy: { via: "finish_id", from: "basis", mode: "always", follow: true } } }),
+      figure("finish_count", "int", "A piece takes", { copy: { via: "finish_id", from: "count", mode: "always", follow: true } }),
+      money("unit_price", "Finish price a piece", { formula: { mul: ["finish_price", { coalesce: ["finish_count", 1] }] } }),
       // A feature: its price, flat for the job, and the Customiser's feature it pays for, by its code.
       price("price", "Price", { default: 0, rules: { validation: { min: 0 } } }),
       text("feature_code", 40, "Feature code", { ...opt, rules: { requiredWhen: { column: "kind", in: ["feature"] } } }),
@@ -1004,16 +1188,49 @@ export const TABLES: Table[] = [
 
 export const TABLE_REFS = TABLES.map((t) => t.ref);
 
-/**
- * The columns that stand in for the rate card's calculated columns until they
- * are written: each is typed by the works for now, and every total above it
- * already reads it.
- */
-export const PRICE_PLACEHOLDERS = [
+/** The figures a line, an order and a quote are priced by: each Adminium's, never typed. */
+export const PRICED = [
   "jobs.price",
   "jobs.weight_kg",
   "quote_lines.price",
   "quote_lines.weight_kg",
   "orders.tube",
   "saved_quotes.tube",
+] as const;
+
+/**
+ * A line's quote, as its breakdown shows it: each amount ex tax, in the order
+ * the quote panel lists them, and the line's price at the bottom. An empty
+ * amount is a line the job does not take.
+ */
+export const BREAKDOWN = [
+  "setup",
+  "print_charge",
+  "material_charge",
+  ...FINISH_LINES.map(({ group }) => `${group}_charge` as const),
+  "minimum_charge",
+  "packaging_charge",
+  "proof_charge",
+  "express_charge",
+  "cap_charge",
+  "price",
+] as const;
+
+/** What the breakdown's words are counted from: sheets, up, the rates and the break. */
+export const BREAKDOWN_DETAIL = [
+  "up",
+  "sheets",
+  "print_rate",
+  "sheet_rate",
+  "material_rate",
+  "multiplier",
+  "next_qty",
+  "area_each",
+  "area_total",
+  "perimeter_m",
+  ...FINISH_LINES.map(({ group }) => `${group}_price` as const),
+  "packaging_price",
+  "express_percent",
+  "weight_kg",
+  "rolls",
 ] as const;

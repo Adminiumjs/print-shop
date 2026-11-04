@@ -17,9 +17,9 @@ import { describe, expect, it } from "vitest";
 import { buildManifest, CUSTOMER_ROUTES, manifestText } from "./build.ts";
 import { untranslated } from "./labels.ts";
 import { DESIGN_POSTING } from "./postings.ts";
-import { CONFIG_WRITABLE, PUBLIC_REFS } from "./public.ts";
+import { CONFIG_SELECT, CONFIG_WRITABLE, PUBLIC_REFS } from "./public.ts";
 import { DECIDING_RULES } from "./roles.ts";
-import { PRICE_PLACEHOLDERS } from "./tables.ts";
+import { BREAKDOWN, PRICED } from "./tables.ts";
 import UNTRANSLATED from "./untranslated-labels.json" with { type: "json" };
 
 const FILE = join(__dirname, "..", "..", "manifest.json");
@@ -86,11 +86,17 @@ describe("the tables of the rate card, the orders and the works", () => {
     ]);
   });
 
-  it("keeps the price placeholders as plain columns the works types, which every total above them reads", () => {
-    for (const name of PRICE_PLACEHOLDERS) {
+  it("prices every line, and decides how an order travels, from the rate card: no figure a person types", () => {
+    for (const name of PRICED) {
       const [t, c] = name.split(".") as [string, string];
-      expect(DECIDING_RULES.filter((rule) => rules(t, c)[rule] !== undefined), name).toEqual([]);
+      expect(DECIDING_RULES.filter((rule) => rules(t, c)[rule] !== undefined), name).toEqual(["formula"]);
     }
+    // Every amount of a line's breakdown is Adminium's, and a customer reads each one.
+    for (const t of ["jobs", "quote_lines"]) {
+      for (const c of BREAKDOWN) expect(DECIDING_RULES.some((rule) => rules(t, c)[rule] !== undefined) || rules(t, c)["default"] !== undefined, `${t}.${c}`).toBe(true);
+    }
+    for (const c of BREAKDOWN) expect(CONFIG_SELECT, c).toContain(c);
+    for (const c of BREAKDOWN) expect(CONFIG_WRITABLE, c).not.toContain(c);
     expect(rules("orders", "goods_total")["rollup"]).toEqual({ from: "jobs", via: "order_id", sum: "price" });
     expect(rules("orders", "weight_kg")["rollup"]).toEqual({ from: "jobs", via: "order_id", sum: "weight_kg" });
     expect(rules("saved_quotes", "goods_total")["rollup"]).toEqual({ from: "quote_lines", via: "quote_id", sum: "price" });

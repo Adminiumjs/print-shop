@@ -25,6 +25,7 @@
  * did what, the works' notes, an order's link code and retry key, the stock.
  */
 import { NEWS_TICK } from "./people.ts";
+import { BREAKDOWN, BREAKDOWN_DETAIL } from "./tables.ts";
 
 /** What a customer sees of an order: its progress, their details, what it costs. */
 export const ORDER_SELECT = [
@@ -89,6 +90,9 @@ export const CONFIG_SELECT = [
   "express",
   "price",
   "weight_kg",
+  // How the rate card priced it: each line of the breakdown, and what its words are counted from.
+  ...BREAKDOWN.filter((c) => c !== "price"),
+  ...BREAKDOWN_DETAIL.filter((c) => c !== "weight_kg"),
 ];
 /** What a customer chooses for a job: never its price, weight or anything Adminium works out. */
 export const CONFIG_WRITABLE = [

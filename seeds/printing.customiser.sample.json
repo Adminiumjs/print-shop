@@ -4612,6 +4612,7 @@
             "@ref": "finish:lam-one"
           },
           "coated": true,
+          "framed": false,
           "preselected": false
         },
         {
@@ -4628,6 +4629,7 @@
             "@ref": "finish:lam-both"
           },
           "coated": true,
+          "framed": false,
           "preselected": false
         },
         {
@@ -4644,6 +4646,7 @@
             "@ref": "finish:lam-soft"
           },
           "coated": true,
+          "framed": false,
           "preselected": false
         },
         {
@@ -4660,6 +4663,7 @@
             "@ref": "finish:spot-uv"
           },
           "coated": true,
+          "framed": false,
           "preselected": false
         },
         {
@@ -4676,6 +4680,7 @@
             "@ref": "finish:corners"
           },
           "coated": false,
+          "framed": false,
           "preselected": false
         },
         {
@@ -4812,6 +4817,7 @@
             "@ref": "finish:lam-one"
           },
           "coated": true,
+          "framed": false,
           "preselected": false
         },
         {
@@ -4828,6 +4834,7 @@
             "@ref": "finish:lam-both"
           },
           "coated": true,
+          "framed": false,
           "preselected": false
         },
         {
@@ -4844,6 +4851,7 @@
             "@ref": "finish:lam-soft"
           },
           "coated": true,
+          "framed": false,
           "preselected": false
         },
         {
@@ -4994,6 +5002,7 @@
             "@ref": "finish:lam-one"
           },
           "coated": true,
+          "framed": false,
           "preselected": false
         },
         {
@@ -5010,6 +5019,7 @@
             "@ref": "finish:lam-both"
           },
           "coated": true,
+          "framed": false,
           "preselected": false
         },
         {
@@ -5026,6 +5036,7 @@
             "@ref": "finish:spot-uv"
           },
           "coated": true,
+          "framed": false,
           "preselected": false
         },
         {
@@ -5400,6 +5411,7 @@
             "@ref": "finish:lam-one"
           },
           "coated": true,
+          "framed": false,
           "preselected": false
         },
         {
@@ -5416,6 +5428,7 @@
             "@ref": "finish:lam-both"
           },
           "coated": true,
+          "framed": false,
           "preselected": false
         },
         {
@@ -5507,6 +5520,7 @@
             "@ref": "finish:lam-one"
           },
           "coated": true,
+          "framed": false,
           "preselected": false
         },
         {
@@ -5523,6 +5537,7 @@
             "@ref": "finish:lam-both"
           },
           "coated": true,
+          "framed": false,
           "preselected": false
         },
         {
@@ -5584,6 +5599,7 @@
             "@ref": "finish:plain"
           },
           "coated": false,
+          "framed": false,
           "preselected": true
         },
         {
@@ -5600,6 +5616,7 @@
             "@ref": "finish:hemmed"
           },
           "coated": false,
+          "framed": false,
           "preselected": false
         },
         {
@@ -5661,6 +5678,7 @@
             "@ref": "finish:plain"
           },
           "coated": false,
+          "framed": false,
           "preselected": true
         },
         {
@@ -5677,6 +5695,7 @@
             "@ref": "finish:hemmed"
           },
           "coated": false,
+          "framed": false,
           "preselected": false
         },
         {
@@ -5693,6 +5712,7 @@
             "@ref": "finish:pockets"
           },
           "coated": false,
+          "framed": false,
           "preselected": false
         },
         {
@@ -5738,6 +5758,7 @@
             "@ref": "finish:rolled"
           },
           "coated": false,
+          "framed": false,
           "preselected": true
         },
         {
@@ -5754,6 +5775,7 @@
             "@ref": "finish:stretched"
           },
           "coated": false,
+          "framed": true,
           "preselected": false
         }
       ]
@@ -5796,8 +5818,6 @@
           },
           "proof_by_post": false,
           "express": false,
-          "price": 70.96,
-          "weight_kg": 1.02,
           "design_code": null,
           "design_id": null,
           "ready_by": {
@@ -5840,8 +5860,6 @@
           },
           "proof_by_post": false,
           "express": false,
-          "price": 106.81,
-          "weight_kg": 2.23,
           "design_code": null,
           "design_id": null,
           "ready_by": {
@@ -5886,8 +5904,6 @@
           },
           "proof_by_post": false,
           "express": false,
-          "price": 489.8,
-          "weight_kg": 5.48,
           "design_code": null,
           "design_id": null,
           "ready_by": {
@@ -5928,8 +5944,6 @@
           "packaging_id": null,
           "proof_by_post": false,
           "express": false,
-          "price": 294,
-          "weight_kg": 3.36,
           "design_code": null,
           "design_id": null,
           "ready_by": {
@@ -5974,8 +5988,6 @@
           },
           "proof_by_post": false,
           "express": false,
-          "price": 99.27,
-          "weight_kg": 1.56,
           "design_code": null,
           "design_id": null,
           "ready_by": {
@@ -6018,8 +6030,6 @@
           },
           "proof_by_post": false,
           "express": false,
-          "price": 61.44,
-          "weight_kg": 0.47,
           "design_code": null,
           "design_id": null,
           "ready_by": {
@@ -6060,8 +6070,6 @@
           "packaging_id": null,
           "proof_by_post": false,
           "express": false,
-          "price": 83.28,
-          "weight_kg": 2.46,
           "design_code": null,
           "design_id": null,
           "ready_by": {
@@ -6104,8 +6112,6 @@
           },
           "proof_by_post": false,
           "express": false,
-          "price": 71.22,
-          "weight_kg": 1.55,
           "design_code": null,
           "design_id": null,
           "ready_by": {
@@ -6148,8 +6154,6 @@
           },
           "proof_by_post": false,
           "express": false,
-          "price": 225.95,
-          "weight_kg": 4.24,
           "design_code": null,
           "design_id": null,
           "ready_by": {
@@ -6190,8 +6194,6 @@
           "packaging_id": null,
           "proof_by_post": false,
           "express": false,
-          "price": 65.6,
-          "weight_kg": 1.17,
           "design_code": null,
           "design_id": null,
           "ready_by": {
@@ -6236,8 +6238,6 @@
           },
           "proof_by_post": false,
           "express": false,
-          "price": 59.05,
-          "weight_kg": 0.86,
           "design_code": null,
           "design_id": null,
           "ready_by": {
@@ -6280,8 +6280,6 @@
           },
           "proof_by_post": false,
           "express": false,
-          "price": 23.17,
-          "weight_kg": 0.34,
           "design_code": null,
           "design_id": null,
           "ready_by": {
@@ -6326,8 +6324,6 @@
           },
           "proof_by_post": false,
           "express": false,
-          "price": 338.65,
-          "weight_kg": 5.5,
           "design_code": null,
           "design_id": null,
           "ready_by": {
@@ -6368,8 +6364,6 @@
           "packaging_id": null,
           "proof_by_post": false,
           "express": false,
-          "price": 630,
-          "weight_kg": 9.48,
           "design_code": null,
           "design_id": null,
           "ready_by": {
@@ -6414,8 +6408,6 @@
           },
           "proof_by_post": false,
           "express": false,
-          "price": 70.96,
-          "weight_kg": 1.02,
           "design_code": "MP4112C8G2S6E4WB",
           "design_id": {
             "@ref": "design:mp-4112"
@@ -6812,8 +6804,6 @@
           },
           "proof_by_post": false,
           "express": false,
-          "price": 192.09,
-          "weight_kg": 1.97,
           "design_code": null,
           "design_id": null
         },
@@ -6850,8 +6840,6 @@
           },
           "proof_by_post": false,
           "express": false,
-          "price": 156.16,
-          "weight_kg": 2.32,
           "design_code": null,
           "design_id": null
         }

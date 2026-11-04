@@ -21,6 +21,8 @@
           "first_quote_number": 2042,
           "tax_rate": 20,
           "setup": 18,
+          "print_single": 0.85,
+          "print_double": 1.2,
           "standard_days": 3,
           "express_days": 1,
           "express_percent": 35,
@@ -412,28 +414,50 @@
       "ref": "breaks",
       "rows": [
         {
-          "min_qty": 25,
-          "multiplier": 1
-        },
-        {
-          "min_qty": 50,
-          "multiplier": 0.92
-        },
-        {
-          "min_qty": 100,
-          "multiplier": 0.84
-        },
-        {
-          "min_qty": 250,
-          "multiplier": 0.74
-        },
-        {
-          "min_qty": 500,
-          "multiplier": 0.66
-        },
-        {
+          "@label": "break:1000",
           "min_qty": 1000,
-          "multiplier": 0.58
+          "multiplier": 0.58,
+          "next_id": null
+        },
+        {
+          "@label": "break:500",
+          "min_qty": 500,
+          "multiplier": 0.66,
+          "next_id": {
+            "@ref": "break:1000"
+          }
+        },
+        {
+          "@label": "break:250",
+          "min_qty": 250,
+          "multiplier": 0.74,
+          "next_id": {
+            "@ref": "break:500"
+          }
+        },
+        {
+          "@label": "break:100",
+          "min_qty": 100,
+          "multiplier": 0.84,
+          "next_id": {
+            "@ref": "break:250"
+          }
+        },
+        {
+          "@label": "break:50",
+          "min_qty": 50,
+          "multiplier": 0.92,
+          "next_id": {
+            "@ref": "break:100"
+          }
+        },
+        {
+          "@label": "break:25",
+          "min_qty": 25,
+          "multiplier": 1,
+          "next_id": {
+            "@ref": "break:50"
+          }
         }
       ]
     },
@@ -763,7 +787,6 @@
             "@ref": "customer:harbourbakery"
           },
           "delivery_method": "deliver",
-          "tube": 0,
           "placed_at": {
             "@day": -5,
             "@time": "10:00",
@@ -787,7 +810,6 @@
             "@ref": "customer:fenwickandsons"
           },
           "delivery_method": "deliver",
-          "tube": 0,
           "placed_at": {
             "@day": -5,
             "@time": "10:00",
@@ -811,7 +833,6 @@
             "@ref": "customer:brambleyoga"
           },
           "delivery_method": "deliver",
-          "tube": 0,
           "placed_at": {
             "@day": -5,
             "@time": "10:00",
@@ -835,7 +856,6 @@
             "@ref": "customer:tworiverscycles"
           },
           "delivery_method": "deliver",
-          "tube": 0,
           "placed_at": {
             "@day": -5,
             "@time": "10:00",
@@ -859,7 +879,6 @@
             "@ref": "customer:ostaraflowers"
           },
           "delivery_method": "deliver",
-          "tube": 0,
           "placed_at": {
             "@day": -5,
             "@time": "10:00",
@@ -883,7 +902,6 @@
             "@ref": "customer:kestreljoinery"
           },
           "delivery_method": "deliver",
-          "tube": 0,
           "placed_at": {
             "@day": -5,
             "@time": "10:00",
@@ -907,7 +925,6 @@
             "@ref": "customer:thelittlegallery"
           },
           "delivery_method": "deliver",
-          "tube": 0,
           "placed_at": {
             "@day": -5,
             "@time": "10:00",
@@ -931,7 +948,6 @@
             "@ref": "customer:marshlanedental"
           },
           "delivery_method": "deliver",
-          "tube": 0,
           "placed_at": {
             "@day": -5,
             "@time": "10:00",
@@ -959,7 +975,6 @@
             "@ref": "customer:cobleandco"
           },
           "delivery_method": "deliver",
-          "tube": 0,
           "placed_at": {
             "@day": -5,
             "@time": "10:00",
@@ -983,7 +998,6 @@
             "@ref": "customer:woldcricketclub"
           },
           "delivery_method": "deliver",
-          "tube": 0,
           "placed_at": {
             "@day": -5,
             "@time": "10:00",
@@ -1007,7 +1021,6 @@
             "@ref": "customer:harbourbakery"
           },
           "delivery_method": "deliver",
-          "tube": 0,
           "placed_at": {
             "@day": -5,
             "@time": "10:00",
@@ -1031,7 +1044,6 @@
             "@ref": "customer:fenwickandsons"
           },
           "delivery_method": "collect",
-          "tube": 0,
           "placed_at": {
             "@day": -5,
             "@time": "10:00",
@@ -1059,7 +1071,6 @@
             "@ref": "customer:brambleyoga"
           },
           "delivery_method": "deliver",
-          "tube": 0,
           "placed_at": {
             "@day": -5,
             "@time": "10:00",
@@ -1083,7 +1094,6 @@
             "@ref": "customer:harbourbakery"
           },
           "delivery_method": "deliver",
-          "tube": 0,
           "placed_at": {
             "@day": -5,
             "@time": "10:00",
@@ -1107,7 +1117,6 @@
             "@ref": "customer:harbourbakery"
           },
           "delivery_method": "deliver",
-          "tube": 0,
           "placed_at": {
             "@day": -2,
             "@time": "10:00",
@@ -1132,7 +1141,6 @@
             "@ref": "customer:tworiverscycles"
           },
           "delivery_method": "deliver",
-          "tube": 0,
           "created_at": {
             "@day": -14,
             "@time": "15:00",
@@ -1150,7 +1158,6 @@
             "@ref": "customer:thelittlegallery"
           },
           "delivery_method": "deliver",
-          "tube": 0,
           "created_at": {
             "@day": -18,
             "@time": "15:00",

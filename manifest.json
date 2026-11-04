@@ -430,6 +430,34 @@
             }
           },
           {
+            "ref": "print_single",
+            "type": "decimal",
+            "scale": "currency",
+            "label": {
+              "en-US": "Printing a press sheet, one side"
+            },
+            "default": 0,
+            "rules": {
+              "validation": {
+                "min": 0
+              }
+            }
+          },
+          {
+            "ref": "print_double",
+            "type": "decimal",
+            "scale": "currency",
+            "label": {
+              "en-US": "Printing a press sheet, both sides"
+            },
+            "default": 0,
+            "rules": {
+              "validation": {
+                "min": 0
+              }
+            }
+          },
+          {
             "ref": "standard_days",
             "type": "int",
             "label": {
@@ -539,6 +567,22 @@
               "validation": {
                 "min": 50,
                 "max": 2000
+              }
+            }
+          },
+          {
+            "ref": "sheet_mm2",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Press sheet area (mm²)"
+            },
+            "rules": {
+              "formula": {
+                "mul": [
+                  "sheet_width_mm",
+                  "sheet_height_mm"
+                ]
               }
             }
           },
@@ -899,6 +943,22 @@
             }
           },
           {
+            "ref": "area_mm2",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Area (mm²)"
+            },
+            "rules": {
+              "formula": {
+                "mul": [
+                  "width_mm",
+                  "height_mm"
+                ]
+              }
+            }
+          },
+          {
             "ref": "direct",
             "type": "bool",
             "default": false,
@@ -1118,6 +1178,15 @@
                 "max": 1
               }
             }
+          },
+          {
+            "ref": "next_id",
+            "type": "fk",
+            "references": "breaks",
+            "label": {
+              "en-US": "Next break up"
+            },
+            "nullable": true
           }
         ]
       },
@@ -1754,6 +1823,115 @@
             "default": false,
             "label": {
               "en-US": "Coated surface"
+            }
+          },
+          {
+            "ref": "framed",
+            "type": "bool",
+            "default": false,
+            "label": {
+              "en-US": "On a frame"
+            }
+          },
+          {
+            "ref": "finish_price",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Finish price"
+            },
+            "rules": {
+              "copy": {
+                "via": "finish_id",
+                "from": "price",
+                "mode": "always",
+                "follow": true
+              }
+            }
+          },
+          {
+            "ref": "finish_basis",
+            "type": "enum",
+            "enum": [
+              "sheet",
+              "per_250",
+              "metre",
+              "piece",
+              "m2",
+              "none"
+            ],
+            "label": {
+              "en-US": "Finish charged by"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "finish_id",
+                "from": "basis",
+                "mode": "always",
+                "follow": true
+              },
+              "enumLabels": {
+                "labels": {
+                  "sheet": {
+                    "en-US": "A press sheet"
+                  },
+                  "per_250": {
+                    "en-US": "Every 250 pieces"
+                  },
+                  "metre": {
+                    "en-US": "A metre of edge"
+                  },
+                  "piece": {
+                    "en-US": "A piece"
+                  },
+                  "m2": {
+                    "en-US": "A square metre"
+                  },
+                  "none": {
+                    "en-US": "No charge"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "ref": "finish_count",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "A piece takes"
+            },
+            "rules": {
+              "copy": {
+                "via": "finish_id",
+                "from": "count",
+                "mode": "always",
+                "follow": true
+              }
+            }
+          },
+          {
+            "ref": "unit_price",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Finish price a piece"
+            },
+            "rules": {
+              "formula": {
+                "mul": [
+                  "finish_price",
+                  {
+                    "coalesce": [
+                      "finish_count",
+                      1
+                    ]
+                  }
+                ]
+              }
             }
           },
           {
@@ -2561,16 +2739,74 @@
             "scale": 2
           },
           {
+            "ref": "rolled_lines",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Lines that roll"
+            },
+            "rules": {
+              "rollup": {
+                "from": "jobs",
+                "via": "order_id",
+                "sum": "rolls"
+              }
+            }
+          },
+          {
+            "ref": "flat_lines",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Large format that doesn't roll"
+            },
+            "rules": {
+              "rollup": {
+                "from": "jobs",
+                "via": "order_id",
+                "sum": "flat"
+              }
+            }
+          },
+          {
             "ref": "tube",
             "type": "int",
+            "nullable": true,
             "label": {
               "en-US": "In a tube"
             },
-            "default": 0,
             "rules": {
-              "validation": {
-                "min": 0,
-                "max": 1
+              "formula": {
+                "if": [
+                  {
+                    "and": [
+                      {
+                        "gt": [
+                          {
+                            "coalesce": [
+                              "rolled_lines",
+                              0
+                            ]
+                          },
+                          0
+                        ]
+                      },
+                      {
+                        "lte": [
+                          {
+                            "coalesce": [
+                              "flat_lines",
+                              0
+                            ]
+                          },
+                          0
+                        ]
+                      }
+                    ]
+                  },
+                  1,
+                  0
+                ]
               }
             }
           },
@@ -3717,30 +3953,2280 @@
             }
           },
           {
-            "ref": "price",
+            "ref": "setup",
             "type": "decimal",
             "scale": "currency",
+            "nullable": true,
             "label": {
-              "en-US": "Price (ex tax)"
+              "en-US": "Setup"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "setup"
+                }
+              }
+            }
+          },
+          {
+            "ref": "print_one",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Printing a sheet, one side"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "print_single"
+                }
+              }
+            }
+          },
+          {
+            "ref": "print_two",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Printing a sheet, both sides"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "print_double"
+                }
+              }
+            }
+          },
+          {
+            "ref": "sheet_mm2",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Press sheet area (mm²)"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "sheet_mm2"
+                }
+              }
+            }
+          },
+          {
+            "ref": "proof_price",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Printed proof price"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "proof_post_price"
+                }
+              }
+            }
+          },
+          {
+            "ref": "express_percent",
+            "type": "decimal",
+            "nullable": true,
+            "label": {
+              "en-US": "Express (+%)"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "express_percent"
+                }
+              }
+            },
+            "scale": 2
+          },
+          {
+            "ref": "lf_minimum",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Large-format minimum"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "large_format_minimum"
+                }
+              }
+            }
+          },
+          {
+            "ref": "sheet_packing_kg",
+            "type": "decimal",
+            "nullable": true,
+            "label": {
+              "en-US": "Packing, sheet work (kg)"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "sheet_packing_kg"
+                }
+              }
+            },
+            "scale": 2
+          },
+          {
+            "ref": "roll_packing_kg",
+            "type": "decimal",
+            "nullable": true,
+            "label": {
+              "en-US": "Packing, large format (kg)"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "roll_packing_kg"
+                }
+              }
+            },
+            "scale": 2
+          },
+          {
+            "ref": "frame_grams",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "A frame weighs (g)"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "frame_grams"
+                }
+              }
+            }
+          },
+          {
+            "ref": "tube_max_mm",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "A tube takes up to (mm)"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "tube_max_mm"
+                }
+              }
+            }
+          },
+          {
+            "ref": "material_rate",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Stock rate"
+            },
+            "rules": {
+              "copy": {
+                "via": "material_id",
+                "from": "rate",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "material_kind",
+            "type": "enum",
+            "enum": [
+              "sheet",
+              "roll"
+            ],
+            "label": {
+              "en-US": "Stock kind"
             },
             "nullable": true,
             "rules": {
-              "validation": {
-                "min": 0
+              "copy": {
+                "via": "material_id",
+                "from": "kind",
+                "mode": "always"
+              },
+              "enumLabels": {
+                "labels": {
+                  "sheet": {
+                    "en-US": "Sheet"
+                  },
+                  "roll": {
+                    "en-US": "Roll"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "ref": "gsm",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Stock weight (gsm)"
+            },
+            "rules": {
+              "copy": {
+                "via": "material_id",
+                "from": "gsm",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "up",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Up on a sheet"
+            },
+            "rules": {
+              "copy": {
+                "via": "size_id",
+                "from": "up",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "piece_mm2",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "A piece's area (mm²)"
+            },
+            "rules": {
+              "copy": {
+                "via": "size_id",
+                "from": "area_mm2",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "break_id",
+            "type": "fk",
+            "references": "breaks",
+            "label": {
+              "en-US": "Quantity break"
+            },
+            "nullable": true,
+            "rules": {
+              "band": {
+                "table": "breaks",
+                "min": "min_qty",
+                "value": "qty"
+              }
+            }
+          },
+          {
+            "ref": "multiplier",
+            "type": "decimal",
+            "nullable": true,
+            "label": {
+              "en-US": "Break multiplier"
+            },
+            "rules": {
+              "copy": {
+                "via": "break_id",
+                "from": "multiplier",
+                "mode": "always"
+              }
+            },
+            "scale": 4
+          },
+          {
+            "ref": "next_break_id",
+            "type": "fk",
+            "references": "breaks",
+            "label": {
+              "en-US": "Next break"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "break_id",
+                "from": "next_id",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "next_qty",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Next break from"
+            },
+            "rules": {
+              "copy": {
+                "via": "next_break_id",
+                "from": "min_qty",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "next_multiplier",
+            "type": "decimal",
+            "nullable": true,
+            "label": {
+              "en-US": "Next break multiplier"
+            },
+            "rules": {
+              "copy": {
+                "via": "next_break_id",
+                "from": "multiplier",
+                "mode": "always"
+              }
+            },
+            "scale": 4
+          },
+          {
+            "ref": "lamination_price",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Lamination price"
+            },
+            "rules": {
+              "copy": {
+                "via": "lamination_option_id",
+                "from": "unit_price",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "lamination_basis",
+            "type": "enum",
+            "enum": [
+              "sheet",
+              "per_250",
+              "metre",
+              "piece",
+              "m2",
+              "none"
+            ],
+            "label": {
+              "en-US": "Lamination charged by"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "lamination_option_id",
+                "from": "finish_basis",
+                "mode": "always"
+              },
+              "enumLabels": {
+                "labels": {
+                  "sheet": {
+                    "en-US": "A press sheet"
+                  },
+                  "per_250": {
+                    "en-US": "Every 250 pieces"
+                  },
+                  "metre": {
+                    "en-US": "A metre of edge"
+                  },
+                  "piece": {
+                    "en-US": "A piece"
+                  },
+                  "m2": {
+                    "en-US": "A square metre"
+                  },
+                  "none": {
+                    "en-US": "No charge"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "ref": "spot_uv_price",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Spot UV price"
+            },
+            "rules": {
+              "copy": {
+                "via": "spot_uv_option_id",
+                "from": "unit_price",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "spot_uv_basis",
+            "type": "enum",
+            "enum": [
+              "sheet",
+              "per_250",
+              "metre",
+              "piece",
+              "m2",
+              "none"
+            ],
+            "label": {
+              "en-US": "Spot UV charged by"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "spot_uv_option_id",
+                "from": "finish_basis",
+                "mode": "always"
+              },
+              "enumLabels": {
+                "labels": {
+                  "sheet": {
+                    "en-US": "A press sheet"
+                  },
+                  "per_250": {
+                    "en-US": "Every 250 pieces"
+                  },
+                  "metre": {
+                    "en-US": "A metre of edge"
+                  },
+                  "piece": {
+                    "en-US": "A piece"
+                  },
+                  "m2": {
+                    "en-US": "A square metre"
+                  },
+                  "none": {
+                    "en-US": "No charge"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "ref": "corners_price",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Round corners price"
+            },
+            "rules": {
+              "copy": {
+                "via": "corners_option_id",
+                "from": "unit_price",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "corners_basis",
+            "type": "enum",
+            "enum": [
+              "sheet",
+              "per_250",
+              "metre",
+              "piece",
+              "m2",
+              "none"
+            ],
+            "label": {
+              "en-US": "Round corners charged by"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "corners_option_id",
+                "from": "finish_basis",
+                "mode": "always"
+              },
+              "enumLabels": {
+                "labels": {
+                  "sheet": {
+                    "en-US": "A press sheet"
+                  },
+                  "per_250": {
+                    "en-US": "Every 250 pieces"
+                  },
+                  "metre": {
+                    "en-US": "A metre of edge"
+                  },
+                  "piece": {
+                    "en-US": "A piece"
+                  },
+                  "m2": {
+                    "en-US": "A square metre"
+                  },
+                  "none": {
+                    "en-US": "No charge"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "ref": "edges_price",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Banner edges price"
+            },
+            "rules": {
+              "copy": {
+                "via": "edges_option_id",
+                "from": "unit_price",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "edges_basis",
+            "type": "enum",
+            "enum": [
+              "sheet",
+              "per_250",
+              "metre",
+              "piece",
+              "m2",
+              "none"
+            ],
+            "label": {
+              "en-US": "Banner edges charged by"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "edges_option_id",
+                "from": "finish_basis",
+                "mode": "always"
+              },
+              "enumLabels": {
+                "labels": {
+                  "sheet": {
+                    "en-US": "A press sheet"
+                  },
+                  "per_250": {
+                    "en-US": "Every 250 pieces"
+                  },
+                  "metre": {
+                    "en-US": "A metre of edge"
+                  },
+                  "piece": {
+                    "en-US": "A piece"
+                  },
+                  "m2": {
+                    "en-US": "A square metre"
+                  },
+                  "none": {
+                    "en-US": "No charge"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "ref": "canvas_price",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Canvas finish price"
+            },
+            "rules": {
+              "copy": {
+                "via": "canvas_option_id",
+                "from": "unit_price",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "canvas_basis",
+            "type": "enum",
+            "enum": [
+              "sheet",
+              "per_250",
+              "metre",
+              "piece",
+              "m2",
+              "none"
+            ],
+            "label": {
+              "en-US": "Canvas finish charged by"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "canvas_option_id",
+                "from": "finish_basis",
+                "mode": "always"
+              },
+              "enumLabels": {
+                "labels": {
+                  "sheet": {
+                    "en-US": "A press sheet"
+                  },
+                  "per_250": {
+                    "en-US": "Every 250 pieces"
+                  },
+                  "metre": {
+                    "en-US": "A metre of edge"
+                  },
+                  "piece": {
+                    "en-US": "A piece"
+                  },
+                  "m2": {
+                    "en-US": "A square metre"
+                  },
+                  "none": {
+                    "en-US": "No charge"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "ref": "packaging_price",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Packaging price"
+            },
+            "rules": {
+              "copy": {
+                "via": "packaging_id",
+                "from": "price",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "packaging_basis",
+            "type": "enum",
+            "enum": [
+              "included",
+              "unit",
+              "per_500"
+            ],
+            "label": {
+              "en-US": "Packaging charged by"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "packaging_id",
+                "from": "basis",
+                "mode": "always"
+              },
+              "enumLabels": {
+                "labels": {
+                  "included": {
+                    "en-US": "Included"
+                  },
+                  "unit": {
+                    "en-US": "A piece"
+                  },
+                  "per_500": {
+                    "en-US": "Every 500 pieces"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "ref": "framed",
+            "type": "bool",
+            "nullable": true,
+            "label": {
+              "en-US": "On a frame"
+            },
+            "rules": {
+              "copy": {
+                "via": "canvas_option_id",
+                "from": "framed",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "print_rate",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Printing a sheet"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "eq": [
+                      "sides",
+                      2
+                    ]
+                  },
+                  "print_two",
+                  "print_one"
+                ]
+              }
+            }
+          },
+          {
+            "ref": "sheets",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Press sheets"
+            },
+            "rules": {
+              "formula": {
+                "ceil": [
+                  {
+                    "div": [
+                      "qty",
+                      "up"
+                    ]
+                  },
+                  0
+                ]
+              }
+            }
+          },
+          {
+            "ref": "sheet_rate",
+            "type": "decimal",
+            "nullable": true,
+            "label": {
+              "en-US": "Stock a sheet"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "eq": [
+                      "material_kind",
+                      "roll"
+                    ]
+                  },
+                  {
+                    "div": [
+                      {
+                        "mul": [
+                          "material_rate",
+                          "sheet_mm2"
+                        ]
+                      },
+                      1000000
+                    ]
+                  },
+                  "material_rate"
+                ]
+              }
+            },
+            "scale": 4
+          },
+          {
+            "ref": "area_each",
+            "type": "decimal",
+            "nullable": true,
+            "label": {
+              "en-US": "Area each (m²)"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "div": [
+                      {
+                        "mul": [
+                          "width_mm",
+                          "height_mm"
+                        ]
+                      },
+                      1000000
+                    ]
+                  },
+                  2
+                ]
+              }
+            },
+            "scale": 2
+          },
+          {
+            "ref": "area_total",
+            "type": "decimal",
+            "nullable": true,
+            "label": {
+              "en-US": "Area (m²)"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "mul": [
+                      "area_each",
+                      "qty"
+                    ]
+                  },
+                  2
+                ]
+              }
+            },
+            "scale": 2
+          },
+          {
+            "ref": "perimeter_m",
+            "type": "decimal",
+            "nullable": true,
+            "label": {
+              "en-US": "Edge each (m)"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "div": [
+                      {
+                        "mul": [
+                          2,
+                          {
+                            "add": [
+                              "width_mm",
+                              "height_mm"
+                            ]
+                          }
+                        ]
+                      },
+                      1000
+                    ]
+                  },
+                  2
+                ]
+              }
+            },
+            "scale": 2
+          },
+          {
+            "ref": "print_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Print"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "mul": [
+                      "sheets",
+                      "print_rate",
+                      {
+                        "coalesce": [
+                          "multiplier",
+                          1
+                        ]
+                      }
+                    ]
+                  },
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "ref": "material_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Material"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "eq": [
+                      "product_kind",
+                      "sheet"
+                    ]
+                  },
+                  {
+                    "round": [
+                      {
+                        "mul": [
+                          "sheets",
+                          "sheet_rate",
+                          {
+                            "coalesce": [
+                              "multiplier",
+                              1
+                            ]
+                          }
+                        ]
+                      },
+                      2
+                    ]
+                  },
+                  {
+                    "round": [
+                      {
+                        "mul": [
+                          "area_total",
+                          "material_rate"
+                        ]
+                      },
+                      2
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "ref": "lamination_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Lamination"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "mul": [
+                      "lamination_price",
+                      {
+                        "if": [
+                          {
+                            "eq": [
+                              "lamination_basis",
+                              "sheet"
+                            ]
+                          },
+                          "sheets",
+                          {
+                            "if": [
+                              {
+                                "eq": [
+                                  "lamination_basis",
+                                  "per_250"
+                                ]
+                              },
+                              {
+                                "ceil": [
+                                  {
+                                    "div": [
+                                      "qty",
+                                      250
+                                    ]
+                                  },
+                                  0
+                                ]
+                              },
+                              {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      "lamination_basis",
+                                      "metre"
+                                    ]
+                                  },
+                                  {
+                                    "mul": [
+                                      "perimeter_m",
+                                      "qty"
+                                    ]
+                                  },
+                                  {
+                                    "if": [
+                                      {
+                                        "eq": [
+                                          "lamination_basis",
+                                          "piece"
+                                        ]
+                                      },
+                                      "qty",
+                                      {
+                                        "if": [
+                                          {
+                                            "eq": [
+                                              "lamination_basis",
+                                              "m2"
+                                            ]
+                                          },
+                                          "area_total",
+                                          0
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "ref": "spot_uv_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Spot UV"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "mul": [
+                      "spot_uv_price",
+                      {
+                        "if": [
+                          {
+                            "eq": [
+                              "spot_uv_basis",
+                              "sheet"
+                            ]
+                          },
+                          "sheets",
+                          {
+                            "if": [
+                              {
+                                "eq": [
+                                  "spot_uv_basis",
+                                  "per_250"
+                                ]
+                              },
+                              {
+                                "ceil": [
+                                  {
+                                    "div": [
+                                      "qty",
+                                      250
+                                    ]
+                                  },
+                                  0
+                                ]
+                              },
+                              {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      "spot_uv_basis",
+                                      "metre"
+                                    ]
+                                  },
+                                  {
+                                    "mul": [
+                                      "perimeter_m",
+                                      "qty"
+                                    ]
+                                  },
+                                  {
+                                    "if": [
+                                      {
+                                        "eq": [
+                                          "spot_uv_basis",
+                                          "piece"
+                                        ]
+                                      },
+                                      "qty",
+                                      {
+                                        "if": [
+                                          {
+                                            "eq": [
+                                              "spot_uv_basis",
+                                              "m2"
+                                            ]
+                                          },
+                                          "area_total",
+                                          0
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "ref": "corners_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Round corners"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "mul": [
+                      "corners_price",
+                      {
+                        "if": [
+                          {
+                            "eq": [
+                              "corners_basis",
+                              "sheet"
+                            ]
+                          },
+                          "sheets",
+                          {
+                            "if": [
+                              {
+                                "eq": [
+                                  "corners_basis",
+                                  "per_250"
+                                ]
+                              },
+                              {
+                                "ceil": [
+                                  {
+                                    "div": [
+                                      "qty",
+                                      250
+                                    ]
+                                  },
+                                  0
+                                ]
+                              },
+                              {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      "corners_basis",
+                                      "metre"
+                                    ]
+                                  },
+                                  {
+                                    "mul": [
+                                      "perimeter_m",
+                                      "qty"
+                                    ]
+                                  },
+                                  {
+                                    "if": [
+                                      {
+                                        "eq": [
+                                          "corners_basis",
+                                          "piece"
+                                        ]
+                                      },
+                                      "qty",
+                                      {
+                                        "if": [
+                                          {
+                                            "eq": [
+                                              "corners_basis",
+                                              "m2"
+                                            ]
+                                          },
+                                          "area_total",
+                                          0
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "ref": "edges_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Banner edges"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "mul": [
+                      "edges_price",
+                      {
+                        "if": [
+                          {
+                            "eq": [
+                              "edges_basis",
+                              "sheet"
+                            ]
+                          },
+                          "sheets",
+                          {
+                            "if": [
+                              {
+                                "eq": [
+                                  "edges_basis",
+                                  "per_250"
+                                ]
+                              },
+                              {
+                                "ceil": [
+                                  {
+                                    "div": [
+                                      "qty",
+                                      250
+                                    ]
+                                  },
+                                  0
+                                ]
+                              },
+                              {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      "edges_basis",
+                                      "metre"
+                                    ]
+                                  },
+                                  {
+                                    "mul": [
+                                      "perimeter_m",
+                                      "qty"
+                                    ]
+                                  },
+                                  {
+                                    "if": [
+                                      {
+                                        "eq": [
+                                          "edges_basis",
+                                          "piece"
+                                        ]
+                                      },
+                                      "qty",
+                                      {
+                                        "if": [
+                                          {
+                                            "eq": [
+                                              "edges_basis",
+                                              "m2"
+                                            ]
+                                          },
+                                          "area_total",
+                                          0
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "ref": "canvas_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Canvas finish"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "mul": [
+                      "canvas_price",
+                      {
+                        "if": [
+                          {
+                            "eq": [
+                              "canvas_basis",
+                              "sheet"
+                            ]
+                          },
+                          "sheets",
+                          {
+                            "if": [
+                              {
+                                "eq": [
+                                  "canvas_basis",
+                                  "per_250"
+                                ]
+                              },
+                              {
+                                "ceil": [
+                                  {
+                                    "div": [
+                                      "qty",
+                                      250
+                                    ]
+                                  },
+                                  0
+                                ]
+                              },
+                              {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      "canvas_basis",
+                                      "metre"
+                                    ]
+                                  },
+                                  {
+                                    "mul": [
+                                      "perimeter_m",
+                                      "qty"
+                                    ]
+                                  },
+                                  {
+                                    "if": [
+                                      {
+                                        "eq": [
+                                          "canvas_basis",
+                                          "piece"
+                                        ]
+                                      },
+                                      "qty",
+                                      {
+                                        "if": [
+                                          {
+                                            "eq": [
+                                              "canvas_basis",
+                                              "m2"
+                                            ]
+                                          },
+                                          "area_total",
+                                          0
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "ref": "minimum_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Large-format minimum"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "eq": [
+                      "product_kind",
+                      "large"
+                    ]
+                  },
+                  {
+                    "max": [
+                      0,
+                      {
+                        "sub": [
+                          "lf_minimum",
+                          {
+                            "add": [
+                              {
+                                "coalesce": [
+                                  "material_charge",
+                                  0
+                                ]
+                              },
+                              {
+                                "coalesce": [
+                                  "edges_charge",
+                                  0
+                                ]
+                              },
+                              {
+                                "coalesce": [
+                                  "canvas_charge",
+                                  0
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  0
+                ]
+              }
+            }
+          },
+          {
+            "ref": "finishing",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Finishing"
+            },
+            "rules": {
+              "formula": {
+                "add": [
+                  {
+                    "coalesce": [
+                      "lamination_charge",
+                      0
+                    ]
+                  },
+                  {
+                    "coalesce": [
+                      "spot_uv_charge",
+                      0
+                    ]
+                  },
+                  {
+                    "coalesce": [
+                      "corners_charge",
+                      0
+                    ]
+                  },
+                  {
+                    "coalesce": [
+                      "edges_charge",
+                      0
+                    ]
+                  },
+                  {
+                    "coalesce": [
+                      "canvas_charge",
+                      0
+                    ]
+                  },
+                  "minimum_charge"
+                ]
+              }
+            }
+          },
+          {
+            "ref": "packaging_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Packaging"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "mul": [
+                      "packaging_price",
+                      {
+                        "if": [
+                          {
+                            "eq": [
+                              "packaging_basis",
+                              "unit"
+                            ]
+                          },
+                          "qty",
+                          {
+                            "if": [
+                              {
+                                "eq": [
+                                  "packaging_basis",
+                                  "per_500"
+                                ]
+                              },
+                              {
+                                "ceil": [
+                                  {
+                                    "div": [
+                                      "qty",
+                                      500
+                                    ]
+                                  },
+                                  0
+                                ]
+                              },
+                              0
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "ref": "proof_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Printed proof"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "eq": [
+                      "proof_by_post",
+                      true
+                    ]
+                  },
+                  {
+                    "coalesce": [
+                      "proof_price",
+                      0
+                    ]
+                  },
+                  0
+                ]
+              }
+            }
+          },
+          {
+            "ref": "before_express",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Work before express"
+            },
+            "rules": {
+              "formula": {
+                "add": [
+                  {
+                    "coalesce": [
+                      "setup",
+                      0
+                    ]
+                  },
+                  {
+                    "coalesce": [
+                      "print_charge",
+                      0
+                    ]
+                  },
+                  "material_charge",
+                  "finishing",
+                  {
+                    "coalesce": [
+                      "packaging_charge",
+                      0
+                    ]
+                  },
+                  "proof_charge"
+                ]
+              }
+            }
+          },
+          {
+            "ref": "express_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Express"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "eq": [
+                      "express",
+                      true
+                    ]
+                  },
+                  {
+                    "round": [
+                      {
+                        "div": [
+                          {
+                            "mul": [
+                              "before_express",
+                              {
+                                "coalesce": [
+                                  "express_percent",
+                                  0
+                                ]
+                              }
+                            ]
+                          },
+                          100
+                        ]
+                      },
+                      2
+                    ]
+                  },
+                  0
+                ]
+              }
+            }
+          },
+          {
+            "ref": "work",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Work"
+            },
+            "rules": {
+              "formula": {
+                "add": [
+                  "before_express",
+                  "express_charge"
+                ]
+              }
+            }
+          },
+          {
+            "ref": "next_sheets",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Sheets at the next break"
+            },
+            "rules": {
+              "formula": {
+                "ceil": [
+                  {
+                    "div": [
+                      "next_qty",
+                      "up"
+                    ]
+                  },
+                  0
+                ]
+              }
+            }
+          },
+          {
+            "ref": "next_run",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Run at the next break"
+            },
+            "rules": {
+              "formula": {
+                "add": [
+                  {
+                    "round": [
+                      {
+                        "mul": [
+                          "next_sheets",
+                          "print_rate",
+                          "next_multiplier"
+                        ]
+                      },
+                      2
+                    ]
+                  },
+                  {
+                    "round": [
+                      {
+                        "mul": [
+                          "next_sheets",
+                          "sheet_rate",
+                          "next_multiplier"
+                        ]
+                      },
+                      2
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "ref": "next_extras",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Finishing and packing at the next break"
+            },
+            "rules": {
+              "formula": {
+                "add": [
+                  {
+                    "coalesce": [
+                      {
+                        "mul": [
+                          "lamination_price",
+                          {
+                            "if": [
+                              {
+                                "eq": [
+                                  "lamination_basis",
+                                  "sheet"
+                                ]
+                              },
+                              "next_sheets",
+                              {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      "lamination_basis",
+                                      "per_250"
+                                    ]
+                                  },
+                                  {
+                                    "ceil": [
+                                      {
+                                        "div": [
+                                          "next_qty",
+                                          250
+                                        ]
+                                      },
+                                      0
+                                    ]
+                                  },
+                                  {
+                                    "if": [
+                                      {
+                                        "eq": [
+                                          "lamination_basis",
+                                          "piece"
+                                        ]
+                                      },
+                                      "next_qty",
+                                      0
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      0
+                    ]
+                  },
+                  {
+                    "coalesce": [
+                      {
+                        "mul": [
+                          "spot_uv_price",
+                          {
+                            "if": [
+                              {
+                                "eq": [
+                                  "spot_uv_basis",
+                                  "sheet"
+                                ]
+                              },
+                              "next_sheets",
+                              {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      "spot_uv_basis",
+                                      "per_250"
+                                    ]
+                                  },
+                                  {
+                                    "ceil": [
+                                      {
+                                        "div": [
+                                          "next_qty",
+                                          250
+                                        ]
+                                      },
+                                      0
+                                    ]
+                                  },
+                                  {
+                                    "if": [
+                                      {
+                                        "eq": [
+                                          "spot_uv_basis",
+                                          "piece"
+                                        ]
+                                      },
+                                      "next_qty",
+                                      0
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      0
+                    ]
+                  },
+                  {
+                    "coalesce": [
+                      {
+                        "mul": [
+                          "corners_price",
+                          {
+                            "if": [
+                              {
+                                "eq": [
+                                  "corners_basis",
+                                  "sheet"
+                                ]
+                              },
+                              "next_sheets",
+                              {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      "corners_basis",
+                                      "per_250"
+                                    ]
+                                  },
+                                  {
+                                    "ceil": [
+                                      {
+                                        "div": [
+                                          "next_qty",
+                                          250
+                                        ]
+                                      },
+                                      0
+                                    ]
+                                  },
+                                  {
+                                    "if": [
+                                      {
+                                        "eq": [
+                                          "corners_basis",
+                                          "piece"
+                                        ]
+                                      },
+                                      "next_qty",
+                                      0
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      0
+                    ]
+                  },
+                  {
+                    "coalesce": [
+                      {
+                        "mul": [
+                          "packaging_price",
+                          {
+                            "if": [
+                              {
+                                "eq": [
+                                  "packaging_basis",
+                                  "unit"
+                                ]
+                              },
+                              "next_qty",
+                              {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      "packaging_basis",
+                                      "per_500"
+                                    ]
+                                  },
+                                  {
+                                    "ceil": [
+                                      {
+                                        "div": [
+                                          "next_qty",
+                                          500
+                                        ]
+                                      },
+                                      0
+                                    ]
+                                  },
+                                  0
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      0
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "ref": "next_work",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Work at the next break"
+            },
+            "rules": {
+              "formula": {
+                "add": [
+                  {
+                    "add": [
+                      {
+                        "coalesce": [
+                          "setup",
+                          0
+                        ]
+                      },
+                      "next_run",
+                      "next_extras",
+                      "proof_charge"
+                    ]
+                  },
+                  {
+                    "if": [
+                      {
+                        "eq": [
+                          "express",
+                          true
+                        ]
+                      },
+                      {
+                        "round": [
+                          {
+                            "div": [
+                              {
+                                "mul": [
+                                  {
+                                    "add": [
+                                      {
+                                        "coalesce": [
+                                          "setup",
+                                          0
+                                        ]
+                                      },
+                                      "next_run",
+                                      "next_extras",
+                                      "proof_charge"
+                                    ]
+                                  },
+                                  {
+                                    "coalesce": [
+                                      "express_percent",
+                                      0
+                                    ]
+                                  }
+                                ]
+                              },
+                              100
+                            ]
+                          },
+                          2
+                        ]
+                      },
+                      0
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "ref": "cap_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Capped at the next break"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "and": [
+                      {
+                        "eq": [
+                          "product_kind",
+                          "sheet"
+                        ]
+                      },
+                      {
+                        "lt": [
+                          "next_work",
+                          "work"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "sub": [
+                      "next_work",
+                      "work"
+                    ]
+                  },
+                  0
+                ]
+              }
+            }
+          },
+          {
+            "ref": "price",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Price (ex tax)"
+            },
+            "rules": {
+              "formula": {
+                "add": [
+                  "work",
+                  "cap_charge"
+                ]
               }
             }
           },
           {
             "ref": "weight_kg",
             "type": "decimal",
-            "scale": 2,
+            "nullable": true,
             "label": {
               "en-US": "Weight (kg)"
             },
-            "nullable": true,
             "rules": {
-              "validation": {
-                "min": 0
+              "formula": {
+                "if": [
+                  {
+                    "eq": [
+                      "product_kind",
+                      "sheet"
+                    ]
+                  },
+                  {
+                    "round": [
+                      {
+                        "add": [
+                          {
+                            "div": [
+                              {
+                                "mul": [
+                                  "qty",
+                                  "piece_mm2",
+                                  "gsm"
+                                ]
+                              },
+                              1000000000
+                            ]
+                          },
+                          {
+                            "coalesce": [
+                              "sheet_packing_kg",
+                              0
+                            ]
+                          }
+                        ]
+                      },
+                      2
+                    ]
+                  },
+                  {
+                    "round": [
+                      {
+                        "add": [
+                          {
+                            "div": [
+                              {
+                                "add": [
+                                  {
+                                    "mul": [
+                                      "area_total",
+                                      "gsm"
+                                    ]
+                                  },
+                                  {
+                                    "if": [
+                                      {
+                                        "eq": [
+                                          "framed",
+                                          true
+                                        ]
+                                      },
+                                      {
+                                        "mul": [
+                                          "qty",
+                                          {
+                                            "coalesce": [
+                                              "frame_grams",
+                                              0
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      0
+                                    ]
+                                  }
+                                ]
+                              },
+                              1000
+                            ]
+                          },
+                          {
+                            "coalesce": [
+                              "roll_packing_kg",
+                              0
+                            ]
+                          }
+                        ]
+                      },
+                      2
+                    ]
+                  }
+                ]
+              }
+            },
+            "scale": 2
+          },
+          {
+            "ref": "rolls",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Rolls into a tube"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "eq": [
+                      "product_kind",
+                      "large"
+                    ]
+                  },
+                  {
+                    "if": [
+                      {
+                        "eq": [
+                          "framed",
+                          true
+                        ]
+                      },
+                      0,
+                      {
+                        "if": [
+                          {
+                            "lte": [
+                              {
+                                "max": [
+                                  "width_mm",
+                                  "height_mm"
+                                ]
+                              },
+                              "tube_max_mm"
+                            ]
+                          },
+                          1,
+                          0
+                        ]
+                      }
+                    ]
+                  },
+                  0
+                ]
+              }
+            }
+          },
+          {
+            "ref": "flat",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Large format, not rolled"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "eq": [
+                      "product_kind",
+                      "large"
+                    ]
+                  },
+                  {
+                    "sub": [
+                      1,
+                      "rolls"
+                    ]
+                  },
+                  0
+                ]
               }
             }
           },
@@ -4986,16 +7472,74 @@
             "scale": 2
           },
           {
+            "ref": "rolled_lines",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Lines that roll"
+            },
+            "rules": {
+              "rollup": {
+                "from": "quote_lines",
+                "via": "quote_id",
+                "sum": "rolls"
+              }
+            }
+          },
+          {
+            "ref": "flat_lines",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Large format that doesn't roll"
+            },
+            "rules": {
+              "rollup": {
+                "from": "quote_lines",
+                "via": "quote_id",
+                "sum": "flat"
+              }
+            }
+          },
+          {
             "ref": "tube",
             "type": "int",
+            "nullable": true,
             "label": {
               "en-US": "In a tube"
             },
-            "default": 0,
             "rules": {
-              "validation": {
-                "min": 0,
-                "max": 1
+              "formula": {
+                "if": [
+                  {
+                    "and": [
+                      {
+                        "gt": [
+                          {
+                            "coalesce": [
+                              "rolled_lines",
+                              0
+                            ]
+                          },
+                          0
+                        ]
+                      },
+                      {
+                        "lte": [
+                          {
+                            "coalesce": [
+                              "flat_lines",
+                              0
+                            ]
+                          },
+                          0
+                        ]
+                      }
+                    ]
+                  },
+                  1,
+                  0
+                ]
               }
             }
           },
@@ -5768,30 +8312,2280 @@
             }
           },
           {
-            "ref": "price",
+            "ref": "setup",
             "type": "decimal",
             "scale": "currency",
+            "nullable": true,
             "label": {
-              "en-US": "Price (ex tax)"
+              "en-US": "Setup"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "setup"
+                }
+              }
+            }
+          },
+          {
+            "ref": "print_one",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Printing a sheet, one side"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "print_single"
+                }
+              }
+            }
+          },
+          {
+            "ref": "print_two",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Printing a sheet, both sides"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "print_double"
+                }
+              }
+            }
+          },
+          {
+            "ref": "sheet_mm2",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Press sheet area (mm²)"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "sheet_mm2"
+                }
+              }
+            }
+          },
+          {
+            "ref": "proof_price",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Printed proof price"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "proof_post_price"
+                }
+              }
+            }
+          },
+          {
+            "ref": "express_percent",
+            "type": "decimal",
+            "nullable": true,
+            "label": {
+              "en-US": "Express (+%)"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "express_percent"
+                }
+              }
+            },
+            "scale": 2
+          },
+          {
+            "ref": "lf_minimum",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Large-format minimum"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "large_format_minimum"
+                }
+              }
+            }
+          },
+          {
+            "ref": "sheet_packing_kg",
+            "type": "decimal",
+            "nullable": true,
+            "label": {
+              "en-US": "Packing, sheet work (kg)"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "sheet_packing_kg"
+                }
+              }
+            },
+            "scale": 2
+          },
+          {
+            "ref": "roll_packing_kg",
+            "type": "decimal",
+            "nullable": true,
+            "label": {
+              "en-US": "Packing, large format (kg)"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "roll_packing_kg"
+                }
+              }
+            },
+            "scale": 2
+          },
+          {
+            "ref": "frame_grams",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "A frame weighs (g)"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "frame_grams"
+                }
+              }
+            }
+          },
+          {
+            "ref": "tube_max_mm",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "A tube takes up to (mm)"
+            },
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "tube_max_mm"
+                }
+              }
+            }
+          },
+          {
+            "ref": "material_rate",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Stock rate"
+            },
+            "rules": {
+              "copy": {
+                "via": "material_id",
+                "from": "rate",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "material_kind",
+            "type": "enum",
+            "enum": [
+              "sheet",
+              "roll"
+            ],
+            "label": {
+              "en-US": "Stock kind"
             },
             "nullable": true,
             "rules": {
-              "validation": {
-                "min": 0
+              "copy": {
+                "via": "material_id",
+                "from": "kind",
+                "mode": "always"
+              },
+              "enumLabels": {
+                "labels": {
+                  "sheet": {
+                    "en-US": "Sheet"
+                  },
+                  "roll": {
+                    "en-US": "Roll"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "ref": "gsm",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Stock weight (gsm)"
+            },
+            "rules": {
+              "copy": {
+                "via": "material_id",
+                "from": "gsm",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "up",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Up on a sheet"
+            },
+            "rules": {
+              "copy": {
+                "via": "size_id",
+                "from": "up",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "piece_mm2",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "A piece's area (mm²)"
+            },
+            "rules": {
+              "copy": {
+                "via": "size_id",
+                "from": "area_mm2",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "break_id",
+            "type": "fk",
+            "references": "breaks",
+            "label": {
+              "en-US": "Quantity break"
+            },
+            "nullable": true,
+            "rules": {
+              "band": {
+                "table": "breaks",
+                "min": "min_qty",
+                "value": "qty"
+              }
+            }
+          },
+          {
+            "ref": "multiplier",
+            "type": "decimal",
+            "nullable": true,
+            "label": {
+              "en-US": "Break multiplier"
+            },
+            "rules": {
+              "copy": {
+                "via": "break_id",
+                "from": "multiplier",
+                "mode": "always"
+              }
+            },
+            "scale": 4
+          },
+          {
+            "ref": "next_break_id",
+            "type": "fk",
+            "references": "breaks",
+            "label": {
+              "en-US": "Next break"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "break_id",
+                "from": "next_id",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "next_qty",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Next break from"
+            },
+            "rules": {
+              "copy": {
+                "via": "next_break_id",
+                "from": "min_qty",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "next_multiplier",
+            "type": "decimal",
+            "nullable": true,
+            "label": {
+              "en-US": "Next break multiplier"
+            },
+            "rules": {
+              "copy": {
+                "via": "next_break_id",
+                "from": "multiplier",
+                "mode": "always"
+              }
+            },
+            "scale": 4
+          },
+          {
+            "ref": "lamination_price",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Lamination price"
+            },
+            "rules": {
+              "copy": {
+                "via": "lamination_option_id",
+                "from": "unit_price",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "lamination_basis",
+            "type": "enum",
+            "enum": [
+              "sheet",
+              "per_250",
+              "metre",
+              "piece",
+              "m2",
+              "none"
+            ],
+            "label": {
+              "en-US": "Lamination charged by"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "lamination_option_id",
+                "from": "finish_basis",
+                "mode": "always"
+              },
+              "enumLabels": {
+                "labels": {
+                  "sheet": {
+                    "en-US": "A press sheet"
+                  },
+                  "per_250": {
+                    "en-US": "Every 250 pieces"
+                  },
+                  "metre": {
+                    "en-US": "A metre of edge"
+                  },
+                  "piece": {
+                    "en-US": "A piece"
+                  },
+                  "m2": {
+                    "en-US": "A square metre"
+                  },
+                  "none": {
+                    "en-US": "No charge"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "ref": "spot_uv_price",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Spot UV price"
+            },
+            "rules": {
+              "copy": {
+                "via": "spot_uv_option_id",
+                "from": "unit_price",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "spot_uv_basis",
+            "type": "enum",
+            "enum": [
+              "sheet",
+              "per_250",
+              "metre",
+              "piece",
+              "m2",
+              "none"
+            ],
+            "label": {
+              "en-US": "Spot UV charged by"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "spot_uv_option_id",
+                "from": "finish_basis",
+                "mode": "always"
+              },
+              "enumLabels": {
+                "labels": {
+                  "sheet": {
+                    "en-US": "A press sheet"
+                  },
+                  "per_250": {
+                    "en-US": "Every 250 pieces"
+                  },
+                  "metre": {
+                    "en-US": "A metre of edge"
+                  },
+                  "piece": {
+                    "en-US": "A piece"
+                  },
+                  "m2": {
+                    "en-US": "A square metre"
+                  },
+                  "none": {
+                    "en-US": "No charge"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "ref": "corners_price",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Round corners price"
+            },
+            "rules": {
+              "copy": {
+                "via": "corners_option_id",
+                "from": "unit_price",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "corners_basis",
+            "type": "enum",
+            "enum": [
+              "sheet",
+              "per_250",
+              "metre",
+              "piece",
+              "m2",
+              "none"
+            ],
+            "label": {
+              "en-US": "Round corners charged by"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "corners_option_id",
+                "from": "finish_basis",
+                "mode": "always"
+              },
+              "enumLabels": {
+                "labels": {
+                  "sheet": {
+                    "en-US": "A press sheet"
+                  },
+                  "per_250": {
+                    "en-US": "Every 250 pieces"
+                  },
+                  "metre": {
+                    "en-US": "A metre of edge"
+                  },
+                  "piece": {
+                    "en-US": "A piece"
+                  },
+                  "m2": {
+                    "en-US": "A square metre"
+                  },
+                  "none": {
+                    "en-US": "No charge"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "ref": "edges_price",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Banner edges price"
+            },
+            "rules": {
+              "copy": {
+                "via": "edges_option_id",
+                "from": "unit_price",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "edges_basis",
+            "type": "enum",
+            "enum": [
+              "sheet",
+              "per_250",
+              "metre",
+              "piece",
+              "m2",
+              "none"
+            ],
+            "label": {
+              "en-US": "Banner edges charged by"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "edges_option_id",
+                "from": "finish_basis",
+                "mode": "always"
+              },
+              "enumLabels": {
+                "labels": {
+                  "sheet": {
+                    "en-US": "A press sheet"
+                  },
+                  "per_250": {
+                    "en-US": "Every 250 pieces"
+                  },
+                  "metre": {
+                    "en-US": "A metre of edge"
+                  },
+                  "piece": {
+                    "en-US": "A piece"
+                  },
+                  "m2": {
+                    "en-US": "A square metre"
+                  },
+                  "none": {
+                    "en-US": "No charge"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "ref": "canvas_price",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Canvas finish price"
+            },
+            "rules": {
+              "copy": {
+                "via": "canvas_option_id",
+                "from": "unit_price",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "canvas_basis",
+            "type": "enum",
+            "enum": [
+              "sheet",
+              "per_250",
+              "metre",
+              "piece",
+              "m2",
+              "none"
+            ],
+            "label": {
+              "en-US": "Canvas finish charged by"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "canvas_option_id",
+                "from": "finish_basis",
+                "mode": "always"
+              },
+              "enumLabels": {
+                "labels": {
+                  "sheet": {
+                    "en-US": "A press sheet"
+                  },
+                  "per_250": {
+                    "en-US": "Every 250 pieces"
+                  },
+                  "metre": {
+                    "en-US": "A metre of edge"
+                  },
+                  "piece": {
+                    "en-US": "A piece"
+                  },
+                  "m2": {
+                    "en-US": "A square metre"
+                  },
+                  "none": {
+                    "en-US": "No charge"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "ref": "packaging_price",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Packaging price"
+            },
+            "rules": {
+              "copy": {
+                "via": "packaging_id",
+                "from": "price",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "packaging_basis",
+            "type": "enum",
+            "enum": [
+              "included",
+              "unit",
+              "per_500"
+            ],
+            "label": {
+              "en-US": "Packaging charged by"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "packaging_id",
+                "from": "basis",
+                "mode": "always"
+              },
+              "enumLabels": {
+                "labels": {
+                  "included": {
+                    "en-US": "Included"
+                  },
+                  "unit": {
+                    "en-US": "A piece"
+                  },
+                  "per_500": {
+                    "en-US": "Every 500 pieces"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "ref": "framed",
+            "type": "bool",
+            "nullable": true,
+            "label": {
+              "en-US": "On a frame"
+            },
+            "rules": {
+              "copy": {
+                "via": "canvas_option_id",
+                "from": "framed",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "print_rate",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Printing a sheet"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "eq": [
+                      "sides",
+                      2
+                    ]
+                  },
+                  "print_two",
+                  "print_one"
+                ]
+              }
+            }
+          },
+          {
+            "ref": "sheets",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Press sheets"
+            },
+            "rules": {
+              "formula": {
+                "ceil": [
+                  {
+                    "div": [
+                      "qty",
+                      "up"
+                    ]
+                  },
+                  0
+                ]
+              }
+            }
+          },
+          {
+            "ref": "sheet_rate",
+            "type": "decimal",
+            "nullable": true,
+            "label": {
+              "en-US": "Stock a sheet"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "eq": [
+                      "material_kind",
+                      "roll"
+                    ]
+                  },
+                  {
+                    "div": [
+                      {
+                        "mul": [
+                          "material_rate",
+                          "sheet_mm2"
+                        ]
+                      },
+                      1000000
+                    ]
+                  },
+                  "material_rate"
+                ]
+              }
+            },
+            "scale": 4
+          },
+          {
+            "ref": "area_each",
+            "type": "decimal",
+            "nullable": true,
+            "label": {
+              "en-US": "Area each (m²)"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "div": [
+                      {
+                        "mul": [
+                          "width_mm",
+                          "height_mm"
+                        ]
+                      },
+                      1000000
+                    ]
+                  },
+                  2
+                ]
+              }
+            },
+            "scale": 2
+          },
+          {
+            "ref": "area_total",
+            "type": "decimal",
+            "nullable": true,
+            "label": {
+              "en-US": "Area (m²)"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "mul": [
+                      "area_each",
+                      "qty"
+                    ]
+                  },
+                  2
+                ]
+              }
+            },
+            "scale": 2
+          },
+          {
+            "ref": "perimeter_m",
+            "type": "decimal",
+            "nullable": true,
+            "label": {
+              "en-US": "Edge each (m)"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "div": [
+                      {
+                        "mul": [
+                          2,
+                          {
+                            "add": [
+                              "width_mm",
+                              "height_mm"
+                            ]
+                          }
+                        ]
+                      },
+                      1000
+                    ]
+                  },
+                  2
+                ]
+              }
+            },
+            "scale": 2
+          },
+          {
+            "ref": "print_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Print"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "mul": [
+                      "sheets",
+                      "print_rate",
+                      {
+                        "coalesce": [
+                          "multiplier",
+                          1
+                        ]
+                      }
+                    ]
+                  },
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "ref": "material_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Material"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "eq": [
+                      "product_kind",
+                      "sheet"
+                    ]
+                  },
+                  {
+                    "round": [
+                      {
+                        "mul": [
+                          "sheets",
+                          "sheet_rate",
+                          {
+                            "coalesce": [
+                              "multiplier",
+                              1
+                            ]
+                          }
+                        ]
+                      },
+                      2
+                    ]
+                  },
+                  {
+                    "round": [
+                      {
+                        "mul": [
+                          "area_total",
+                          "material_rate"
+                        ]
+                      },
+                      2
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "ref": "lamination_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Lamination"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "mul": [
+                      "lamination_price",
+                      {
+                        "if": [
+                          {
+                            "eq": [
+                              "lamination_basis",
+                              "sheet"
+                            ]
+                          },
+                          "sheets",
+                          {
+                            "if": [
+                              {
+                                "eq": [
+                                  "lamination_basis",
+                                  "per_250"
+                                ]
+                              },
+                              {
+                                "ceil": [
+                                  {
+                                    "div": [
+                                      "qty",
+                                      250
+                                    ]
+                                  },
+                                  0
+                                ]
+                              },
+                              {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      "lamination_basis",
+                                      "metre"
+                                    ]
+                                  },
+                                  {
+                                    "mul": [
+                                      "perimeter_m",
+                                      "qty"
+                                    ]
+                                  },
+                                  {
+                                    "if": [
+                                      {
+                                        "eq": [
+                                          "lamination_basis",
+                                          "piece"
+                                        ]
+                                      },
+                                      "qty",
+                                      {
+                                        "if": [
+                                          {
+                                            "eq": [
+                                              "lamination_basis",
+                                              "m2"
+                                            ]
+                                          },
+                                          "area_total",
+                                          0
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "ref": "spot_uv_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Spot UV"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "mul": [
+                      "spot_uv_price",
+                      {
+                        "if": [
+                          {
+                            "eq": [
+                              "spot_uv_basis",
+                              "sheet"
+                            ]
+                          },
+                          "sheets",
+                          {
+                            "if": [
+                              {
+                                "eq": [
+                                  "spot_uv_basis",
+                                  "per_250"
+                                ]
+                              },
+                              {
+                                "ceil": [
+                                  {
+                                    "div": [
+                                      "qty",
+                                      250
+                                    ]
+                                  },
+                                  0
+                                ]
+                              },
+                              {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      "spot_uv_basis",
+                                      "metre"
+                                    ]
+                                  },
+                                  {
+                                    "mul": [
+                                      "perimeter_m",
+                                      "qty"
+                                    ]
+                                  },
+                                  {
+                                    "if": [
+                                      {
+                                        "eq": [
+                                          "spot_uv_basis",
+                                          "piece"
+                                        ]
+                                      },
+                                      "qty",
+                                      {
+                                        "if": [
+                                          {
+                                            "eq": [
+                                              "spot_uv_basis",
+                                              "m2"
+                                            ]
+                                          },
+                                          "area_total",
+                                          0
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "ref": "corners_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Round corners"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "mul": [
+                      "corners_price",
+                      {
+                        "if": [
+                          {
+                            "eq": [
+                              "corners_basis",
+                              "sheet"
+                            ]
+                          },
+                          "sheets",
+                          {
+                            "if": [
+                              {
+                                "eq": [
+                                  "corners_basis",
+                                  "per_250"
+                                ]
+                              },
+                              {
+                                "ceil": [
+                                  {
+                                    "div": [
+                                      "qty",
+                                      250
+                                    ]
+                                  },
+                                  0
+                                ]
+                              },
+                              {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      "corners_basis",
+                                      "metre"
+                                    ]
+                                  },
+                                  {
+                                    "mul": [
+                                      "perimeter_m",
+                                      "qty"
+                                    ]
+                                  },
+                                  {
+                                    "if": [
+                                      {
+                                        "eq": [
+                                          "corners_basis",
+                                          "piece"
+                                        ]
+                                      },
+                                      "qty",
+                                      {
+                                        "if": [
+                                          {
+                                            "eq": [
+                                              "corners_basis",
+                                              "m2"
+                                            ]
+                                          },
+                                          "area_total",
+                                          0
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "ref": "edges_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Banner edges"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "mul": [
+                      "edges_price",
+                      {
+                        "if": [
+                          {
+                            "eq": [
+                              "edges_basis",
+                              "sheet"
+                            ]
+                          },
+                          "sheets",
+                          {
+                            "if": [
+                              {
+                                "eq": [
+                                  "edges_basis",
+                                  "per_250"
+                                ]
+                              },
+                              {
+                                "ceil": [
+                                  {
+                                    "div": [
+                                      "qty",
+                                      250
+                                    ]
+                                  },
+                                  0
+                                ]
+                              },
+                              {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      "edges_basis",
+                                      "metre"
+                                    ]
+                                  },
+                                  {
+                                    "mul": [
+                                      "perimeter_m",
+                                      "qty"
+                                    ]
+                                  },
+                                  {
+                                    "if": [
+                                      {
+                                        "eq": [
+                                          "edges_basis",
+                                          "piece"
+                                        ]
+                                      },
+                                      "qty",
+                                      {
+                                        "if": [
+                                          {
+                                            "eq": [
+                                              "edges_basis",
+                                              "m2"
+                                            ]
+                                          },
+                                          "area_total",
+                                          0
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "ref": "canvas_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Canvas finish"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "mul": [
+                      "canvas_price",
+                      {
+                        "if": [
+                          {
+                            "eq": [
+                              "canvas_basis",
+                              "sheet"
+                            ]
+                          },
+                          "sheets",
+                          {
+                            "if": [
+                              {
+                                "eq": [
+                                  "canvas_basis",
+                                  "per_250"
+                                ]
+                              },
+                              {
+                                "ceil": [
+                                  {
+                                    "div": [
+                                      "qty",
+                                      250
+                                    ]
+                                  },
+                                  0
+                                ]
+                              },
+                              {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      "canvas_basis",
+                                      "metre"
+                                    ]
+                                  },
+                                  {
+                                    "mul": [
+                                      "perimeter_m",
+                                      "qty"
+                                    ]
+                                  },
+                                  {
+                                    "if": [
+                                      {
+                                        "eq": [
+                                          "canvas_basis",
+                                          "piece"
+                                        ]
+                                      },
+                                      "qty",
+                                      {
+                                        "if": [
+                                          {
+                                            "eq": [
+                                              "canvas_basis",
+                                              "m2"
+                                            ]
+                                          },
+                                          "area_total",
+                                          0
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "ref": "minimum_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Large-format minimum"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "eq": [
+                      "product_kind",
+                      "large"
+                    ]
+                  },
+                  {
+                    "max": [
+                      0,
+                      {
+                        "sub": [
+                          "lf_minimum",
+                          {
+                            "add": [
+                              {
+                                "coalesce": [
+                                  "material_charge",
+                                  0
+                                ]
+                              },
+                              {
+                                "coalesce": [
+                                  "edges_charge",
+                                  0
+                                ]
+                              },
+                              {
+                                "coalesce": [
+                                  "canvas_charge",
+                                  0
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  0
+                ]
+              }
+            }
+          },
+          {
+            "ref": "finishing",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Finishing"
+            },
+            "rules": {
+              "formula": {
+                "add": [
+                  {
+                    "coalesce": [
+                      "lamination_charge",
+                      0
+                    ]
+                  },
+                  {
+                    "coalesce": [
+                      "spot_uv_charge",
+                      0
+                    ]
+                  },
+                  {
+                    "coalesce": [
+                      "corners_charge",
+                      0
+                    ]
+                  },
+                  {
+                    "coalesce": [
+                      "edges_charge",
+                      0
+                    ]
+                  },
+                  {
+                    "coalesce": [
+                      "canvas_charge",
+                      0
+                    ]
+                  },
+                  "minimum_charge"
+                ]
+              }
+            }
+          },
+          {
+            "ref": "packaging_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Packaging"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "mul": [
+                      "packaging_price",
+                      {
+                        "if": [
+                          {
+                            "eq": [
+                              "packaging_basis",
+                              "unit"
+                            ]
+                          },
+                          "qty",
+                          {
+                            "if": [
+                              {
+                                "eq": [
+                                  "packaging_basis",
+                                  "per_500"
+                                ]
+                              },
+                              {
+                                "ceil": [
+                                  {
+                                    "div": [
+                                      "qty",
+                                      500
+                                    ]
+                                  },
+                                  0
+                                ]
+                              },
+                              0
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "ref": "proof_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Printed proof"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "eq": [
+                      "proof_by_post",
+                      true
+                    ]
+                  },
+                  {
+                    "coalesce": [
+                      "proof_price",
+                      0
+                    ]
+                  },
+                  0
+                ]
+              }
+            }
+          },
+          {
+            "ref": "before_express",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Work before express"
+            },
+            "rules": {
+              "formula": {
+                "add": [
+                  {
+                    "coalesce": [
+                      "setup",
+                      0
+                    ]
+                  },
+                  {
+                    "coalesce": [
+                      "print_charge",
+                      0
+                    ]
+                  },
+                  "material_charge",
+                  "finishing",
+                  {
+                    "coalesce": [
+                      "packaging_charge",
+                      0
+                    ]
+                  },
+                  "proof_charge"
+                ]
+              }
+            }
+          },
+          {
+            "ref": "express_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Express"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "eq": [
+                      "express",
+                      true
+                    ]
+                  },
+                  {
+                    "round": [
+                      {
+                        "div": [
+                          {
+                            "mul": [
+                              "before_express",
+                              {
+                                "coalesce": [
+                                  "express_percent",
+                                  0
+                                ]
+                              }
+                            ]
+                          },
+                          100
+                        ]
+                      },
+                      2
+                    ]
+                  },
+                  0
+                ]
+              }
+            }
+          },
+          {
+            "ref": "work",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Work"
+            },
+            "rules": {
+              "formula": {
+                "add": [
+                  "before_express",
+                  "express_charge"
+                ]
+              }
+            }
+          },
+          {
+            "ref": "next_sheets",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Sheets at the next break"
+            },
+            "rules": {
+              "formula": {
+                "ceil": [
+                  {
+                    "div": [
+                      "next_qty",
+                      "up"
+                    ]
+                  },
+                  0
+                ]
+              }
+            }
+          },
+          {
+            "ref": "next_run",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Run at the next break"
+            },
+            "rules": {
+              "formula": {
+                "add": [
+                  {
+                    "round": [
+                      {
+                        "mul": [
+                          "next_sheets",
+                          "print_rate",
+                          "next_multiplier"
+                        ]
+                      },
+                      2
+                    ]
+                  },
+                  {
+                    "round": [
+                      {
+                        "mul": [
+                          "next_sheets",
+                          "sheet_rate",
+                          "next_multiplier"
+                        ]
+                      },
+                      2
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "ref": "next_extras",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Finishing and packing at the next break"
+            },
+            "rules": {
+              "formula": {
+                "add": [
+                  {
+                    "coalesce": [
+                      {
+                        "mul": [
+                          "lamination_price",
+                          {
+                            "if": [
+                              {
+                                "eq": [
+                                  "lamination_basis",
+                                  "sheet"
+                                ]
+                              },
+                              "next_sheets",
+                              {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      "lamination_basis",
+                                      "per_250"
+                                    ]
+                                  },
+                                  {
+                                    "ceil": [
+                                      {
+                                        "div": [
+                                          "next_qty",
+                                          250
+                                        ]
+                                      },
+                                      0
+                                    ]
+                                  },
+                                  {
+                                    "if": [
+                                      {
+                                        "eq": [
+                                          "lamination_basis",
+                                          "piece"
+                                        ]
+                                      },
+                                      "next_qty",
+                                      0
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      0
+                    ]
+                  },
+                  {
+                    "coalesce": [
+                      {
+                        "mul": [
+                          "spot_uv_price",
+                          {
+                            "if": [
+                              {
+                                "eq": [
+                                  "spot_uv_basis",
+                                  "sheet"
+                                ]
+                              },
+                              "next_sheets",
+                              {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      "spot_uv_basis",
+                                      "per_250"
+                                    ]
+                                  },
+                                  {
+                                    "ceil": [
+                                      {
+                                        "div": [
+                                          "next_qty",
+                                          250
+                                        ]
+                                      },
+                                      0
+                                    ]
+                                  },
+                                  {
+                                    "if": [
+                                      {
+                                        "eq": [
+                                          "spot_uv_basis",
+                                          "piece"
+                                        ]
+                                      },
+                                      "next_qty",
+                                      0
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      0
+                    ]
+                  },
+                  {
+                    "coalesce": [
+                      {
+                        "mul": [
+                          "corners_price",
+                          {
+                            "if": [
+                              {
+                                "eq": [
+                                  "corners_basis",
+                                  "sheet"
+                                ]
+                              },
+                              "next_sheets",
+                              {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      "corners_basis",
+                                      "per_250"
+                                    ]
+                                  },
+                                  {
+                                    "ceil": [
+                                      {
+                                        "div": [
+                                          "next_qty",
+                                          250
+                                        ]
+                                      },
+                                      0
+                                    ]
+                                  },
+                                  {
+                                    "if": [
+                                      {
+                                        "eq": [
+                                          "corners_basis",
+                                          "piece"
+                                        ]
+                                      },
+                                      "next_qty",
+                                      0
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      0
+                    ]
+                  },
+                  {
+                    "coalesce": [
+                      {
+                        "mul": [
+                          "packaging_price",
+                          {
+                            "if": [
+                              {
+                                "eq": [
+                                  "packaging_basis",
+                                  "unit"
+                                ]
+                              },
+                              "next_qty",
+                              {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      "packaging_basis",
+                                      "per_500"
+                                    ]
+                                  },
+                                  {
+                                    "ceil": [
+                                      {
+                                        "div": [
+                                          "next_qty",
+                                          500
+                                        ]
+                                      },
+                                      0
+                                    ]
+                                  },
+                                  0
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      0
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "ref": "next_work",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Work at the next break"
+            },
+            "rules": {
+              "formula": {
+                "add": [
+                  {
+                    "add": [
+                      {
+                        "coalesce": [
+                          "setup",
+                          0
+                        ]
+                      },
+                      "next_run",
+                      "next_extras",
+                      "proof_charge"
+                    ]
+                  },
+                  {
+                    "if": [
+                      {
+                        "eq": [
+                          "express",
+                          true
+                        ]
+                      },
+                      {
+                        "round": [
+                          {
+                            "div": [
+                              {
+                                "mul": [
+                                  {
+                                    "add": [
+                                      {
+                                        "coalesce": [
+                                          "setup",
+                                          0
+                                        ]
+                                      },
+                                      "next_run",
+                                      "next_extras",
+                                      "proof_charge"
+                                    ]
+                                  },
+                                  {
+                                    "coalesce": [
+                                      "express_percent",
+                                      0
+                                    ]
+                                  }
+                                ]
+                              },
+                              100
+                            ]
+                          },
+                          2
+                        ]
+                      },
+                      0
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "ref": "cap_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Capped at the next break"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "and": [
+                      {
+                        "eq": [
+                          "product_kind",
+                          "sheet"
+                        ]
+                      },
+                      {
+                        "lt": [
+                          "next_work",
+                          "work"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "sub": [
+                      "next_work",
+                      "work"
+                    ]
+                  },
+                  0
+                ]
+              }
+            }
+          },
+          {
+            "ref": "price",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Price (ex tax)"
+            },
+            "rules": {
+              "formula": {
+                "add": [
+                  "work",
+                  "cap_charge"
+                ]
               }
             }
           },
           {
             "ref": "weight_kg",
             "type": "decimal",
-            "scale": 2,
+            "nullable": true,
             "label": {
               "en-US": "Weight (kg)"
             },
-            "nullable": true,
             "rules": {
-              "validation": {
-                "min": 0
+              "formula": {
+                "if": [
+                  {
+                    "eq": [
+                      "product_kind",
+                      "sheet"
+                    ]
+                  },
+                  {
+                    "round": [
+                      {
+                        "add": [
+                          {
+                            "div": [
+                              {
+                                "mul": [
+                                  "qty",
+                                  "piece_mm2",
+                                  "gsm"
+                                ]
+                              },
+                              1000000000
+                            ]
+                          },
+                          {
+                            "coalesce": [
+                              "sheet_packing_kg",
+                              0
+                            ]
+                          }
+                        ]
+                      },
+                      2
+                    ]
+                  },
+                  {
+                    "round": [
+                      {
+                        "add": [
+                          {
+                            "div": [
+                              {
+                                "add": [
+                                  {
+                                    "mul": [
+                                      "area_total",
+                                      "gsm"
+                                    ]
+                                  },
+                                  {
+                                    "if": [
+                                      {
+                                        "eq": [
+                                          "framed",
+                                          true
+                                        ]
+                                      },
+                                      {
+                                        "mul": [
+                                          "qty",
+                                          {
+                                            "coalesce": [
+                                              "frame_grams",
+                                              0
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      0
+                                    ]
+                                  }
+                                ]
+                              },
+                              1000
+                            ]
+                          },
+                          {
+                            "coalesce": [
+                              "roll_packing_kg",
+                              0
+                            ]
+                          }
+                        ]
+                      },
+                      2
+                    ]
+                  }
+                ]
+              }
+            },
+            "scale": 2
+          },
+          {
+            "ref": "rolls",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Rolls into a tube"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "eq": [
+                      "product_kind",
+                      "large"
+                    ]
+                  },
+                  {
+                    "if": [
+                      {
+                        "eq": [
+                          "framed",
+                          true
+                        ]
+                      },
+                      0,
+                      {
+                        "if": [
+                          {
+                            "lte": [
+                              {
+                                "max": [
+                                  "width_mm",
+                                  "height_mm"
+                                ]
+                              },
+                              "tube_max_mm"
+                            ]
+                          },
+                          1,
+                          0
+                        ]
+                      }
+                    ]
+                  },
+                  0
+                ]
+              }
+            }
+          },
+          {
+            "ref": "flat",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Large format, not rolled"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "eq": [
+                      "product_kind",
+                      "large"
+                    ]
+                  },
+                  {
+                    "sub": [
+                      1,
+                      "rolls"
+                    ]
+                  },
+                  0
+                ]
               }
             }
           },
@@ -6678,20 +11472,130 @@
               "id": "s3",
               "fields": [
                 {
+                  "column": "setup",
+                  "control": "currency"
+                },
+                {
+                  "column": "print_charge",
+                  "control": "currency"
+                },
+                {
+                  "column": "material_charge",
+                  "control": "currency"
+                },
+                {
+                  "column": "lamination_charge",
+                  "control": "currency"
+                },
+                {
+                  "column": "spot_uv_charge",
+                  "control": "currency"
+                },
+                {
+                  "column": "corners_charge",
+                  "control": "currency"
+                },
+                {
+                  "column": "edges_charge",
+                  "control": "currency"
+                },
+                {
+                  "column": "canvas_charge",
+                  "control": "currency"
+                },
+                {
+                  "column": "minimum_charge",
+                  "control": "currency"
+                },
+                {
+                  "column": "packaging_charge",
+                  "control": "currency"
+                },
+                {
+                  "column": "proof_charge",
+                  "control": "currency"
+                },
+                {
+                  "column": "express_charge",
+                  "control": "currency"
+                },
+                {
+                  "column": "cap_charge",
+                  "control": "currency"
+                },
+                {
                   "column": "price",
                   "control": "currency"
+                }
+              ]
+            },
+            {
+              "id": "s4",
+              "fields": [
+                {
+                  "column": "up",
+                  "control": "number"
+                },
+                {
+                  "column": "sheets",
+                  "control": "number"
+                },
+                {
+                  "column": "print_rate",
+                  "control": "currency"
+                },
+                {
+                  "column": "sheet_rate",
+                  "control": "number"
+                },
+                {
+                  "column": "material_rate",
+                  "control": "currency"
+                },
+                {
+                  "column": "multiplier",
+                  "control": "number"
+                },
+                {
+                  "column": "next_qty",
+                  "control": "number"
+                },
+                {
+                  "column": "next_work",
+                  "control": "currency"
+                },
+                {
+                  "column": "area_each",
+                  "control": "number"
+                },
+                {
+                  "column": "area_total",
+                  "control": "number"
+                },
+                {
+                  "column": "perimeter_m",
+                  "control": "number"
                 },
                 {
                   "column": "weight_kg",
                   "control": "number"
                 },
                 {
+                  "column": "rolls",
+                  "control": "number"
+                }
+              ]
+            },
+            {
+              "id": "s5",
+              "fields": [
+                {
                   "column": "design_code"
                 }
               ]
             },
             {
-              "id": "s4",
+              "id": "s6",
               "fields": [
                 {
                   "column": "proof_state",
@@ -6720,7 +11624,7 @@
               ]
             },
             {
-              "id": "s5",
+              "id": "s7",
               "fields": [
                 {
                   "column": "printing_at",
@@ -7277,11 +12181,35 @@
                 {
                   "column": "coated",
                   "control": "toggle-row"
+                },
+                {
+                  "column": "framed",
+                  "control": "toggle-row"
                 }
               ]
             },
             {
               "id": "s3",
+              "fields": [
+                {
+                  "column": "finish_price",
+                  "control": "currency"
+                },
+                {
+                  "column": "finish_basis"
+                },
+                {
+                  "column": "finish_count",
+                  "control": "number"
+                },
+                {
+                  "column": "unit_price",
+                  "control": "currency"
+                }
+              ]
+            },
+            {
+              "id": "s4",
               "fields": [
                 {
                   "column": "price",
@@ -7293,7 +12221,7 @@
               ]
             },
             {
-              "id": "s4",
+              "id": "s5",
               "fields": [
                 {
                   "column": "preselected",
@@ -7441,6 +12369,10 @@
                   "control": "number"
                 },
                 {
+                  "column": "area_mm2",
+                  "control": "number"
+                },
+                {
                   "column": "direct",
                   "control": "toggle-row"
                 },
@@ -7549,6 +12481,10 @@
                 {
                   "column": "multiplier",
                   "control": "number"
+                },
+                {
+                  "column": "next_id",
+                  "control": "reference"
                 }
               ]
             }
@@ -8046,6 +12982,14 @@
                   "control": "currency"
                 },
                 {
+                  "column": "print_single",
+                  "control": "currency"
+                },
+                {
+                  "column": "print_double",
+                  "control": "currency"
+                },
+                {
                   "column": "standard_days",
                   "control": "number"
                 },
@@ -8080,6 +13024,10 @@
                 },
                 {
                   "column": "sheet_height_mm",
+                  "control": "number"
+                },
+                {
+                  "column": "sheet_mm2",
                   "control": "number"
                 },
                 {
@@ -8274,7 +13222,6 @@
             "language",
             "customer_id",
             "delivery_method",
-            "tube",
             "tax_rate",
             "dhl_service",
             "delivery_quote",
@@ -8294,7 +13241,6 @@
             "language",
             "customer_id",
             "delivery_method",
-            "tube",
             "tax_rate",
             "dhl_service",
             "delivery_quote",
@@ -8312,7 +13258,6 @@
             "language",
             "customer_id",
             "delivery_method",
-            "tube",
             "tax_rate",
             "link_stopped"
           ],
@@ -8323,7 +13268,6 @@
             "language",
             "customer_id",
             "delivery_method",
-            "tube",
             "tax_rate",
             "link_stopped"
           ]
@@ -8765,6 +13709,37 @@
         "express",
         "price",
         "weight_kg",
+        "setup",
+        "print_charge",
+        "material_charge",
+        "lamination_charge",
+        "spot_uv_charge",
+        "corners_charge",
+        "edges_charge",
+        "canvas_charge",
+        "minimum_charge",
+        "packaging_charge",
+        "proof_charge",
+        "express_charge",
+        "cap_charge",
+        "up",
+        "sheets",
+        "print_rate",
+        "sheet_rate",
+        "material_rate",
+        "multiplier",
+        "next_qty",
+        "area_each",
+        "area_total",
+        "perimeter_m",
+        "lamination_price",
+        "spot_uv_price",
+        "corners_price",
+        "edges_price",
+        "canvas_price",
+        "packaging_price",
+        "express_percent",
+        "rolls",
         "design_id",
         "proof_state",
         "changes",
@@ -8940,6 +13915,37 @@
         "express",
         "price",
         "weight_kg",
+        "setup",
+        "print_charge",
+        "material_charge",
+        "lamination_charge",
+        "spot_uv_charge",
+        "corners_charge",
+        "edges_charge",
+        "canvas_charge",
+        "minimum_charge",
+        "packaging_charge",
+        "proof_charge",
+        "express_charge",
+        "cap_charge",
+        "up",
+        "sheets",
+        "print_rate",
+        "sheet_rate",
+        "material_rate",
+        "multiplier",
+        "next_qty",
+        "area_each",
+        "area_total",
+        "perimeter_m",
+        "lamination_price",
+        "spot_uv_price",
+        "corners_price",
+        "edges_price",
+        "canvas_price",
+        "packaging_price",
+        "express_percent",
+        "rolls",
         "design_id"
       ]
     },
@@ -9364,6 +14370,37 @@
             "express",
             "price",
             "weight_kg",
+            "setup",
+            "print_charge",
+            "material_charge",
+            "lamination_charge",
+            "spot_uv_charge",
+            "corners_charge",
+            "edges_charge",
+            "canvas_charge",
+            "minimum_charge",
+            "packaging_charge",
+            "proof_charge",
+            "express_charge",
+            "cap_charge",
+            "up",
+            "sheets",
+            "print_rate",
+            "sheet_rate",
+            "material_rate",
+            "multiplier",
+            "next_qty",
+            "area_each",
+            "area_total",
+            "perimeter_m",
+            "lamination_price",
+            "spot_uv_price",
+            "corners_price",
+            "edges_price",
+            "canvas_price",
+            "packaging_price",
+            "express_percent",
+            "rolls",
             "design_id",
             "proof_state",
             "changes",
@@ -9554,6 +14591,37 @@
             "express",
             "price",
             "weight_kg",
+            "setup",
+            "print_charge",
+            "material_charge",
+            "lamination_charge",
+            "spot_uv_charge",
+            "corners_charge",
+            "edges_charge",
+            "canvas_charge",
+            "minimum_charge",
+            "packaging_charge",
+            "proof_charge",
+            "express_charge",
+            "cap_charge",
+            "up",
+            "sheets",
+            "print_rate",
+            "sheet_rate",
+            "material_rate",
+            "multiplier",
+            "next_qty",
+            "area_each",
+            "area_total",
+            "perimeter_m",
+            "lamination_price",
+            "spot_uv_price",
+            "corners_price",
+            "edges_price",
+            "canvas_price",
+            "packaging_price",
+            "express_percent",
+            "rolls",
             "design_id"
           ],
           "position": "position",
@@ -9728,6 +14796,37 @@
         "express",
         "price",
         "weight_kg",
+        "setup",
+        "print_charge",
+        "material_charge",
+        "lamination_charge",
+        "spot_uv_charge",
+        "corners_charge",
+        "edges_charge",
+        "canvas_charge",
+        "minimum_charge",
+        "packaging_charge",
+        "proof_charge",
+        "express_charge",
+        "cap_charge",
+        "up",
+        "sheets",
+        "print_rate",
+        "sheet_rate",
+        "material_rate",
+        "multiplier",
+        "next_qty",
+        "area_each",
+        "area_total",
+        "perimeter_m",
+        "lamination_price",
+        "spot_uv_price",
+        "corners_price",
+        "edges_price",
+        "canvas_price",
+        "packaging_price",
+        "express_percent",
+        "rolls",
         "design_id",
         "proof_state",
         "changes",
@@ -9911,6 +15010,37 @@
         "express",
         "price",
         "weight_kg",
+        "setup",
+        "print_charge",
+        "material_charge",
+        "lamination_charge",
+        "spot_uv_charge",
+        "corners_charge",
+        "edges_charge",
+        "canvas_charge",
+        "minimum_charge",
+        "packaging_charge",
+        "proof_charge",
+        "express_charge",
+        "cap_charge",
+        "up",
+        "sheets",
+        "print_rate",
+        "sheet_rate",
+        "material_rate",
+        "multiplier",
+        "next_qty",
+        "area_each",
+        "area_total",
+        "perimeter_m",
+        "lamination_price",
+        "spot_uv_price",
+        "corners_price",
+        "edges_price",
+        "canvas_price",
+        "packaging_price",
+        "express_percent",
+        "rolls",
         "design_id"
       ]
     }

@@ -76,7 +76,18 @@ describe("the rate card is the comp's", () => {
       ["lam-both", 0.95],
       ["lam-soft", 1.2],
     ]);
-    expect(rowsOf(main, "breaks").map((b) => [b["min_qty"], b["multiplier"]])).toEqual([[25, 1], [50, 0.92], [100, 0.84], [250, 0.74], [500, 0.66], [1000, 0.58]]);
+    const breaks = rowsOf(main, "breaks");
+    expect(breaks.map((b) => [b["min_qty"], b["multiplier"]]).reverse()).toEqual([[25, 1], [50, 0.92], [100, 0.84], [250, 0.74], [500, 0.66], [1000, 0.58]]);
+    // Each break names the one above it, which goes in before it; the top one names none.
+    expect(breaks.map((b) => [b["@label"], b["next_id"] === null ? null : refOf(b["next_id"])])).toEqual([
+      ["break:1000", null],
+      ["break:500", "break:1000"],
+      ["break:250", "break:500"],
+      ["break:100", "break:250"],
+      ["break:50", "break:100"],
+      ["break:25", "break:50"],
+    ]);
+    expect(rowsOf(main, "settings")[0]).toMatchObject({ print_single: 0.85, print_double: 1.2 });
     expect(rowsOf(main, "delivery_bands").map((b) => [b["code"], b["max_kg"], b["price"]])).toEqual([["light", 2, 6.5], ["mid", 10, 9.8], ["heavy", 30, 16.4], ["tube", 30, 14]]);
     expect(rowsOf(main, "settings")[0]).toMatchObject({ setup: 18, tax_rate: 20, express_percent: 35, proof_post_price: 12, proof_post_days: 2, standard_days: 3, express_days: 1, large_format_minimum: 35 });
   });
@@ -91,6 +102,13 @@ describe("the rate card is the comp's", () => {
     for (const o of options.filter((x) => x["kind"] === "lamination" || x["kind"] === "spot_uv")) expect(o["coated"]).toBe(true);
     expect(options.find((o) => o["@label"] === "option:business-cards:material:uncoated300")!["coated"]).toBe(false);
     expect(of("business-cards", "feature")).toEqual(["print-back"]);
+    // Only a canvas on a frame stays flat: it never rolls into a tube.
+    expect(options.filter((o) => o["framed"] === true).map((o) => o["@label"])).toEqual(["option:canvas:canvas:stretched"]);
+  });
+
+  it("leaves every price, weight and tube to Adminium: no figure is written", () => {
+    for (const t of ["jobs", "quote_lines"]) for (const row of rowsOf(section, t)) for (const c of ["price", "weight_kg", "sheets", "work"]) expect(row[c], `${t}.${c}`).toBeUndefined();
+    for (const t of ["orders", "saved_quotes"]) for (const row of rowsOf(main, t)) expect(row["tube"], `${t}.tube`).toBeUndefined();
   });
 });
 
