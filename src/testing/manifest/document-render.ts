@@ -165,6 +165,7 @@ export const OUTLINE_SLOT_TYPES = [
   'number',
   'collection',
   'qr',
+  'picture',
 ] as const;
 export type OutlineSlotType = (typeof OUTLINE_SLOT_TYPES)[number];
 
@@ -195,14 +196,78 @@ export const documentQrValueSchema = z
   });
 
 /**
+ * The kinds of picture a `picture` slot carries: the two every HTML page and
+ * every PDF writer draws without a decoder of its own (a PNG's own compressed
+ * rows go into an image object as they are, a JPEG as `DCTDecode`).
+ */
+export const DOCUMENT_PICTURE_MEDIA_TYPES = ['image/png', 'image/jpeg'] as const;
+export type DocumentPictureMediaType = (typeof DOCUMENT_PICTURE_MEDIA_TYPES)[number];
+
+/** The most pixels a picture is on either side (the host refuses a larger one). */
+export const DOCUMENT_PICTURE_MAX_SIDE = 8192;
+
+/**
+ * A `picture` slot's value, made by the HOST from a file a column of the
+ * document's own row holds (a customer's drawn signature). A provider never
+ * reads the file store: it is handed the picture, or nothing.
+ *
+ * WHAT THE HOST HAS ALREADY JUDGED, so a provider need not:
+ *
+ *  - the file is the row's own (attached to that very record), alive, and in
+ *    a column that holds files (`rules.file`), one picture, not a list;
+ *  - whoever the document is drawn for may read that row and that column — a
+ *    staff door draws nothing for a person whose role does not read the
+ *    column, and a guest's door blanks a column withheld from them, so the
+ *    slot is then empty;
+ *  - its bytes are a PNG or a JPEG by their own signature (never by the name),
+ *    at most the column's own size limit and 5 MiB, at most
+ *    {@link DOCUMENT_PICTURE_MAX_SIDE} pixels a side, and cleaned of what a
+ *    camera writes beside the picture (the place, the device).
+ *
+ * Anything short of that is NO value: the slot is left out of
+ * `subject.fields`, and a `required` picture slot is then a missing slot.
+ *
+ * `dataUrl` is `data:<mediaType>;base64,<the bytes>`: an HTML writer puts it
+ * in an `<img src>`, and a PDF writer decodes the base64 after the comma.
+ * `width` and `height` are the picture's own pixels, read from its header,
+ * so a writer sizes it without parsing it. A slot of this type is never a
+ * column of a `collection`.
+ *
+ * The register keeps what was printed WITHOUT the bytes: a stored subject's
+ * picture is `{ mediaType, width, height, sha256 }` (the document's own file
+ * holds the picture as drawn).
+ */
+export interface DocumentPictureValue {
+  mediaType: DocumentPictureMediaType;
+  dataUrl: string;
+  width: number;
+  height: number;
+}
+
+export const documentPictureValueSchema = z
+  .object({
+    mediaType: z.enum(DOCUMENT_PICTURE_MEDIA_TYPES),
+    dataUrl: z.string().regex(/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/),
+    width: z.number().int().min(1).max(DOCUMENT_PICTURE_MAX_SIDE),
+    height: z.number().int().min(1).max(DOCUMENT_PICTURE_MAX_SIDE),
+  })
+  .strict()
+  .refine((value) => value.dataUrl.startsWith(`data:${value.mediaType};base64,`), {
+    message: 'the data URL holds the picture of the kind it names',
+    path: ['dataUrl'],
+  });
+
+/**
  * Where an unmapped slot's value comes from, if anywhere.
  *
  * `sequence` — the engine's CAS document number, minted after render.
  * `connection` — the connection's currency. `setting` — one of the add-on's
  * own non-secret settings. `now` — `subject.now.iso`, never the provider's own
- * clock.
+ * clock. `pay-link` — the record's own live pay link (a `text` slot), or the
+ * same link as a code to scan (a `qr` slot, only when it is short enough),
+ * when the record can be paid online right now; otherwise the slot stays empty.
  */
-export const OUTLINE_SLOT_DEFAULTS = ['sequence', 'connection', 'setting', 'now'] as const;
+export const OUTLINE_SLOT_DEFAULTS = ['sequence', 'connection', 'setting', 'now', 'pay-link'] as const;
 export type OutlineSlotDefault = (typeof OUTLINE_SLOT_DEFAULTS)[number];
 
 export interface OutlineSlot {
@@ -226,8 +291,18 @@ const outlineSlotShape = {
   default: z.enum(OUTLINE_SLOT_DEFAULTS).optional(),
 };
 
-/** One column of a `collection`. A column is never itself a collection. */
-export const outlineLeafSlotSchema = z.object(outlineSlotShape).strict();
+/**
+ * One column of a `collection`. A column is never itself a collection (it
+ * has no `columns`), and never a picture: a list of a thousand lines is no
+ * place to read a thousand files.
+ */
+export const outlineLeafSlotSchema = z
+  .object(outlineSlotShape)
+  .strict()
+  .refine((slot) => slot.type !== 'picture', {
+    message: 'a collection column is never a picture',
+    path: ['type'],
+  });
 
 /**
  * The depth limit is in the SCHEMA, not in a comment.
