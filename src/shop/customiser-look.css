@@ -1,0 +1,18 @@
+/*
+ * The Customiser's editor in Marlow Press's look.
+ *
+ * The editor reads the page's colours through its own `--cz-` variables,
+ * each falling back to the comps' light values. The app's tokens already
+ * carry most of those names; this file sets the few the app names otherwise
+ * (its type, its shadows, its focus ring), so the editor follows the shop in
+ * both themes.
+ */
+.cz {
+  --cz-mono: var(--font-mono);
+  --cz-shadow: var(--shadow);
+  --cz-shadow-lift: var(--shadow-lg);
+  font-family: var(--font-sans);
+}
+.cz :focus-visible {
+  outline-color: var(--focus-ring);
+}

@@ -52,6 +52,7 @@ import { chrome } from "../strings/chrome.ts";
 import { screensCustomer } from "../strings/screensCustomer.ts";
 import { screensShop } from "../strings/screensShop.ts";
 import { data } from "../strings/data.ts";
+import { shop } from "../strings/shop.ts";
 
 /**
  * Parity guard. `en-US` defines the keys; the other seven must each carry a
@@ -70,7 +71,8 @@ const AREAS: [
   Area<(typeof screensShop)["en-US"]>,
   Area<(typeof data)["en-US"]>,
   Area<(typeof addOns)["en-US"]>,
-] = [chrome, screensCustomer, screensShop, data, addOns];
+  Area<(typeof shop)["en-US"]>,
+] = [chrome, screensCustomer, screensShop, data, addOns, shop];
 
 export const MESSAGES = Object.fromEntries(
   LOCALE_TAGS.map((t) => [t, Object.assign({}, ...AREAS.map((a) => a[t] ?? {}))]),
@@ -82,7 +84,8 @@ export type MessageKey =
   | keyof (typeof screensCustomer)["en-US"]
   | keyof (typeof screensShop)["en-US"]
   | keyof (typeof data)["en-US"]
-  | keyof (typeof addOns)["en-US"];
+  | keyof (typeof addOns)["en-US"]
+  | keyof (typeof shop)["en-US"];
 
 /** One add-on's bundle, as it travels on the add-on object. */
 export type AddOnMessages = Readonly<Record<string, Readonly<Record<string, string>>>>;
