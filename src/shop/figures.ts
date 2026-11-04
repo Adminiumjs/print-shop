@@ -21,30 +21,39 @@ export interface Part {
   label: MessageKey | { finish: "lamination" | "spot_uv" | "corners" | "edges" | "canvas" };
   /** What a row of this kind counts toward in "What moves this price". */
   lever: boolean;
+  /** Whether the job takes this line: a finish it chose, its packing, a proof by post, express, a cap. */
+  shown: (amount: string, job: Row) => boolean;
 }
 
+const yes = (value: unknown): boolean => value === true || value === 1 || value === "1" || value === "true";
+const always = () => true;
+const nonZero = (amount: string) => Number(amount) !== 0;
+
 export const PARTS: Part[] = [
-  { column: "setup_cost", label: "shop.quote.part.setup", lever: false },
-  { column: "print_cost", label: "shop.quote.part.print", lever: true },
-  { column: "material_cost", label: "shop.quote.part.material", lever: true },
-  { column: "lamination_cost", label: { finish: "lamination" }, lever: true },
-  { column: "spot_uv_cost", label: { finish: "spot_uv" }, lever: true },
-  { column: "corners_cost", label: { finish: "corners" }, lever: true },
-  { column: "edges_cost", label: { finish: "edges" }, lever: true },
-  { column: "canvas_cost", label: { finish: "canvas" }, lever: true },
-  { column: "minimum_cost", label: "shop.quote.part.minimum", lever: false },
-  { column: "packaging_cost", label: "shop.quote.part.packaging", lever: true },
-  { column: "proof_cost", label: "shop.quote.part.proof", lever: true },
-  { column: "express_cost", label: "shop.quote.part.express", lever: true },
-  { column: "cap_saving", label: "shop.quote.part.cap", lever: false },
+  { column: "setup", label: "shop.quote.part.setup", lever: false, shown: always },
+  { column: "print_charge", label: "shop.quote.part.print", lever: true, shown: always },
+  { column: "material_charge", label: "shop.quote.part.material", lever: true, shown: always },
+  { column: "lamination_charge", label: { finish: "lamination" }, lever: true, shown: nonZero },
+  { column: "spot_uv_charge", label: { finish: "spot_uv" }, lever: true, shown: nonZero },
+  { column: "corners_charge", label: { finish: "corners" }, lever: true, shown: nonZero },
+  { column: "edges_charge", label: { finish: "edges" }, lever: true, shown: nonZero },
+  { column: "canvas_charge", label: { finish: "canvas" }, lever: true, shown: nonZero },
+  { column: "minimum_charge", label: "shop.quote.part.minimum", lever: false, shown: (amount) => Number(amount) > 0 },
+  { column: "packaging_charge", label: "shop.quote.part.packaging", lever: true, shown: (_, job) => job["packaging_id"] !== null && job["packaging_id"] !== undefined },
+  { column: "proof_charge", label: "shop.quote.part.proof", lever: true, shown: (_, job) => yes(job["proof_by_post"]) },
+  { column: "express_charge", label: "shop.quote.part.express", lever: true, shown: (_, job) => yes(job["express"]) },
+  // Negative when the next break would cost no less: the difference comes off.
+  { column: "cap_charge", label: "shop.quote.part.cap", lever: false, shown: (amount) => Number(amount) < 0 },
 ];
 
-/** The job's price a piece, as the rate card works it out. */
+/** The job's price a piece, ex tax, as the rate card works it out (`price` over `qty`, rounded by Adminium). */
 export const EACH = "each";
-/** The quantity the job is capped at the price of, when the next break would cost no more. */
-export const CAPPED_AT = "cap_qty";
-/** The job's area, for a large-format job. */
-export const AREA = "area_m2";
+/** The next quantity break: what a capped job costs the same as. */
+export const NEXT_QTY = "next_qty";
+/** The line a capped job's price is held down by. */
+export const CAP = "cap_charge";
+/** A large-format piece's area, in square metres. */
+export const AREA = "area_each";
 
 /** A figure the answer carries: its decimal text, or null when the row has none. */
 export function figure(row: Row | null | undefined, column: string): string | null {
@@ -52,9 +61,16 @@ export function figure(row: Row | null | undefined, column: string): string | nu
   return value === null || value === undefined || value === "" ? null : String(value);
 }
 
-/** The parts of a job's price its answer carries, in the panel's order. */
+/** The quantity a job is capped at the price of (999 flyers cost what 1000 do), or null when it is not capped. */
+export function cappedAt(job: Row | null | undefined): string | null {
+  const cap = figure(job, CAP);
+  return cap !== null && Number(cap) < 0 ? figure(job, NEXT_QTY) : null;
+}
+
+/** The parts of a job's price its answer carries and the job takes, in the panel's order. */
 export function partsOf(job: Row | null | undefined): { part: Part; amount: string }[] {
-  return PARTS.map((part) => ({ part, amount: figure(job, part.column) })).filter((p): p is { part: Part; amount: string } => p.amount !== null);
+  if (job === null || job === undefined) return [];
+  return PARTS.map((part) => ({ part, amount: figure(job, part.column) })).filter((p): p is { part: Part; amount: string } => p.amount !== null && p.part.shown(p.amount, job));
 }
 
 /**
@@ -71,15 +87,13 @@ export function levers(job: Row | null | undefined): Part[] {
 
 /**
  * The delivery an order comes to, as its answer says it: the band its
- * weight falls in and that band's price, or none — over the top band, the
- * works quotes it by hand.
+ * weight falls in, the order's own `delivery`, and whether the works quotes
+ * it by hand (`delivery_to_quote`: delivered, and over every band).
  */
 export function deliveryOf(order: Row | null | undefined, bands: readonly Band[]): { band: Band | null; price: string | null; toQuote: boolean; weight: string | null } {
   const id = order?.["delivery_band_id"];
   const band = id === null || id === undefined ? null : (bands.find((b) => String(b.id) === String(id)) ?? null);
-  const weight = figure(order, "weight_kg");
-  // The band's price is the rate card's row; the order's own `band_price` is not among what it answers.
-  return { band, price: figure(order, "band_price") ?? band?.price ?? null, toQuote: order !== null && order !== undefined && band === null && weight !== null, weight };
+  return { band, price: figure(order, "delivery"), toQuote: Number(order?.["delivery_to_quote"] ?? 0) === 1, weight: figure(order, "weight_kg") };
 }
 
 /** The top of the weight bands, in kilograms: over it, delivery is quoted by hand. */

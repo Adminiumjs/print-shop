@@ -82,6 +82,7 @@ describe("the tables of the rate card, the orders and the works", () => {
       "saved_quotes",
       "quote_lines",
       "sample_requests",
+      "sample_stocks",
       "messages",
     ]);
   });

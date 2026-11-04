@@ -22,6 +22,8 @@ export const ELSEWHERE = {
   delivery: "delivery",
   findUs: "find-us",
   savedDesign: "design",
+  // The sign-in link Adminium e-mails lands here, its code in the fragment.
+  signIn: "c",
 } as const;
 export type Elsewhere = keyof typeof ELSEWHERE;
 

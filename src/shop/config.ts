@@ -5,7 +5,7 @@
  * packaging, and a large-format job's limits. Nothing here prices anything:
  * the choices become a job's values, and Adminium answers what they cost.
  */
-import type { Catalogue, Id, JobValues, Material, Option, OptionKind, Product, Rule } from "./port.ts";
+import type { Catalogue, Id, JobValues, Material, Option, OptionKind, Product, Row, Rule } from "./port.ts";
 
 /** What a customer chose on a product's page: each of its own options by id, and how many. */
 export interface Choice {
@@ -219,4 +219,40 @@ export function trimOf(catalogue: Catalogue, product: Product, choice: Choice): 
   const option = optionById(catalogue, choice.sizeId);
   const preset = option === null ? null : catalogue.sizes.find((s) => same(s.id, option.sizeId));
   return preset === undefined || preset === null ? null : { w: preset.width, h: preset.height };
+}
+
+/**
+ * A job or a quote line as it was configured, as the configurator takes it
+ * again: each option the row names if the product still offers it, else the
+ * works' first; then settled by today's rules (a finish no longer offered on
+ * that stock comes off).
+ */
+export function choiceOf(catalogue: Catalogue, product: Product, row: Row): Choice {
+  const start = firstChoice(catalogue, product);
+  const kept = (kind: OptionKind, column: string, fallback: Id | null): Id | null => {
+    const value = row[column];
+    if (value === null || value === undefined || value === "") return kind === "material" || kind === "sides" || kind === "size" ? fallback : null;
+    return optionsOf(catalogue, product.id, kind).some((o) => same(o.id, value as Id)) ? (value as Id) : fallback;
+  };
+  const truthy = (value: unknown) => value === true || value === 1 || value === "1" || value === "true";
+  const packaging = row["packaging_id"];
+  const sheet = product.kind === "sheet";
+  const choice: Choice = {
+    materialId: kept("material", "material_option_id", start.materialId),
+    sizeId: sheet ? kept("size", "size_option_id", start.sizeId) : null,
+    width: sheet ? null : Number(row["width_mm"] ?? start.width),
+    height: sheet ? null : Number(row["height_mm"] ?? start.height),
+    sidesId: kept("sides", "sides_option_id", start.sidesId),
+    laminationId: kept("lamination", "lamination_option_id", null),
+    look: row["look"] === "gloss" ? "gloss" : "matt",
+    spotUvId: kept("spot_uv", "spot_uv_option_id", null),
+    cornersId: kept("corners", "corners_option_id", null),
+    edgesId: sheet ? null : kept("edges", "edges_option_id", start.edgesId),
+    canvasId: sheet ? null : kept("canvas", "canvas_option_id", start.canvasId),
+    packagingId: sheet && packagingFor(catalogue, product).some((p) => same(p.id, packaging as Id)) ? (packaging as Id) : start.packagingId,
+    proof: truthy(row["proof_by_post"]),
+    express: truthy(row["express"]),
+    qty: Math.max(1, Number(row["qty"] ?? start.qty)),
+  };
+  return settle(catalogue, product, choice).choice;
 }

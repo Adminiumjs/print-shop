@@ -17,7 +17,8 @@ import "../customiser-look.css";
 
 import { useI18n, type MessageKey } from "../../i18n/index.tsx";
 import { finishBlocked, LARGE_MAX_QTY, nextStep, optionById, optionsOf, packagingFor, sizeLimits, sizeProblems, stepsOf, type Choice, type FinishKind } from "../config.ts";
-import { AREA, CAPPED_AT, deliveryOf, EACH, figure, levers, partsOf, type Part } from "../figures.ts";
+import { startSaveQuote, useAfter } from "../after.ts";
+import { AREA, cappedAt, deliveryOf, EACH, figure, levers, partsOf, type Part } from "../figures.ts";
 import { dayFull, decimal, money } from "../format.ts";
 import { ProductIcon, rich, tintOf } from "../parts.tsx";
 import type { Catalogue, Id, Option, Product, Row } from "../port.ts";
@@ -224,7 +225,7 @@ function Quantity({ catalogue, product, choice }: { catalogue: Catalogue; produc
   }
   const steps = stepsOf(catalogue, product);
   const { job } = jobFigures();
-  const capped = figure(job, CAPPED_AT);
+  const capped = cappedAt(job);
   const next = nextStep(catalogue, product, choice.qty);
   const each = figure(job, EACH);
   const nextEach = next === null ? null : figure(stepFigures(next), EACH);
@@ -344,7 +345,7 @@ function Options({ catalogue, product, choice }: { catalogue: Catalogue; product
 /** A part's row name: its own, or the finish option the job chose. */
 function partLabel(part: Part, catalogue: Catalogue, choice: Choice, t: T, job: Row | null, locale: string): string {
   if (typeof part.label === "string") {
-    if (part.column === "cap_saving") return t(part.label, { n: new Intl.NumberFormat(locale).format(Number(figure(job, CAPPED_AT) ?? 0)) });
+    if (part.column === "cap_charge") return t(part.label, { n: new Intl.NumberFormat(locale).format(Number(cappedAt(job) ?? 0)) });
     return t(part.label);
   }
   const option = optionById(catalogue, choice[FINISH_KINDS[part.label.finish]] as Id | null);
@@ -365,7 +366,7 @@ export function QuoteRows({ catalogue, choice }: { catalogue: Catalogue; choice:
   const rows: { key: string; label: string; detail?: string; amount: string; tone?: "strong" | "zero" | "pos" }[] = [];
   if (parts.length === 0 && price !== null) rows.push({ key: "price", label: t("shop.quote.part.job"), amount: m(price), tone: "strong" });
   for (const { part, amount } of parts) {
-    rows.push({ key: part.column, label: partLabel(part, catalogue, choice, t, job, locale), amount: m(amount), ...(part.column === "cap_saving" ? { tone: "pos" as const } : Number(amount) === 0 ? { tone: "zero" as const } : ["print_cost", "material_cost", "setup_cost"].includes(part.column) ? { tone: "strong" as const } : {}) });
+    rows.push({ key: part.column, label: partLabel(part, catalogue, choice, t, job, locale), amount: m(amount), ...(part.column === "cap_charge" ? { tone: "pos" as const } : Number(amount) === 0 ? { tone: "zero" as const } : ["print_charge", "material_charge", "setup"].includes(part.column) ? { tone: "strong" as const } : {}) });
   }
   if (order !== null) {
     const about = weight === null ? undefined : t("shop.quote.about", { kg: decimal(weight, locale, 1) });
@@ -436,6 +437,7 @@ function QuotePanel({ catalogue, product, choice }: { catalogue: Catalogue; prod
   const failed = quote?.state === "failed";
   const { job, order } = jobFigures();
   const moves = levers(job);
+  const saving = useAfter((s) => s.saving.busy);
   const deliveryMoves = delivery === "deliver" && Number(order?.["delivery"] ?? 0) > 0;
   return (
     <aside className="mp-quote mp-quote--panel" aria-labelledby="mp-quote-title">
@@ -492,6 +494,9 @@ function QuotePanel({ catalogue, product, choice }: { catalogue: Catalogue; prod
             <button type="button" className="mp-button mp-button--accent mp-quote-cta" onClick={() => addJobForArtwork()}>
               {t("shop.quote.send")}
               <ArrowRight size={16} aria-hidden="true" className="mp-flip" />
+            </button>
+            <button type="button" className="mp-button mp-quote-save" aria-busy={saving || undefined} onClick={() => void startSaveQuote()}>
+              {t("after.save.button")}
             </button>
           </div>
         </div>

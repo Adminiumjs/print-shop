@@ -6,6 +6,7 @@
  * decimal text the server sent ("87.55") until it is formatted.
  */
 import type { CustomiserApi } from "../../vendor/customiser/index.js";
+import type { AfterPort } from "./after-port.ts";
 
 export type Id = string | number;
 export type Row = Record<string, unknown>;
@@ -74,6 +75,10 @@ export interface Size {
   name: string;
   width: number;
   height: number;
+  /** How many print on a press sheet; null for a size printed direct. */
+  up: number | null;
+  /** Printed direct (an envelope), not imposed on a press sheet. */
+  direct: boolean;
 }
 
 export interface Finish {
@@ -133,6 +138,13 @@ export interface Works {
   expressPercent: string | null;
   proofPostPrice: string | null;
   proofPostDays: number | null;
+  /** The working days a change asked on a proof adds. */
+  changeDays: number | null;
+  /** How long a large-format job may be and still go rolled in a tube, in millimetres. */
+  tubeMaxMm: number | null;
+  /** The order and quote numbers' prefixes ("MP-", "MQ-"). */
+  refPrefix: string | null;
+  quotePrefix: string | null;
   artworkMaxMb: number;
   minDpi: number;
   takingOrders: boolean;
@@ -221,6 +233,24 @@ export interface Placed extends Figures {
   link: { token: string } | null;
 }
 
+/** A saved quote as the page sends it: the customer's values, and its lines (one job's values each). */
+export interface QuoteBody {
+  values: Row;
+  children: { quote_lines: { values: JobValues }[] };
+}
+
+/** What a quote's dry run answers: the quote's figures, and each line's. */
+export interface QuoteFigures {
+  quote: Row;
+  lines: Row[];
+}
+
+/** A quote saved: its figures, and its own link with a session on it already open. */
+export interface SavedQuote extends QuoteFigures {
+  replayed: boolean;
+  link: { token: string; session: { token: string; expiresAt: number } } | null;
+}
+
 /** A file Adminium took for a job's artwork, until the order names it. */
 export interface Uploaded {
   id: string;
@@ -255,6 +285,14 @@ export interface ShopPort {
   upload(file: Blob, name: string, signal?: AbortSignal): Promise<Uploaded>;
   /** The Customiser's calls, through the shop's own clients. */
   customiser(): CustomiserApi;
+  /** A dry run of a saved quote: every figure its save would write, nothing kept. */
+  priceQuote(body: QuoteBody): Promise<QuoteFigures>;
+  /** A quote saved once, at the total the customer was shown, with its own link. */
+  saveQuote(body: QuoteBody, clientKey: string, expectTotal: string): Promise<SavedQuote>;
+  /** The pages after an order: the sign-in, an order's own link, proofs, quotes, sample packs. */
+  after(): AfterPort;
+  /** The app's own settings, as Adminium serves them (its working days, its cut-off). */
+  settings(): Readonly<Record<string, unknown>>;
 }
 
 /** A refusal is a thrown `ShopError`; anything else is a failure to reach Adminium. */

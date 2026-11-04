@@ -79,7 +79,8 @@
         "templates": "/templates",
         "delivery": "/delivery",
         "findUs": "/find-us",
-        "customiserDesign": "/design"
+        "customiserDesign": "/design",
+        "link": "/c"
       }
     }
   ],
@@ -6055,6 +6056,28 @@
             }
           },
           {
+            "ref": "each",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Price a piece (ex tax)"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "div": [
+                      "price",
+                      "qty"
+                    ]
+                  },
+                  2
+                ]
+              }
+            }
+          },
+          {
             "ref": "weight_kg",
             "type": "decimal",
             "nullable": true,
@@ -10414,6 +10437,28 @@
             }
           },
           {
+            "ref": "each",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Price a piece (ex tax)"
+            },
+            "rules": {
+              "formula": {
+                "round": [
+                  {
+                    "div": [
+                      "price",
+                      "qty"
+                    ]
+                  },
+                  2
+                ]
+              }
+            }
+          },
+          {
             "ref": "weight_kg",
             "type": "decimal",
             "nullable": true,
@@ -10864,6 +10909,55 @@
             },
             "nullable": true,
             "unique": true
+          }
+        ]
+      },
+      {
+        "ref": "sample_stocks",
+        "label": {
+          "en-US": "Stock in a sample pack"
+        },
+        "labelPlural": {
+          "en-US": "Stocks in sample packs"
+        },
+        "keyField": "material_id",
+        "unique": [
+          [
+            "request_id",
+            "material_id"
+          ]
+        ],
+        "columns": [
+          {
+            "ref": "id",
+            "type": "int",
+            "role": "pk"
+          },
+          {
+            "ref": "request_id",
+            "type": "fk",
+            "references": "sample_requests",
+            "label": {
+              "en-US": "Sample pack"
+            }
+          },
+          {
+            "ref": "material_id",
+            "type": "fk",
+            "references": "materials",
+            "label": {
+              "en-US": "Stock"
+            },
+            "rules": {
+              "linkable": {
+                "where": [
+                  {
+                    "column": "active",
+                    "eq": true
+                  }
+                ]
+              }
+            }
           }
         ]
       },
@@ -13160,6 +13254,10 @@
         "table:@sample_requests:create",
         "table:@sample_requests:update",
         "table:@sample_requests:delete",
+        "table:@sample_stocks:read",
+        "table:@sample_stocks:create",
+        "table:@sample_stocks:update",
+        "table:@sample_stocks:delete",
         "table:@messages:read",
         "table:@messages:create",
         "table:@messages:update",
@@ -13722,6 +13820,7 @@
         "proof_charge",
         "express_charge",
         "cap_charge",
+        "each",
         "up",
         "sheets",
         "print_rate",
@@ -13741,6 +13840,7 @@
         "express_percent",
         "rolls",
         "design_id",
+        "design_code",
         "proof_state",
         "changes",
         "turnaround_days",
@@ -13928,6 +14028,7 @@
         "proof_charge",
         "express_charge",
         "cap_charge",
+        "each",
         "up",
         "sheets",
         "print_rate",
@@ -13946,7 +14047,8 @@
         "packaging_price",
         "express_percent",
         "rolls",
-        "design_id"
+        "design_id",
+        "design_code"
       ]
     },
     {
@@ -14187,6 +14289,8 @@
       "select": [
         "id",
         "works_name",
+        "ref_prefix",
+        "quote_prefix",
         "address",
         "phone",
         "email",
@@ -14383,6 +14487,7 @@
             "proof_charge",
             "express_charge",
             "cap_charge",
+            "each",
             "up",
             "sheets",
             "print_rate",
@@ -14402,6 +14507,7 @@
             "express_percent",
             "rolls",
             "design_id",
+            "design_code",
             "proof_state",
             "changes",
             "turnaround_days",
@@ -14604,6 +14710,7 @@
             "proof_charge",
             "express_charge",
             "cap_charge",
+            "each",
             "up",
             "sheets",
             "print_rate",
@@ -14622,7 +14729,8 @@
             "packaging_price",
             "express_percent",
             "rolls",
-            "design_id"
+            "design_id",
+            "design_code"
           ],
           "position": "position",
           "min": 1,
@@ -14689,6 +14797,23 @@
             "max": 120
           }
         ]
+      },
+      "children": {
+        "sample_stocks": {
+          "via": "request_id",
+          "writable": [
+            "material_id"
+          ],
+          "requires": [
+            "material_id"
+          ],
+          "select": [
+            "id",
+            "material_id"
+          ],
+          "min": 1,
+          "max": 12
+        }
       },
       "clientKey": "client_key"
     },
@@ -14809,6 +14934,7 @@
         "proof_charge",
         "express_charge",
         "cap_charge",
+        "each",
         "up",
         "sheets",
         "print_rate",
@@ -14828,6 +14954,7 @@
         "express_percent",
         "rolls",
         "design_id",
+        "design_code",
         "proof_state",
         "changes",
         "turnaround_days",
@@ -15023,6 +15150,7 @@
         "proof_charge",
         "express_charge",
         "cap_charge",
+        "each",
         "up",
         "sheets",
         "print_rate",
@@ -15041,7 +15169,8 @@
         "packaging_price",
         "express_percent",
         "rolls",
-        "design_id"
+        "design_id",
+        "design_code"
       ]
     }
   ],

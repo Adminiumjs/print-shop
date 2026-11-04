@@ -23,6 +23,8 @@ export const SHOP_REFS = {
   settings: ["settings", ""],
   placeOrder: ["orders", "_verified_2"],
   orderByLink: ["orders", "_claimed"],
+  saveQuote: ["saved_quotes", "_verified_2"],
+  samplePack: ["sample_requests", ""],
 } as const satisfies Record<string, readonly [string, string]>;
 
 export type ShopRefName = keyof typeof SHOP_REFS;
@@ -49,4 +51,6 @@ export const KEYS = {
   order: "order",
   /** A saved design, by its own link: the Customiser's. */
   design: "customiser-link",
+  /** One saved quote, by its own link (the manifest's `quote` key). */
+  quote: "quote",
 } as const;

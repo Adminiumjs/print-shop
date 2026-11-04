@@ -533,6 +533,8 @@ function pricing(): Column[] {
     money("next_work", "Work at the next break", { formula: { add: [NEXT_BEFORE_EXPRESS, expressOn(NEXT_BEFORE_EXPRESS)] } }),
     money("cap_charge", "Capped at the next break", { formula: { if: [{ and: [isSheet, { lt: ["next_work", "work"] }] }, { sub: ["next_work", "work"] }, 0] } }),
     money("price", "Price (ex tax)", { formula: { add: ["work", "cap_charge"] } }),
+    // The price a piece, ex tax: what the quantity chips and the quote panel say "each" by.
+    money("each", "Price a piece (ex tax)", { formula: cents({ div: ["price", "qty"] }) }),
     // What it weighs, and how it travels.
     figure("weight_kg", "decimal", "Weight (kg)", {
       formula: {
@@ -1152,6 +1154,19 @@ export const TABLES: Table[] = [
     ],
   },
   {
+    // A stock the customer ticked to see in their sample pack: one a row.
+    ref: "sample_stocks",
+    label: l("Stock in a sample pack"),
+    labelPlural: l("Stocks in sample packs"),
+    keyField: "material_id",
+    unique: [["request_id", "material_id"]],
+    columns: [
+      id,
+      fk("request_id", "sample_requests", "Sample pack"),
+      fk("material_id", "materials", "Stock", { rules: { linkable: { where: [{ column: "active", eq: true }] } } }),
+    ],
+  },
+  {
     ref: "messages",
     label: l("E-mail"),
     labelPlural: l("E-mails"),
@@ -1218,6 +1233,7 @@ export const BREAKDOWN = [
 
 /** What the breakdown's words are counted from: sheets, up, the rates and the break. */
 export const BREAKDOWN_DETAIL = [
+  "each",
   "up",
   "sheets",
   "print_rate",

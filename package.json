@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Print Shop — an open-source print-ordering and works-floor example app for Adminium.",
+  "description": "Print Shop \u2014 an open-source print-ordering and works-floor example app for Adminium.",
   "license": "AGPL-3.0-only",
   "scripts": {
     "dev": "vite",
@@ -20,6 +20,7 @@
     "manifest": "vite-node scripts/write-manifest.ts",
     "manifest:check": "vite-node scripts/check-manifest.ts",
     "sample": "vite-node scripts/write-sample.ts",
+    "templates": "vite-node scripts/write-templates.ts",
     "sync:customiser": "node scripts/sync-customiser.mjs"
   },
   "dependencies": {

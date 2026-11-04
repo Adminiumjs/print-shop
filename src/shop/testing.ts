@@ -9,7 +9,8 @@
  * Tests only; nothing that ships imports it.
  */
 import type { CustomiserApi } from "../../vendor/customiser/index.js";
-import { ShopError, type Catalogue, type Figures, type Id, type JobNode, type Option, type OrderBody, type Placed, type Product, type Refused, type Row, type ShopConfig, type ShopPort, type Uploaded } from "./port.ts";
+import { fakeAfter, type FakeAfter } from "./after-testing.ts";
+import { ShopError, type Catalogue, type Figures, type Id, type JobNode, type Option, type OrderBody, type Placed, type Product, type QuoteBody, type QuoteFigures, type Refused, type Row, type SavedQuote, type ShopConfig, type ShopPort, type Uploaded } from "./port.ts";
 
 const product = (p: Partial<Product> & Pick<Product, "id" | "code" | "name" | "family" | "kind">): Product => ({
   line: null,
@@ -70,8 +71,8 @@ export function sampleCatalogue(): Catalogue {
       { id: 4, code: "pvc510", name: "510gsm PVC banner", shortName: "510gsm PVC", spec: "510gsm · PVC", kind: "roll", coated: false, gsm: 510, rate: "28.00", rollWidth: 1370 },
     ],
     sizes: [
-      { id: 1, code: "bcard", name: "Business card", width: 85, height: 55 },
-      { id: 2, code: "a4", name: "A4", width: 210, height: 297 },
+      { id: 1, code: "bcard", name: "Business card", width: 85, height: 55, up: 24, direct: false },
+      { id: 2, code: "a4", name: "A4", width: 210, height: 297, up: 2, direct: false },
     ],
     finishes: [],
     breaks: [25, 50, 100, 250, 500, 1000].map((minQty, i) => ({ id: i + 1, minQty })),
@@ -105,6 +106,10 @@ export function sampleCatalogue(): Catalogue {
       expressPercent: "35.00",
       proofPostPrice: "12.00",
       proofPostDays: 2,
+      changeDays: 1,
+      tubeMaxMm: 1500,
+      refPrefix: "MP-",
+      quotePrefix: "MQ-",
       artworkMaxMb: 100,
       minDpi: 150,
       takingOrders: true,
@@ -116,8 +121,9 @@ const cents = (n: number) => Math.round(n * 100);
 const fixed = (c: number) => (c / 100).toFixed(2);
 
 export interface FakeCall {
-  call: "quote" | "place" | "upload";
+  call: "quote" | "place" | "upload" | "priceQuote" | "saveQuote";
   body?: OrderBody;
+  quoteBody?: QuoteBody;
   clientKey?: string;
   expect?: string;
   name?: string;
@@ -136,6 +142,8 @@ export interface FakePort extends ShopPort {
   /** Hold the uploads until let go. */
   holdUploads: () => () => void;
   customiserApi: CustomiserApi;
+  /** The after-order door it hands the pages. */
+  afterPort: FakeAfter;
 }
 
 export function fakePort(catalogue: Catalogue = sampleCatalogue()): FakePort {
@@ -161,11 +169,14 @@ export function fakePort(catalogue: Catalogue = sampleCatalogue()): FakePort {
       qty: v.qty,
       price: fixed(price),
       each: fixed(Math.round(price / v.qty)),
-      setup_cost: p.kind === "sheet" ? "18.00" : null,
-      print_cost: p.kind === "sheet" ? fixed(price - 1800 - (laminated ? 960 : 0)) : null,
-      lamination_cost: laminated ? "9.60" : null,
-      cap_qty: capped,
-      cap_saving: capped === null ? null : "-0.10",
+      setup: p.kind === "sheet" ? "18.00" : null,
+      print_charge: p.kind === "sheet" ? fixed(price - 1800 - (laminated ? 960 : 0)) : null,
+      lamination_charge: laminated ? "9.60" : "0.00",
+      lamination_option_id: v.lamination_option_id ?? null,
+      next_qty: capped,
+      cap_charge: capped === null ? "0.00" : "-0.10",
+      proof_by_post: v.proof_by_post,
+      express: v.express,
       weight_kg: p.kind === "sheet" ? (v.qty / 400).toFixed(2) : (2.5 * v.qty).toFixed(2),
       design_id: v.design_code === undefined ? null : 900,
       turnaround_days: v.express ? 1 : 3,
@@ -225,7 +236,32 @@ export function fakePort(catalogue: Catalogue = sampleCatalogue()): FakePort {
   };
 
   const api = {} as CustomiserApi;
+  const afterPort = fakeAfter();
+  let quoteNumber = 2042;
+  /** A saved quote's figures: its lines as jobs, the quote as an order. */
+  const quoteFigures = (body: QuoteBody): QuoteFigures => {
+    const made = figures({ values: body.values, children: { jobs: body.children.quote_lines } });
+    return { quote: made.order, lines: made.jobs };
+  };
   return {
+    afterPort,
+    after: () => afterPort,
+    settings: () => ({ working_days: "mon,tue,wed,thu,fri", cutoff: "14:00" }),
+    priceQuote: (body) => {
+      calls.push({ call: "priceQuote", quoteBody: body });
+      return answer(() => quoteFigures(body));
+    },
+    saveQuote: (body, clientKey, expect) => {
+      calls.push({ call: "saveQuote", quoteBody: body, clientKey, expect });
+      return answer((): SavedQuote => {
+        const made = quoteFigures(body);
+        const number = `MQ-${quoteNumber}`;
+        quoteNumber += 1;
+        afterPort.rows.quotes.push({ id: quoteNumber, number, label: null, email: body.values["email"], delivery_method: body.values["delivery_method"], total: made.quote["total"], created_at: "2026-08-05T09:20:00Z" });
+        afterPort.rows.quoteLines.push(...body.children.quote_lines.map((line, i) => ({ id: quoteNumber * 10 + i, quote_id: quoteNumber, position: i + 1, ...line.values })));
+        return { quote: { ...made.quote, number }, lines: made.lines, replayed: false, link: { token: "QUOTECODE000000B", session: { token: "QS", expiresAt: Date.parse("2027-01-01") } } };
+      });
+    },
     calls,
     customiserApi: api,
     raise: (by) => {

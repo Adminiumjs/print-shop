@@ -120,6 +120,8 @@ export const JOB_SELECT = [
   "position",
   ...CONFIG_SELECT,
   "design_id",
+  // The design's code: the customer's own pages open each design by it (Your designs).
+  "design_code",
   "proof_state",
   "changes",
   "turnaround_days",
@@ -157,7 +159,7 @@ export const QUOTE_SELECT = [
   "created_at",
   "link_expires",
 ];
-export const QUOTE_LINE_SELECT = ["id", "quote_id", "position", ...CONFIG_SELECT, "design_id"];
+export const QUOTE_LINE_SELECT = ["id", "quote_id", "position", ...CONFIG_SELECT, "design_id", "design_code"];
 
 /** The customer's answer to a proof: approve it, or ask for a change in their own words, while it waits. */
 const ANSWER = {
@@ -215,6 +217,9 @@ export const OPTION_SELECT = ["id", "product_id", "kind", "code", "name", "mater
 export const SETTINGS_SELECT = [
   "id",
   "works_name",
+  // A reference's prefixes: the lookup knows a quote's from an order's.
+  "ref_prefix",
+  "quote_prefix",
   "address",
   "phone",
   "email",
@@ -364,6 +369,8 @@ export const PUBLIC_ACCESS = [
     requires: ["name", "email", "address_line1", "town", "postcode"],
     requireSetting: [{ table: "settings", column: "sample_packs" }],
     anonymous: { perValue: { columns: ["email"], n: 3 }, perIpHour: 3, perKeyHour: 60, plainText: PLAIN_ADDRESS },
+    // The stocks ticked, each a link to a stock in use: one to twelve.
+    children: { sample_stocks: { via: "request_id", writable: ["material_id"], requires: ["material_id"], select: ["id", "material_id"], min: 1, max: 12 } },
     clientKey: "client_key",
   },
 

@@ -59,6 +59,10 @@ vi.mock("../../vendor/customiser/index.js", () => ({
   },
   designRefusal: () => null,
   heldDesign: () => null,
+  hasSavedDesigns: () => false,
+  readDesigns: async () => [],
+  openSavedLink: async () => "unknown",
+  YourDesigns: () => null,
 }));
 vi.mock("../../vendor/customiser/editor.css", () => ({}));
 
@@ -443,7 +447,9 @@ describe.each(["en-US", "ar-EG"] as const)("the customer side in %s", (locale) =
     await sweep(`${locale} · confirmation`);
     await press(".mp-confirmed-actions .mp-button--accent");
     expect(window.location.pathname).toBe("/order");
-    expect(window.location.hash).toBe("#LINKCODE0000000A");
+    // Follow your order takes the order's own link off the address and opens the order by it.
+    expect(window.location.hash).toBe("");
+    expect(port.afterPort.calls.filter((c) => c.call === "openShared").map((c) => c.args)).toEqual([["LINKCODE0000000A"]]);
   });
 
   it("an empty basket, collection, a failed shop and a page that isn't here", async () => {

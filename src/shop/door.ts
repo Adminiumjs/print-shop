@@ -13,6 +13,7 @@
 import { createPublicClient, newClientKey, pictureUrl, PublicApiError, type PublicClient, type PublicConfig } from "@adminiumjs/public-client";
 
 import { customiserApi, REFS as CUSTOMISER_REFS, type ClientLike, type CustomiserApi } from "../../vendor/customiser/index.js";
+import { AdminiumAfter, keyClient, type AfterPort } from "./after-port.ts";
 import { ARTWORK_COLUMN, KEYS, shopRefs, type ShopRefs } from "./refs.ts";
 import {
   ShopError,
@@ -34,7 +35,10 @@ import {
   type Row,
   type Rule,
   type RuleTest,
+  type SavedQuote,
   type ShopConfig,
+  type QuoteBody,
+  type QuoteFigures,
   type ShopPort,
   type Size,
   type Uploaded,
@@ -46,6 +50,8 @@ export interface ShopServed {
   publishableKey: string;
   tables?: Record<string, string>;
   publicKeys?: Record<string, string>;
+  /** The app's own settings as Adminium serves them (its working days, its cut-off). */
+  settings?: Record<string, unknown>;
 }
 
 export interface ShopDoorOptions {
@@ -58,6 +64,8 @@ export interface ShopDoorOptions {
 const PAGE = 200;
 /** The child list an order's jobs come back under. */
 const JOBS = "jobs";
+/** The child list a saved quote's lines come back under. */
+const QUOTE_LINES = "quote_lines";
 
 const text = (value: unknown): string | null => (value === null || value === undefined || value === "" ? null : String(value));
 const num = (value: unknown): number | null => (value === null || value === undefined || value === "" || Number.isNaN(Number(value)) ? null : Number(value));
@@ -141,7 +149,15 @@ const material = (row: Row): Material => ({
   rollWidth: num(row["roll_width_mm"]),
 });
 
-const size = (row: Row): Size => ({ id: row["id"] as Id, code: String(row["code"] ?? ""), name: String(row["name"] ?? ""), width: num(row["width_mm"]) ?? 0, height: num(row["height_mm"]) ?? 0 });
+const size = (row: Row): Size => ({
+  id: row["id"] as Id,
+  code: String(row["code"] ?? ""),
+  name: String(row["name"] ?? ""),
+  width: num(row["width_mm"]) ?? 0,
+  height: num(row["height_mm"]) ?? 0,
+  up: num(row["up"]),
+  direct: yes(row["direct"]),
+});
 const finish = (row: Row): Finish => ({ id: row["id"] as Id, code: String(row["code"] ?? ""), name: String(row["name"] ?? ""), group: String(row["group"] ?? "") });
 const breakRow = (row: Row): Break => ({ id: row["id"] as Id, minQty: num(row["min_qty"]) ?? 1 });
 const packaging = (row: Row): Packaging => ({
@@ -169,6 +185,10 @@ function works(row: Row): Works {
     expressPercent: text(row["express_percent"]),
     proofPostPrice: text(row["proof_post_price"]),
     proofPostDays: num(row["proof_post_days"]),
+    changeDays: num(row["change_days"]),
+    tubeMaxMm: num(row["tube_max_mm"]),
+    refPrefix: text(row["ref_prefix"]),
+    quotePrefix: text(row["quote_prefix"]),
     artworkMaxMb: num(row["artwork_max_mb"]) ?? 100,
     minDpi: num(row["min_dpi"]) ?? 150,
     takingOrders: row["taking_orders"] === undefined ? true : yes(row["taking_orders"]),
@@ -187,6 +207,7 @@ export class AdminiumShop implements ShopPort {
   readonly orderClient: PublicClient | null;
   private config$: Promise<PublicConfig> | null = null;
   private api: CustomiserApi | null = null;
+  private afterPort: AfterPort | null = null;
 
   constructor(served: ShopServed, options: ShopDoorOptions = {}) {
     this.served = served;
@@ -194,8 +215,8 @@ export class AdminiumShop implements ShopPort {
     this.fetchImpl = options.fetch;
     const make = (publishableKey: string, humanCheck: ShopDoorOptions["humanCheck"]) =>
       createPublicClient({ baseUrl: served.baseUrl, publishableKey, ...(options.fetch === undefined ? {} : { fetch: options.fetch }), ...(humanCheck === undefined ? {} : { humanCheck }) });
-    // Placing an order, sending a file and saving a design all ask the human check: solved before they are sent.
-    const client = make(served.publishableKey, options.humanCheck ?? { refs: [this.refs.placeOrder, CUSTOMISER_REFS.designs] });
+    // Placing an order, saving a quote, asking for samples and saving a design all ask the human check: solved before they are sent.
+    const client = make(served.publishableKey, options.humanCheck ?? { refs: [this.refs.placeOrder, this.refs.saveQuote, this.refs.samplePack, CUSTOMISER_REFS.designs] });
     if (client === null) throw new Error("The shop's key could not be used.");
     this.client = client;
     const orderKey = served.publicKeys?.[KEYS.order];
@@ -267,6 +288,40 @@ export class AdminiumShop implements ShopPort {
       }
       return { ...figuresOf(made), replayed: made.replayed, link: made.link === null ? null : { token: made.link.token } };
     });
+  }
+
+  priceQuote(body: QuoteBody): Promise<QuoteFigures> {
+    return answer(async () => {
+      const made = await this.client.quote<Row>(this.refs.saveQuote, { values: body.values, children: body.children as never });
+      return { quote: made.data, lines: (made.children[QUOTE_LINES] ?? []).map((line) => line.data) };
+    });
+  }
+
+  saveQuote(body: QuoteBody, clientKey: string, expectTotal: string): Promise<SavedQuote> {
+    return answer(async () => {
+      const made = await this.client.createTree<Row>(this.refs.saveQuote, { values: { ...body.values, client_key: clientKey }, children: body.children as never, expect: { total: expectTotal } });
+      const link = made.link !== null && made.link.session !== null && made.link.expiresAt !== null ? { token: made.link.token, session: { token: made.link.session, expiresAt: made.link.expiresAt } } : null;
+      return { quote: made.data, lines: (made.children[QUOTE_LINES] ?? []).map((line) => line.data), replayed: made.replayed, link };
+    });
+  }
+
+  after(): AfterPort {
+    if (this.afterPort !== null) return this.afterPort;
+    const quoteKey = this.served.publicKeys?.[KEYS.quote];
+    this.afterPort = new AdminiumAfter(
+      {
+        client: this.client,
+        orderClient: this.orderClient,
+        quoteClient: quoteKey === undefined ? null : (session) => keyClient(this.served.baseUrl, quoteKey, this.fetchImpl, session),
+      },
+      this.served.tables,
+    );
+    return this.afterPort;
+  }
+
+  /** The app's own settings, as Adminium served them with the keys. */
+  settings(): Readonly<Record<string, unknown>> {
+    return this.served.settings ?? {};
   }
 
   upload(file: Blob, name: string, signal?: AbortSignal): Promise<Uploaded> {

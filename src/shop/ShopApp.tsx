@@ -3,15 +3,17 @@
  * and the toasts.
  *
  * The screens of an order after it is placed (Follow an order, Reorder,
- * proofs, saved quotes, sample packs, templates, delivery, find us, a saved
- * design's own page) are routed here and drawn by their own modules
- * (`ELSEWHERE` in `route.ts`).
+ * proofs, saved quotes, sample packs, templates, delivery, find us, Your
+ * designs, the sign-in link's page) are routed here and drawn by their own
+ * modules (`ELSEWHERE` in `route.ts`).
  */
-import { CircleCheck, FileQuestion, Info, Moon, Printer, ShoppingBasket, Sun, TriangleAlert } from "lucide-react";
+import { CircleCheck, FileQuestion, FolderHeart, Info, Moon, Printer, ShoppingBasket, Sun, TriangleAlert } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 
 import "./shop.css";
+import "./after.css";
 
+import { hasSavedDesigns } from "../../vendor/customiser/index.js";
 import { useI18n, type MessageKey } from "../i18n/index.tsx";
 import { attachShopUrl, type Place } from "./route.ts";
 import { goView, loadShop, onShopNavigate, openArtwork, openProduct, tellWords, useShop, type ShopView } from "./store.ts";
@@ -21,6 +23,14 @@ import { ConfigureScreen } from "./screens/Configure.tsx";
 import { ConfirmedScreen } from "./screens/Confirmed.tsx";
 import { DesignScreen } from "./screens/Design.tsx";
 import { ProductsScreen } from "./screens/Products.tsx";
+import { useAfter } from "./after.ts";
+import { AgainScreen } from "./screens/Again.tsx";
+import { DesignsScreen, SignInScreen } from "./screens/Designs.tsx";
+import { DeliveryScreen, FindUsScreen, TemplatesScreen } from "./screens/Info.tsx";
+import { OrderScreen } from "./screens/Order.tsx";
+import { ProofsScreen } from "./screens/Proofs.tsx";
+import { QuotesScreen, SaveQuoteSheet } from "./screens/Quotes.tsx";
+import { SamplesScreen } from "./screens/Samples.tsx";
 
 const NAV: [ShopView, MessageKey][] = [
   ["products", "chrome.nav.products"],
@@ -68,10 +78,30 @@ function Screen({ view }: { view: ShopView }): ReactNode {
       return <BasketScreen />;
     case "confirmed":
       return <ConfirmedScreen />;
+    case "order":
+    case "find":
+      return <OrderScreen />;
+    case "proofs":
+      return <ProofsScreen />;
+    case "reorder":
+      return <AgainScreen />;
+    case "quotes":
+    case "quote":
+      return <QuotesScreen />;
+    case "samples":
+      return <SamplesScreen />;
+    case "templates":
+      return <TemplatesScreen />;
+    case "delivery":
+      return <DeliveryScreen />;
+    case "findUs":
+      return <FindUsScreen />;
+    case "savedDesign":
+      return <DesignsScreen />;
+    case "signIn":
+      return <SignInScreen />;
     case "missing":
       return <Missing />;
-    default:
-      return <Elsewhere />;
   }
 }
 
@@ -96,21 +126,6 @@ function Missing() {
           {t("shop.nav.follow")}
         </button>
       </div>
-    </section>
-  );
-}
-
-/** A screen the shop's other parts draw, not in this build. */
-function Elsewhere() {
-  const { t } = useI18n();
-  return (
-    <section className="mp-screen mp-empty" aria-labelledby="mp-elsewhere-title">
-      <h1 id="mp-elsewhere-title" className="mp-empty-title">
-        {t("shop.elsewhere.title")}
-      </h1>
-      <button type="button" className="mp-button mp-button--accent" onClick={() => goView("products")}>
-        {t("shop.basket.see")}
-      </button>
     </section>
   );
 }
@@ -167,6 +182,10 @@ export default function ShopApp() {
   const loading = useShop((s) => s.loading);
   const works = useShop((s) => s.catalogue?.works ?? null);
   const jobs = useShop((s) => s.basket.length);
+  // "Your designs" shows only when this browser holds a design's link, or an order's or a sign-in that names one.
+  const heldDesigns = useShop((s) => hasSavedDesigns(s.held));
+  const orderDesigns = useAfter((s) => (s.opened?.read?.jobs ?? s.mine.rows?.jobs ?? []).some((j) => typeof j["design_code"] === "string" && j["design_code"] !== ""));
+  const designs = heldDesigns || orderDesigns;
   const [theme, setTheme] = useState(initialTheme);
 
   useEffect(() => {
@@ -215,6 +234,12 @@ export default function ShopApp() {
                 {t(key)}
               </button>
             ))}
+            {designs && (
+              <button type="button" className="mp-nav-item mp-nav-designs" aria-current={view === "savedDesign" ? "page" : undefined} onClick={() => goView("savedDesign")}>
+                <FolderHeart size={15} aria-hidden="true" />
+                {t("after.designs.nav")}
+              </button>
+            )}
             <button type="button" className="mp-basket-button" aria-current={view === "basket" ? "page" : undefined} aria-label={t("shop.nav.basketAria", undefined, jobs)} onClick={() => goView("basket")}>
               <ShoppingBasket size={16} aria-hidden="true" />
               <span>{t("chrome.nav.order")}</span>
@@ -292,6 +317,7 @@ export default function ShopApp() {
         )}
       </footer>
 
+      <SaveQuoteSheet />
       <Toasts />
     </div>
   );

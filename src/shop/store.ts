@@ -134,6 +134,8 @@ export interface ShopState {
   used: string[];
   /** The basket line the configurator or the editor is changing, when it opened from one. */
   editing: string | null;
+  /** A saved design opened in the editor from Your designs, not from a basket line. */
+  opening: SavedDesign | null;
   basket: BasketLine[];
   /** The basket line the artwork screen sends files for, and the files on it. */
   artLine: string | null;
@@ -200,6 +202,7 @@ function initial(): Omit<ShopState, "port"> {
     jobQuote: null,
     used: [],
     editing: null,
+    opening: null,
     basket: Array.isArray(kept.lines) ? kept.lines : [],
     artLine: null,
     artFiles: [],
@@ -643,6 +646,34 @@ export function keepHeld(design: SavedDesign, email: string | null): void {
   const rest = get().held.filter((one) => String(one.id) !== String(held.id));
   set({ held: [held, ...rest] });
   writeSlot(HELD_SLOT, get().held);
+}
+
+/**
+ * A product's page set up as a past job or a saved quote was (Order it
+ * again, a saved quote's Open): the choices given, priced there afresh.
+ */
+export function openProductAs(code: string, choice: Choice): void {
+  set({ view: "product", productCode: code, editing: null, opening: null, choice: { ...choice }, used: [], jobQuote: null, stepsQuote: null, priceMoves: null });
+  onNavigate?.("product", code);
+  requoteProduct();
+}
+
+/** A saved design opened in the editor, on the product made on its base ("Open" in Your designs). */
+export function openDesign(design: SavedDesign): boolean {
+  const s = get();
+  const product = s.catalogue?.products.find((p) => p.baseId !== null && String(p.baseId) === String(design.base_id)) ?? null;
+  if (product === null || s.catalogue === null) return false;
+  set({ view: "design", productCode: product.code, editing: null, opening: design, choice: firstChoice(s.catalogue, product), used: [], jobQuote: null, stepsQuote: null });
+  onNavigate?.("design", product.code);
+  requoteProduct();
+  return true;
+}
+
+/** Jobs put in the basket as they were (a saved quote's Add to order): each a new line, priced again by the basket's dry run. */
+export function addLinesToBasket(lines: readonly Omit<BasketLine, "id">[]): void {
+  for (const line of lines) set({ basket: [...get().basket, { ...line, id: lineId() }], priceMoves: null });
+  keepBasket();
+  requoteBasket();
 }
 
 /** Back to a basket job's own page, to change it; saving it puts it back in its place. */

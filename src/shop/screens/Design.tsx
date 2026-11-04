@@ -28,6 +28,7 @@ export function DesignScreen({ blank }: { blank: boolean }) {
   const quote = useShop((s) => s.jobQuote);
   useShop((s) => s.stepsQuote);
   const editing = useShop((s) => s.editing);
+  const opening = useShop((s) => s.opening);
   const basket = useShop((s) => s.basket);
   const refusedLine = useShop((s) => s.refusedLine);
   const email = useShop((s) => s.details.email);
@@ -42,7 +43,7 @@ export function DesignScreen({ blank }: { blank: boolean }) {
   const m = (value: unknown) => money(value, currency, locale);
   const { job, order } = jobFigures();
   const at = editing === null ? -1 : basket.findIndex((b) => b.id === editing);
-  const design = at === -1 ? undefined : (basket[at]!.design ?? undefined);
+  const design = at === -1 ? (opening ?? undefined) : (basket[at]!.design ?? undefined);
   const refused = refusedLine !== null && refusedLine.index === at ? designRefusal(refusedLine.raw) : null;
   const each = figure(job, EACH);
   const breaks = stepsOf(catalogue, product).map((qty) => {

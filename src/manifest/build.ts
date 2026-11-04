@@ -57,6 +57,8 @@ export const CUSTOMER_ROUTES = {
   findUs: "/find-us",
   // A saved design's link: the key the Customiser's own e-mail looks for.
   customiserDesign: "/design",
+  // The sign-in link Adminium e-mails lands here, its code in the fragment.
+  link: "/c",
 };
 
 export function buildManifest(): Record<string, unknown> {

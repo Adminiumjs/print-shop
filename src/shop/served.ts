@@ -4,11 +4,13 @@
  * In order:
  *   1. a build that baked `VITE_ADMINIUM_API_BASE_URL` and
  *      `VITE_ADMINIUM_PUBLISHABLE_KEY` (a shop served on its own) uses them,
- *      with `VITE_ADMINIUM_ORDER_KEY` and `VITE_ADMINIUM_DESIGN_KEY` for the
- *      order's and the design's own links where it has them;
+ *      with `VITE_ADMINIUM_ORDER_KEY`, `VITE_ADMINIUM_QUOTE_KEY` and
+ *      `VITE_ADMINIUM_DESIGN_KEY` for an order's, a quote's and a design's
+ *      own links where it has them;
  *   2. the shop Adminium serves (`/apps/printing/customer/`) asks for
  *      `surface-config.json` beside itself: the newest key bound to the app,
- *      the tables' real names and the other keys by purpose;
+ *      the tables' real names, the other keys by purpose and the app's own
+ *      settings;
  *   3. neither: null, and the page says the shop is not connected.
  */
 import type { ShopServed } from "./door.ts";
@@ -41,7 +43,7 @@ function strings(value: unknown): Record<string, string> | null {
 }
 
 export interface ResolveOptions {
-  baked?: { baseUrl?: string; publishableKey?: string; orderKey?: string; designKey?: string };
+  baked?: { baseUrl?: string; publishableKey?: string; orderKey?: string; designKey?: string; quoteKey?: string };
   hosted?: boolean;
   base?: string;
   pathname?: string;
@@ -56,11 +58,13 @@ export async function resolveShop(opts: ResolveOptions = {}): Promise<ShopServed
     publishableKey: env["VITE_ADMINIUM_PUBLISHABLE_KEY"],
     orderKey: env["VITE_ADMINIUM_ORDER_KEY"],
     designKey: env["VITE_ADMINIUM_DESIGN_KEY"],
+    quoteKey: env["VITE_ADMINIUM_QUOTE_KEY"],
   };
   if (baked.baseUrl && baked.publishableKey) {
     const publicKeys: Record<string, string> = {};
     if (baked.orderKey) publicKeys["order"] = baked.orderKey;
     if (baked.designKey) publicKeys["customiser-link"] = baked.designKey;
+    if (baked.quoteKey) publicKeys["quote"] = baked.quoteKey;
     return { baseUrl: baked.baseUrl, publishableKey: baked.publishableKey, publicKeys };
   }
   if (opts.hosted === false) return null;
@@ -75,11 +79,13 @@ export async function resolveShop(opts: ResolveOptions = {}): Promise<ShopServed
     const served = doc["baseUrl"];
     const tables = strings(doc["tables"]);
     const publicKeys = strings(doc["publicKeys"]);
+    const settings = doc["settings"] !== null && typeof doc["settings"] === "object" && !Array.isArray(doc["settings"]) ? (doc["settings"] as Record<string, unknown>) : null;
     return {
       baseUrl: typeof served === "string" && served !== "" ? served : (opts.origin ?? window.location.origin),
       publishableKey: key,
       ...(tables === null ? {} : { tables }),
       ...(publicKeys === null ? {} : { publicKeys }),
+      ...(settings === null ? {} : { settings }),
     };
   } catch {
     // No answer, or the page's own HTML answered for the document: not configured.
