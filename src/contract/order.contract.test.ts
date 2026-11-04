@@ -42,6 +42,7 @@ import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { checkFile, needsAcceptance } from "../shop/checks.ts";
+import { cappedAt, deliveryOf, EACH, figure, partsOf } from "../shop/figures.ts";
 import { firstChoice, jobValues, optionsOf, stepsOf } from "../shop/config.ts";
 import { AdminiumShop } from "../shop/door.ts";
 import { isShopError, type Catalogue, type Row } from "../shop/port.ts";
@@ -162,6 +163,25 @@ describe.skipIf(why !== null)(`a customer orders on a built Adminium${why === nu
         expect(panel.jobs[0]).toMatchObject({ product_name: "Business cards", qty: 500, look: "matt" });
         expect(Number(panel.order["tax_rate"])).toBe(20);
         expect(Object.keys(panel.order)).toEqual(expect.arrayContaining(["goods_total", "weight_kg", "delivery_band_id", "delivery", "delivery_to_quote", "tax", "total"]));
+        // The panel's lines are the rate card's own columns, a piece's price among them (never divided in the browser).
+        const job = panel.jobs[0]!;
+        expect(partsOf(job).map((p) => p.part.column)).toEqual(["setup", "print_charge", "material_charge", "lamination_charge", "packaging_charge"]);
+        expect(Number(figure(job, EACH))).toBe(Math.round((Number(job["price"]) / 500) * 100) / 100);
+        expect(cappedAt(job)).toBeNull();
+        expect(deliveryOf(panel.order, catalogue.bands)).toMatchObject({ toQuote: false, price: String(panel.order["delivery"]) });
+        expect(deliveryOf(panel.order, catalogue.bands).band?.code).toBe("light");
+      });
+
+      it("caps 999 flyers at the 1000 price, and says so from the job's own columns", async () => {
+        const flyers = productOf("flyers");
+        const choice = { ...firstChoice(catalogue, flyers), sizeId: optionOf("flyers", "size", "a5"), materialId: optionOf("flyers", "material", "silk170") };
+        const quoted = await door.quote({ values: { delivery_method: "collect", language: "en-US" }, children: { jobs: [999, 1000].map((qty) => ({ values: jobValues(catalogue, flyers, choice, qty) })) } });
+        const [nine, thousand] = quoted.jobs;
+        expect(cappedAt(nine)).toBe("1000");
+        expect(Number(nine!["cap_charge"])).toBeLessThan(0);
+        expect(String(nine!["price"])).toBe(String(thousand!["price"]));
+        expect(partsOf(nine).map((p) => p.part.column)).toContain("cap_charge");
+        expect(cappedAt(thousand)).toBeNull();
       });
 
       let uploaded: ArtFile;
