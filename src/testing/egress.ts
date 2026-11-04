@@ -276,6 +276,9 @@ export function offendingAddresses(text: string, inert: readonly InertOrigin[]):
 export const XML_NAMESPACE_ORIGINS: readonly string[] = [
   "http://www.w3.org",
   "https://www.w3.org",
+  // A 3MF's package and model namespaces (Open Packaging Conventions, 3MF Core): written into a file, never fetched.
+  "http://schemas.openxmlformats.org",
+  "http://schemas.microsoft.com",
 ];
 
 /**
