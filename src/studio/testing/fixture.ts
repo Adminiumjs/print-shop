@@ -167,3 +167,19 @@ export function person(roles: string[], name = "Rosa Marlow"): Person {
     can: (table: Table, action: Action) => owner || roles.some((role) => grants[role]?.[table]?.includes(action) ?? false),
   };
 }
+
+/** The same works with Inventory keeping its stock: three stocks linked to their items, one below its reorder level. */
+export function stocked(): WorksData {
+  const data = fixture();
+  data.links = [
+    r({ id: 1, source_table: "printing_materials", source_row: "1", kind: "item", item_id: 11 }),
+    r({ id: 2, source_table: "printing_materials", source_row: "2", kind: "item", item_id: 12 }),
+    r({ id: 3, source_table: "printing_materials", source_row: "3", kind: "item", item_id: 13 }),
+  ];
+  data.stock = [
+    r({ id: 21, item_id: 11, place_name: "Paper store", on_hand: "2600", reserved: "340", available: "2260", reorder_level: "800", low: 0 }),
+    r({ id: 22, item_id: 12, place_name: "Paper store", on_hand: "5200", reserved: "1180", available: "4020", reorder_level: "1500", low: 0 }),
+    r({ id: 23, item_id: 13, place_name: "Roll rack", on_hand: "38", reserved: "22", available: "16", reorder_level: "60", low: 1 }),
+  ];
+  return data;
+}

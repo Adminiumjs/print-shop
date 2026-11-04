@@ -21,6 +21,8 @@ import { go, useWorks, type View } from "./store.ts";
 import { TodayScreen } from "./screens/Today.tsx";
 import { TicketScreen } from "./screens/Ticket.tsx";
 import { JobsScreen } from "./screens/Jobs.tsx";
+import { MaterialsScreen } from "./screens/Materials.tsx";
+import { PricesScreen } from "./screens/Prices.tsx";
 import { Overlays } from "./screens/Overlays.tsx";
 import { Mono, Typed } from "./ui.tsx";
 import { text } from "./wire.ts";
@@ -347,6 +349,10 @@ function Screen({ view, reach }: { view: View; reach: string[] }) {
       return <TicketScreen />;
     case "jobs":
       return <JobsScreen />;
+    case "materials":
+      return <MaterialsScreen />;
+    case "prices":
+      return <PricesScreen />;
     default:
       return <NotFoundScreen />;
   }

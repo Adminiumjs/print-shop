@@ -54,7 +54,7 @@ const ALL = walk(SRC).filter((f) => /\.(ts|tsx)$/.test(f));
  * held to every rule here. `contract/` boots a real Adminium for the contract
  * tests: it never ships either.
  */
-const BUILD_TIME = ['testing', 'manifest', 'sample', 'contract'];
+const BUILD_TIME = ['testing', 'studio/testing', 'manifest', 'sample', 'contract'];
 const READ_BY_SCREENS = ['/src/sample/rate-card.ts'];
 const SHIPPED = ALL.filter(
   (f) => !f.includes('.test.') && (READ_BY_SCREENS.some((file) => f.endsWith(file)) || !BUILD_TIME.some((dir) => f.includes(`/src/${dir}/`))),

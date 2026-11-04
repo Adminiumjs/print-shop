@@ -8,101 +8,17 @@
  * against a stand-in door that records them, with the bodies they send.
  */
 import { act } from "react";
-import { createRoot, type Root } from "react-dom/client";
-import axe from "axe-core";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import { I18nProvider } from "../i18n/index.tsx";
-import { WorksProvider, type WorksEnv } from "./env.tsx";
-import { WorksApp, screensFor } from "./WorksApp.tsx";
+import { screensFor } from "./WorksApp.tsx";
 import { useWorks, type View, type WorksState } from "./store.ts";
 import { FakeDoor } from "./testing/fakeDoor.ts";
-import { DASHBOARD_LINKS } from "./boot.tsx";
+import { button, choose, click, freshPage, mount, mountBare, settle, sweep, text, toasts, type, unmount } from "./testing/render.tsx";
 import { ApiError } from "./wire.ts";
 
-(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-
-let root: Root | null = null;
-let host: HTMLElement;
-
-const INITIAL = useWorks.getState();
-
-beforeEach(() => {
-  useWorks.setState({ ...INITIAL, toasts: [], overlay: null, data: null, failure: null, boardMenu: null, query: "" });
-  host = document.createElement("div");
-  document.body.replaceChildren(host);
-  localStorage.clear();
-});
-
-afterEach(() => {
-  act(() => root?.unmount());
-  root = null;
-});
-
-export async function mount(door: FakeDoor, view: View = "today", more: Partial<WorksState> = {}): Promise<void> {
-  const env: WorksEnv = { door, ...DASHBOARD_LINKS };
-  useWorks.setState({ data: await door.load(), view, ...more });
-  await act(async () => {
-    root = createRoot(host);
-    root.render(
-      <I18nProvider>
-        <WorksProvider env={env}>
-          <WorksApp />
-        </WorksProvider>
-      </I18nProvider>,
-    );
-  });
-  await settle();
-}
-
-/** Let effects, the door's promises and the reload after a write run. */
-async function settle(): Promise<void> {
-  for (let i = 0; i < 6; i += 1) await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
-}
-
-async function click(el: Element | null | undefined): Promise<void> {
-  if (el === null || el === undefined) throw new Error("nothing to click");
-  await act(async () => {
-    (el as HTMLElement).click();
-  });
-  await settle();
-}
-
-async function type(el: Element | null | undefined, value: string): Promise<void> {
-  if (el === null || el === undefined) throw new Error("nothing to type into");
-  const input = el as HTMLInputElement;
-  const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), "value")!.set!;
-  await act(async () => {
-    setter.call(input, value);
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-  });
-  await settle();
-}
-
-async function choose(input: HTMLInputElement, file: File): Promise<void> {
-  Object.defineProperty(input, "files", { value: [file], configurable: true });
-  await act(async () => {
-    input.dispatchEvent(new Event("change", { bubbles: true }));
-  });
-  await settle();
-}
-
-const button = (name: string | RegExp): HTMLButtonElement | undefined =>
-  [...document.querySelectorAll("button")].find((b) => (typeof name === "string" ? (b.textContent ?? "").trim() === name || b.getAttribute("aria-label") === name : name.test(b.textContent ?? "") || name.test(b.getAttribute("aria-label") ?? ""))) as HTMLButtonElement | undefined;
+freshPage();
 
 const card = (ref: string): HTMLElement | undefined => [...document.querySelectorAll<HTMLElement>(".wk-card")].find((c) => (c.querySelector(".wk-card-open")?.getAttribute("aria-label") ?? "").includes(ref));
-const text = () => document.body.textContent ?? "";
-const toasts = () => useWorks.getState().toasts.map((t) => t.text);
-
-/** axe over the whole page: WCAG A and AA, the rules jsdom can judge (no layout, so no contrast). */
-export async function sweep(label: string): Promise<void> {
-  const result = await axe.run(document.body, {
-    runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] },
-    rules: { "color-contrast": { enabled: false } },
-  });
-  expect(result.passes.length, `${label}: axe looked at something`).toBeGreaterThan(0);
-  expect(result.violations.map((v) => `${label}: ${v.id} — ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
-}
 
 describe("every screen and state, swept by axe", () => {
   const states: [string, View, Partial<WorksState>, string][] = [
@@ -141,24 +57,12 @@ describe("every screen and state, swept by axe", () => {
       expect(text()).toContain(shows);
       expect(document.querySelector('[role="dialog"][aria-modal="true"]')).not.toBeNull();
       await sweep(overlay.kind);
-      act(() => root?.unmount());
-      root = null;
+      unmount();
     }
   });
 
   it("draws the shell while it reads and when the read failed", async () => {
-    const door = new FakeDoor();
-    const env: WorksEnv = { door, ...DASHBOARD_LINKS };
-    await act(async () => {
-      root = createRoot(host);
-      root.render(
-        <I18nProvider>
-          <WorksProvider env={env}>
-            <WorksApp />
-          </WorksProvider>
-        </I18nProvider>,
-      );
-    });
+    await mountBare(new FakeDoor());
     expect(document.querySelector('[aria-busy="true"]')).not.toBeNull();
     await sweep("loading");
     await act(async () => useWorks.setState({ failure: "the network is down" }));
@@ -234,8 +138,7 @@ describe("the board", () => {
   it("offers Book a collection on a ready delivery only while a delivery company is on", async () => {
     await mount(new FakeDoor());
     expect(button("Book a collection")).toBeUndefined();
-    act(() => root?.unmount());
-    root = null;
+    unmount();
     await mount(new FakeDoor({ facts: { carrier: { key: "carrier", name: "Parcel Co" } } }));
     expect([...document.querySelectorAll(".wk-card-dispatch")].length).toBe(1);
     await click(button("Book a collection"));
@@ -362,12 +265,10 @@ describe("the ticket's writes", () => {
   it("shows each role only what it does", async () => {
     await mount(new FakeDoor({ roles: ["press"] }), "ticket", { jobId: 1 });
     expect([button("Send a proof"), button("Mark printed"), button("Record spoilage"), button("Mark ready")].map((b) => b !== undefined)).toEqual([false, true, true, true]);
-    act(() => root?.unmount());
-    root = null;
+    unmount();
     await mount(new FakeDoor({ roles: ["prepress"] }), "ticket", { jobId: 3 });
     expect([button("Send a proof"), button("Mark printed"), button("Record spoilage"), button("Mark ready")].map((b) => b !== undefined)).toEqual([true, false, false, false]);
-    act(() => root?.unmount());
-    root = null;
+    unmount();
     await mount(new FakeDoor({ roles: ["press"] }), "ticket", { jobId: 7 });
     expect(text()).toContain("The counter hands this one over.");
   });
