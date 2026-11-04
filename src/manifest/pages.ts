@@ -130,7 +130,7 @@ const SPECS: PageSpec[] = [
     table: "proofs",
     config: form(
       [ref("order_id"), ref("job_id"), number("version"), f("state", { control: "segmented" })],
-      [f("kind", { control: "segmented" }), f("file", { control: "file" }), wide("note", "text"), wide("change_note", "text")],
+      [f("kind", { control: "segmented" }), f("file"), wide("note", "text"), wide("change_note", "text")],
       [when("sent_at"), f("sent_by"), when("answered_at")],
     ),
   },
@@ -141,7 +141,7 @@ const SPECS: PageSpec[] = [
     icon: "file-image",
     order: 4,
     table: "artwork",
-    config: form([ref("job_id"), title("name"), f("file", { control: "file" }), f("side", { control: "segmented" }), toggle("accepted"), when("uploaded_at")]),
+    config: form([ref("job_id"), title("name"), f("file"), f("side", { control: "segmented" }), toggle("accepted"), when("uploaded_at")]),
   },
   {
     ref: "printing-quotes",
