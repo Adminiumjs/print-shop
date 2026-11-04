@@ -50,8 +50,9 @@ const ALL = walk(SRC).filter((f) => /\.(ts|tsx)$/.test(f));
  * The shipped half: everything that is not itself a test or a test helper.
  * `manifest/` and `sample/` write `manifest.json` and the sample bundle at
  * build time: no screen imports them, so nothing in them reaches a browser.
+ * `contract/` boots a real Adminium for the contract tests: it never ships either.
  */
-const BUILD_TIME = ['testing', 'manifest', 'sample'];
+const BUILD_TIME = ['testing', 'manifest', 'sample', 'contract'];
 const SHIPPED = ALL.filter((f) => !f.includes('.test.') && !BUILD_TIME.some((dir) => f.includes(`/src/${dir}/`)));
 
 const read = (file: string) => readFileSync(file, 'utf8');
