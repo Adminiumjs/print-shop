@@ -412,6 +412,23 @@ export function detailValues(details: Details, delivery: Delivery): Row {
 
 // ── the dry runs ──────────────────────────────────────────────────────────
 
+/**
+ * An order as a dry run prices it before the customer has typed where it
+ * goes. A delivered order's address is required by its columns (`requiredWhen`
+ * on `delivery_method`), and Adminium 0.3.43 fills a quote's placeholders for
+ * an entry's `requires` but not for those, so a delivery quoted before the
+ * address is refused. The band and the price never read the address: the
+ * quote carries the same stand-in words Adminium's own placeholders use, for
+ * the columns not yet typed. Nothing a dry run sends is kept, and the order
+ * itself is only ever placed with the customer's own address.
+ */
+export function dryValues(values: Row): Row {
+  if (values["delivery_method"] !== "deliver") return values;
+  const out: Row = { ...values };
+  for (const column of ["address_line1", "town", "postcode"]) if (out[column] === undefined || out[column] === null || out[column] === "") out[column] = "Quote";
+  return out;
+}
+
 async function runQuote(body: OrderBody, key: string, put: (q: Quoted) => void, current: () => string | undefined): Promise<void> {
   const port = get().port;
   if (port === null) return;
@@ -496,7 +513,7 @@ export function requoteProduct(): void {
     set({ jobQuote: null });
     return;
   }
-  const values = { delivery_method: s.delivery, language: language() };
+  const values = dryValues({ delivery_method: s.delivery, language: language() });
   const jobBody: OrderBody = { values, children: { jobs: [jobNode(line)] } };
   const jobKey = JSON.stringify(jobBody);
   const steps = stepsOf(catalogue, product);
@@ -547,7 +564,7 @@ export function requoteBasket(): void {
     set({ basketQuote: null });
     return;
   }
-  const body = orderBody({ delivery_method: s.delivery, language: language() }, s.basket);
+  const body = orderBody(dryValues({ delivery_method: s.delivery, language: language() }), s.basket);
   const key = JSON.stringify(body);
   if (s.basketQuote?.key === key && s.basketQuote.state !== "failed") return;
   set({ basketQuote: { key, state: "busy", figures: s.basketQuote?.figures ?? null } });
