@@ -10,6 +10,7 @@
  *   counter   a ready job handed over: collected, or dispatched
  */
 import type { Person } from "./door.ts";
+import { ROLE_PANELS, type PanelId } from "../manifest/panels.ts";
 
 /** The moves a job's stage takes (`jobs.states.moves`), with the owner's way back. */
 export const JOB_MOVES: Readonly<Record<string, readonly string[]>> = {
@@ -52,3 +53,11 @@ export const mayEditRates = (who: Person): boolean => who.can("materials", "upda
 
 /** Whether this person looks after the add-ons (the shelf is theirs). */
 export const mayManageAddOns = (who: Person): boolean => isOwner(who) || who.roles.length === 0;
+
+/**
+ * Whether this person opens one of the Customiser's panels on the works'
+ * screens: their role holds it (`ROLE_PANELS`). Adminium serves the panel's
+ * code only to a role that holds it; this keeps the way to it off the screen
+ * of anyone else.
+ */
+export const mayOpenPanel = (who: Person, panel: PanelId): boolean => who.roles.length === 0 || who.roles.some((role) => ROLE_PANELS[role]?.includes(panel) === true);

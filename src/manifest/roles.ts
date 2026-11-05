@@ -18,18 +18,27 @@
  *             number, pricing a delivery over the bands and sending its
  *             quote, and posting sample packs.
  *
- * Every role reads the Customiser's rows its work needs: the design a job
- * names, its versions and files. The Customiser's panels on a record page
- * open for the roles below (`ROLE_PANELS`): a job's design for the owner,
- * prepress and the press, a product's base for the owner. Adminium reads that
- * grant from 0.3.44; on an older floor the panels open only for a person who
- * also holds one of the Customiser's own roles. The owner reads Holiday
- * calendars' public holidays, to add one as a closure.
+ * Every role reads the Customiser's rows its work needs. The Customiser's
+ * panels open for the roles below (`ROLE_PANELS`): a job's design for the
+ * owner, prepress and the press, a product's base for the owner, drawn on the
+ * works' own screens (and on the dashboard's record pages for the owner).
+ * Those roles read what the panel draws a design from and write what it
+ * makes: a design's version, its proof, the print files. The counter reads
+ * only whether a job names a design. The owner reads Holiday calendars'
+ * public holidays, to add one as a closure.
+ *
+ * A role holds at most twelve of the add-ons' tables, and the panel alone
+ * reads twelve of the Customiser's. So the panel's roles leave out what
+ * fits no more: the owner the Customiser's priced features (the panel draws a
+ * design without them), Inventory's stock and DHL's collections; prepress
+ * and the press Inventory's stock. Their screens read those as closed, and
+ * show none.
  *
  * The screens show or hide a button by the role, but the grants and limits
  * below are what refuse the write: a hidden button is not a lock.
  */
 import { PAGE_REFS } from "./pages.ts";
+import { ROLE_PANELS } from "./panels.ts";
 import { CUSTOMISER, HOLIDAYS } from "./postings.ts";
 import { TABLE_REFS, TABLES } from "./tables.ts";
 
@@ -38,14 +47,41 @@ const view = (page: string) => `page:@${page}:view`;
 /** Seeing a table's personal columns. */
 const pii = (table: string) => `table:@${table}:read_pii`;
 
-/** What the works reads of the Customiser: the design a job names, its versions and files, a product's base. */
-const CUSTOMISER_READS = [
+/**
+ * What the Customiser's panel on a job reads to draw the design as it will be
+ * printed (its ready-made design and parts, the base's areas and pieces, the
+ * palettes, colours and fonts), and what it writes when the proof and the
+ * print files are made: a version of the design where none was ordered yet,
+ * the proof file on it, and the files of the version. The panel makes them in
+ * the browser and saves them as the person signed in.
+ */
+const CUSTOMISER_PANEL = [
   { addOn: CUSTOMISER, table: "designs", actions: ["read"] },
-  { addOn: CUSTOMISER, table: "design_versions", actions: ["read"] },
-  { addOn: CUSTOMISER, table: "version_files", actions: ["read"] },
+  {
+    addOn: CUSTOMISER,
+    table: "design_versions",
+    actions: ["read", "create", "update"],
+    limit: { creatable: ["app", "design_id", "version", "values"], writable: ["proof_file", "note"] },
+  },
+  {
+    addOn: CUSTOMISER,
+    table: "version_files",
+    actions: ["read", "create", "update"],
+    limit: { creatable: ["app", "version_id", "kind", "name", "about", "layers", "left_out", "position"], writable: ["file"] },
+  },
   { addOn: CUSTOMISER, table: "bases", actions: ["read"] },
+  { addOn: CUSTOMISER, table: "ready_designs", actions: ["read"] },
+  { addOn: CUSTOMISER, table: "ready_parts", actions: ["read"] },
+  { addOn: CUSTOMISER, table: "base_areas", actions: ["read"] },
+  { addOn: CUSTOMISER, table: "base_pieces", actions: ["read"] },
+  { addOn: CUSTOMISER, table: "palettes", actions: ["read"] },
+  { addOn: CUSTOMISER, table: "palette_colours", actions: ["read"] },
+  { addOn: CUSTOMISER, table: "fonts", actions: ["read"] },
   { addOn: CUSTOMISER, table: "features", actions: ["read"] },
 ];
+
+/** The owner reads Holiday calendars' days too, so of the panel's twelve it leaves out the priced features. */
+const OWNER_CUSTOMISER = CUSTOMISER_PANEL.filter((grant) => grant.table !== "features");
 
 /** The rules by which Adminium decides a column: nobody writes one, whatever their role. */
 export const DECIDING_RULES = ["rollup", "formula", "copy", "band", "stamp", "sequence", "format", "code", "lookup"] as const;
@@ -97,12 +133,14 @@ export const ROLES = [
       ),
       ...PAGE_REFS.flatMap((page) => [view(page), `page:@${page}:edit`]),
       ...["orders", "customers", "saved_quotes", "sample_requests", "messages"].map(pii),
+      // The Customiser's set-up page (fonts, palettes, ready-made designs): the works' Designs opens it.
+      view(CUSTOMISER),
     ],
     limits: {
       orders: { writable: typed("orders", ...CUSTOMERS_OWN), creatable: typed("orders", ...CUSTOMERS_OWN) },
       saved_quotes: { writable: typed("saved_quotes", ...CUSTOMERS_OWN), creatable: typed("saved_quotes", ...CUSTOMERS_OWN) },
     },
-    tables: [...CUSTOMISER_READS, ...STOCK_READS, ...SHIPMENT_READS, ...HOLIDAY_READS],
+    tables: [...OWNER_CUSTOMISER, ...HOLIDAY_READS],
   },
   {
     key: "prepress",
@@ -128,7 +166,7 @@ export const ROLES = [
         writableValues: { state: ["superseded"] },
       },
     },
-    tables: [...CUSTOMISER_READS, ...STOCK_READS],
+    tables: CUSTOMISER_PANEL,
   },
   {
     key: "press",
@@ -149,12 +187,7 @@ export const ROLES = [
       // The order ready to hand over, once its last job is.
       orders: { writable: ["status"], writableValues: { status: ["ready"] }, writableFrom: { status: ["placed"] } },
     },
-    tables: [
-      { addOn: CUSTOMISER, table: "designs", actions: ["read"] },
-      { addOn: CUSTOMISER, table: "design_versions", actions: ["read"] },
-      { addOn: CUSTOMISER, table: "version_files", actions: ["read"] },
-      ...STOCK_READS,
-    ],
+    tables: CUSTOMISER_PANEL,
   },
   {
     key: "counter",
@@ -185,12 +218,7 @@ export const ROLES = [
   },
 ];
 
-/** The Customiser's record panels each role opens: the design on a job, the base on a product. */
-export const ROLE_PANELS: Record<string, string[]> = {
-  owner: ["customiser-line", "customiser-product"],
-  prepress: ["customiser-line"],
-  press: ["customiser-line"],
-};
+export { ROLE_PANELS };
 
 /** The roles as a manifest at `floor` writes them: the panels' grants need the release that reads them. */
 export function rolesFor(panels: boolean): typeof ROLES {

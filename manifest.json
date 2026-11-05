@@ -19260,6 +19260,7 @@
         "table:@saved_quotes:read_pii",
         "table:@sample_requests:read_pii",
         "table:@messages:read_pii",
+        "page:@customiser:view",
         "page:@customiser-line:view",
         "page:@customiser-product:view"
       ],
@@ -19339,15 +19340,46 @@
           "addOn": "customiser",
           "table": "design_versions",
           "actions": [
-            "read"
-          ]
+            "read",
+            "create",
+            "update"
+          ],
+          "limit": {
+            "creatable": [
+              "app",
+              "design_id",
+              "version",
+              "values"
+            ],
+            "writable": [
+              "proof_file",
+              "note"
+            ]
+          }
         },
         {
           "addOn": "customiser",
           "table": "version_files",
           "actions": [
-            "read"
-          ]
+            "read",
+            "create",
+            "update"
+          ],
+          "limit": {
+            "creatable": [
+              "app",
+              "version_id",
+              "kind",
+              "name",
+              "about",
+              "layers",
+              "left_out",
+              "position"
+            ],
+            "writable": [
+              "file"
+            ]
+          }
         },
         {
           "addOn": "customiser",
@@ -19358,28 +19390,49 @@
         },
         {
           "addOn": "customiser",
-          "table": "features",
+          "table": "ready_designs",
           "actions": [
             "read"
           ]
         },
         {
-          "addOn": "inventory",
-          "table": "links",
+          "addOn": "customiser",
+          "table": "ready_parts",
           "actions": [
             "read"
           ]
         },
         {
-          "addOn": "inventory",
-          "table": "stock_points",
+          "addOn": "customiser",
+          "table": "base_areas",
           "actions": [
             "read"
           ]
         },
         {
-          "addOn": "shipping-dhl",
-          "table": "shipments",
+          "addOn": "customiser",
+          "table": "base_pieces",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "palettes",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "palette_colours",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "fonts",
           "actions": [
             "read"
           ]
@@ -19474,15 +19527,46 @@
           "addOn": "customiser",
           "table": "design_versions",
           "actions": [
-            "read"
-          ]
+            "read",
+            "create",
+            "update"
+          ],
+          "limit": {
+            "creatable": [
+              "app",
+              "design_id",
+              "version",
+              "values"
+            ],
+            "writable": [
+              "proof_file",
+              "note"
+            ]
+          }
         },
         {
           "addOn": "customiser",
           "table": "version_files",
           "actions": [
-            "read"
-          ]
+            "read",
+            "create",
+            "update"
+          ],
+          "limit": {
+            "creatable": [
+              "app",
+              "version_id",
+              "kind",
+              "name",
+              "about",
+              "layers",
+              "left_out",
+              "position"
+            ],
+            "writable": [
+              "file"
+            ]
+          }
         },
         {
           "addOn": "customiser",
@@ -19493,21 +19577,56 @@
         },
         {
           "addOn": "customiser",
+          "table": "ready_designs",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "ready_parts",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "base_areas",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "base_pieces",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "palettes",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "palette_colours",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "fonts",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
           "table": "features",
-          "actions": [
-            "read"
-          ]
-        },
-        {
-          "addOn": "inventory",
-          "table": "links",
-          "actions": [
-            "read"
-          ]
-        },
-        {
-          "addOn": "inventory",
-          "table": "stock_points",
           "actions": [
             "read"
           ]
@@ -19598,26 +19717,106 @@
           "addOn": "customiser",
           "table": "design_versions",
           "actions": [
-            "read"
-          ]
+            "read",
+            "create",
+            "update"
+          ],
+          "limit": {
+            "creatable": [
+              "app",
+              "design_id",
+              "version",
+              "values"
+            ],
+            "writable": [
+              "proof_file",
+              "note"
+            ]
+          }
         },
         {
           "addOn": "customiser",
           "table": "version_files",
           "actions": [
-            "read"
-          ]
+            "read",
+            "create",
+            "update"
+          ],
+          "limit": {
+            "creatable": [
+              "app",
+              "version_id",
+              "kind",
+              "name",
+              "about",
+              "layers",
+              "left_out",
+              "position"
+            ],
+            "writable": [
+              "file"
+            ]
+          }
         },
         {
-          "addOn": "inventory",
-          "table": "links",
+          "addOn": "customiser",
+          "table": "bases",
           "actions": [
             "read"
           ]
         },
         {
-          "addOn": "inventory",
-          "table": "stock_points",
+          "addOn": "customiser",
+          "table": "ready_designs",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "ready_parts",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "base_areas",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "base_pieces",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "palettes",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "palette_colours",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "fonts",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "features",
           "actions": [
             "read"
           ]
