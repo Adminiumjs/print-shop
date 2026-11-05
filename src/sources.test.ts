@@ -654,6 +654,20 @@ describe('the vendored halves are copies, and say so', () => {
     expect(offenders.map(relative)).toEqual([]);
   });
 
+  it('ships the script the headers name, syncing exactly the files vendored', () => {
+    const script = join(SRC, '..', 'scripts', 'sync-add-ons.sh');
+    expect(existsSync(script), 'scripts/sync-add-ons.sh').toBe(true);
+    const text = read(script);
+    const listed = /FILES_host=\(([\s\S]*?)\n\)/.exec(text)?.[1] ?? '';
+    const named = listed
+      .split('\n')
+      .map((line) => line.replace(/#.*$/, '').trim())
+      .flatMap((line) => line.split(/\s+/))
+      .filter((f) => f !== '');
+    const here = vendored().map((f) => f.slice(join(SRC, 'add-ons', 'vendor', 'host').length + 1)).sort();
+    expect(named.sort()).toEqual(here);
+  });
+
   /*
    * THE VENDORED TREE HAS TO BE SELF-CONTAINED, and this is the assertion that
    * says so from this side.
