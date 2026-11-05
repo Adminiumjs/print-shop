@@ -477,8 +477,9 @@ const nextBeforeExpress = (features: boolean) => ({ add: [zero("setup"), "next_r
  * square metre, and never less than the large-format minimum on that work.
  * A job's priced features (the Customiser's, printing a design's back) are
  * each one price for the job, added up from the rows it pays for. A printed
- * proof by post and express (a percentage of all the work) go on top. A sheet line never costs more than the next break's quantity would:
- * 999 flyers cost what 1000 do (`cap_charge` takes the difference off).
+ * proof by post and express (a percentage of all the work) go on top. A
+ * sheet line never costs more than the next break's quantity would: 999
+ * flyers cost what 1000 do (`cap_charge` takes the difference off).
  *
  * The weight is the finished pieces' paper and the packing (a sheet job), or
  * the printed area, the frames and the tube or box (large format); whether
