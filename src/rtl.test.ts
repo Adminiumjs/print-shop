@@ -65,9 +65,12 @@ type Side = (typeof SIDES)[number];
 const codeOf = (sides: readonly Side[]) => sides.flatMap((side) => walk(join(SRC, side))).filter((f) => /\.tsx?$/.test(f) && !/\.test\.tsx?$/.test(f) && !/[/\\]testing[/\\]|testing\.ts$/.test(f));
 const CODE = codeOf(SIDES);
 
-/** Every stylesheet a side ships: its own, and each one its code or its sheets import, followed. */
+/** The app's shared sheets (`src/styles/`: the tokens and the base), which both sides' entries load. */
+const SHARED = "styles";
+
+/** Every stylesheet a side ships: its own, the shared ones, and each one its code or its sheets import, followed. */
 function stylesheets(sides: readonly Side[] = SIDES): { sheets: string[]; missing: string[] } {
-  const found = new Set<string>(sides.flatMap((side) => readdirSync(join(SRC, side)).filter((n) => n.endsWith(".css")).map((n) => join(SRC, side, n))));
+  const found = new Set<string>([...sides, SHARED].flatMap((dir) => walk(join(SRC, dir)).filter((f) => f.endsWith(".css"))));
   const missing: string[] = [];
   for (const file of codeOf(sides)) {
     for (const [, spec] of readFileSync(file, "utf8").matchAll(/import\s+["']([^"']+\.css)["']/g)) found.add(resolve(dirname(file), spec!));
@@ -212,9 +215,12 @@ const allowed = (d: Declaration) => ALLOWED.find((a) => relative(ROOT, d.file) =
 describe("the stylesheets the shop and the works ship", () => {
   const { sheets, missing } = stylesheets();
 
-  it("are all there, and include each side's own", () => {
+  it("are all there, and include each side's own and every shared sheet", () => {
     expect(missing, "imported but not there").toEqual([]);
     for (const side of SIDES) expect(sheets.some((s) => s.startsWith(join(SRC, side))), side).toBe(true);
+    const shared = readdirSync(join(SRC, SHARED)).filter((n) => n.endsWith(".css"));
+    expect(shared.length).toBeGreaterThan(1);
+    for (const side of SIDES) for (const name of shared) expect(stylesheets([side]).sheets, `${side} ${name}`).toContain(join(SRC, SHARED, name));
   });
 
   it("place nothing by a physical side", () => {
