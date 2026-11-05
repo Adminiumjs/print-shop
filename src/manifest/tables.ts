@@ -50,7 +50,7 @@
  */
 import { l, type Labels } from "./labels.ts";
 import { KIND_NAMES } from "./outbox.ts";
-import { DESIGN_POSTING, CUSTOMISER } from "./postings.ts";
+import { DESIGN_POSTING, CUSTOMISER, HOLIDAYS } from "./postings.ts";
 import { CUTOFF, WORKING_DAYS } from "./settings.ts";
 
 type Tone = "pos" | "warn" | "danger" | "info" | "neutral" | "accent";
@@ -874,6 +874,9 @@ export const TABLES: Table[] = [
     keyField: "reason",
     columns: [
       id,
+      // The public holiday from Holiday calendars this closure was added for ("Add as a closure" on the works'
+      // price list writes its day and name in; they stay the works' to change).
+      { ref: "holiday_id", type: "int", nullable: true, label: l("Public holiday"), rules: { addOnLink: { addOn: HOLIDAYS, table: "holidays" } } },
       date("from_date", "From"),
       date("to_date", "To"),
       text("reason", 120, "Reason", opt),

@@ -253,6 +253,7 @@ export const WORDS: Record<string, Translation> = {
   "Proof ready": { "de-DE": "Proof fertig", "fr-FR": "Épreuve prête", "da-DK": "Korrektur klar", "cs-CZ": "Nátisk připraven", "ar-EG": "البروفة جاهزة", "zh-CN": "校样已就绪", "zh-TW": "打樣已就緒" },
   "Proofs": { "de-DE": "Proofs", "fr-FR": "Épreuves", "da-DK": "Korrekturer", "cs-CZ": "Nátisky", "ar-EG": "البروفات", "zh-CN": "校样", "zh-TW": "打樣" },
   "Proofs by post": { "de-DE": "Proofs per Post", "fr-FR": "Épreuves par la poste", "da-DK": "Korrekturer med posten", "cs-CZ": "Nátisky poštou", "ar-EG": "بروفات بالبريد", "zh-CN": "邮寄校样", "zh-TW": "郵寄打樣" },
+  "Public holiday": { "de-DE": "Feiertag", "fr-FR": "Jour férié", "da-DK": "Helligdag", "cs-CZ": "Státní svátek", "ar-EG": "عطلة رسمية", "zh-CN": "公共假日", "zh-TW": "國定假日" },
   "Public holidays as closures": { "de-DE": "Feiertage als Schließtage", "fr-FR": "Jours fériés comme fermetures", "da-DK": "Helligdage som lukkedage", "cs-CZ": "Státní svátky jako zavírací dny", "ar-EG": "العطلات الرسمية كأيام إغلاق", "zh-CN": "节假日作为休息日", "zh-TW": "國定假日作為停業日" },
   "Quantity": { "de-DE": "Menge", "fr-FR": "Quantité", "da-DK": "Antal", "cs-CZ": "Množství", "ar-EG": "الكمية", "zh-CN": "数量", "zh-TW": "數量" },
   "Quantity break": { "de-DE": "Mengenstaffel", "fr-FR": "Palier de quantité", "da-DK": "Mængderabat", "cs-CZ": "Množstevní sleva", "ar-EG": "شريحة الكمية", "zh-CN": "数量折扣", "zh-TW": "數量折扣" },

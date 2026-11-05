@@ -14,9 +14,9 @@ import { DOCUMENTS } from "./documents.ts";
 import { emailTemplates } from "./emails.ts";
 import { KINDS, OUTBOX } from "./outbox.ts";
 import { NAV_GROUPS, pages } from "./pages.ts";
-import { PEOPLE } from "./people.ts";
+import { peopleFor } from "./people.ts";
 import { PUBLIC_ACCESS, PUBLIC_KEYS } from "./public.ts";
-import { ROLES } from "./roles.ts";
+import { rolesFor } from "./roles.ts";
 import { SETTINGS } from "./settings.ts";
 import { TABLES } from "./tables.ts";
 
@@ -29,6 +29,22 @@ export const VERSION = "0.1.0";
  * snapshotted by a job, and its copies of a person.
  */
 export const MIN_ADMINIUM = "0.3.43";
+
+/**
+ * The release that reads two more things this app says: a role's grant of
+ * the Customiser's panels on a job and a product, and a person's copies in
+ * the versions of their designs and those versions' files. They are written
+ * only in a manifest whose floor is that release, so raising `MIN_ADMINIUM`
+ * to it is the one change that turns them on.
+ */
+export const PANELS_AND_COPIES = "0.3.44";
+
+/** Whether release `a` is `b` or later, on major.minor.patch. */
+export function atLeast(a: string, b: string): boolean {
+  const [x, y] = [a, b].map((v) => v.split(/[.-]/).slice(0, 3).map(Number));
+  for (let i = 0; i < 3; i += 1) if (x![i] !== y![i]) return x![i]! > y![i]!;
+  return true;
+}
 
 const ENV = {
   VITE_ADMINIUM_API_BASE_URL: { required: false, example: "https://admin.example.com" },
@@ -61,7 +77,10 @@ export const CUSTOMER_ROUTES = {
   link: "/c",
 };
 
-export function buildManifest(): Record<string, unknown> {
+/** `floor` builds the manifest for another floor than the one it ships with (the tests try the next one). */
+export function buildManifest(options: { floor?: string } = {}): Record<string, unknown> {
+  const floor = options.floor ?? MIN_ADMINIUM;
+  const newer = atLeast(floor, PANELS_AND_COPIES);
   return {
     kind: "app",
     manifestVersion: 1,
@@ -77,7 +96,7 @@ export function buildManifest(): Record<string, unknown> {
     },
     categories: ["commerce"],
     compatibility: {
-      minAdminiumVersion: MIN_ADMINIUM,
+      minAdminiumVersion: floor,
       engines: ["sqlite", "postgres", "mysql"],
     },
     capabilities: ["email-delivery", "file-storage"],
@@ -91,17 +110,17 @@ export function buildManifest(): Record<string, unknown> {
     navGroups: NAV_GROUPS,
     requiredSchema: { prefixed: true, tables: TABLES },
     pages: pages(),
-    roles: ROLES,
+    roles: rolesFor(newer),
     publicKeys: PUBLIC_KEYS,
     publicAccess: PUBLIC_ACCESS,
     outbox: OUTBOX,
-    people: PEOPLE,
+    people: peopleFor(newer),
     emailTemplates: emailTemplates(KINDS),
     sampleData: { file: "seeds/printing.sample.json", addOns: { customiser: { file: "seeds/printing.customiser.sample.json" } } },
   };
 }
 
 /** The file's text: two-space JSON and a final newline. */
-export function manifestText(): string {
-  return `${JSON.stringify(buildManifest(), null, 2)}\n`;
+export function manifestText(options: { floor?: string } = {}): string {
+  return `${JSON.stringify(buildManifest(options), null, 2)}\n`;
 }

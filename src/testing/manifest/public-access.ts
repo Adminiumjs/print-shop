@@ -395,12 +395,16 @@ const agreeTargetSchema = z.union([
  * A value of the row that must agree with another: `column` (followed along
  * `path` through foreign keys) equals, is at most, or is at least the target.
  * `when` applies it only to rows whose value (along its own `path`) is one of
- * `in`.
+ * `in`. `length: true` compares how many characters a text value has, with
+ * `lte` alone: a line's lettering no longer than its product allows
+ * (`{ "column": "lettering", "length": true, "lte": { "via": "product_id",
+ * "column": "lettering_limit" } }`), refused as `too-long`.
  */
 export const agreeSchema = z
   .object({
     column: refSchema,
     path: pathSchema.optional(),
+    length: z.literal(true).optional(),
     when: z.object({ path: pathSchema.optional(), in: z.array(scalarSchema).min(1).max(32) }).strict().optional(),
     eq: agreeTargetSchema.optional(),
     lte: agreeTargetSchema.optional(),
@@ -2117,8 +2121,16 @@ function agreeIssues(index: TableIndex, table: string, parent: string | undefine
       other = index.column(via.references, target.column);
       if (other === undefined) out.push({ path: at(test, 'column'), message: `"${via.references}" has no column "${target.column}"` });
     }
-  } else if (typeof reached !== 'string' && !agreeValueFits(reached.column, target.value)) {
+  } else if (agree.length !== true && typeof reached !== 'string' && !agreeValueFits(reached.column, target.value)) {
     out.push({ path: at(test, 'value'), message: `${JSON.stringify(target.value)} is not a value of "${reached.table}.${reached.column.ref}"` });
+  }
+  if (agree.length === true) {
+    // How many characters a text has, at most a number: the text is the row's, the most is a number.
+    if (test !== 'lte') out.push({ path: at(test), message: 'a length is compared with lte (at most so many characters)' });
+    if (typeof reached !== 'string' && reached.column.type !== 'text') out.push({ path: at('length'), message: `"${reached.table}.${reached.column.ref}" is not text, so it has no length` });
+    if (other !== undefined && !NUMBERS.includes(other.type)) out.push({ path: at(test), message: `"${other.ref}" is not a number, so it is no most characters` });
+    if ('value' in target && (typeof target.value !== 'number' || !Number.isInteger(target.value) || target.value < 0)) out.push({ path: at(test, 'value'), message: 'the most characters is a whole number' });
+    return out;
   }
   if (typeof reached !== 'string') {
     if (test !== 'eq' && !NUMBERS.includes(reached.column.type)) {

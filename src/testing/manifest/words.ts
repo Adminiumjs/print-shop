@@ -243,6 +243,12 @@ export const INSTALL_FLOOR_WORD_NAMES = [
   'people.copyDetails',
   // An add-on's own link removing its row (a shopper deleting their own draft) while it is in a state.
   'publicAccess.ownDelete',
+  // An app role given a page or a record panel of an add-on the app names (`page:@customiser-line:view`).
+  'roles.addOnPages',
+  // An agreement on how many characters a text has (a line's lettering at most its product's limit).
+  'agrees.length',
+  // A copy of a person one or two links further into an add-on (a design's versions, and their files).
+  'people.addOnCopyFrom',
 ] as const;
 export type ManifestWordName = (typeof INSTALL_FLOOR_WORD_NAMES)[number];
 
@@ -455,6 +461,12 @@ export const WORD_FLOORS: Readonly<Partial<Record<ManifestWordName, string>>> = 
   'people.copyDetails': '0.3.43',
   // A guest's own draft removed through its own link: read by the same release.
   'publicAccess.ownDelete': '0.3.43',
+  // An app role given an add-on's page or panel: a release before refuses the grant as a page the app does not declare.
+  'roles.addOnPages': '0.3.44',
+  // A length agreement: a release before refuses the key.
+  'agrees.length': '0.3.44',
+  // A copy reached through the add-on's own links: a release before refuses the key.
+  'people.addOnCopyFrom': '0.3.44',
 };
 
 /** The kinds of file a column takes from the release that cleans SVG and reads models and fonts whole (`ASSET_FILE_KINDS`). */
@@ -545,15 +557,36 @@ export function installFloorWords(document: unknown): ManifestWord[] {
     });
     // An entry of the app's section that is not a page.
     if (document['navLinks'] !== undefined) out.push({ word: 'navLinks', path: 'navLinks' });
+    // A role's grant of a page that is not one of the app's own: an add-on's page or panel.
+    const ownPages = new Set(list(document['pages']).flatMap((page) => (isDoc(page) && typeof page['ref'] === 'string' ? [page['ref']] : [])));
+    list(document['roles']).forEach((role, r) => {
+      list(isDoc(role) ? role['permissions'] : undefined).forEach((grant, g) => {
+        const ref = typeof grant === 'string' ? /^page:@([a-z][a-z0-9-]*):view$/.exec(grant)?.[1] : undefined;
+        if (ref !== undefined && !ownPages.has(ref)) out.push({ word: 'roles.addOnPages', path: `roles.${String(r)}.permissions.${String(g)}` });
+      });
+    });
     // The app's people tables.
     if (document['people'] !== undefined) out.push({ word: 'people', path: 'people' });
     list(document['people']).forEach((entry, e) => {
       list(isDoc(entry) ? entry['copies'] : undefined).forEach((copy, c) => {
         if (isDoc(copy) && copy['addOn'] !== undefined) out.push({ word: 'people.addOnCopies', path: `people.${String(e)}.copies.${String(c)}.addOn` });
         if (isDoc(copy) && copy['holds'] === 'details') out.push({ word: 'people.copyDetails', path: `people.${String(e)}.copies.${String(c)}.holds` });
+        if (isDoc(copy) && copy['from'] !== undefined) out.push({ word: 'people.addOnCopyFrom', path: `people.${String(e)}.copies.${String(c)}.from` });
       });
     });
   }
+
+  // An agreement on a text's length, on an entry or on its child rows (two levels).
+  list(document['publicAccess']).forEach((entry, e) => {
+    const lengths = (holder: unknown, at: string): void => {
+      if (!isDoc(holder)) return;
+      list(holder['agrees']).forEach((agree, a) => {
+        if (isDoc(agree) && agree['length'] !== undefined) out.push({ word: 'agrees.length', path: `${at}.agrees.${String(a)}.length` });
+      });
+      for (const [name, child] of Object.entries(isDoc(holder['children']) ? holder['children'] : {})) lengths(child, `${at}.children.${name}`);
+    };
+    lengths(entry, `publicAccess.${String(e)}`);
+  });
 
   list(schema['tables']).forEach((table, t) => {
     if (!isDoc(table)) return;

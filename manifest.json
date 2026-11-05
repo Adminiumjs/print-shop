@@ -3761,6 +3761,27 @@
             "role": "pk"
           },
           {
+            "ref": "holiday_id",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Public holiday",
+              "de-DE": "Feiertag",
+              "fr-FR": "Jour férié",
+              "da-DK": "Helligdag",
+              "cs-CZ": "Státní svátek",
+              "ar-EG": "عطلة رسمية",
+              "zh-CN": "公共假日",
+              "zh-TW": "國定假日"
+            },
+            "rules": {
+              "addOnLink": {
+                "addOn": "holiday-calendars",
+                "table": "holidays"
+              }
+            }
+          },
+          {
             "ref": "from_date",
             "type": "date",
             "label": {
@@ -19049,6 +19070,13 @@
           "actions": [
             "read"
           ]
+        },
+        {
+          "addOn": "holiday-calendars",
+          "table": "holidays",
+          "actions": [
+            "read"
+          ]
         }
       ]
     },
@@ -22299,24 +22327,19 @@
             },
             {
               "block": "email.rows",
-              "id": "proofs",
+              "id": "jobs",
               "data": {
                 "from": {
                   "link": "order",
-                  "table": "proofs",
+                  "table": "jobs",
                   "via": "order_id",
-                  "orderBy": "version",
-                  "where": {
-                    "column": "state",
-                    "in": [
-                      "sent"
-                    ]
-                  },
-                  "limit": 20
+                  "orderBy": "position",
+                  "limit": 50
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
-                  "meta": "{{row.job.dims|}}"
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}"
                 }
               }
             },
@@ -22386,24 +22409,19 @@
             },
             {
               "block": "email.rows",
-              "id": "proofs",
+              "id": "jobs",
               "data": {
                 "from": {
                   "link": "order",
-                  "table": "proofs",
+                  "table": "jobs",
                   "via": "order_id",
-                  "orderBy": "version",
-                  "where": {
-                    "column": "state",
-                    "in": [
-                      "sent"
-                    ]
-                  },
-                  "limit": 20
+                  "orderBy": "position",
+                  "limit": 50
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
-                  "meta": "{{row.job.dims|}}"
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}"
                 }
               }
             },
@@ -22473,24 +22491,19 @@
             },
             {
               "block": "email.rows",
-              "id": "proofs",
+              "id": "jobs",
               "data": {
                 "from": {
                   "link": "order",
-                  "table": "proofs",
+                  "table": "jobs",
                   "via": "order_id",
-                  "orderBy": "version",
-                  "where": {
-                    "column": "state",
-                    "in": [
-                      "sent"
-                    ]
-                  },
-                  "limit": 20
+                  "orderBy": "position",
+                  "limit": 50
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
-                  "meta": "{{row.job.dims|}}"
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}"
                 }
               }
             },
@@ -22560,24 +22573,19 @@
             },
             {
               "block": "email.rows",
-              "id": "proofs",
+              "id": "jobs",
               "data": {
                 "from": {
                   "link": "order",
-                  "table": "proofs",
+                  "table": "jobs",
                   "via": "order_id",
-                  "orderBy": "version",
-                  "where": {
-                    "column": "state",
-                    "in": [
-                      "sent"
-                    ]
-                  },
-                  "limit": 20
+                  "orderBy": "position",
+                  "limit": 50
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
-                  "meta": "{{row.job.dims|}}"
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}"
                 }
               }
             },
@@ -22647,24 +22655,19 @@
             },
             {
               "block": "email.rows",
-              "id": "proofs",
+              "id": "jobs",
               "data": {
                 "from": {
                   "link": "order",
-                  "table": "proofs",
+                  "table": "jobs",
                   "via": "order_id",
-                  "orderBy": "version",
-                  "where": {
-                    "column": "state",
-                    "in": [
-                      "sent"
-                    ]
-                  },
-                  "limit": 20
+                  "orderBy": "position",
+                  "limit": 50
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
-                  "meta": "{{row.job.dims|}}"
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}"
                 }
               }
             },
@@ -22734,24 +22737,19 @@
             },
             {
               "block": "email.rows",
-              "id": "proofs",
+              "id": "jobs",
               "data": {
                 "from": {
                   "link": "order",
-                  "table": "proofs",
+                  "table": "jobs",
                   "via": "order_id",
-                  "orderBy": "version",
-                  "where": {
-                    "column": "state",
-                    "in": [
-                      "sent"
-                    ]
-                  },
-                  "limit": 20
+                  "orderBy": "position",
+                  "limit": 50
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
-                  "meta": "{{row.job.dims|}}"
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}"
                 }
               }
             },
@@ -22821,24 +22819,19 @@
             },
             {
               "block": "email.rows",
-              "id": "proofs",
+              "id": "jobs",
               "data": {
                 "from": {
                   "link": "order",
-                  "table": "proofs",
+                  "table": "jobs",
                   "via": "order_id",
-                  "orderBy": "version",
-                  "where": {
-                    "column": "state",
-                    "in": [
-                      "sent"
-                    ]
-                  },
-                  "limit": 20
+                  "orderBy": "position",
+                  "limit": 50
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
-                  "meta": "{{row.job.dims|}}"
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}"
                 }
               }
             },
@@ -22908,24 +22901,19 @@
             },
             {
               "block": "email.rows",
-              "id": "proofs",
+              "id": "jobs",
               "data": {
                 "from": {
                   "link": "order",
-                  "table": "proofs",
+                  "table": "jobs",
                   "via": "order_id",
-                  "orderBy": "version",
-                  "where": {
-                    "column": "state",
-                    "in": [
-                      "sent"
-                    ]
-                  },
-                  "limit": 20
+                  "orderBy": "position",
+                  "limit": 50
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
-                  "meta": "{{row.job.dims|}}"
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}"
                 }
               }
             },

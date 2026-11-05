@@ -318,7 +318,7 @@ function body(kind: Kind, w: EmailWords): Block[] {
     case "proof-ready":
       return [
         ...head,
-        proofs("sent"),
+        jobs(false),
         button("open", own.button!, ORDER_URL),
         button("approve", w.approve, ORDER_URL),
         button("change", w.askChange, ORDER_URL),

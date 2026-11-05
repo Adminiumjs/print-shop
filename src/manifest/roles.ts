@@ -18,14 +18,17 @@
  *
  * Every role reads the Customiser's rows its work needs: the design a job
  * names, its versions and files. The Customiser's panels on a record page
- * open for a person who also holds one of the Customiser's own roles: an
- * app's role cannot grant an add-on's panel yet.
+ * open for the roles below (`ROLE_PANELS`): a job's design for the owner,
+ * prepress and the press, a product's base for the owner. Adminium reads that
+ * grant from 0.3.44; on an older floor the panels open only for a person who
+ * also holds one of the Customiser's own roles. The owner reads Holiday
+ * calendars' public holidays, to add one as a closure.
  *
  * The screens show or hide a button by the role, but the grants and limits
  * below are what refuse the write: a hidden button is not a lock.
  */
 import { PAGE_REFS } from "./pages.ts";
-import { CUSTOMISER } from "./postings.ts";
+import { CUSTOMISER, HOLIDAYS } from "./postings.ts";
 import { TABLE_REFS, TABLES } from "./tables.ts";
 
 const grant = (table: string, ...actions: string[]) => actions.map((action) => `table:@${table}:${action}`);
@@ -74,6 +77,8 @@ const STOCK_READS = [
 ];
 /** What the owner and the counter read of DHL, when it is on: the collections it booked. */
 const SHIPMENT_READS = [{ addOn: "shipping-dhl", table: "shipments", actions: ["read"] }];
+/** What the owner reads of Holiday calendars, when it is on: the public holidays, each to add as a closure. */
+const HOLIDAY_READS = [{ addOn: HOLIDAYS, table: "holidays", actions: ["read"] }];
 
 /** The works' screens open records on these pages. */
 export const WORKS_PAGES = ["printing-orders", "printing-jobs", "printing-proofs", "printing-artwork", "printing-samples"];
@@ -95,7 +100,7 @@ export const ROLES = [
       orders: { writable: typed("orders", ...CUSTOMERS_OWN), creatable: typed("orders", ...CUSTOMERS_OWN) },
       saved_quotes: { writable: typed("saved_quotes", ...CUSTOMERS_OWN), creatable: typed("saved_quotes", ...CUSTOMERS_OWN) },
     },
-    tables: [...CUSTOMISER_READS, ...STOCK_READS, ...SHIPMENT_READS],
+    tables: [...CUSTOMISER_READS, ...STOCK_READS, ...SHIPMENT_READS, ...HOLIDAY_READS],
   },
   {
     key: "prepress",
@@ -178,3 +183,16 @@ export const ROLES = [
     tables: [{ addOn: CUSTOMISER, table: "designs", actions: ["read"] }, ...STOCK_READS, ...SHIPMENT_READS],
   },
 ];
+
+/** The Customiser's record panels each role opens: the design on a job, the base on a product. */
+export const ROLE_PANELS: Record<string, string[]> = {
+  owner: ["customiser-line", "customiser-product"],
+  prepress: ["customiser-line"],
+  press: ["customiser-line"],
+};
+
+/** The roles as a manifest at `floor` writes them: the panels' grants need the release that reads them. */
+export function rolesFor(panels: boolean): typeof ROLES {
+  if (!panels) return ROLES;
+  return ROLES.map((role) => ({ ...role, permissions: [...role.permissions, ...(ROLE_PANELS[role.key] ?? []).map(view)] }));
+}

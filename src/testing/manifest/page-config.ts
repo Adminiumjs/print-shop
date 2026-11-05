@@ -34,6 +34,48 @@ import { refSchema, scalarSchema, textOrLabels, wordsOrLabels, valueFits, type C
 export const PAGE_FILTER_CONTROLS = ['one-of', 'any-of', 'yes-no', 'record', 'date-range', 'number-range'] as const;
 export type PageFilterControl = (typeof PAGE_FILTER_CONTROLS)[number];
 
+/**
+ * The controls a field of a page's `config.form` may name: the widgets' own
+ * list (`FORM_CONTROLS`), which the install reads the form with. A control
+ * outside it is no form at all there, so it is refused here first, by name,
+ * rather than passing this check and failing the install.
+ */
+export const PAGE_FORM_CONTROLS = [
+  'text',
+  'title',
+  'textarea',
+  'mono',
+  'email',
+  'url',
+  'phone',
+  'password',
+  'number',
+  'currency',
+  'stepper',
+  'slider',
+  'date',
+  'time',
+  'datetime',
+  'select',
+  'segmented',
+  'pill-switch',
+  'choice-cards',
+  'toggle-row',
+  'check-row',
+  'chips',
+  'reference',
+  'reference-chips',
+  'image',
+  'avatar',
+  'attachments',
+  'picture',
+  'json',
+  'readonly',
+  'calendar',
+] as const;
+/** The controls a form's field over a related table (`relation`) may name. */
+export const PAGE_FORM_RELATION_CONTROLS = ['reference-chips', 'check-rows', 'child-rows'] as const;
+
 export const pageTabsSchema = z.record(
   refSchema,
   z.object({ empty: textOrLabels.optional(), emptyBody: wordsOrLabels.optional(), noNew: z.literal(true).optional() }).strict(),
@@ -113,7 +155,42 @@ function placeholdersOf(message: unknown): string[] {
   return texts.flatMap((text) => [...text.matchAll(/\{([^{}]*)\}/g)].map((match) => match[1] ?? ''));
 }
 
-/** Every problem with the pages' `config.tabs`, `config.filters` and `config.bulk`, against the manifest's own tables. */
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
+
+/**
+ * Each control a page's form names that the install could not read it with:
+ * a column's, a related table's, a child row's column's. Only the controls —
+ * the rest of the form is checked at install, against the tables as they are
+ * made. A file column takes its own control by naming none (or `attachments`,
+ * `image`, `picture`): there is no `file` control.
+ */
+function formControlIssues(form: unknown, at: (...rest: (string | number)[]) => (string | number)[]): ReferenceIssue[] {
+  if (!isRecord(form) || !Array.isArray(form['sections'])) return [];
+  const out: ReferenceIssue[] = [];
+  const known = (control: unknown, list: readonly string[]) => control === undefined || (typeof control === 'string' && list.includes(control));
+  const refuse = (path: (string | number)[], control: unknown, list: readonly string[]) =>
+    out.push({ path, message: `${JSON.stringify(control)} is not a form control: a field takes ${list.map((name) => `"${name}"`).join(', ')}, or none for the column's own` });
+  form['sections'].forEach((section: unknown, s: number) => {
+    if (!isRecord(section) || !Array.isArray(section['fields'])) return;
+    section['fields'].forEach((field: unknown, f: number) => {
+      if (!isRecord(field)) return;
+      const here = (...rest: (string | number)[]) => at('form', 'sections', s, 'fields', f, ...rest);
+      if (typeof field['relation'] === 'string') {
+        if (!known(field['control'], PAGE_FORM_RELATION_CONTROLS)) refuse(here('control'), field['control'], PAGE_FORM_RELATION_CONTROLS);
+        if (Array.isArray(field['columns'])) {
+          field['columns'].forEach((child: unknown, c: number) => {
+            if (isRecord(child) && !known(child['control'], PAGE_FORM_CONTROLS)) refuse(here('columns', c, 'control'), child['control'], PAGE_FORM_CONTROLS);
+          });
+        }
+      } else if (typeof field['column'] === 'string' && !known(field['control'], PAGE_FORM_CONTROLS)) {
+        refuse(here('control'), field['control'], PAGE_FORM_CONTROLS);
+      }
+    });
+  });
+  return out;
+}
+
+/** Every problem with the pages' `config.tabs`, `config.filters` and `config.bulk`, and the controls their forms name, against the manifest's own tables. */
 export function pageConfigIssues<C extends RuledColumn>(pages: readonly PageShape[], index: TableIndex<C>): ReferenceIssue[] {
   const out: ReferenceIssue[] = [];
   pages.forEach((page, p) => {
@@ -142,6 +219,8 @@ export function pageConfigIssues<C extends RuledColumn>(pages: readonly PageShap
       const column = index.column(child, via);
       return column !== undefined && column.type === 'fk' && column.references === own;
     };
+
+    out.push(...formControlIssues(page.config?.['form'], at));
 
     const tabs = parse('tabs', pageTabsSchema);
     for (const ref of Object.keys(tabs ?? {})) {

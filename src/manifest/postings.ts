@@ -9,6 +9,8 @@
  * snippet, as its README gives it.
  */
 export const CUSTOMISER = "customiser";
+/** The add-on that keeps the public holidays a closure may come from. */
+export const HOLIDAYS = "holiday-calendars";
 
 export const DESIGN_POSTING = {
   id: "design",

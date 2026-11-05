@@ -31,6 +31,28 @@ export const NEWS_TICK = {
   },
 };
 
+/**
+ * The logo and photo a customer put on their design, the versions of it the
+ * Customiser keeps as it was ordered, and their files: the person's because
+ * their design is, so erasing them deletes the logo and photo, blanks the
+ * words in each version and deletes its proof picture and production files.
+ * Adminium empties a copy that holds files, and follows one that far into an
+ * add-on, from 0.3.44.
+ */
+export const VERSION_COPIES = [
+  { addOn: CUSTOMISER, table: "designs", column: "logo_file", holds: "details", via: "jobs.design_id" },
+  { addOn: CUSTOMISER, table: "designs", column: "photo_file", holds: "details", via: "jobs.design_id" },
+  { addOn: CUSTOMISER, table: "design_versions", column: "values", holds: "details", via: "jobs.design_id", from: ["design_id"] },
+  { addOn: CUSTOMISER, table: "design_versions", column: "proof_file", holds: "details", via: "jobs.design_id", from: ["design_id"] },
+  { addOn: CUSTOMISER, table: "version_files", column: "file", holds: "details", via: "jobs.design_id", from: ["version_id", "design_id"] },
+];
+
+/** The people declaration as a manifest at a floor that reads `from` writes it. */
+export function peopleFor(versions: boolean): typeof PEOPLE {
+  if (!versions) return PEOPLE;
+  return PEOPLE.map((person) => ({ ...person, copies: [...person.copies, ...VERSION_COPIES] })) as typeof PEOPLE;
+}
+
 export const PEOPLE = [
   {
     table: "customers",
