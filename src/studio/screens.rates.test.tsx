@@ -124,16 +124,20 @@ describe("the price list", () => {
     expect(text()).toContain("Only the owner can change the rate card.");
   });
 
-  it("adds a public holiday from Holiday calendars as a closure, for the owner alone", async () => {
+  it("adds a bank holiday of England and Wales from Holiday calendars as a closure, for the owner alone", async () => {
     const data = fixture();
+    const ew = { country: "GB", region: "england-and-wales" };
     data.holidays = [
-      { id: 71, country: "GB", region: "ENG", day: "2026-08-31", name: "Summer bank holiday" },
-      { id: 72, country: "GB", region: "ENG", day: "2026-12-25", name: "Christmas Day" },
-      { id: 70, country: "GB", region: "ENG", day: "2026-05-25", name: "Spring bank holiday" },
+      { id: 71, ...ew, day: "2026-08-31", name: "Summer bank holiday" },
+      { id: 72, ...ew, day: "2026-12-25", name: "Christmas Day" },
+      { id: 70, ...ew, day: "2026-05-25", name: "Spring bank holiday" },
+      // Another set's days: not the works' own.
+      { id: 30, country: "DE", region: null, day: "2026-10-03", name: "Tag der Deutschen Einheit" },
+      { id: 90, country: "US", region: null, day: "2026-11-26", name: "Thanksgiving Day" },
     ];
     const door = new FakeDoor({ data, facts: { addOns: ["customiser", "holiday-calendars"] } });
     await mount(door, "prices");
-    // The summer one is a closure already (on its day), the spring one is past: only Christmas is offered.
+    // The summer one is a closure already (on its day), the spring one is past, the others are another country's: only Christmas is offered.
     expect([...document.querySelectorAll(".wk-price-holiday")].map((li) => li.querySelector("span")?.textContent)).toEqual([expect.stringContaining("Christmas Day")]);
     await sweep("the price list with public holidays to add");
     await click(button(/^Add Christmas Day on .+ as a closure$/));

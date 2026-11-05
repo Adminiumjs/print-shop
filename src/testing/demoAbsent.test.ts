@@ -13,7 +13,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const REPO = resolve(__dirname, "..", "..");
 
-/** Literals only the demo's modules hold: a stand-in holiday, a card label, a shortcut's words, the protocol's prefix. */
+/** Literals only the demo's modules hold: a holiday of its own, a card label, a shortcut's words, the protocol's prefix. */
 const MARKERS = ["Boxing Day (substitute day)", "Back to Wednesday morning", "500 business cards, both sides, laminated", "adminium:demo:"];
 
 function build(env: Record<string, string>, base: string): string {

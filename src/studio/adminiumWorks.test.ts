@@ -144,6 +144,17 @@ describe("the reads", () => {
     expect(sent.some((s) => s.path.startsWith("/api/v1/data/conn-1/shipments?"))).toBe(true);
   });
 
+  it("reads the bank holidays of England and Wales alone of the sets Holiday calendars keeps", async () => {
+    const { t, sent } = transport({ "/api/v1/add-ons": { addOns: [] }, "/api/v1/data/conn-1/holiday_calendars_holidays": { data: [{ id: 141, country: "GB", region: "england-and-wales", day: "2026-12-25", name: "Christmas Day" }] } });
+    const config = { ...CONFIG, addOns: { ...CONFIG.addOns, "holiday-calendars": { version: "1.0.17", settings: {}, tables: { holidays: "holiday_calendars_holidays" } } } };
+    const data = await new AdminiumWorks(t, config).load();
+    expect(data.holidays.map((h) => h["name"])).toEqual(["Christmas Day"]);
+    const read = sent.find((s) => s.path.startsWith("/api/v1/data/conn-1/holiday_calendars_holidays?"))!;
+    const where = JSON.parse(new URL(read.path, "http://x").searchParams.get("where")!) as unknown;
+    expect(where).toEqual({ and: [{ column: "country", op: "eq", value: "GB" }, { column: "region", op: "eq", value: "england-and-wales" }] });
+    expect(new URL(read.path, "http://x").searchParams.get("order")).toBe("day.asc");
+  });
+
   it("reads a table its roles do not open as empty, and Adminium's log as nothing for who may not read it", async () => {
     const closed = new SessionPortError("No.", 403, "FORBIDDEN");
     const { t } = transport({ "/api/v1/add-ons": closed, "/api/v1/audit": closed, "/api/v1/data/conn-1/printing_spoils": closed });

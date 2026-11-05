@@ -8,12 +8,16 @@
  * only once no job of it is on the floor; and a second sample pack to an
  * address is refused.
  */
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { JOB_FIGURES } from "../sample/marlow-press.ts";
 import type { OrderBody } from "../shop/port.ts";
+import { holidaysToAdd } from "../studio/screens/Prices.tsx";
 import { isShopError } from "../shop/port.ts";
 import { makeDemo } from "./adminium.ts";
+import { DEMO_HOLIDAYS } from "./world.ts";
 
 const optionOf = (demo: ReturnType<typeof makeDemo>, product: string, kind: string, code: string) => {
   const p = demo.world.all("products").find((r) => r["code"] === product)!;
@@ -182,5 +186,23 @@ describe("the demo's Adminium", () => {
     };
     const dry = await demo.shop.quote(body);
     expect([Number(dry.order["weight_kg"]) > 30, dry.order["delivery_to_quote"], dry.order["delivery_priced"]]).toEqual([true, 1, null]);
+  });
+});
+
+/** Holiday calendars' starting rows, in an add-ons checkout beside this repo (`ADD_ONS_REPO`), when there is one. */
+const SEED = join(process.env["ADD_ONS_REPO"] ?? join(import.meta.dirname, "..", "..", "..", "add-ons"), "packages", "holiday-calendars", "seeds", "holidays.json");
+
+describe("the demo's public holidays", () => {
+  it.skipIf(!existsSync(SEED))("are the England and Wales set Holiday calendars seeds, day for day and name for name", () => {
+    const seeded = (JSON.parse(readFileSync(SEED, "utf8")) as { country: string; region: string | null; day: string; name: string }[]).filter((h) => h.country === "GB" && h.region === "england-and-wales");
+    expect(DEMO_HOLIDAYS.map(({ country, region, day, name }) => ({ country, region, day, name }))).toEqual(seeded);
+  });
+
+  it("offers the ones to come as closures once Holiday calendars is on, those the sample shuts already left out", async () => {
+    const demo = makeDemo();
+    demo.world.addOns.add("holiday-calendars");
+    const data = await demo.works.load();
+    expect(data.holidays.every((h) => h["country"] === "GB" && h["region"] === "england-and-wales")).toBe(true);
+    expect(holidaysToAdd(data, "2026-08-05").map((h) => `${String(h["day"])} ${String(h["name"])}`).slice(0, 2)).toEqual(["2027-01-01 New Year's Day", "2027-03-26 Good Friday"]);
   });
 });

@@ -29,17 +29,30 @@ export type CardAddOn = (typeof CARD_ADD_ONS)[number];
 
 
 /**
- * Holiday calendars' table as the demo has it: the English bank holidays
- * after the pinned Wednesday that "Add as a closure" offers. A STAND-IN: the
- * add-on as released carries sets for the United States, Germany, France,
- * Czechia and Denmark and none for Britain, so a real Marlow Press reads none
- * of these. The names are the ones GOV.UK gives the English bank holidays.
+ * Holiday calendars' table as the demo has it: the England and Wales set the
+ * add-on keeps (`country` GB, `region` england-and-wales), the rows of its
+ * 1.0.17 seed in their order, which "Add as a closure" offers from. The
+ * add-on keeps the other countries' sets beside it; the works reads only this
+ * one, so the demo holds no other.
  */
 export const DEMO_HOLIDAYS: readonly Row[] = [
-  { id: 1, country: "GB", region: null, day: "2026-08-31", name: "Summer bank holiday" },
-  { id: 2, country: "GB", region: null, day: "2026-12-25", name: "Christmas Day" },
-  { id: 3, country: "GB", region: null, day: "2026-12-28", name: "Boxing Day (substitute day)" },
-];
+  ["2026-01-01", "New Year's Day"],
+  ["2026-04-03", "Good Friday"],
+  ["2026-04-06", "Easter Monday"],
+  ["2026-05-04", "Early May bank holiday"],
+  ["2026-05-25", "Spring bank holiday"],
+  ["2026-08-31", "Summer bank holiday"],
+  ["2026-12-25", "Christmas Day"],
+  ["2026-12-28", "Boxing Day (substitute day)"],
+  ["2027-01-01", "New Year's Day"],
+  ["2027-03-26", "Good Friday"],
+  ["2027-03-29", "Easter Monday"],
+  ["2027-05-03", "Early May bank holiday"],
+  ["2027-05-31", "Spring bank holiday"],
+  ["2027-08-30", "Summer bank holiday"],
+  ["2027-12-27", "Christmas Day (substitute day)"],
+  ["2027-12-28", "Boxing Day (substitute day)"],
+].map(([day, name], i) => ({ id: i + 1, country: "GB", region: "england-and-wales", day, name }));
 
 const same = (a: unknown, b: unknown) => a !== null && a !== undefined && b !== null && b !== undefined && String(a) === String(b);
 const pad = (n: number, width: number) => String(n).padStart(width, "0");

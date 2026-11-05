@@ -9,15 +9,16 @@
  * priced again.
  *
  * Under it the works' closures, the days no job is due on, and, while Holiday
- * calendars is on, the public holidays to come that are not closures yet: the
- * owner adds one as a closure (its day and its name, linked to the holiday).
+ * calendars is on, the bank holidays of England and Wales to come that are
+ * not closures yet: the owner adds one as a closure (its day and its name,
+ * linked to the holiday).
  * The comp draws no closures here; this is the smallest place the owner
  * already edits the works' rate card and calendar from.
  */
 import { useEffect, useId, useState } from "react";
 import { CalendarPlus, Pencil, UserRoundCog } from "lucide-react";
 
-import { HOLIDAYS } from "../adminiumWorks.ts";
+import { HOLIDAY_SET, HOLIDAYS } from "../adminiumWorks.ts";
 import { useData, useEnv, useRun } from "../env.tsx";
 import { useFmt } from "../format.ts";
 import { mayEditRates } from "../roles.ts";
@@ -238,13 +239,14 @@ function PriceSection({ section, editable, editing, onEdit, onDone }: { section:
 
 const dayOf = (value: unknown): string | null => (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value) ? value.slice(0, 10) : null);
 
-/** The public holidays to come that no closure is for yet: none linked to it, none on its day. */
+/** The public holidays of England and Wales to come that no closure is for yet: none linked to it, none on its day. */
 export function holidaysToAdd(data: WorksData, today: string): Row[] {
   const linked = new Set(data.closures.map((c) => String(c["holiday_id"] ?? "")));
   const shut = (day: string) => data.closures.some((c) => c["active"] !== false && (dayOf(c["from_date"]) ?? "") <= day && day <= (dayOf(c["to_date"]) ?? ""));
   return data.holidays.filter((h) => {
     const day = dayOf(h["day"]);
-    return day !== null && day >= today && !linked.has(String(h.id)) && !shut(day);
+    const ours = h["country"] === HOLIDAY_SET.country && h["region"] === HOLIDAY_SET.region;
+    return ours && day !== null && day >= today && !linked.has(String(h.id)) && !shut(day);
   });
 }
 

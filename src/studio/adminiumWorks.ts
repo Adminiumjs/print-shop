@@ -46,6 +46,8 @@ const SHIPMENT_MOMENTS = ["created_at", "collection_from", "collection_to"];
 export const CARRIER_CONTRACT = "shipping-carrier";
 /** The add-on that keeps public holidays, each one the works may add as a closure. */
 export const HOLIDAYS = "holiday-calendars";
+/** The works is in England: of the sets Holiday calendars keeps, the bank holidays of England and Wales are its own. */
+export const HOLIDAY_SET = { country: "GB", region: "england-and-wales" } as const;
 
 /** The yes/no columns each table holds: SQLite and MySQL hand back 0 or 1. */
 export const YES_NO: Readonly<Partial<Record<Table, readonly string[]>>> = {
@@ -244,8 +246,9 @@ export class AdminiumWorks implements WorksDoor {
       // The delivery company attached and on, and what it booked.
       this.carrier = await this.findCarrier(on);
       const shipments = this.carrier === null ? [] : await this.listAddOn(`${this.carrier.key}:shipments`, { order: "created_at.desc" });
-      // The public holidays, to add one as a closure: Holiday calendars on, and read by whoever may (the owner).
-      const holidays = on.has(HOLIDAYS) ? await this.listAddOn(`${HOLIDAYS}:holidays`, { order: "day.asc" }) : [];
+      // The public holidays of England and Wales, to add one as a closure: Holiday calendars on, and read by whoever may (the owner).
+      const set = { and: [{ column: "country", op: "eq", value: HOLIDAY_SET.country }, { column: "region", op: "eq", value: HOLIDAY_SET.region }] };
+      const holidays = on.has(HOLIDAYS) ? await this.listAddOn(`${HOLIDAYS}:holidays`, { where: set, order: "day.asc" }) : [];
       return {
         settings: settings![0] ?? null,
         products: products!,
