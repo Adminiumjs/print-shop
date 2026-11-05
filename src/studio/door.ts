@@ -163,7 +163,7 @@ export interface WorksDoor {
   /** A proof the works sent before, answered by the one it sends now. */
   supersede(proof: Row): Promise<Row>;
   /** A proof of a job: its PDF stored first, then the row that sends it (Adminium numbers it and e-mails it). */
-  sendProof(input: { order: Row; job: Row; kind: "email" | "post"; file: ProofFile; designVersionId: Id | null; note: string | null }): Promise<Row>;
+  sendProof(input: { job: Row; kind: "email" | "post"; file: ProofFile; designVersionId: Id | null; note: string | null }): Promise<Row>;
   /** Sheets spoiled on a job's run: a row of their own, which Inventory is told of when it keeps the stock. */
   spoil(input: { job: Row; sheets: number; note: string | null }): Promise<Row>;
   /** A row of the rate card, changed. */

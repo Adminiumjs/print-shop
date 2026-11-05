@@ -96,8 +96,10 @@ describe("the demo's Adminium", () => {
     const job = data.jobs.find((j) => String(j["order_id"]) === String(placed.order["id"]))!;
     const order = data.orders.find((o) => String(o.id) === String(placed.order["id"]))!;
     expect(await demo.works.moveJob(job, "printing").catch((e: unknown) => (e as { code?: string }).code)).toBe("STATE_MOVE_REFUSED");
-    const proof = await demo.works.sendProof({ order, job, kind: "email", file: { blob: new Blob(["%PDF-1.4"], { type: "application/pdf" }), filename: "proof.pdf" }, designVersionId: null, note: null });
+    const proof = await demo.works.sendProof({ job, kind: "email", file: { blob: new Blob(["%PDF-1.4"], { type: "application/pdf" }), filename: "proof.pdf" }, designVersionId: null, note: null });
     expect([proof["version"], proof["state"], proof["sent_by"]]).toEqual([1, "sent", "Rosa Marlow"]);
+    // The proof's order is its job's, never sent.
+    expect(String(proof["order_id"])).toBe(String(order.id));
     // Thursday afternoon, past the cut-off, the customer approves through the order's own link.
     demo.world.advanceWorkingDay();
     demo.world.pastCutoff();

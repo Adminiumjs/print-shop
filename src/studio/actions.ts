@@ -122,7 +122,7 @@ export async function sendProof(door: WorksDoor, data: WorksData, job: Row, inpu
   const open = openProofOf(data, job);
   if (open !== undefined) await door.supersede(open);
   const version = job["design_id"] === null || job["design_id"] === undefined ? undefined : versionOf(data, job);
-  const sent = await door.sendProof({ order, job, kind: input.kind, file: input.file, designVersionId: version?.id ?? null, note: input.note });
+  const sent = await door.sendProof({ job, kind: input.kind, file: input.file, designVersionId: version?.id ?? null, note: input.note });
   if (job["artwork_checked"] !== true && who.can("jobs", "update")) await door.updateJob(job, { artwork_checked: true });
   return sent;
 }

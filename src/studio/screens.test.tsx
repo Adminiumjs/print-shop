@@ -175,7 +175,7 @@ describe("the ticket's writes", () => {
     await type(document.querySelector("textarea"), "Cut line moved in.");
     await click(button("Send"));
     expect(door.of("supersede")).toEqual([{ id: 2, from: "sent" }]);
-    expect(door.of("sendProof")).toEqual([{ orderId: 4121, jobId: 3, kind: "email", file: { filename: "proof-mp-4121.pdf", type: "application/pdf" }, designVersionId: null, note: "Cut line moved in." }]);
+    expect(door.of("sendProof")).toEqual([{ jobId: 3, kind: "email", file: { filename: "proof-mp-4121.pdf", type: "application/pdf" }, designVersionId: null, note: "Cut line moved in." }]);
     expect(toasts()).toEqual(["Proof sent — we've e-mailed Kestrel Joinery."]);
     expect(useWorks.getState().overlay).toBeNull();
   });
@@ -197,7 +197,7 @@ describe("the ticket's writes", () => {
     await mount(door, "ticket", { jobId: 8, overlay: { kind: "proof", jobId: 8 } });
     expect(button(/Printed, by post \(£12\.00\)/)?.getAttribute("aria-checked")).toBe("true");
     await click(button("Send"));
-    expect(door.of("sendProof")).toEqual([{ orderId: 4127, jobId: 8, kind: "post", file: { copyOf: "/api/v1/files/file_01J8Z6Q3M4N5P6R7S8T9V0W1XA/content" }, designVersionId: 700, note: null }]);
+    expect(door.of("sendProof")).toEqual([{ jobId: 8, kind: "post", file: { copyOf: "/api/v1/files/file_01J8Z6Q3M4N5P6R7S8T9V0W1XA/content" }, designVersionId: 700, note: null }]);
   });
 
   it("records spoilage as a row of its own, and refuses a number a run cannot take", async () => {

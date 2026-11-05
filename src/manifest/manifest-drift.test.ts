@@ -190,6 +190,11 @@ describe("every total, number and date is Adminium's", () => {
     expect(rules("orders", "tax_rate")["default"]).toEqual({ from: { table: "settings", column: "tax_rate" } });
   });
 
+  it("ties a proof and a spoilage to their job's own order, which nobody types", () => {
+    for (const t of ["proofs", "spoils"]) expect(rules(t, "order_id")["copy"], t).toEqual({ via: "job_id", from: "order_id", mode: "always" });
+    expect((role("prepress").limits!["proofs"]!["creatable"] as string[])).not.toContain("order_id");
+  });
+
   it("keeps nothing from the press before its proof is approved", () => {
     const moves = (table("jobs")["states"] as Json)["moves"] as Record<string, unknown[]>;
     expect(moves["prepress"]![0]).toEqual({ to: "printing", requires: { where: [{ column: "proof_ok", eq: 1 }] } });

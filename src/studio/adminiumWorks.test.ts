@@ -85,23 +85,23 @@ describe("the writes, as Adminium reads them", () => {
     }) as typeof fetch;
     const door = new AdminiumWorks(t, CONFIG, { fetchImpl });
     const blob = new Blob(["%PDF-1.4"], { type: "application/pdf" });
-    await door.sendProof({ order: { id: 4122 }, job: { id: 2 }, kind: "post", file: { blob, filename: "proof-mp-4122.pdf" }, designVersionId: null, note: "Check the fold." });
+    await door.sendProof({ job: { id: 2 }, kind: "post", file: { blob, filename: "proof-mp-4122.pdf" }, designVersionId: null, note: "Check the fold." });
     expect(calls[0]!.url).toBe("/api/v1/files?filename=proof-mp-4122.pdf&connectionId=conn-1&table=printing_proofs&column=file");
     expect(calls[0]!.init.method).toBe("POST");
     expect((calls[0]!.init.headers as Record<string, string>)["x-adminium-csrf"]).toBe("tok");
     expect(calls[0]!.init.body).toBe(blob);
     expect(sent).toEqual([
-      { method: "POST", path: "/api/v1/data/conn-1/printing_proofs", body: { values: { order_id: 4122, job_id: 2, kind: "post", file: "/api/v1/files/file_01J8Z6Q3M4N5P6R7S8T9V0W1ZZ/content", note: "Check the fold." } } },
+      { method: "POST", path: "/api/v1/data/conn-1/printing_proofs", body: { values: { job_id: 2, kind: "post", file: "/api/v1/files/file_01J8Z6Q3M4N5P6R7S8T9V0W1ZZ/content", note: "Check the fold." } } },
     ]);
   });
 
   it("copies the Customiser's proof of a design, and names the version it shows", async () => {
     const { t, sent } = transport();
     const door = new AdminiumWorks(t, CONFIG);
-    await door.sendProof({ order: { id: 4127 }, job: { id: 8 }, kind: "email", file: { copyOf: "file_01J8Z6Q3M4N5P6R7S8T9V0W1XA" }, designVersionId: 700, note: null });
+    await door.sendProof({ job: { id: 8 }, kind: "email", file: { copyOf: "file_01J8Z6Q3M4N5P6R7S8T9V0W1XA" }, designVersionId: 700, note: null });
     expect(sent.map((s) => [s.method, s.path, s.body])).toEqual([
       ["POST", "/api/v1/files/file_01J8Z6Q3M4N5P6R7S8T9V0W1XA/copy", { connectionId: "conn-1", table: "printing_proofs", column: "file" }],
-      ["POST", "/api/v1/data/conn-1/printing_proofs", { values: { order_id: 4127, job_id: 8, kind: "email", file: "/api/v1/files/file_01J8Z6Q3M4N5P6R7S8T9V0W1YY/content", design_version_id: 700 } }],
+      ["POST", "/api/v1/data/conn-1/printing_proofs", { values: { job_id: 8, kind: "email", file: "/api/v1/files/file_01J8Z6Q3M4N5P6R7S8T9V0W1YY/content", design_version_id: 700 } }],
     ]);
   });
 

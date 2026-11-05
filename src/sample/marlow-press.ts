@@ -527,7 +527,6 @@ export function customiserSection(): SampleBundle {
     }
     for (const pr of j.proofs) {
       proofs.push({
-        order_id: { "@ref": orderLabel(j.ref) },
         job_id: { "@ref": jobLabel(j.ref) },
         version: pr.version,
         kind: "email",

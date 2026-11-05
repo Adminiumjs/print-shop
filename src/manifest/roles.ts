@@ -122,7 +122,7 @@ export const ROLES = [
       jobs: { writable: ["artwork_checked", "stage", "works_note"], writableValues: { stage: ["printing"] }, writableFrom: { stage: ["prepress"] } },
       // A proof: the job, its file, how it is sent, the note and the design version it shows; or sent again.
       proofs: {
-        creatable: ["order_id", "job_id", "kind", "file", "design_version_id", "note"],
+        creatable: ["job_id", "kind", "file", "design_version_id", "note"],
         writable: ["state"],
         writableValues: { state: ["superseded"] },
       },

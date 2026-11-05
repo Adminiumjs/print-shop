@@ -130,7 +130,7 @@ export class DemoWorks implements WorksDoor {
     return this.move("proofs", "state", proof, "superseded", {});
   }
 
-  async sendProof(input: { order: Row; job: Row; kind: "email" | "post"; file: ProofFile; designVersionId: Id | null; note: string | null }): Promise<Row> {
+  async sendProof(input: { job: Row; kind: "email" | "post"; file: ProofFile; designVersionId: Id | null; note: string | null }): Promise<Row> {
     const w = this.world;
     let file: string;
     if ("copyOf" in input.file) file = input.file.copyOf;
@@ -140,7 +140,7 @@ export class DemoWorks implements WorksDoor {
     }
     return copy(
       w.write(
-        () => w.insert("proofs", { order_id: input.order.id, job_id: input.job.id, kind: input.kind, file, design_version_id: input.designVersionId, note: input.note, state: "sent" }),
+        () => w.insert("proofs", { job_id: input.job.id, kind: input.kind, file, design_version_id: input.designVersionId, note: input.note, state: "sent" }),
         DEMO_PERSON.name,
       ),
     );

@@ -343,11 +343,10 @@ export class AdminiumWorks implements WorksDoor {
     return body.ref;
   }
 
-  sendProof(input: { order: Row; job: Row; kind: "email" | "post"; file: ProofFile; designVersionId: Id | null; note: string | null }): Promise<Row> {
+  sendProof(input: { job: Row; kind: "email" | "post"; file: ProofFile; designVersionId: Id | null; note: string | null }): Promise<Row> {
     return this.run(async () => {
       const file = await this.storeFile(input.file);
       return this.create("proofs", {
-        order_id: input.order.id,
         job_id: input.job.id,
         kind: input.kind,
         file,

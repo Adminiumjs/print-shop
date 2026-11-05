@@ -10792,21 +10792,6 @@
             "role": "pk"
           },
           {
-            "ref": "order_id",
-            "type": "fk",
-            "references": "orders",
-            "label": {
-              "en-US": "Order",
-              "de-DE": "Bestellung",
-              "fr-FR": "Commande",
-              "da-DK": "Bestilling",
-              "cs-CZ": "Objednávka",
-              "ar-EG": "الطلب",
-              "zh-CN": "订单",
-              "zh-TW": "訂單"
-            }
-          },
-          {
             "ref": "job_id",
             "type": "fk",
             "references": "jobs",
@@ -10821,6 +10806,29 @@
               "zh-TW": "工作"
             },
             "index": true
+          },
+          {
+            "ref": "order_id",
+            "type": "fk",
+            "references": "orders",
+            "label": {
+              "en-US": "Order",
+              "de-DE": "Bestellung",
+              "fr-FR": "Commande",
+              "da-DK": "Bestilling",
+              "cs-CZ": "Objednávka",
+              "ar-EG": "الطلب",
+              "zh-CN": "订单",
+              "zh-TW": "訂單"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "job_id",
+                "from": "order_id",
+                "mode": "always"
+              }
+            }
           },
           {
             "ref": "version",
@@ -19370,7 +19378,6 @@
         },
         "proofs": {
           "creatable": [
-            "order_id",
             "job_id",
             "kind",
             "file",

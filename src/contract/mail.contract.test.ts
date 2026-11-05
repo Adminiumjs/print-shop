@@ -109,14 +109,14 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
         return shop.place(orderBody(values, lines, true), `printing-mail-${engine}-${String(keys).padStart(10, "0")}`, String(quoted.order["total"]));
       };
       const jobsOf = async (order: Row) => (await rows("jobs")).filter((j) => String(j["order_id"]) === String(order["id"]));
-      const sendProof = async (order: Row, job: Row): Promise<Row> => {
+      const sendProof = async (job: Row): Promise<Row> => {
         const stored = ok(await staff.send<{ ref: string }>("POST", `/api/v1/files?${new URLSearchParams({ filename: "proof.pdf", connectionId, table: tables()["proofs"] ?? "printing_proofs", column: "file" }).toString()}`, PDF, { "content-type": "application/pdf" }), 201);
-        return ok(await staff.post<{ data: Row }>(`/api/v1/data/${connectionId}/${table("proofs")}`, { values: { order_id: order["id"], job_id: job["id"], kind: "email", file: stored.ref } }), 201).data;
+        return ok(await staff.post<{ data: Row }>(`/api/v1/data/${connectionId}/${table("proofs")}`, { values: { job_id: job["id"], kind: "email", file: stored.ref } }), 201).data;
       };
       /** A job approved, printed and ready, and its order with it. */
       const finish = async (order: Row) => {
         for (const job of await jobsOf(order)) {
-          const proof = await sendProof(order, job);
+          const proof = await sendProof(job);
           await patch("proofs", proof["id"], { state: "approved" }, "sent");
           await patch("jobs", job["id"], { stage: "printing" }, "prepress");
           await patch("jobs", job["id"], { stage: "ready" }, "printing");
@@ -185,7 +185,7 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
 
       it("sends the proof ready, then the proof approved", async () => {
         const [job] = await jobsOf(collect.order);
-        const proof = await sendProof(collect.order, job!);
+        const proof = await sendProof(job!);
         const ready = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-ready", to: SHOPPER.email, row: message("proof-ready", "order_id", collect.order["id"]), body: new RegExp(`/order#${collect.link!.token}`) });
         expect(ready.mail.text).toContain("Open the proof (PDF)");
         expect(ready.mail.text).toContain("500 × Business cards");
@@ -227,7 +227,7 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
       it("sends the works its copy of a change asked, with the customer's words", async () => {
         const order = await place([cards(1000)], "collect");
         const [job] = await jobsOf(order.order);
-        const proof = await sendProof(order.order, job!);
+        const proof = await sendProof(job!);
         const door = browser().after();
         expect(await door.openShared(order.link!.token)).toBe("opened");
         await door.answerProof("link", proof["id"] as number, { state: "change_asked", change_note: "Make the phone number bigger." });

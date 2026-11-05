@@ -154,9 +154,9 @@ describe.skipIf(why !== null)(`after the order, on a built Adminium${why === nul
         return door.place(body, key, String(quoted.order["total"]));
       };
       /** The works sends a proof of a job: its PDF stored through the files route, then the proof row. */
-      const sendProof = async (order: Row, job: Row): Promise<Row> => {
+      const sendProof = async (job: Row): Promise<Row> => {
         const stored = ok(await staff.send<{ ref: string }>("POST", `/api/v1/files?${new URLSearchParams({ filename: "proof.pdf", connectionId, table: tables()["proofs"] ?? "printing_proofs", column: "file" }).toString()}`, PDF, { "content-type": "application/pdf" }), 201);
-        return ok(await staff.post<{ data: Row }>(`/api/v1/data/${connectionId}/${table("proofs")}`, { values: { order_id: order["id"], job_id: job["id"], kind: "email", file: stored.ref } }), 201).data;
+        return ok(await staff.post<{ data: Row }>(`/api/v1/data/${connectionId}/${table("proofs")}`, { values: { job_id: job["id"], kind: "email", file: stored.ref } }), 201).data;
       };
 
       let placed: Awaited<ReturnType<AdminiumShop["place"]>>;
@@ -166,7 +166,7 @@ describe.skipIf(why !== null)(`after the order, on a built Adminium${why === nul
         placed = await place(shop, cards(500), `printing-after-${engine}-0000000001`);
         expect(placed.order["number"]).toBe("MP-4127");
         job = (await rows("jobs")).find((j) => String(j["order_id"]) === String(placed.order["id"]))!;
-        const proof = await sendProof(placed.order, job);
+        const proof = await sendProof(job);
 
         const door = browser().after();
         expect(door.sharedHeld()).toBe(false);
