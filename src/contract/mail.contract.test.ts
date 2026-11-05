@@ -185,8 +185,8 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
         received = mail;
       }, 240_000);
 
-      // MAIL-BRAND: Adminium heads an app's mail with the workspace's name, not the app's own (its outbox's `settings.name`).
-      it.fails("heads the customer's e-mail with the works' name, never Adminium's", () => {
+      // An app's mail with no brand of its own is headed with the business's name (its outbox's `settings.name`).
+      it("heads the customer's e-mail with the works' name, never Adminium's", () => {
         const band = /font-size:15px;font-weight:800;letter-spacing:-\.01em;[^"]*">([^<]*)</.exec(received?.html ?? "");
         expect(band?.[1]).toBe("Marlow Press");
       });

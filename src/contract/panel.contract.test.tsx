@@ -19,11 +19,11 @@
  *     canvas, which this suite has not);
  *   - the product's panel is served to the owner, and refused to the press;
  *   - the owner keeps Holiday calendars' closed days (its settings grant),
- *     and finds a customer to erase (an engine gap: no app role holds it).
+ *     and finds a customer to erase; prepress does not.
  *
- * What an app's role cannot yet hold on 0.3.46 (the shopper's words, a
- * write of a version, a delete of a file) is held as `it.fails`, each named
- * with its gap.
+ * What an app's role cannot yet do (the proof saved on the design's
+ * version, until the Customiser's `appGrants` allow it) is held as
+ * `it.fails`, named with its gap.
  *
  * It runs with `CONTRACT=1` where a built Adminium (`ADMINIUM_REPO`) and a
  * built add-ons checkout (`ADD_ONS_REPO`) are, and says why it skipped
@@ -239,9 +239,9 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
         expect(panelsOf("counter").access("customiser", "version_files")).toEqual([]);
       });
 
-      // G1: the starter fonts' files are handed out beside the set-up page, which Adminium serves only while the Customiser is attached to the dashboard.
+      // The starter fonts' files are handed out beside the set-up page, to a role holding its page, screens-only or not.
       for (const who of ["owner", "prepress", "press"] as const) {
-        it.fails(`hands ${who} a starter font's file to make the print files with (gap G1: the set-up page's files are closed to an app-attached add-on and to screens-only people)`, async () => {
+        it(`hands ${who} a starter font's file to make the print files with`, async () => {
           const answer = await callers[who]!.fetchAs()("/api/v1/add-ons/customiser/pages/customiser/files/fonts/Manrope-OFL.txt");
           expect(answer.status).toBe(200);
         });
@@ -261,13 +261,14 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
       });
 
       /*
-       * Finding and erasing a person is `system:privacy:manage`, which an
-       * app's manifest may not hand out: the works' owner, who is not an
-       * administrator, is refused Adminium's privacy page.
+       * Finding and erasing a person is the owner's (`privacy:@:people`, on
+       * the dashboard's privacy page): never a screens-only role's.
        */
-      it.fails("lets the owner find a customer to erase them (gap: an app role cannot hold the erase right)", async () => {
+      it("lets the owner find a customer to erase them, and no floor role", async () => {
         const found = await callers["owner"]!.post("/api/v1/privacy/find", { address: "hello@harbourbakery.example" }, await tokenOf("owner"));
         expect(found.status, JSON.stringify(found.body).slice(0, 400)).toBe(200);
+        const refused = await callers["prepress"]!.post("/api/v1/privacy/find", { address: "hello@harbourbakery.example" }, await tokenOf("prepress"));
+        expect([refused.status, refused.code === "CSRF_FAILED"]).toEqual([403, false]);
       });
 
       /** The Customiser's own job panel, drawn here with the works' host as this role: what it says. */
@@ -308,8 +309,8 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
           expect(drawn).toContain("Design");
         }, 60_000);
 
-        // G2: an app's role holds read, create and update of an add-on's table, never its personal columns in clear (`read_pii`).
-        it.fails(`shows ${who} the customer's own words in the panel (gap G2: an app role cannot read the Customiser's personal columns)`, async () => {
+        // The role holds the designs' and versions' personal columns in clear (`read_pii`): the customer's own words.
+        it(`shows ${who} the customer's own words in the panel`, async () => {
           const job = designedJob(await doors[who]!.load());
           const words = await wordsOf(job);
           expect(words.length).toBeGreaterThan(0);
@@ -336,8 +337,8 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
         }, 60_000);
       }
 
-      // G2: "Make the files again" takes the version's old files away first; an app's role never deletes an add-on's rows.
-      it.fails("lets prepress make the files again: the version's old files taken away (gap G2: an app role cannot delete version_files)", async () => {
+      // "Make the files again" takes the version's old files away first: the role deletes the version's files.
+      it("lets prepress make the files again: the version's old files taken away", async () => {
         const panels = panelsOf("prepress");
         const files = await panels.list("customiser", "version_files", { where: { column: "name", op: "eq", value: "cards-prepress.pdf" }, limit: 2, offset: 0 });
         expect(files.length).toBe(1);
