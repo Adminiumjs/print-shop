@@ -1,12 +1,9 @@
 /**
- * Which Adminium the contract runs on, and so which manifest it installs.
+ * Which Adminium the contract runs on.
  *
- * The app ships at its floor (`MIN_ADMINIUM`), but the same modules write the
- * manifest for the next release, which grants the Customiser's panels on a
- * job and a product and lets a person's copies follow into the versions of
- * their designs. On an Adminium that reads those, the contract installs that
- * manifest, so the checks of the next release run against the real thing; on
- * an older one it installs the manifest that ships.
+ * The contract installs the manifest that ships (`manifest.json`, at the
+ * floor `MIN_ADMINIUM`), so the Adminium under test is that release or a
+ * later one.
  *
  * Tests only; nothing that ships imports it.
  */
@@ -14,7 +11,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { atLeast, manifestText, PANELS_AND_COPIES } from "../manifest/build.ts";
+import { atLeast } from "../manifest/build.ts";
 
 const REPO = fileURLToPath(new URL("../..", import.meta.url));
 
@@ -28,8 +25,5 @@ export const ENGINE_VERSION: string = (() => {
 /** Whether the Adminium under test is that release or a later one. */
 export const engineAtLeast = (release: string): boolean => atLeast(ENGINE_VERSION, release);
 
-/** Whether that Adminium reads the panels' grants and the copies into the Customiser's versions. */
-export const READS_PANELS_AND_COPIES = engineAtLeast(PANELS_AND_COPIES);
-
-/** The manifest the contract installs: written for the next release when the Adminium reads it, else the one that ships. */
-export const MANIFEST_TEXT: string = READS_PANELS_AND_COPIES ? manifestText({ floor: PANELS_AND_COPIES }) : readFileSync(join(REPO, "manifest.json"), "utf8");
+/** The manifest the contract installs: the one that ships. */
+export const MANIFEST_TEXT: string = readFileSync(join(REPO, "manifest.json"), "utf8");

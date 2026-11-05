@@ -2,7 +2,7 @@
  * AFTER THE ORDER, ON A BUILT ADMINIUM, THROUGH THE SHOP'S OWN DOOR.
  *
  * The app and the Customiser it requires are installed on a BUILT Adminium
- * (`ADMINIUM_REPO`, the core at 0.3.44) as an operator installs them, the
+ * (`ADMINIUM_REPO`, the core at 0.3.45) as an operator installs them, the
  * sample added at the moment the comps pin the works to (10:20 on Wednesday
  * 5 August 2026 in Marlow), and the shop opened the way its customer build
  * opens it. Harbour Bakery orders 500 business cards; the works sends a
@@ -305,25 +305,14 @@ describe.skipIf(why !== null)(`after the order, on a built Adminium${why === nul
         expect((await rows("sample_requests")).length).toBe(before);
       }, 60_000);
 
-      /*
-       * WAITS ON THE CORE (named in the piece's report): `address_key` is a `join` over the postcode and the
-       * first line, kept with `normalize: "code"`, but the normalising is not applied to a formula's result, so
-       * "12 quay street" makes a key the sample's "12 Quay Street" does not clash with, and a second pack goes.
-       * When the core normalises a formula column's value, this flips red: take the `.fails` off. On MySQL it
-       * holds already, by the column's case-insensitive collation rather than by the rule.
-       */
-      (engine === "mysql" ? it : it.fails)("refuses a second pack to the same address typed another way", async () => {
+      // The key is kept by the column's `normalize: "code"` rule, so the address typed in another case is the same address.
+      it("refuses a second pack to the same address typed another way", async () => {
         const door = browser().after();
         const stock = catalogue.materials.filter((m) => m.code === "silk170").map((m) => ({ values: { material_id: m.id } }));
         const refused = await door
           .askSamples({ values: { name: "Harbour Bakery", email: "post@harbourbakery.example", address_line1: "12 quay street", town: "Marlow", postcode: "sl7 1bt", language: "en-US", client_key: `printing-after-${engine}-pack-000003` }, children: { sample_stocks: stock } })
           .catch((e: unknown) => e);
         expect(isShopError(refused)).toBe(true);
-      }, 60_000);
-
-      it("keeps a formula's key as written, not normalised: what the gap above stands on", async () => {
-        const keys = (await rows("sample_requests")).map((r) => r["address_key"]);
-        expect(keys).toContain("SL71BT12 Quay Street");
       }, 60_000);
 
       it("accepts the works' delivery quote through the order's own link: the order's delivery and total move to it", async () => {

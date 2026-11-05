@@ -16,6 +16,7 @@ import { describe, expect, it } from "vitest";
 
 import { buildManifest, CUSTOMER_ROUTES, manifestText } from "./build.ts";
 import { untranslated } from "./labels.ts";
+import { VERSION_COPIES } from "./people.ts";
 import { DESIGN_POSTING } from "./postings.ts";
 import { CONFIG_SELECT, CONFIG_WRITABLE, JOB_SELECT, PUBLIC_REFS } from "./public.ts";
 import { DECIDING_RULES } from "./roles.ts";
@@ -45,11 +46,11 @@ describe("manifest.json is what src/manifest/ writes", () => {
     expect(readFileSync(FILE, "utf8") === manifestText()).toBe(true);
   });
 
-  it("is prefixed, keyed printing, at 0.1.0, and needs the engine that reads its rules", () => {
+  it("is prefixed, keyed printing, at 0.2.0, and needs the engine that reads its rules", () => {
     expect(manifest.requiredSchema.prefixed).toBe(true);
     expect(manifest["key"]).toBe("printing");
-    expect(manifest["version"]).toBe("0.1.0");
-    expect((manifest["compatibility"] as Json)["minAdminiumVersion"]).toBe("0.3.43");
+    expect(manifest["version"]).toBe("0.2.0");
+    expect((manifest["compatibility"] as Json)["minAdminiumVersion"]).toBe("0.3.45");
   });
 
   it("holds its English-only labels to the list recorded, so a new one cannot slip in untranslated", () => {
@@ -270,11 +271,12 @@ describe("the Customiser is bound as its README asks", () => {
     expect(column("options", "feature_id")["rules"]).toEqual({ addOnLink: { addOn: "customiser", table: "features" } });
   });
 
-  it("copies a person onto the designs their jobs name", () => {
+  it("copies a person onto the designs their jobs name, and on into those designs' versions and files", () => {
     const copies = manifest.people[0]!.copies.filter((c) => c["addOn"] === "customiser");
     expect(copies).toEqual([
       { addOn: "customiser", table: "designs", column: "email", holds: "email", via: "jobs.design_id" },
       { addOn: "customiser", table: "designs", column: "values", holds: "details", via: "jobs.design_id" },
+      ...VERSION_COPIES,
     ]);
   });
 });

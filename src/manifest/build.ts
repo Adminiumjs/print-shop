@@ -20,22 +20,24 @@ import { rolesFor } from "./roles.ts";
 import { SETTINGS } from "./settings.ts";
 import { TABLES } from "./tables.ts";
 
-export const VERSION = "0.1.0";
+export const VERSION = "0.2.0";
 
 /**
  * The Adminium release that first reads everything below: delivery bands
  * picked by the basket's weight, ready-by dates in working days, a guest's
  * artwork uploaded into a job, the Customiser's design checked and
- * snapshotted by a job, and its copies of a person.
+ * snapshotted by a job, its copies of a person, the panels' grants, and a
+ * formula's key kept by its `normalize` rule (one sample pack per address,
+ * however the address is typed).
  */
-export const MIN_ADMINIUM = "0.3.43";
+export const MIN_ADMINIUM = "0.3.45";
 
 /**
  * The release that reads two more things this app says: a role's grant of
  * the Customiser's panels on a job and a product, and a person's copies in
  * the versions of their designs and those versions' files. They are written
- * only in a manifest whose floor is that release, so raising `MIN_ADMINIUM`
- * to it is the one change that turns them on.
+ * only in a manifest whose floor is that release or later; the floor above
+ * is, so the manifest that ships says them.
  */
 export const PANELS_AND_COPIES = "0.3.44";
 
@@ -77,7 +79,7 @@ export const CUSTOMER_ROUTES = {
   link: "/c",
 };
 
-/** `floor` builds the manifest for another floor than the one it ships with (the tests try the next one). */
+/** `floor` builds the manifest for another floor than the one it ships with (the tests try an older one). */
 export function buildManifest(options: { floor?: string } = {}): Record<string, unknown> {
   const floor = options.floor ?? MIN_ADMINIUM;
   const newer = atLeast(floor, PANELS_AND_COPIES);

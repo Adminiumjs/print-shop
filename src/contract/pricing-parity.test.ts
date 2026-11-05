@@ -3,7 +3,7 @@
  * code did, but for differences each of which is named.
  *
  * Marlow Press and the Customiser it requires are installed on a BUILT
- * Adminium (`ADMINIUM_REPO`, the core at 0.3.43) on each engine, SQLite,
+ * Adminium (`ADMINIUM_REPO`, the core at 0.3.45) on each engine, SQLite,
  * Postgres and MySQL, with the sample added at the comps' pinned moment.
  * Then:
  *
@@ -61,7 +61,7 @@ describe.skipIf(why !== null)(`Marlow Press prices on a built Adminium${why === 
       let works: Works;
       let catalogue: Catalogue;
       beforeAll(async () => {
-        works = await openWorks(engine as Engine, PORT_BASE + index * PORTS_PER_ENGINE, `print_parity_${engine}`);
+        works = await openWorks(engine as Engine, PORT_BASE + index * PORTS_PER_ENGINE, `print_parity_${engine}${process.env["CONTRACT_DB_SUFFIX"] ?? ""}`);
         catalogue = await readCatalogue(works);
       }, 600_000);
       afterAll(async () => {

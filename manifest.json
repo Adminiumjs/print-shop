@@ -3,7 +3,7 @@
   "manifestVersion": 1,
   "key": "printing",
   "name": "Print Shop",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": {
     "id": "adminium",
     "name": "Adminium",
@@ -18,7 +18,7 @@
     "commerce"
   ],
   "compatibility": {
-    "minAdminiumVersion": "0.3.43",
+    "minAdminiumVersion": "0.3.45",
     "engines": [
       "sqlite",
       "postgres",
@@ -19259,7 +19259,9 @@
         "table:@customers:read_pii",
         "table:@saved_quotes:read_pii",
         "table:@sample_requests:read_pii",
-        "table:@messages:read_pii"
+        "table:@messages:read_pii",
+        "page:@customiser-line:view",
+        "page:@customiser-product:view"
       ],
       "limits": {
         "orders": {
@@ -19421,7 +19423,8 @@
         "page:@printing-orders:view",
         "page:@printing-jobs:view",
         "page:@printing-proofs:view",
-        "page:@printing-artwork:view"
+        "page:@printing-artwork:view",
+        "page:@customiser-line:view"
       ],
       "limits": {
         "jobs": {
@@ -19538,7 +19541,8 @@
         "table:@jobs:update",
         "table:@spoils:create",
         "table:@orders:update",
-        "page:@printing-jobs:view"
+        "page:@printing-jobs:view",
+        "page:@customiser-line:view"
       ],
       "limits": {
         "jobs": {
@@ -21526,6 +21530,51 @@
           "column": "values",
           "holds": "details",
           "via": "jobs.design_id"
+        },
+        {
+          "addOn": "customiser",
+          "table": "designs",
+          "column": "logo_file",
+          "holds": "details",
+          "via": "jobs.design_id"
+        },
+        {
+          "addOn": "customiser",
+          "table": "designs",
+          "column": "photo_file",
+          "holds": "details",
+          "via": "jobs.design_id"
+        },
+        {
+          "addOn": "customiser",
+          "table": "design_versions",
+          "column": "values",
+          "holds": "details",
+          "via": "jobs.design_id",
+          "from": [
+            "design_id"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "design_versions",
+          "column": "proof_file",
+          "holds": "details",
+          "via": "jobs.design_id",
+          "from": [
+            "design_id"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "version_files",
+          "column": "file",
+          "holds": "details",
+          "via": "jobs.design_id",
+          "from": [
+            "version_id",
+            "design_id"
+          ]
         }
       ]
     }
