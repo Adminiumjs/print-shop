@@ -21,9 +21,8 @@
  *   - the owner keeps Holiday calendars' closed days (its settings grant),
  *     and finds a customer to erase; prepress does not.
  *
- * What an app's role cannot yet do (the proof saved on the design's
- * version, until the Customiser's `appGrants` allow it) is held as
- * `it.fails`, named with its gap.
+ * The role holds the customer's words in clear, saves the proof on the
+ * design's version (the Customiser's `appGrants`) and takes old files away.
  *
  * It runs with `CONTRACT=1` where a built Adminium (`ADMINIUM_REPO`) and a
  * built add-ons checkout (`ADD_ONS_REPO`) are, and says why it skipped
@@ -327,8 +326,8 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
           expect((await panels.get("customiser", "version_files", made.data.id))?.["file"]).toEqual(file.row["file"]);
         }, 60_000);
 
-        // G2b: the Customiser's `designs` ledger writes `design_versions`, and an app's role is held to read on a table a ledger writes.
-        it.fails(`stores the proof the panel makes as ${who} (gap G2b: an app role cannot write design_versions)`, async () => {
+        // `design_versions` is a table the Customiser's designs ledger writes; the add-on's `appGrants` open its proof to an app's role.
+        it(`stores the proof the panel makes as ${who}`, async () => {
           const job = designedJob(await doors[who]!.load());
           const panels = panelsOf(who);
           const version = (await panels.list("customiser", "design_versions", { where: { column: "design_id", op: "eq", value: job["design_id"] }, order: "version.desc", limit: 51, offset: 0 }))[0]!;
