@@ -250,7 +250,7 @@ describe("the ticket's writes", () => {
     await mount(door, "ticket", { jobId: 8 });
     await click(button("Price the delivery"));
     const field = document.querySelector<HTMLInputElement>(".wk-sheet input")!;
-    // 53.2 kg over the 30 kg band: two parcels at £16.40, as plan CR17 rules.
+    // 53.2 kg over the 30 kg band: two parcels at £16.40, at the top band's price each.
     expect(field.value).toBe("32.80");
     expect(text()).toContain("2 parcels of up to 30kg at £16.40 each");
     await type(field, "thirty");
