@@ -8,7 +8,7 @@
  *
  * Tests only; nothing that ships imports it.
  */
-import type { ActivityEntry, InstalledAddOn, Person, ProofFile, Table, WorksData, WorksDoor, WorksFacts } from "../door.ts";
+import type { ActivityEntry, CatalogEntry, InstalledAddOn, Person, ProofFile, Table, WorksData, WorksDoor, WorksFacts } from "../door.ts";
 import { JOB_MOVES } from "../roles.ts";
 import { ApiError, num, same, type Id, type Row } from "../wire.ts";
 import { FACTS, fixture, person, WEDNESDAY } from "./fixture.ts";
@@ -38,17 +38,19 @@ export class FakeDoor implements WorksDoor {
   calls: Call[] = [];
   installed: InstalledAddOn[];
   log: ActivityEntry[];
+  shelf: CatalogEntry[];
   private readonly person: Person;
   private readonly works: WorksFacts;
   private refusals = new Map<string, ApiError>();
   private nextId = 9000;
 
-  constructor(options: { roles?: string[]; data?: WorksData; facts?: Partial<WorksFacts>; installed?: InstalledAddOn[]; activity?: ActivityEntry[] } = {}) {
+  constructor(options: { roles?: string[]; data?: WorksData; facts?: Partial<WorksFacts>; installed?: InstalledAddOn[]; activity?: ActivityEntry[]; catalog?: CatalogEntry[] } = {}) {
     this.data = options.data ?? fixture();
     this.person = person(options.roles ?? ["owner"]);
     this.works = { ...FACTS, ...options.facts };
     this.installed = options.installed ?? [];
     this.log = options.activity ?? [];
+    this.shelf = options.catalog ?? [];
   }
 
   /** The next call of `method` is refused with this. */
@@ -165,6 +167,11 @@ export class FakeDoor implements WorksDoor {
   async setAddOn(key: string, enabled: boolean): Promise<void> {
     this.record("setAddOn", { key, enabled });
     this.installed = this.installed.map((a) => (a.key === key ? { ...a, enabled, attached: true } : a));
+  }
+
+  async catalog(): Promise<CatalogEntry[]> {
+    this.record("catalog", {});
+    return structuredClone(this.shelf);
   }
 
   async activity(): Promise<ActivityEntry[]> {

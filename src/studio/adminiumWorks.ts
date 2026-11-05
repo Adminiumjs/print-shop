@@ -23,7 +23,7 @@ import { deviceNow } from "./clock.ts";
 import type { StaffConfig } from "./transport/staffConnection.ts";
 import { SessionPortError, type SessionTransport } from "./transport/sessionSource.ts";
 import { momentOf } from "./time.ts";
-import type { Action, ActivityEntry, AddOnTable, InstalledAddOn, Person, ProofFile, Table, WorksData, WorksDoor, WorksFacts } from "./door.ts";
+import type { Action, ActivityEntry, AddOnTable, CatalogEntry, InstalledAddOn, Person, ProofFile, Table, WorksData, WorksDoor, WorksFacts } from "./door.ts";
 import { ApiError, text, type Id, type Row } from "./wire.ts";
 
 export const APP_KEY = "printing";
@@ -189,6 +189,7 @@ export class AdminiumWorks implements WorksDoor {
       cutoff: typeof cutoff === "string" && /^\d{1,2}:\d{2}$/.test(cutoff.trim()) ? cutoff.trim() : "14:00",
       addOns: Object.keys(this.cfg.addOns),
       carrier: this.carrier,
+      addOnSettings: Object.fromEntries(Object.entries(this.cfg.addOns).map(([key, addOn]) => [key, addOn.settings])),
       connectionId: this.cfg.connectionId,
     };
   }
@@ -367,6 +368,7 @@ export class AdminiumWorks implements WorksDoor {
       return got.addOns.map((a) => {
         const attachment = (Array.isArray(a["attachments"]) ? (a["attachments"] as Record<string, unknown>[]) : []).find((one) => one["attachedTo"] === APP_KEY);
         const kind = a["connectKind"];
+        const bundles = Array.isArray(a["bundles"]) ? (a["bundles"] as Record<string, unknown>[]) : [];
         return {
           key: String(a["key"]),
           name: text(a["name"]) ?? String(a["key"]),
@@ -377,6 +379,9 @@ export class AdminiumWorks implements WorksDoor {
           attached: attachment !== undefined,
           enabled: attachment?.["enabled"] === true,
           slots: (Array.isArray(a["slots"]) ? (a["slots"] as Record<string, unknown>[]) : []).map((s) => String(s["slot"])),
+          networkAllow: (Array.isArray(a["networkAllow"]) ? (a["networkAllow"] as unknown[]) : []).map(String),
+          pages: bundles.flatMap((b) => (typeof b["ref"] === "string" ? [b["ref"]] : [])),
+          panels: bundles.flatMap((b) => (typeof b["panel"] === "string" ? [b["panel"]] : [])),
         };
       });
     });
@@ -386,6 +391,30 @@ export class AdminiumWorks implements WorksDoor {
     return this.run(async () => {
       await this.t.port.config();
       await this.t.mutate(`/api/v1/add-ons/${encodeURIComponent(key)}`, "PATCH", { attachedTo: APP_KEY, enabled });
+    });
+  }
+
+  catalog(): Promise<CatalogEntry[]> {
+    return this.run(async () => {
+      try {
+        const got = await this.t.get<{ addOns: Record<string, unknown>[] }>("/api/v1/add-ons/catalog");
+        return got.addOns.map((a) => {
+          const state = a["state"];
+          const kind = a["connectKind"];
+          return {
+            key: String(a["key"]),
+            name: text(a["name"]) ?? String(a["key"]),
+            state: state === "installed" || state === "staged" || state === "missing" ? state : "available",
+            tagline: text(a["tagline"]),
+            categories: (Array.isArray(a["categories"]) ? (a["categories"] as unknown[]) : []).map(String),
+            monogram: text(a["monogram"]),
+            connectKind: kind === "api-key" || kind === "oauth2" ? kind : "none",
+          };
+        });
+      } catch (error) {
+        if (closed(error)) return [];
+        throw error;
+      }
     });
   }
 

@@ -23,6 +23,9 @@ import { TicketScreen } from "./screens/Ticket.tsx";
 import { JobsScreen } from "./screens/Jobs.tsx";
 import { MaterialsScreen } from "./screens/Materials.tsx";
 import { PricesScreen } from "./screens/Prices.tsx";
+import { DispatchScreen } from "./screens/Dispatch.tsx";
+import { ShipmentsScreen } from "./screens/Shipments.tsx";
+import { ActivityScreen, AddOnScreen, AddOnsScreen } from "./screens/AddOns.tsx";
 import { Overlays } from "./screens/Overlays.tsx";
 import { Mono, Typed } from "./ui.tsx";
 import { text } from "./wire.ts";
@@ -353,6 +356,16 @@ function Screen({ view, reach }: { view: View; reach: string[] }) {
       return <MaterialsScreen />;
     case "prices":
       return <PricesScreen />;
+    case "dispatch":
+      return <DispatchScreen />;
+    case "shipments":
+      return <ShipmentsScreen />;
+    case "addons":
+      return <AddOnsScreen />;
+    case "addon":
+      return <AddOnScreen />;
+    case "activity":
+      return <ActivityScreen />;
     default:
       return <NotFoundScreen />;
   }

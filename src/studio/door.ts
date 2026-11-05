@@ -91,6 +91,8 @@ export interface WorksFacts {
    * by. The works' screens never name one themselves.
    */
   carrier: { key: string; name: string } | null;
+  /** Each add-on's settings it marks for a browser (never a secret), by key: what its fills are handed. */
+  addOnSettings: Record<string, Record<string, unknown>>;
   /** The connection the app's tables are in: a record page's address names it. */
   connectionId: string | null;
 }
@@ -108,6 +110,22 @@ export interface InstalledAddOn {
   enabled: boolean;
   /** The slots it fills. */
   slots: string[];
+  /** The one address it may reach, when it reaches any. */
+  networkAllow: string[];
+  /** Its own pages in Adminium, and its panels on a record's page, by their refs. */
+  pages: string[];
+  panels: string[];
+}
+
+/** One add-on as Adminium's catalogue shows it: its line, its kinds, its tile. */
+export interface CatalogEntry {
+  key: string;
+  name: string;
+  state: "installed" | "staged" | "available" | "missing";
+  tagline: string | null;
+  categories: string[];
+  monogram: string | null;
+  connectKind: "none" | "api-key" | "oauth2";
 }
 
 /** One thing an add-on did, as Adminium's log says it. */
@@ -153,6 +171,8 @@ export interface WorksDoor {
   addOns(): Promise<InstalledAddOn[]>;
   /** An installed add-on switched on or off for this app (only who manages add-ons may). */
   setAddOn(key: string, enabled: boolean): Promise<void>;
+  /** Adminium's catalogue of add-ons; empty for someone who may not manage add-ons, or offline. */
+  catalog(): Promise<CatalogEntry[]>;
   /** What the add-ons did, newest first; empty for someone who may not read Adminium's log. */
   activity(): Promise<ActivityEntry[]>;
 }

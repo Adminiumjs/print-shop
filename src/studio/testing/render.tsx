@@ -42,6 +42,8 @@ export function unmount(): void {
 
 /** The app drawn over this door, before it has read anything. */
 export async function mountBare(door: FakeDoor): Promise<void> {
+  // A second mount in one test replaces the first.
+  if (root !== null) unmount();
   const env: WorksEnv = { door, ...DASHBOARD_LINKS };
   await act(async () => {
     root = createRoot(host);

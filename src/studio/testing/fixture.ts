@@ -13,7 +13,7 @@ import type { Row } from "../wire.ts";
 /** 10:20 on Wednesday 5 August 2026 in Marlow (British Summer Time). */
 export const WEDNESDAY = Date.parse("2026-08-05T09:20:00Z");
 
-export const FACTS: WorksFacts = { zone: "Europe/London", currency: "GBP", workingDays: ["mon", "tue", "wed", "thu", "fri"], cutoff: "14:00", addOns: ["customiser"], carrier: null, connectionId: "conn-1" };
+export const FACTS: WorksFacts = { zone: "Europe/London", currency: "GBP", workingDays: ["mon", "tue", "wed", "thu", "fri"], cutoff: "14:00", addOns: ["customiser"], carrier: null, addOnSettings: {}, connectionId: "conn-1" };
 
 const r = (row: Record<string, unknown> & { id: number }): Row => row;
 

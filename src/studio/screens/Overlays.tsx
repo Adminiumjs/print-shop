@@ -1,7 +1,8 @@
 /**
  * The overlays over the works' screens: the send-a-proof sheet and the
  * spoilage dialog (comp `I - Marlow Press` 1388-1430), the delivery quote
- * drawn on the proof sheet's anatomy (plan CR16, CR17). Each is a dialog with its own label, focus kept
+ * drawn on the proof sheet's anatomy (plan CR16, CR17), and the add-ons'
+ * dialogs (`AddOnOverlays`). Each is a dialog with its own label, focus kept
  * inside it and given back to what opened it, closed by Escape.
  */
 import { useId, useRef, useState, type ChangeEvent, type DragEvent } from "react";
@@ -16,6 +17,7 @@ import { Mono, Typed } from "../ui.tsx";
 import { num, text, type Row } from "../wire.ts";
 import type { ProofFile } from "../door.ts";
 import { close, Modal } from "./Modal.tsx";
+import { AddOnOverlays } from "./AddOns.tsx";
 import { useT } from "../../i18n/index.tsx";
 
 /** What the proofs table's `file` column takes: a PDF, up to 100 MB (`manifest/tables.ts`). */
@@ -41,7 +43,7 @@ export function Overlays() {
       return order === undefined ? null : <QuoteSheet order={order} />;
     }
     default:
-      return null;
+      return <AddOnOverlays />;
   }
 }
 

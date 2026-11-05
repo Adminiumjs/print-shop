@@ -6,7 +6,7 @@
 import { create } from "zustand";
 
 import type { AddOnRegistry } from "../add-ons/host.ts";
-import type { InstalledAddOn, WorksData } from "./door.ts";
+import type { CatalogEntry, InstalledAddOn, WorksData } from "./door.ts";
 import type { Id } from "./wire.ts";
 
 import type { View } from "./view.ts";
@@ -53,6 +53,8 @@ export interface WorksState {
   theme: "light" | "dark" | null;
   /** The add-ons installed, as Adminium last listed them; null until asked. */
   installed: InstalledAddOn[] | null;
+  /** Adminium's catalogue, as it last answered; null until asked. */
+  catalog: CatalogEntry[] | null;
   /** The add-ons' fills this build mounts (a delivery company's dispatch), loaded from Adminium. */
   registry: AddOnRegistry | null;
 }
@@ -74,6 +76,7 @@ export const useWorks = create<WorksState>(() => ({
   failure: null,
   theme: null,
   installed: null,
+  catalog: null,
   registry: null,
 }));
 
