@@ -25,7 +25,8 @@
  *   "appGrants": { "actions": ["read"], "readable": ["id", "name", "lead_days", "active"] } }
  * ```
  *
- *  - `actions`: the most an app's role is given here (read, create, update);
+ *  - `actions`: the most an app's role is given here (read, read_pii,
+ *    create, update, delete);
  *  - `readable`: the only columns an app's read shows; absent, every column
  *    but those `never` names;
  *  - `writable` / `creatable`: the only columns an app's update may change
@@ -37,6 +38,13 @@
  * without `appGrants` is then given to no app's role. An add-on that says it
  * of none is held only by its own shape, as before the word: no hold on a
  * ledger's receipts, read only on a table a ledger's code writes.
+ *
+ * A table a ledger's code writes (a design's versions, made when an order
+ * line posts) is the ledger's record: no app's role is given it but to read,
+ * unless the add-on says otherwise here. Then an app's role may add rows and
+ * change the columns the add-on names, never a column the ledger's code
+ * writes (what the posting copied stays as it was copied), and never remove
+ * a row.
  *
  * The grant an app asks for is cut to fit (`roleTableHold`): an action or a
  * column outside the add-on's words is left out and said, by name; a grant on
@@ -50,14 +58,17 @@
 import { z } from 'zod';
 
 import { refSchema, type ReferenceIssue } from './refs.ts';
-import { reachList, ROLE_ADD_ON_ACTIONS, type RoleAddOnTable, type RoleLimit } from './roles.ts';
+import { reachList, ROLE_ADD_ON_ACTIONS, ROLE_ADD_ON_COLUMN_ACTIONS, type RoleAddOnTable, type RoleLimit } from './roles.ts';
 
 export type RoleAddOnAction = (typeof ROLE_ADD_ON_ACTIONS)[number];
+/** An action a column list narrows. */
+type ColumnAction = (typeof ROLE_ADD_ON_COLUMN_ACTIONS)[number];
+const isColumnAction = (action: string): action is ColumnAction => (ROLE_ADD_ON_COLUMN_ACTIONS as readonly string[]).includes(action);
 
 export const appGrantsSchema = z
   .object({
     /** The most an app's role may be given on this table. */
-    actions: z.array(z.enum(ROLE_ADD_ON_ACTIONS)).min(1).max(3),
+    actions: z.array(z.enum(ROLE_ADD_ON_ACTIONS)).min(1).max(ROLE_ADD_ON_ACTIONS.length),
     /** The only columns an app's read shows (with the key); absent, every column but `never`'s. */
     readable: z.array(refSchema).min(1).max(200).optional(),
     /** The only columns an app's update may change. Named whenever `update` is allowed. */
@@ -86,7 +97,22 @@ export interface AppGrantLedgerShape {
 /** Whether the add-on says, of any of its tables, what an app's role may be given. */
 export const declaresAppGrants = (tables: readonly AppGrantTableShape[]): boolean => tables.some((table) => table.appGrants !== undefined);
 
-const LIST_OF: Record<RoleAddOnAction, 'readable' | 'writable' | 'creatable'> = { read: 'readable', update: 'writable', create: 'creatable' };
+const LIST_OF: Record<ColumnAction, 'readable' | 'writable' | 'creatable'> = { read: 'readable', update: 'writable', create: 'creatable' };
+
+/** The columns of a table the ledgers' code writes: the ones a posting inserts, and the ones it sets on a row it changes. */
+function ledgerColumnsOf(ledgers: readonly AppGrantLedgerShape[], table: string): Set<string> {
+  const out = new Set<string>();
+  for (const ledger of ledgers) {
+    const writes = ledger.writes?.[table] as { insert?: unknown; update?: { set?: unknown } } | undefined;
+    if (writes === undefined) continue;
+    for (const column of Array.isArray(writes.insert) ? writes.insert : []) if (typeof column === 'string') out.add(column);
+    for (const column of Array.isArray(writes.update?.set) ? writes.update.set : []) if (typeof column === 'string') out.add(column);
+  }
+  return out;
+}
+
+/** Whether a ledger's code writes the table. */
+const ledgerWrites = (ledgers: readonly AppGrantLedgerShape[], table: string): boolean => ledgers.some((ledger) => Object.prototype.hasOwnProperty.call(ledger.writes ?? {}, table));
 
 /** Everything wrong with an add-on's `appGrants`, against its own tables and ledgers. */
 export function appGrantsIssues(tables: readonly AppGrantTableShape[], ledgers: readonly AppGrantLedgerShape[]): ReferenceIssue[] {
@@ -100,13 +126,19 @@ export function appGrantsIssues(tables: readonly AppGrantTableShape[], ledgers: 
       out.push({ path: at(), message: `"${table.ref}" is a ledger's receipt table, which no app's role ever holds: take "appGrants" off it` });
       return;
     }
-    if (ledgers.some((ledger) => Object.prototype.hasOwnProperty.call(ledger.writes ?? {}, table.ref))) {
+    if (grants.actions.includes('read_pii') && !grants.actions.includes('read')) out.push({ path: at('actions'), message: '"read_pii" shows the personal columns of what a role reads: allow "read" too' });
+    if (ledgerWrites(ledgers, table.ref)) {
+      // The ledger's record: rows may be added and the add-on's own columns changed, never a row removed nor what the posting copied.
       grants.actions.forEach((action, a) => {
-        if (action !== 'read') out.push({ path: at('actions', a), message: `a ledger's code writes "${table.ref}": an app's role may only read it` });
+        if (action === 'delete') out.push({ path: at('actions', a), message: `a ledger's code writes "${table.ref}": no app's role removes its rows` });
+      });
+      const copied = ledgerColumnsOf(ledgers, table.ref);
+      (grants.writable ?? []).forEach((ref, c) => {
+        if (copied.has(ref)) out.push({ path: at('writable', c), message: `a ledger's code writes "${table.ref}.${ref}": no app's role changes it` });
       });
     }
     const columns = new Map(table.columns.map((column) => [column.ref, column]));
-    for (const action of ROLE_ADD_ON_ACTIONS) {
+    for (const action of ROLE_ADD_ON_COLUMN_ACTIONS) {
       const key = LIST_OF[action];
       const listed = grants[key];
       const allowed = grants.actions.includes(action);
@@ -203,10 +235,14 @@ export function roleTableHold(entry: RoleAddOnTable, addOn: { tables: readonly A
   const ceilinged = declaresAppGrants(addOn.tables);
   const grants = shape.appGrants;
   if (ceilinged && grants === undefined) return none('not-offered');
-  const written = addOn.ledgers.some((ledger) => Object.prototype.hasOwnProperty.call(ledger.writes ?? {}, entry.table));
-  const cutByLedger = asked.filter((action) => written && action !== 'read');
+  const written = ledgerWrites(addOn.ledgers, entry.table);
+  /*
+   * On a table a ledger's code writes: a read (and its personal columns), and an add or a change the add-on allows there by
+   * name; never a remove. An add-on that says nothing of the table leaves an app's role its read alone.
+   */
+  const cutByLedger = asked.filter((action) => written && (action === 'delete' || ((action === 'create' || action === 'update') && grants?.actions.includes(action) !== true)));
   const cutActions = new Set<string>(cutByLedger);
-  const cutColumns: Partial<Record<RoleAddOnAction, string[]>> = {};
+  const cutColumns: Partial<Record<ColumnAction, string[]>> = {};
   let byCeiling = false;
   let actions = asked.filter((action) => !cutActions.has(action));
   if (grants !== undefined) {
@@ -221,11 +257,13 @@ export function roleTableHold(entry: RoleAddOnTable, addOn: { tables: readonly A
 
   const never = new Set(grants?.never ?? []);
   const secret = new Set(shape.columns.filter((column) => column.rules?.secret === true).map((column) => column.ref));
+  /** On a ledger's table, the columns its code writes: no app's update reaches them, whatever the add-on lists. */
+  const copied = written ? ledgerColumnsOf(addOn.ledgers, entry.table) : new Set<string>();
   /** The columns the add-on lets an app's action reach: null, every column (an add-on with no `appGrants`). */
-  const ceilingOf = (action: RoleAddOnAction): ReadonlySet<string> | null => {
+  const ceilingOf = (action: ColumnAction): ReadonlySet<string> | null => {
     if (grants === undefined) return null;
     const listed = grants[LIST_OF[action]];
-    if (listed !== undefined) return new Set(listed.filter((ref) => !never.has(ref)));
+    if (listed !== undefined) return new Set(listed.filter((ref) => !never.has(ref) && !(action === 'update' && copied.has(ref))));
     // Only a read may be "every column": every one but `never`'s and the secrets no response carries.
     return action === 'read' ? new Set(all.filter((ref) => !never.has(ref) && !secret.has(ref))) : new Set();
   };
@@ -240,9 +278,10 @@ export function roleTableHold(entry: RoleAddOnTable, addOn: { tables: readonly A
     const judged = [...Object.keys(limit?.writableFrom ?? {}), ...Object.values(limit?.rows ?? {}).flatMap((written) => reachList(written).flatMap((reach) => (reach.while === undefined ? [] : [reach.while.column])))];
     if (judged.some((column) => !shown.has(column))) return none('ceiling');
   }
-  const askedOf = (action: RoleAddOnAction): readonly string[] | undefined => (action === 'read' ? limit?.readable : action === 'update' ? limit?.writable : limit?.creatable);
-  const lists: Partial<Record<RoleAddOnAction, string[]>> = {};
+  const askedOf = (action: ColumnAction): readonly string[] | undefined => (action === 'read' ? limit?.readable : action === 'update' ? limit?.writable : limit?.creatable);
+  const lists: Partial<Record<ColumnAction, string[]>> = {};
   for (const action of [...actions]) {
+    if (!isColumnAction(action)) continue;
     const ceiling = ceilingOf(action);
     const wanted = askedOf(action);
     if (ceiling === null) {
@@ -266,6 +305,11 @@ export function roleTableHold(entry: RoleAddOnTable, addOn: { tables: readonly A
     lists[action] = fits;
   }
 
+  // Personal columns in clear go with the read: a read cut takes them too.
+  if (actions.includes('read_pii') && !actions.includes('read')) {
+    cutActions.add('read_pii');
+    actions = actions.filter((one) => one !== 'read_pii');
+  }
   const has = (action: RoleAddOnAction): boolean => actions.includes(action);
   const writable = has('update') ? lists.update : undefined;
   const creatable = has('create') ? lists.create : undefined;
@@ -285,7 +329,7 @@ export function roleTableHold(entry: RoleAddOnTable, addOn: { tables: readonly A
   const narrowed: RoleTableNarrowed | undefined =
     cutActions.size + Object.keys(cutColumns).length === 0
       ? undefined
-      : { actions: asked.filter((action) => cutActions.has(action)), ...Object.fromEntries(ROLE_ADD_ON_ACTIONS.flatMap((action) => (cutColumns[action] === undefined ? [] : [[LIST_OF[action], cutColumns[action]]]))) };
+      : { actions: asked.filter((action) => cutActions.has(action)), ...Object.fromEntries(ROLE_ADD_ON_COLUMN_ACTIONS.flatMap((action) => (cutColumns[action] === undefined ? [] : [[LIST_OF[action], cutColumns[action]]]))) };
   const skipped: RoleTableSkip | undefined = byCeiling ? 'ceiling' : cutByLedger.length > 0 ? 'ledger-table' : undefined;
   return {
     actions,
@@ -311,6 +355,8 @@ export function holdWider(before: Pick<RoleTableHold, 'actions' | 'readable' | '
   const actions = after.actions.filter((action) => !had.has(action));
   const columns = new Set<string>();
   for (const action of after.actions) {
+    // A personal-column read or a remove has no columns of its own: new, it is said with the actions above.
+    if (!isColumnAction(action)) continue;
     const key = LIST_OF[action];
     const now = after[key];
     const was = had.has(action) ? (before?.[key] ?? null) : [];

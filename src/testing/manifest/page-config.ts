@@ -14,7 +14,7 @@
  */
 /**
  * What a records page says of itself beside its form: `config.tabs`,
- * `config.filters` and `config.bulk` on a `page-crud` page.
+ * `config.filters`, `config.bulk` and `config.columns` on a `page-crud` page.
  *
  *  - `tabs` words a tab the page already has for a child table: what it says
  *    while empty, and whether it offers "New". It makes no tab and renames
@@ -22,6 +22,8 @@
  *  - `filters` names the columns the list is filtered by, at most six.
  *  - `bulk` is an action on the rows ticked in the list: one row of a child
  *    table for each ("Reorder" on a list of stock points).
+ *  - `columns` names the columns the list opens on, in order, at most eight;
+ *    every other column of the table is still there to switch on.
  *
  * Every name is the manifest's own (a table or column ref), checked here
  * against `requiredSchema`, so a typo is refused long before an install.
@@ -86,6 +88,13 @@ export const pageFiltersSchema = z
   .array(z.object({ column: refSchema, control: z.enum(PAGE_FILTER_CONTROLS).optional(), label: textOrLabels.optional() }).strict())
   .max(6);
 export type PageFilters = z.infer<typeof pageFiltersSchema>;
+
+/** The most columns a list opens on: what a grid shows before it scrolls sideways. */
+export const PAGE_COLUMNS_MAX = 8;
+
+/** The columns a list opens on, in order: the manifest's own refs of the page's table. */
+export const pageColumnsSchema = z.array(refSchema).min(1).max(PAGE_COLUMNS_MAX);
+export type PageColumns = z.infer<typeof pageColumnsSchema>;
 
 export const pageBulkActionSchema = z
   .object({
@@ -190,7 +199,7 @@ function formControlIssues(form: unknown, at: (...rest: (string | number)[]) => 
   return out;
 }
 
-/** Every problem with the pages' `config.tabs`, `config.filters` and `config.bulk`, and the controls their forms name, against the manifest's own tables. */
+/** Every problem with the pages' `config.tabs`, `config.filters`, `config.columns` and `config.bulk`, and the controls their forms name, against the manifest's own tables. */
 export function pageConfigIssues<C extends RuledColumn>(pages: readonly PageShape[], index: TableIndex<C>): ReferenceIssue[] {
   const out: ReferenceIssue[] = [];
   pages.forEach((page, p) => {
@@ -242,6 +251,20 @@ export function pageConfigIssues<C extends RuledColumn>(pages: readonly PageShap
       const controls = pageFilterControls(column);
       if (controls.length === 0) out.push({ path: at('filters', f, 'column'), message: `"${own!}.${filter.column}" cannot be filtered that way: a list filters by a link, a yes/no, a choice, a date or a number` });
       else if (filter.control !== undefined && !controls.includes(filter.control)) out.push({ path: at('filters', f, 'control'), message: `"${own!}.${filter.column}" cannot be filtered that way: it takes ${controls.map((control) => `"${control}"`).join(' or ')}` });
+    });
+
+    // The columns the list opens on: each a column of the page's table staff may see, each once.
+    const listed = parse('columns', pageColumnsSchema);
+    const named = new Set<string>();
+    (listed ?? []).forEach((ref, c) => {
+      if (!index.has(own!, ref)) {
+        out.push({ path: at('columns', c), message: `"${ref}" is not a column of the page's table "${own!}"` });
+        return;
+      }
+      if (named.has(ref)) out.push({ path: at('columns', c), message: `"${ref}" is named twice` });
+      named.add(ref);
+      const kept = keptFromStaff(index.table(own!)!, ref);
+      if (kept !== null) out.push({ path: at('columns', c), message: `"${own!}.${ref}" is ${kept}: no list shows it` });
     });
 
     const bulk = parse('bulk', pageBulkSchema);
