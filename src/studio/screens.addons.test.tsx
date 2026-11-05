@@ -52,7 +52,7 @@ const carrierAddOn = {
 const installed = (key: string, more: Partial<InstalledAddOn> = {}): InstalledAddOn => ({
   key,
   name: key,
-  version: "1.0.17",
+  version: "1.0.19",
   connectKind: "none",
   connected: false,
   missing: false,

@@ -29,7 +29,7 @@ const CONFIG: StaffConfig = {
   csrfToken: "tok",
   publicKeys: {},
   access: null,
-  addOns: { customiser: { version: "1.0.17", settings: {}, tables: {} }, "shipping-dhl": { version: "1.0.17", settings: { demo_transport: true }, tables: { shipments: "shipments" } } },
+  addOns: { customiser: { version: "1.0.19", settings: {}, tables: {} }, "shipping-dhl": { version: "1.0.19", settings: { demo_transport: true }, tables: { shipments: "shipments" } } },
   sharedTables: {},
 };
 
@@ -146,7 +146,7 @@ describe("the reads", () => {
 
   it("reads the bank holidays of England and Wales alone of the sets Holiday calendars keeps", async () => {
     const { t, sent } = transport({ "/api/v1/add-ons": { addOns: [] }, "/api/v1/data/conn-1/holiday_calendars_holidays": { data: [{ id: 141, country: "GB", region: "england-and-wales", day: "2026-12-25", name: "Christmas Day" }] } });
-    const config = { ...CONFIG, addOns: { ...CONFIG.addOns, "holiday-calendars": { version: "1.0.17", settings: {}, tables: { holidays: "holiday_calendars_holidays" } } } };
+    const config = { ...CONFIG, addOns: { ...CONFIG.addOns, "holiday-calendars": { version: "1.0.19", settings: {}, tables: { holidays: "holiday_calendars_holidays" } } } };
     const data = await new AdminiumWorks(t, config).load();
     expect(data.holidays.map((h) => h["name"])).toEqual(["Christmas Day"]);
     const read = sent.find((s) => s.path.startsWith("/api/v1/data/conn-1/holiday_calendars_holidays?"))!;

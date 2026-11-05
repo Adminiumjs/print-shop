@@ -2,7 +2,7 @@
  * A CUSTOMER ORDERS FROM MARLOW PRESS ON A BUILT ADMINIUM, THROUGH THE SHOP'S OWN DOOR.
  *
  * The app and the Customiser it requires are installed on a BUILT Adminium
- * (`ADMINIUM_REPO`, the core at 0.3.45) as an operator installs them, the
+ * (`ADMINIUM_REPO`, the core at 0.3.48) as an operator installs them, the
  * sample added at the moment the comps pin the works to (10:20 on Wednesday
  * 5 August 2026 in Marlow), and the shop is opened the way its customer
  * build opens it: the surface config Adminium serves, the shop's door

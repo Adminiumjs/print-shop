@@ -30,9 +30,11 @@ export const VERSION = "0.2.0";
  * formula's key kept by its `normalize` rule (one sample pack per address,
  * however the address is typed), and, from 0.3.47, the owner's erase of a
  * person, a role's personal columns and deletes of an add-on's rows (more
- * than twelve of its tables), and the columns the Jobs list opens on.
+ * than twelve of its tables), and the columns the Jobs list opens on. 0.3.48
+ * is the first to install the Customiser 1.0.19 it bundles, whose
+ * `appGrants` let the works' roles save a proof on a design's version.
  */
-export const MIN_ADMINIUM = "0.3.47";
+export const MIN_ADMINIUM = "0.3.48";
 
 /**
  * The release that reads two more things this app says: a role's grant of

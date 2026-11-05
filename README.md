@@ -21,8 +21,8 @@ the two o'clock cut-off — and the works prints Monday to Friday.
 
 ## What it needs
 
-- Adminium **0.3.45** or later, on SQLite, Postgres or MySQL.
-- The **Customiser** add-on (1.0.17 or later): it is where a customer fills in a
+- Adminium **0.3.48** or later, on SQLite, Postgres or MySQL.
+- The **Customiser** add-on (1.0.19 or later): it is where a customer fills in a
   ready-made design or starts from blank, and the job names the design they
   made. Adminium installs it with the app.
 - Nothing else. Four add-ons are offered at install, and the app is whole without
@@ -60,15 +60,20 @@ the two o'clock cut-off — and the works prints Monday to Friday.
 
 **For the works** (the app's staff side): Today's board with the proof gate (a
 job goes to press only once its proof is approved), the job ticket (the
-imposition, the artwork and its checks, the proofs sent and answered, spoilage,
-printed, ready, collected or dispatched), the jobs, materials and stock, the
-price list (the rate card edited in place, and the closures), DHL's dispatch page
-and shipments, and the add-ons. Roles: **owner** (everything), **prepress** (the
-artwork, the proofs, an approved job onto the press), **press** (the press, the
-finishing, spoilage) and **counter** (handing over, a delivery quote, the sample
-packs).
+imposition, the artwork and its checks, the Customiser's panel on a designed job
+where its proof and print files are made, the proofs sent and answered,
+spoilage, printed, ready, collected or dispatched), the jobs, materials and
+stock, the price list (the rate card edited in place, the closures, and the
+public holidays to add as one), DHL's dispatch page and shipments, and the
+add-ons; a sign-out in the header. Roles: **owner** (everything, the
+Customiser's set-up, Holiday calendars' closed days, and finding and erasing a
+customer's data on the dashboard's privacy page), **prepress** (the artwork, the
+proofs and the Customiser's panel, an approved job onto the press), **press**
+(the press, the finishing, spoilage, the Customiser's panel) and **counter**
+(handing over, a delivery quote, the sample packs).
 
-**In the dashboard** (the Print Shop section): orders, jobs, proofs, artwork,
+**In the dashboard** (the Print Shop section): orders, jobs (the list opens on
+the order, product, quantity, stage, proof and ready-by), proofs, artwork,
 saved quotes, sample packs, the rate card (products, options, materials, sizes,
 finishes, quantity breaks, packaging, delivery bands, the rules between options),
 machines and closures, customers, the e-mails sent, and the works' settings.

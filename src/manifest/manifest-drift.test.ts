@@ -50,7 +50,7 @@ describe("manifest.json is what src/manifest/ writes", () => {
     expect(manifest.requiredSchema.prefixed).toBe(true);
     expect(manifest["key"]).toBe("printing");
     expect(manifest["version"]).toBe("0.2.0");
-    expect((manifest["compatibility"] as Json)["minAdminiumVersion"]).toBe("0.3.47");
+    expect((manifest["compatibility"] as Json)["minAdminiumVersion"]).toBe("0.3.48");
   });
 
   it("holds its English-only labels to the list recorded, so a new one cannot slip in untranslated", () => {
@@ -244,7 +244,7 @@ describe("every total, number and date is Adminium's", () => {
 
 describe("the Customiser is bound as its README asks", () => {
   it("requires it at the release that carries it, suggests neither Design Studio nor the Canva import, and names the page its saved-design mail opens", () => {
-    expect(manifest.addOns.requires).toEqual([expect.objectContaining({ key: "customiser", range: "^1.0.17" })]);
+    expect(manifest.addOns.requires).toEqual([expect.objectContaining({ key: "customiser", range: "^1.0.19" })]);
     expect(manifest.addOns.suggests.map((s) => s["key"])).toEqual(["shipping-dhl", "inventory", "invoices", "holiday-calendars"]);
     expect(CUSTOMER_ROUTES.customiserDesign).toBe("/design");
   });
