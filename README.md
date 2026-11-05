@@ -1,199 +1,158 @@
 # Print Shop
 
-> **This app will be reworked in Q4 2026.** Until then it is kept as it is and may not show what
-> the newest Adminium can do.
+A print works, front and back, installed into [Adminium](https://adminium.dev).
+Customers choose a product, its stock, size, sides and finishes, fill in a
+ready-made design in the Customiser or send their own artwork, and see the price
+at every quantity and the day it will be ready; the works proofs every job,
+prints it and hands it over at the counter or sends it. Adminium decides every
+price (the rate card, the quantity breaks, the sheets a run takes, the delivery
+band), every ready-by date, order and quote number and status — the pages only
+ask.
 
-An open-source **print works, front and back** — an example app for
-[Adminium](https://adminium.dev), and the host the wave's three demo add-ons
-attach to. The demo shop is called **Marlow Press**.
+**Made it in Canva?** Download it as PDF Print and send the file: the artwork
+step checks it (size, bleed, resolution, colour, fonts) before anybody prints
+anything.
 
-A customer configures a job — product, material, size, sides, finish, quantity,
-packaging, delivery — and watches the price and the ready-by date move as they
-do, then sends artwork and gets it checked before anybody prints anything. The
-works imposes that job onto SRA3 sheets, holds it behind an approved proof, runs
-it, and hands it over the counter or to a carrier.
+The demo is dressed as **Marlow Press**, a fictional print works on the market
+square in Marlow. Its clock stands at **Wednesday 5 August 2026, 10:20** — before
+the two o'clock cut-off — and the works prints Monday to Friday.
 
-Everything on screen is fiction: the shop, its customers, its jobs and its rate
-card are invented, and no real company appears anywhere.
+**Live demo → [adminium.dev/demo/print-shop](https://adminium.dev/demo/print-shop)**
 
-## The two people it is for
+## What it needs
 
-The dock's segment switches between them, and they are genuinely different apps
-sharing one bundle:
+- Adminium **0.3.44** or later, on SQLite, Postgres or MySQL.
+- The **Customiser** add-on (1.0.16 or later): it is where a customer fills in a
+  ready-made design or starts from blank, and the job names the design they
+  made. Adminium installs it with the app.
+- Nothing else. Four add-ons are offered at install, and the app is whole without
+  any of them:
+  - **DHL shipping** — book a collection for a delivery, with the service the
+    customer chose already picked, print its label, and send the customer the
+    tracking number. Without it, the "on its way" e-mail says the works' own
+    courier took it and has no tracking number.
+  - **Inventory** — the sheet stocks and rolls kept as stock, with what each job
+    takes and spoils.
+  - **Invoices & Receipts** — an invoice with each delivery, printed at the
+    counter.
+  - **Holiday calendars** — the coming public holidays on the works' price list,
+    each added as a closure in a tap, so no job is due on one.
 
-| Persona | What they do here |
-|---|---|
-| **Customer** | build a job, see the price break down line by line, save a quote, send artwork and read its verdicts, approve a proof, track an order |
-| **Print shop** | today's board, a job ticket with the imposition and the proof gate, materials and spoilage, the rate card, the add-on shelf |
+## What it does
 
-Out of the SPA on purpose: full-table CRUD, bulk operations, imports,
-role admin and analytics past a glanceable KPI. **The SPA quotes, takes and runs
-jobs; the rate card itself is edited in the generated Adminium dashboard**, and
-the Price list screen says exactly that.
+**For customers** (the app's customer side):
+- The products and a product's configurator: its stocks, sizes, sides and
+  finishes (a finish a stock cannot take is locked, with the reason), the price
+  at each quantity step and what moves it, and the ready-by date, all worked out
+  by Adminium before anything is placed.
+- "Design it" opens the Customiser's editor on the page; "Send your artwork"
+  uploads a PDF, TIFF or JPEG and shows its five checks, a warning accepted kept
+  with the file.
+- The basket and the checkout: one delivery for the whole order (by weight, a
+  delivery band; over the bands the works prices it and e-mails a quote), or
+  collection from the works. One write places the order, its jobs, their designs
+  and artwork, checked against the total the customer saw.
+- An e-mail with the order's own link; the order's page with each job's stages
+  and its proofs, each answered there ("Approve" or "Ask for a change"); finding
+  an order by its number and a code e-mailed to the customer; ordering again at
+  today's prices; saved quotes (`MQ-…`); a sample pack of the stocks; templates
+  and sizes; delivery and collection; find us; their designs.
 
-## The clock is pinned
+**For the works** (the app's staff side): Today's board with the proof gate (a
+job goes to press only once its proof is approved), the job ticket (the
+imposition, the artwork and its checks, the proofs sent and answered, spoilage,
+printed, ready, collected or dispatched), the jobs, materials and stock, the
+price list (the rate card edited in place, and the closures), DHL's dispatch page
+and shipments, and the add-ons. Roles: **owner** (everything), **prepress** (the
+artwork, the proofs, an approved job onto the press), **press** (the press, the
+finishing, spoilage) and **counter** (handing over, a delivery quote, the sample
+packs).
 
-Nothing anywhere reads a real clock. Every date derives from **Wednesday
-5 August 2026, 10:20** — `NOW` in `src/data/demo.ts` — which is what lets the
-promise dates, the due chips and the overdue count be asserted in tests and
-reproduced in a screenshot a year from now. `src/sources.test.ts` fails the
-build if a `Date.now()`, a `new Date()` or a `Math.random()` appears in a
-shipped module.
+**In the dashboard** (the Print Shop section): orders, jobs, proofs, artwork,
+saved quotes, sample packs, the rate card (products, options, materials, sizes,
+finishes, quantity breaks, packaging, delivery bands, the rules between options),
+machines and closures, customers, the e-mails sent, and the works' settings.
 
-The dock's **+1 working day** chip advances an OFFSET IN WORKING DAYS, never a
-date, so every view moves together and two screens cannot disagree about what
-day it is.
+**E-mails.** Order received, proof ready, proof approved, ready to collect, on
+its way, quote saved, sample pack posted and the delivery quote of an order over
+the bands go to the customer, in the language the order was placed in (eight
+languages); a change asked to a proof and a new order whose customer accepted an
+artwork warning are copied to the works' own address. All of them are service
+mail: the do-not-email list never stops them and none has an unsubscribe line.
+The sign-in code is Adminium's own e-mail; the saved design's is the
+Customiser's.
 
-## The add-on slots
+## Installing it
 
-This app is designed **with the holes already in it**. Five slots exist
-whether or not a single add-on does, and four of them are visible surfaces with
-a real empty state:
+Install Print Shop from Adminium's app catalog and pick the database it should
+use. Adminium creates the app's tables (each named `printing_…`), installs the
+Customiser, and makes the dashboard pages, the four roles, the shop's browser
+keys and the e-mails. Tick sample data at the install step to start with Marlow
+Press's Wednesday, or add it later from the app's settings.
 
-| Slot | Where | With nothing filling it |
-|---|---|---|
-| `artwork.sources` | the artwork screen | **speaks** — "More ways to send artwork / Nothing else is connected yet." |
-| `checkout.delivery.methods` | the basket | **speaks** — "No delivery companies are connected / Carrier options with their own prices and days would show here." |
-| `order.dispatch.panel` | the customer's order view | **speaks** — "Collection from the works — we'll text you when it's ready." |
-| `order.dispatch.actions` | the works' job ticket | **silent** — "Mark collected" stands alone |
-| `settings.add-on.panel` | the manage drawer | silent by nature; each add-on renders its own settings form here |
+Once installed, the works' screens are served at `/apps/printing/staff/` and the
+shop at `/apps/printing/customer/`. A works can also give the shop a domain of
+its own.
 
-The one asymmetry is deliberate: **where an empty slot has something to explain
-to a customer it says it in words; where it has nothing to explain it renders
-nothing.** A works with no carrier connected hands the job over the counter, and
-a dashed "no carriers" panel on the shop floor would be noise nobody can act on.
+**Coming from 0.1.x?** The 0.1 Print Shop was an example with its own database,
+and the Design studio and Import from Canva add-ons in place of the Customiser.
+0.2 is a different app on new tables:
 
-An empty slot never renders as an error, a placeholder or an upsell, and an
-add-on never edits app code. Switching every add-on off returns the app to
-exactly its base state with no orphan button and no dead link —
-`src/add-ons/addOns.test.ts` asserts it rather than leaving it to a screenshot.
+1. **Detach and remove Design studio and Import from Canva** from the app on its
+   Add-ons page. Both are retired: the Customiser does what Design studio did,
+   and a design made in Canva comes in as its PDF Print file.
+2. **Then install Print Shop 0.2** on the same database. Its tables are all named
+   `printing_…`, so the old `jobs`, `quotes`, `customers` and the rest stay
+   exactly as they are, row for row, and nothing is carried over from them.
+   Drop them yourself once you no longer need them.
 
-`nav.add-on.routes` is in the closed slot registry and **this app does not host
-it**: there is no router here — `src/app/App.tsx` switches views off one store
-field — so a route slot would be a declaration nothing could mount.
-`addOns.test.ts` asserts that every slot in `HOSTED_SLOTS` is mounted somewhere
-in `src/`, in both directions.
+## Local development
 
-## The three demo add-ons, and how they get here
-
-The add-ons live in **one repository**, `add-ons`, each as a package with its
-own manifest, tests and README:
-
-| Key | Package | What it adds |
-|---|---|---|
-| `design-studio` | `add-ons/packages/design-studio` | a small in-browser artwork editor, on the artwork screen |
-| `shipping-dhl` | `add-ons/packages/shipping-dhl` | carrier rates at checkout, a booking action on the ticket, tracking on the order |
-| `import-canva` | `add-ons/packages/import-canva` | bring a design in from an outside design tool, with the bleed maths shown |
-
-They were three separate repositories for exactly one day. Each carried its own
-copy of the host contract — this app's `AddOn` interface — narrowed to the
-members that add-on happened to use, and the three copies disagreed before
-anyone had changed anything: 19 members, 18 and 18, with two the host declares
-in none of them. Nothing failed, and nothing could have, because no suite
-anywhere had two copies in front of it. There is **one** contract now,
-`add-ons/packages/host`, and a suite in that repo reads *this* app's
-`src/add-ons/host.ts` and fails when a member it declares is missing there.
-
-There is no npm package tying that repo to this one, so **the client half of
-each add-on is vendored** under `src/add-ons/vendor/<key>/`, byte-derived and
-synced by **`scripts/sync-add-ons.sh`, which ships in this repo**. The shared
-contract is vendored too, once, into `src/add-ons/vendor/host/`, and the copied
-files' `@adminium/add-on-host` imports are rewritten onto it — so the vendored
-tree compiles with nothing beside it, which is what a clean clone has.
-`src/sources.test.ts` fails if a specifier survives that this app cannot
-resolve, and if `AddOn` is ever declared under `vendor/` more than once.
-
-Every vendored file carries a header saying where it came from. Clone the
-monorepo beside this one as `../add-ons` (or point `ADD_ONS_DIR` at wherever it
-lives) and the script compares every vendored byte with its source; with it
-absent the script says so and exits clean, so a clone of this app alone still
-builds and still tests.
-
-> **The monorepo is the source of truth.** Never hand-edit a vendored copy —
-> edit the package and re-run `npm run add-ons:sync`. A hand-edit here is
-> invisible until it is a bug in two places at once.
-
-The sync deliberately does **not** copy an add-on's tests, its conformance
-harness or its **server half**: secrets are server-only, and a module
-that reads a credential must not be reachable from a browser bundle at all.
-`src/sources.test.ts` and `src/builtOutput.test.ts` both fail if one appears.
-
-Nothing in the demo makes a real third-party call. Every add-on ships a
-deterministic demo transport seeded from the pinned clock, and every simulated
-result is labelled as such on screen.
-
-`src/add-ons/registry.ts` is **the only production module outside `vendor/`
-that names an add-on** — three import lines, and `src/sources.test.ts` fails if
-a fourth mention appears anywhere else. (The test suites name them on purpose:
-a suite that asserted the seam without naming what is on the far side of it
-would be asserting nothing.) An add-on's settings, its defaults, the words on
-its settings form, its eight-locale strings and its seeded activity all arrive
-inside the object `register()` returns, so replacing the delivery company is one
-import here and one package over there.
-
-The four entries on the shelf that are **described but not built** live in
-`src/add-ons/shelf.ts` and name **no company at all** — "a second delivery
-company", "a card payment processor", "a mailing-list service". The shelf reads
-honestly without this app printing the name of a firm it does not integrate
-with.
-
-## Running it
-
-Node 20+.
-
-```sh
-npm ci
-npm run dev            # http://localhost:5173
+```bash
+npm install
+npm run dev        # the demo: the shop and the works on Marlow Press's sample, in the browser
 ```
 
-```sh
-npm run build          # tsc -b && vite build
-npm run build:demo     # the same, based at /demo/print-shop/
-npm test               # vitest: engines, i18n, add-on seam, manifest, built output
+| Script | What it does |
+| --- | --- |
+| `npm run dev` | Start the Vite dev server on the in-browser demo. |
+| `npm run dev:staff` | The dev server on the works' hosted side (it reads its session from the Adminium that serves it). |
+| `npm run build` | Type-check and build to `dist/` (the demo). |
+| `npm run build:demo` | Build the website's demo, at base `/demo/print-shop/app/`, with its `demo.json`. |
+| `npm run build:surface` | Build the two sides Adminium serves (`dist-surface/printing/`). |
+| `npm run manifest` | Write `manifest.json` from `src/manifest/`. A test fails when the two disagree. |
+| `npm run manifest:check` | Validate `manifest.json` with the vendored validator. |
+| `npm run sample` | Write the sample bundle (`seeds/`) from `src/sample/`. |
+| `npm run templates` | Write the templates' PDFs (`public/templates/`) from the products' sizes. |
+| `npm run sync:customiser` | Vendor the Customiser's editor from its release (`vendor/customiser/`); `-- --check` only compares. |
+| `npm test` | Run the suite. |
+| `npm run contract` | Run the contract against a built Adminium (`ADMINIUM_REPO`) and add-ons (`ADD_ONS_REPO`) checkout, on SQLite and, with `TEST_POSTGRES_URL` / `TEST_MYSQL_URL`, Postgres and MySQL. |
+
+## Project structure
+
+```
+manifest.json  what Adminium installs (written from src/manifest/)
+seeds/         the sample bundle, the app's rows and the Customiser's (written from src/sample/)
+public/        the fonts, and the templates customers download
+src/
+  manifest/    the tables and their rules (the rate card and the price as
+               calculated columns), the pages, the roles, the shop's doors,
+               the e-mails in eight languages, the people, the add-ons
+  shop/        the customer's side: its screens and its door (the public API)
+  studio/      the works' side: its screens and its door (the staff session)
+  add-ons/     the host the works mounts DHL's dispatch flow with
+  demo/        the in-browser demo for the website's card (never in a hosted build)
+  sample/      Marlow Press's Wednesday, which both the bundle and the demo are made from
+  contract/    the contract with a built Adminium (`npm run contract`)
+  i18n/        the 8-locale runtime and the keyed strings
+  styles/      design tokens and base styles
+  testing/     the product's manifest validator, vendored for the tests
+vendor/        the Customiser's editor, as its release ships it
 ```
 
-The verification order this repo is held to is **`npx tsc -b && npx vitest run
-&& npx vite build`**, and all three have to pass.
+## License
 
-To re-sync the vendored add-ons after changing one of their packages:
-
-```sh
-npm run add-ons:status   # what is vendored, and whether it drifted from source
-npm run add-ons:sync     # re-copy from ../add-ons (or $ADD_ONS_DIR)
-```
-
-### The full self-host stack
-
-`docker-compose.yml` brings up the app, Postgres and Caddy. Copy `.env.example`
-to `.env` and set `ADMINIUM_SECRET` first. Demo rows load on first boot unless
-`DEMO_DATA=0`, and you can change your mind later:
-
-```sh
-npm run demo:status    # what is loaded
-npm run demo:import    # load the demo rows
-npm run demo:wipe      # remove them — your own rows and the schema stay
-npm run demo:reset     # wipe, then import
-```
-
-## The manifest
-
-`manifest.json` is the marketplace's document about this app: `kind: "app"`, key
-`printing`, publisher `adminium`, the tables it needs, the dashboard pages it
-installs, and the four capabilities it declares (`payments`, `file-storage`,
-`email-delivery`, `realtime`). `src/manifest.test.ts` puts it through the real
-validator and checks the job machine it declares still matches `src/lib/jobs.ts`.
-
-## Eight languages
-
-`en-US`, `de-DE`, `fr-FR`, `cs-CZ`, `da-DK`, `zh-CN`, `zh-TW`, `ar-EG` — Arabic
-right-to-left with no separate stylesheet, because every rule in this repo uses
-CSS logical properties and a test enforces it. An add-on registers its own
-strings in all eight; a bundle that is short a locale or a key throws at boot
-rather than rendering a raw dotted key at one reader.
-
-## Licence
-
-AGPL-3.0-only. See `LICENSE`.
+[AGPL-3.0](LICENSE) © 2026 Print Shop. An example app for Adminium.
 
 ## Building on this app with a coding agent
 
