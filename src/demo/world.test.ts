@@ -89,6 +89,33 @@ describe("the demo's Adminium", () => {
     expect(isShopError(refused) && Number(refused.refused.changed?.order["total"])).toBeGreaterThan(Number(dry.order["total"]));
   });
 
+  it("works a large-format run's area out whole and rounds it once, never a piece's rounded area times the run", async () => {
+    const demo = makeDemo();
+    const p = demo.world.all("products").find((r) => r["code"] === "canvas")!;
+    const body: OrderBody = {
+      values: { delivery_method: "collect", language: "en-US" },
+      children: {
+        jobs: [
+          {
+            values: {
+              product_id: p.id,
+              qty: 10,
+              material_option_id: optionOf(demo, "canvas", "material", "canvas380"),
+              sides_option_id: optionOf(demo, "canvas", "sides", "single"),
+              width_mm: 333,
+              height_mm: 777,
+              proof_by_post: false,
+              express: false,
+            },
+          },
+        ],
+      },
+    };
+    const job = (await demo.shop.quote(body)).jobs[0]!;
+    // 0.258741 m² a piece reads 0.26; ten of them are 2.58741 m², 2.59 — not 2.60.
+    expect([job["area_each"], job["area_total"]]).toEqual(["0.26", "2.59"]);
+  });
+
   it("leaves a cancelled job out of its order's goods, weight and total, as the manifest's `unlessSet` says", async () => {
     const demo = makeDemo();
     const two = cards(demo);

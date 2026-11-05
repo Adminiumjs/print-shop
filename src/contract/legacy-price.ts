@@ -33,8 +33,8 @@ export const FIXES = {
   weightAsPosted: "the weight is the finished pieces, the frames and the packing",
   /** Every large-format job went in a tube, a stretched canvas and a 3 m banner too. */
   tubeOnlyWhenItRolls: "the tube only for large format that rolls: not on a frame, no longer than the tube",
-  /** Areas and edges are counted to the hundredth of a square metre and of a metre, as the comp counts them. */
-  areaToTheHundredth: "areas and edges to the hundredth",
+  /** Areas and edges are counted to the hundredth of a square metre and of a metre, as the comp counts them; a run's area once, over the whole run. */
+  areaToTheHundredth: "areas and edges to the hundredth, a run's area rounded once",
   /** The large-format minimum tops up the roll's work (stock and finishing), not the setup and the proof as well. */
   minimumOnTheRollWork: "the large-format minimum is on the work of the roll alone",
   /** Pennies counted exactly: the browser rounded floating-point pence, which can fall a hair under a half. */
@@ -218,7 +218,8 @@ export function legacyQuote(config: Configuration, fixes: ReadonlySet<Fix> = new
   const widthMm = config.size === "custom" ? config.customWidthMm! : PRESET_SIZES[config.size].widthMm;
   const heightMm = config.size === "custom" ? config.customHeightMm! : PRESET_SIZES[config.size].heightMm;
   const areaEach = hundredth((widthMm / 1000) * (heightMm / 1000));
-  const areaTotal = hundredth(areaEach * config.quantity);
+  // The run's area from its own size, rounded once: never a piece's rounded area times the run.
+  const areaTotal = on("areaToTheHundredth") ? hundredth((widthMm * heightMm * config.quantity) / 1e6) : areaEach * config.quantity;
 
   const sheetsAt = (quantity: number): number => {
     if (config.size === "custom") return 0;

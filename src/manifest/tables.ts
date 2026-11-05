@@ -522,8 +522,9 @@ function pricing(features: boolean): Column[] {
     figure("sheets", "int", "Press sheets", { formula: ceilOf("qty", "up") }),
     // A sheet of a roll stock is charged for the area it prints.
     figure("sheet_rate", "decimal", "Stock a sheet", { formula: { if: [{ eq: ["material_kind", "roll"] }, { div: [{ mul: ["material_rate", "sheet_mm2"] }, 1000000] }, "material_rate"] } }, 4),
+    // A piece's area, to the hundredth, as the quote shows it; the run's area is worked out whole and rounded once.
     figure("area_each", "decimal", "Area each (m²)", { formula: cents({ div: [{ mul: ["width_mm", "height_mm"] }, 1000000] }) }, 2),
-    figure("area_total", "decimal", "Area (m²)", { formula: cents({ mul: ["area_each", "qty"] }) }, 2),
+    figure("area_total", "decimal", "Area (m²)", { formula: cents({ div: [{ mul: ["width_mm", "height_mm", "qty"] }, 1000000] }) }, 2),
     figure("perimeter_m", "decimal", "Edge each (m)", { formula: cents({ div: [{ mul: [2, { add: ["width_mm", "height_mm"] }] }, 1000] }) }, 2),
     money("print_charge", "Print", { formula: cents({ mul: ["sheets", "print_rate", { coalesce: ["multiplier", 1] }] }) }),
     money("material_charge", "Material", {

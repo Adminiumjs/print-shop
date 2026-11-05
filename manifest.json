@@ -7811,9 +7811,15 @@
               "formula": {
                 "round": [
                   {
-                    "mul": [
-                      "area_each",
-                      "qty"
+                    "div": [
+                      {
+                        "mul": [
+                          "width_mm",
+                          "height_mm",
+                          "qty"
+                        ]
+                      },
+                      1000000
                     ]
                   },
                   2
@@ -14311,9 +14317,15 @@
               "formula": {
                 "round": [
                   {
-                    "mul": [
-                      "area_each",
-                      "qty"
+                    "div": [
+                      {
+                        "mul": [
+                          "width_mm",
+                          "height_mm",
+                          "qty"
+                        ]
+                      },
+                      1000000
                     ]
                   },
                   2

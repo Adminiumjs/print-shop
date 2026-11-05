@@ -137,6 +137,13 @@ describe("the tables of the rate card, the orders and the works", () => {
     for (const from of lists) expect(from["where"]).toEqual({ column: "stage", in: ["prepress", "printing", "finishing", "ready", "collected", "dispatched"] });
   });
 
+  it("works a large-format run's area from its own size and rounds it once; a piece's area is for the quote's words", () => {
+    for (const t of ["jobs", "quote_lines"]) {
+      expect(rules(t, "area_total")["formula"], t).toEqual({ round: [{ div: [{ mul: ["width_mm", "height_mm", "qty"] }, 1000000] }, 2] });
+      expect(JSON.stringify(rules(t, "area_total")["formula"])).not.toContain("area_each");
+    }
+  });
+
   it("asks a sheet line for its size and a large-format line for its width and height, by the product's kind", () => {
     for (const t of ["jobs", "quote_lines"]) {
       expect(rules(t, "product_kind")["copy"], t).toEqual({ via: "product_id", from: "kind", mode: "always" });
