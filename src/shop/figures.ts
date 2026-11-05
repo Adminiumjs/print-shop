@@ -92,10 +92,20 @@ export function levers(job: Row | null | undefined): Part[] {
  * weight falls in, the order's own `delivery`, and whether the works quotes
  * it by hand (`delivery_to_quote`: delivered, and over every band).
  */
-export function deliveryOf(order: Row | null | undefined, bands: readonly Band[]): { band: Band | null; price: string | null; toQuote: boolean; weight: string | null } {
+export function deliveryOf(
+  order: Row | null | undefined,
+  bands: readonly Band[],
+): { band: Band | null; price: string | null; offered: string | null; toQuote: boolean; weight: string | null } {
   const id = order?.["delivery_band_id"];
   const band = id === null || id === undefined ? null : (bands.find((b) => String(b.id) === String(id)) ?? null);
-  return { band, price: figure(order, "delivery"), toQuote: Number(order?.["delivery_to_quote"] ?? 0) === 1, weight: figure(order, "weight_kg") };
+  const price = figure(order, "delivery");
+  // What delivering costs, picked or not: the order's own delivery once picked, else its band's price (a collected order's delivery is nothing).
+  const delivering = order?.["delivery_method"] === "deliver";
+  const offered = delivering ? price : (band?.price ?? null);
+  const weight = figure(order, "weight_kg");
+  // Over the top band delivery is quoted by hand: Adminium says so of a delivered order, and a collected one has a weight but no band.
+  const toQuote = Number(order?.["delivery_to_quote"] ?? 0) === 1 || (!delivering && band === null && weight !== null && Number(weight) > 0);
+  return { band, price, offered, toQuote, weight };
 }
 
 /** The top of the weight bands, in kilograms: over it, delivery is quoted by hand. */

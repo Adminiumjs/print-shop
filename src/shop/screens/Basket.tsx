@@ -162,7 +162,7 @@ function Getting() {
             <span className="mp-radio-label">{deliverLabel}</span>
             {deliverSub !== "" && <span className="mp-radio-sub">{deliverSub}</span>}
           </span>
-          <span className="mp-radio-price">{band.toQuote ? t("shop.toQuote") : band.price === null ? "" : m(band.price)}</span>
+          <span className="mp-radio-price">{band.toQuote ? t("shop.toQuote") : band.offered === null ? "" : m(band.offered)}</span>
         </button>
         <button type="button" role="radio" aria-checked={delivery === "collect"} className="mp-radio" onClick={() => chooseDelivery("collect")}>
           <span className="mp-radio-ring" aria-hidden="true" />

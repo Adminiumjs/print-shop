@@ -178,6 +178,11 @@ describe.skipIf(why !== null)(`a customer orders on a built Adminium${why === nu
         expect(cappedAt(job)).toBeNull();
         expect(deliveryOf(panel.order, catalogue.bands)).toMatchObject({ toQuote: false, price: String(panel.order["delivery"]) });
         expect(deliveryOf(panel.order, catalogue.bands).band?.code).toBe("light");
+        // Collected, the order's delivery is nothing, and the Delivery option still says what delivering costs: its band's price.
+        const collected = await door.quote({ values: { delivery_method: "collect", language: "en-US" }, children: { jobs: [{ values: jobValues(catalogue, cards, choice, 500) }] } });
+        expect(Number(collected.order["delivery"])).toBe(0);
+        expect(Number(deliveryOf(collected.order, catalogue.bands).offered)).toBe(Number(panel.order["delivery"]));
+        expect(Number(panel.order["delivery"])).toBeGreaterThan(0);
       });
 
       it("caps 999 flyers at the 1000 price, and says so from the job's own columns", async () => {

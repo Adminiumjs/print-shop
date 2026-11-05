@@ -329,7 +329,7 @@ function Options({ catalogue, product, choice }: { catalogue: Catalogue; product
           <button type="button" role="radio" aria-checked={delivery === "deliver"} className="mp-choice mp-choice--row" onClick={() => chooseDelivery("deliver")}>
             <Truck size={15} aria-hidden="true" />
             <span>{band.toQuote ? t("shop.config.deliver.quote") : band.band === null ? t("shop.config.deliver") : t("shop.config.deliver.band", { band: band.band.name })}</span>
-            <span className="mp-mono">{band.toQuote ? t("shop.toQuote") : band.price === null ? "" : m(band.price)}</span>
+            <span className="mp-mono">{band.toQuote ? t("shop.toQuote") : band.offered === null ? "" : m(band.offered)}</span>
           </button>
           <button type="button" role="radio" aria-checked={delivery === "collect"} className="mp-choice mp-choice--row" onClick={() => chooseDelivery("collect")}>
             <Store size={15} aria-hidden="true" />

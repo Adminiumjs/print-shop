@@ -25,6 +25,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CustomiserEditorProps, WaysInProps } from "../../vendor/customiser/index.js";
 import { I18nProvider } from "../i18n/index.tsx";
 import ShopApp from "./ShopApp.tsx";
+import { money } from "./format.ts";
 import { goView, openProduct, resetShop, useShop } from "./store.ts";
 import { fakePort, type FakePort } from "./testing.ts";
 
@@ -374,6 +375,14 @@ describe.each(["en-US", "ar-EG"] as const)("the customer side in %s", (locale) =
       expect(text()).toContain("Delivery");
       expect(text()).toContain("Up to 2kg · about 0.3 kg for the whole order");
     }
+    // Collecting, the Delivery option still says what delivering costs; only the summary's line is nothing.
+    const priceOf = (i: number) => document.querySelectorAll(".mp-radios .mp-radio-price")[i]!.textContent;
+    const delivering = priceOf(0);
+    expect(delivering).toBe(money("6.50", "GBP", locale));
+    await press(document.querySelectorAll<HTMLButtonElement>(".mp-radios .mp-radio")[1]!);
+    expect(useShop.getState().delivery).toBe("collect");
+    expect(priceOf(0)).toBe(delivering);
+    await press(document.querySelectorAll<HTMLButtonElement>(".mp-radios .mp-radio")[0]!);
     await sweep(`${locale} · basket and checkout`);
 
     await press(".mp-summary .mp-button--wide");
