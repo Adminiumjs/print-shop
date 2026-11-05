@@ -230,14 +230,23 @@ describe.skipIf(why !== null)(`the works against a built Adminium${why === null 
         expect(isApiError(refused) && refused.status).toBe(403);
       });
 
+      /** The columns the Jobs list shows before anybody arranges them. */
+      const jobsListColumns = async (): Promise<string[]> => {
+        const listed = ok(await owner.get<{ data: { id: string; slug: string }[] }>("/api/v1/pages")).data.find((p) => p.slug === "printing-jobs");
+        expect(listed, "the Jobs page").toBeDefined();
+        const page = ok(await owner.get<{ data: { config?: { columns?: { name: string; hidden?: boolean }[] } } }>(`/api/v1/pages/${encodeURIComponent(listed!.id)}`)).data;
+        return (page.config?.columns ?? []).filter((c) => c.hidden !== true).map((c) => c.name);
+      };
+
+      it("lists the jobs on the dashboard, the rate card's charges among their first columns", async () => {
+        const shown = await jobsListColumns();
+        expect(shown, JSON.stringify(shown)).toContain("setup");
+      });
+
       // LIST-COLUMNS: a manifest cannot say which columns a page's list shows, and Adminium ranks money first,
       // so the Jobs list opens on the rate card's charges, with no order or ready-by.
       it.fails("opens the Jobs list on what the floor needs: the order, the product, the stage, the ready-by", async () => {
-        const pages = ok(await owner.get<{ data: { slug?: string; config: Record<string, unknown> }[] }>("/api/v1/pages")).data;
-        const jobs = pages.find((p) => p.slug === "printing-jobs" || JSON.stringify(p.config).includes('"slug":"printing-jobs"'))!;
-        const body = (jobs.config["config"] ?? {}) as { columns?: { name: string; hidden?: boolean }[] };
-        const shown = (body.columns ?? []).filter((c) => c.hidden !== true).map((c) => c.name);
-        expect(shown.slice(0, 4)).toEqual(["order_id", "product_name", "stage", "ready_by"]);
+        expect((await jobsListColumns()).slice(0, 4)).toEqual(["order_id", "product_name", "stage", "ready_by"]);
       });
 
       // Last: the sessions it ends are the ones the tests above use.
