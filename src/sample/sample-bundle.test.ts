@@ -137,6 +137,14 @@ describe("every row is one the works could have made", () => {
     expect(readyBy("2026-08-28", "10:00", 3)).toBe("2026-09-03");
   });
 
+  it("shuts on the bank holidays' own dates, never moved with the sample's week", () => {
+    expect(rowsOf(main, "closures").map((c) => [c["from_date"], c["to_date"], c["reason"]])).toEqual([
+      ["2026-08-31", "2026-08-31", "Summer bank holiday"],
+      ["2026-12-25", "2026-12-25", "Christmas Day"],
+      ["2026-12-28", "2026-12-28", "Boxing Day, observed"],
+    ]);
+  });
+
   it("prints nothing before a yes: every job on the press or past it has an approved proof", () => {
     const jobs = rowsOf(section, "jobs");
     const proofs = rowsOf(section, "proofs");

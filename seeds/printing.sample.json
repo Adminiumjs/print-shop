@@ -607,38 +607,20 @@
       "ref": "closures",
       "rows": [
         {
-          "from_date": {
-            "@day": 26,
-            "@week": true
-          },
-          "to_date": {
-            "@day": 26,
-            "@week": true
-          },
+          "from_date": "2026-08-31",
+          "to_date": "2026-08-31",
           "reason": "Summer bank holiday",
           "active": true
         },
         {
-          "from_date": {
-            "@day": 142,
-            "@week": true
-          },
-          "to_date": {
-            "@day": 142,
-            "@week": true
-          },
+          "from_date": "2026-12-25",
+          "to_date": "2026-12-25",
           "reason": "Christmas Day",
           "active": true
         },
         {
-          "from_date": {
-            "@day": 145,
-            "@week": true
-          },
-          "to_date": {
-            "@day": 145,
-            "@week": true
-          },
+          "from_date": "2026-12-28",
+          "to_date": "2026-12-28",
           "reason": "Boxing Day, observed",
           "active": true
         }

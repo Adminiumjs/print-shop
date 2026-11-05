@@ -43,7 +43,8 @@
  *
  * The works' clock is pinned to Wednesday 5 August 2026, 10:20, as the comps
  * draw it: every date is a `@week` day from the bundle's Wednesday, so it
- * keeps its weekday whatever day the sample is added on. The orders and quotes
+ * keeps its weekday whatever day the sample is added on. The closures are
+ * the exception: a bank holiday keeps its own date. The orders and quotes
  * carry their own numbers (MP-4112 to MP-4126, MQ-2037 and MQ-2041) and no
  * running number, so the works' own next order is MP-4127 and its next quote
  * MQ-2042. Addresses mailed end in `.example`, which Adminium never mails.
@@ -75,7 +76,12 @@ export const NOW_TIME = "10:20";
 export const CUTOFF = "14:00";
 /** Monday to Friday. */
 export const WORKING_DAYS = [1, 2, 3, 4, 5];
-/** The bank holidays the works is shut. */
+/**
+ * The bank holidays the works is shut: the rest of 2026's in England and
+ * Wales, as Holiday calendars has them. Their own dates on every clock, never
+ * moved with the sample's week; 2027's are the owner's to add from Holiday
+ * calendars.
+ */
 export const CLOSURES = [
   { from: "2026-08-31", to: "2026-08-31", reason: "Summer bank holiday" },
   { from: "2026-12-25", to: "2026-12-25", reason: "Christmas Day" },
@@ -379,7 +385,8 @@ export function sampleBundle(): SampleBundle {
       { ref: "delivery_bands", rows: DELIVERY_BANDS.map((b, i) => ({ code: b.code, name: b.name, tube: b.tube, min_kg: b.min, max_kg: b.max, price: b.price, position: i + 1 })) },
       { ref: "option_rules", rows: OPTION_RULES.map((r, i) => ({ finish_group: r.group, test: r.test, gsm: r.gsm ?? null, reason: r.reason, active: true, position: i + 1 })) },
       { ref: "machines", rows: MACHINES.map((m, i) => ({ code: m.code, name: m.name, kind: m.kind, detail: m.detail, active: true, position: i + 1 })) },
-      { ref: "closures", rows: CLOSURES.map((c) => ({ from_date: day(c.from), to_date: day(c.to), reason: c.reason, active: true })) },
+      // A bank holiday is on the calendar's day, not the sample's: written as plain dates, which Adminium adds as they are.
+      { ref: "closures", rows: CLOSURES.map((c) => ({ from_date: c.from, to_date: c.to, reason: c.reason, active: true })) },
       {
         ref: "customers",
         rows: [...firstSeen].map(([name, on]) => ({ "@label": customerLabel(name), email: emailOf(name), name, language: "en-US", may_email: false, created_at: wall(on, PLACED_AT) })),
