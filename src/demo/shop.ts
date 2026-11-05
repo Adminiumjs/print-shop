@@ -298,6 +298,10 @@ export class DemoAfter implements AfterPort {
     return this.linked !== null;
   }
 
+  async closeShared(): Promise<void> {
+    this.linked = null;
+  }
+
   async readShared(): Promise<OrderRead | null> {
     const order = this.linked === null ? undefined : this.world.get("orders", this.linked);
     if (order === undefined) return null;

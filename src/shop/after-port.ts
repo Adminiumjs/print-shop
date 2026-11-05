@@ -125,6 +125,8 @@ export interface AfterPort {
   openShared(token: string): Promise<"opened" | "unknown" | "closed">;
   /** Whether a session on an order's own link is held. */
   sharedHeld(): boolean;
+  /** Let go of the session on an order's own link, here and on the server: the link opens it again. */
+  closeShared(): Promise<void>;
   /** The order the held link opens, or null when it opens nothing now. */
   readShared(): Promise<OrderRead | null>;
   answerProof(via: Via, proofId: Id, answer: ProofAnswer): Promise<Row>;
@@ -262,6 +264,12 @@ export class AdminiumAfter implements AfterPort {
 
   sharedHeld(): boolean {
     return this.orderClient?.session() != null;
+  }
+
+  closeShared(): Promise<void> {
+    return answer(async () => {
+      if (this.orderClient?.session() != null) await this.orderClient.signOut();
+    });
   }
 
   readShared(): Promise<OrderRead | null> {

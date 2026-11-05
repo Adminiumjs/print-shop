@@ -133,7 +133,8 @@ function readHeld(): HeldQuote[] {
 
 function keepHeldQuotes(held: readonly HeldQuote[]): void {
   try {
-    tab()?.setItem(HELD_QUOTES, JSON.stringify(held));
+    if (held.length === 0) tab()?.removeItem(HELD_QUOTES);
+    else tab()?.setItem(HELD_QUOTES, JSON.stringify(held));
   } catch {
     // not kept: listed until the page goes
   }
@@ -373,16 +374,24 @@ export async function loadMine(): Promise<void> {
   }
 }
 
-/** "Not you? Sign out": the session ends here and on the server, and the pages lock again. */
+/**
+ * "Not you? Sign out": the session ends here and on the server, and the pages
+ * lock again. Nothing of the customer's stays in the tab for whoever comes
+ * next: no order open (by the sign-in or by its own link, whose session ends
+ * too), no saved quote held from this visit, nothing typed or answered.
+ */
 export async function signOut(): Promise<void> {
   const door = port();
-  try {
-    await door?.signOut();
-  } catch {
-    // the session ends on this page either way
+  for (const end of [() => door?.signOut(), () => door?.closeShared()]) {
+    try {
+      await end();
+    } catch {
+      // the session ends on this page either way
+    }
   }
   remember(null);
-  set({ me: null, mine: { state: "idle", orders: [], rows: null, quotes: [], quoteLines: [] }, opened: get().opened?.via === "mine" ? null : get().opened, lookup: NO_LOOKUP, reprices: {}, quotePrices: {} });
+  keepHeldQuotes([]);
+  set({ ...initial(), held: [], templates: get().templates });
 }
 
 // ── the order open ─────────────────────────────────────────────────────────

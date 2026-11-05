@@ -223,6 +223,30 @@ describe("the writes and reads the pages after an order send", () => {
     expect(useAfter.getState().held.map((h) => h.number)).toEqual(["MQ-2042"]);
   });
 
+  it("leaves nothing of the customer's in the tab on Sign out: no order open, by sign-in or by link, and no quote held", async () => {
+    await mount();
+    // A quote saved on this visit, held for the tab.
+    await act(async () => openProduct("letterheads"));
+    await settle();
+    await press(".mp-quote-save");
+    await type('[role="dialog"] input', "hello@harbourbakery.example");
+    await press([...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find((b) => b.textContent === "Save the quote")!);
+    expect(useAfter.getState().held.map((h) => h.number)).toEqual(["MQ-2042"]);
+    expect(sessionStorage.getItem("printing.shop.quotes")).toContain("MQ-2042");
+    // The order opened by signing in.
+    await go("order");
+    await signIn();
+    expect(useAfter.getState().opened?.read?.order["number"]).toBe("MP-4113");
+    await press(".ma-session .ma-small-link");
+    expect(calls("signOut")).toHaveLength(1);
+    expect(calls("closeShared")).toHaveLength(1);
+    const after = useAfter.getState();
+    expect([after.me, after.opened, after.link, after.held, after.heldRead, after.mine.orders]).toEqual([null, null, null, [], {}, []]);
+    expect(sessionStorage.getItem("printing.shop.quotes")).toBeNull();
+    expect(text()).not.toContain("MQ-2042");
+    expect(text()).not.toContain("Harbour Bakery");
+  });
+
   it("renames a quote through the session that reads it, prices it afresh, and puts it in the order", async () => {
     await mount();
     await go("quotes");

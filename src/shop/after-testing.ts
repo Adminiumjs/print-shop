@@ -182,6 +182,10 @@ export function fakeAfter(): FakeAfter {
       return token === "STOPPEDCODE00000" ? "closed" : "unknown";
     },
     sharedHeld: () => fake.linkOpen,
+    async closeShared() {
+      record("closeShared");
+      fake.linkOpen = false;
+    },
     async readShared() {
       return fake.linkOpen ? orderRead("link", fake.rows.orders[0]!) : null;
     },
