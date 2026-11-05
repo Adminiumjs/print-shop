@@ -8,7 +8,8 @@
  *
  * `{{…}}` are the outbox's variables, filled by Adminium when it sends:
  * `order.*`, `quote.*` and `sample.*` through the message's links;
- * `practice.*` the works' settings row; `recipient.first_name` the customer;
+ * `practice.*` the works' settings row by its own columns (`practice.works_name`,
+ * `practice.address`), `appName` the works' name; `recipient.first_name` the customer;
  * `manage_url` the customer side's order page.
  */
 import { KIND_NAMES, type Kind } from "./outbox.ts";
@@ -72,7 +73,7 @@ const WORDS: Record<Kind, Words> = {
     subject: "Your sample pack is on its way",
     preheader: "It's in the post.",
     heading: "Your sample pack is on its way.",
-    paras: ["We've posted your sample pack to {{sample.address_line1}}, {{sample.town}}. There's no charge."],
+    paras: ["We've posted your sample pack. It should reach you in 2–3 working days. There's no charge."],
   },
   "delivery-quote": {
     subject: "Your delivery quote for {{order.number}}",
@@ -83,15 +84,15 @@ const WORDS: Record<Kind, Words> = {
   },
   "change-asked": {
     subject: "Change asked on {{order.number}}",
-    preheader: "From {{order.name}}.",
+    preheader: "{{order.number}}",
     heading: "A change was asked for.",
-    paras: ["{{order.name}} asked for a change on a proof for {{order.number}}."],
+    paras: ["The customer asked for a change on a proof for {{order.number}}."],
   },
   "warnings-accepted": {
     subject: "New order {{order.number}}: artwork warnings accepted",
-    preheader: "From {{order.name}}.",
+    preheader: "{{order.number}}",
     heading: "Artwork warnings accepted.",
-    paras: ["{{order.name}} placed {{order.number}} and accepted a warning on their artwork. Check it before the proof."],
+    paras: ["A customer placed {{order.number}} and accepted a warning on their artwork. Check it before the proof."],
   },
 };
 
@@ -102,7 +103,7 @@ function layout(kind: Kind) {
     { block: "email.text", id: "body", data: { paras: w.paras } },
   ];
   if (w.button !== undefined) blocks.push({ block: "email.button", id: "follow", data: { label: w.button, url: "{{manage_url}}#{{order.link_token}}" } });
-  return { subject: w.subject, preheader: w.preheader, blocks, footer: "{{practice.name}}" };
+  return { subject: w.subject, preheader: w.preheader, blocks, footer: "{{appName}} · {{practice.address}} · {{practice.phone}}" };
 }
 
 /** The variables each template reads, for the template editor's list. */

@@ -15772,12 +15772,14 @@
         "en-US": "Order received"
       },
       "vars": [
+        "appName",
         "manage_url",
         "order.link_token",
         "order.number",
         "order.ready_by",
         "order.total",
-        "practice.name",
+        "practice.address",
+        "practice.phone",
         "recipient.first_name"
       ],
       "locales": {
@@ -15812,7 +15814,7 @@
               }
             }
           ],
-          "footer": "{{practice.name}}"
+          "footer": "{{appName}} · {{practice.address}} · {{practice.phone}}"
         }
       }
     },
@@ -15822,10 +15824,12 @@
         "en-US": "Proof ready"
       },
       "vars": [
+        "appName",
         "manage_url",
         "order.link_token",
         "order.number",
-        "practice.name"
+        "practice.address",
+        "practice.phone"
       ],
       "locales": {
         "en-US": {
@@ -15858,7 +15862,7 @@
               }
             }
           ],
-          "footer": "{{practice.name}}"
+          "footer": "{{appName}} · {{practice.address}} · {{practice.phone}}"
         }
       }
     },
@@ -15868,11 +15872,13 @@
         "en-US": "Proof approved"
       },
       "vars": [
+        "appName",
         "manage_url",
         "order.link_token",
         "order.number",
         "order.ready_by",
-        "practice.name"
+        "practice.address",
+        "practice.phone"
       ],
       "locales": {
         "en-US": {
@@ -15904,7 +15910,7 @@
               }
             }
           ],
-          "footer": "{{practice.name}}"
+          "footer": "{{appName}} · {{practice.address}} · {{practice.phone}}"
         }
       }
     },
@@ -15914,11 +15920,13 @@
         "en-US": "Ready to collect"
       },
       "vars": [
+        "appName",
         "manage_url",
         "order.link_token",
         "order.number",
         "order.total",
-        "practice.name"
+        "practice.address",
+        "practice.phone"
       ],
       "locales": {
         "en-US": {
@@ -15950,7 +15958,7 @@
               }
             }
           ],
-          "footer": "{{practice.name}}"
+          "footer": "{{appName}} · {{practice.address}} · {{practice.phone}}"
         }
       }
     },
@@ -15960,10 +15968,12 @@
         "en-US": "Dispatched"
       },
       "vars": [
+        "appName",
         "manage_url",
         "order.link_token",
         "order.number",
-        "practice.name"
+        "practice.address",
+        "practice.phone"
       ],
       "locales": {
         "en-US": {
@@ -15995,7 +16005,7 @@
               }
             }
           ],
-          "footer": "{{practice.name}}"
+          "footer": "{{appName}} · {{practice.address}} · {{practice.phone}}"
         }
       }
     },
@@ -16005,7 +16015,9 @@
         "en-US": "Quote saved"
       },
       "vars": [
-        "practice.name",
+        "appName",
+        "practice.address",
+        "practice.phone",
         "quote.number",
         "quote.total"
       ],
@@ -16032,7 +16044,7 @@
               }
             }
           ],
-          "footer": "{{practice.name}}"
+          "footer": "{{appName}} · {{practice.address}} · {{practice.phone}}"
         }
       }
     },
@@ -16042,8 +16054,9 @@
         "en-US": "Sample pack sent"
       },
       "vars": [
-        "practice.name",
-        "sample.town"
+        "appName",
+        "practice.address",
+        "practice.phone"
       ],
       "locales": {
         "en-US": {
@@ -16062,12 +16075,12 @@
               "id": "body",
               "data": {
                 "paras": [
-                  "We've posted your sample pack to {{sample.address_line1}}, {{sample.town}}. There's no charge."
+                  "We've posted your sample pack. It should reach you in 2–3 working days. There's no charge."
                 ]
               }
             }
           ],
-          "footer": "{{practice.name}}"
+          "footer": "{{appName}} · {{practice.address}} · {{practice.phone}}"
         }
       }
     },
@@ -16077,11 +16090,13 @@
         "en-US": "Delivery quote"
       },
       "vars": [
+        "appName",
         "manage_url",
         "order.delivery_quote",
         "order.link_token",
         "order.number",
-        "practice.name"
+        "practice.address",
+        "practice.phone"
       ],
       "locales": {
         "en-US": {
@@ -16114,7 +16129,7 @@
               }
             }
           ],
-          "footer": "{{practice.name}}"
+          "footer": "{{appName}} · {{practice.address}} · {{practice.phone}}"
         }
       }
     },
@@ -16124,14 +16139,15 @@
         "en-US": "Change asked: works copy"
       },
       "vars": [
-        "order.name",
+        "appName",
         "order.number",
-        "practice.name"
+        "practice.address",
+        "practice.phone"
       ],
       "locales": {
         "en-US": {
           "subject": "Change asked on {{order.number}}",
-          "preheader": "From {{order.name}}.",
+          "preheader": "{{order.number}}",
           "blocks": [
             {
               "block": "email.heading",
@@ -16145,12 +16161,12 @@
               "id": "body",
               "data": {
                 "paras": [
-                  "{{order.name}} asked for a change on a proof for {{order.number}}."
+                  "The customer asked for a change on a proof for {{order.number}}."
                 ]
               }
             }
           ],
-          "footer": "{{practice.name}}"
+          "footer": "{{appName}} · {{practice.address}} · {{practice.phone}}"
         }
       }
     },
@@ -16160,14 +16176,15 @@
         "en-US": "Warnings accepted: works copy"
       },
       "vars": [
-        "order.name",
+        "appName",
         "order.number",
-        "practice.name"
+        "practice.address",
+        "practice.phone"
       ],
       "locales": {
         "en-US": {
           "subject": "New order {{order.number}}: artwork warnings accepted",
-          "preheader": "From {{order.name}}.",
+          "preheader": "{{order.number}}",
           "blocks": [
             {
               "block": "email.heading",
@@ -16181,12 +16198,12 @@
               "id": "body",
               "data": {
                 "paras": [
-                  "{{order.name}} placed {{order.number}} and accepted a warning on their artwork. Check it before the proof."
+                  "A customer placed {{order.number}} and accepted a warning on their artwork. Check it before the proof."
                 ]
               }
             }
           ],
-          "footer": "{{practice.name}}"
+          "footer": "{{appName}} · {{practice.address}} · {{practice.phone}}"
         }
       }
     }
