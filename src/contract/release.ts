@@ -15,8 +15,18 @@ import { atLeast } from "../manifest/build.ts";
 
 const REPO = fileURLToPath(new URL("../..", import.meta.url));
 
-/** The release of the Adminium under test, as its server's own package says it ("0.0.0" when there is no checkout). */
+/**
+ * The release of the Adminium under test, as its server's own package says it ("0.0.0" when there is no checkout).
+ *
+ * A checkout built before its version was moved still says the release
+ * before, and refuses a manifest whose floor is the one it is about to be:
+ * `CONTRACT_ENGINE_RELEASE=0.3.47` names the release it becomes, and its
+ * server is run as that release (`engine-release.mjs`). Never set in CI,
+ * which runs a released Adminium.
+ */
 export const ENGINE_VERSION: string = (() => {
+  const becomes = process.env["CONTRACT_ENGINE_RELEASE"];
+  if (becomes !== undefined && becomes !== "") return becomes;
   const file = join(process.env["ADMINIUM_REPO"] ?? "", "apps", "server", "package.json");
   if (!existsSync(file)) return "0.0.0";
   return (JSON.parse(readFileSync(file, "utf8")) as { version?: string }).version ?? "0.0.0";
