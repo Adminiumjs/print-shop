@@ -40,7 +40,7 @@ import { type Catalogue, type Row } from "../shop/port.ts";
 import { orderBody, useShop, type BasketLine } from "../shop/store.ts";
 import { addOnBundle, appBundle, boot, Caller, ENGINES, missing, missingAddOn, ok, PORTS_PER_ENGINE, until, type Engine, type Server } from "./harness.ts";
 import { MANIFEST_TEXT } from "./release.ts";
-import { delivered, sinkMail } from "./mail.ts";
+import { delivered, sinkMail, type Mail } from "./mail.ts";
 
 const why = missing() ?? missingAddOn("customiser");
 if (why !== null && process.env["ADMINIUM_REQUIRE_CONTRACT"] === "1") throw new Error(`the mail contract must run here, and cannot: ${why}`);
@@ -170,6 +170,7 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
       });
 
       let collect: Awaited<ReturnType<AdminiumShop["place"]>>;
+      let received: Mail | null = null;
 
       it("sends the order received: its jobs, its money, the day it is ready, and the order's own link", async () => {
         collect = await place([cards(500)], "collect");
@@ -181,7 +182,14 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
         expect(mail.text).toContain("This link is just for you");
         expect(mail.text).toContain("Marlow Press · 3 Market Square, Marlow SL7 1AA");
         expect(mail.text).toContain(`because of your order ${String(collect.order["number"])}`);
+        received = mail;
       }, 240_000);
+
+      // MAIL-BRAND: Adminium heads an app's mail with the workspace's name, not the app's own (its outbox's `settings.name`).
+      it.fails("heads the customer's e-mail with the works' name, never Adminium's", () => {
+        const band = /font-size:15px;font-weight:800;letter-spacing:-\.01em;[^"]*">([^<]*)</.exec(received?.html ?? "");
+        expect(band?.[1]).toBe("Marlow Press");
+      });
 
       it("sends the proof ready, then the proof approved", async () => {
         const [job] = await jobsOf(collect.order);
