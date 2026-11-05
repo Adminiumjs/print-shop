@@ -34,8 +34,6 @@ import { ADDRESS, dryRun, openWorks, PACE_MS, readCatalogue, type Row, type Work
 const why = missing() ?? missingAddOn("customiser");
 if (why !== null && process.env["ADMINIUM_REQUIRE_CONTRACT"] === "1") throw new Error(`the contract must run here, and cannot: ${why}`);
 const PORT_BASE = Number(process.env["CONTRACT_PORT_BASE"] ?? 4980);
-/** The core leaves a formula-dated ready-by empty on a create until 0.3.44; `READY_BY_GAP=0` asserts the date. */
-const READY_BY_GAP = process.env["READY_BY_GAP"] !== "0";
 
 /** The figures compared, in pence and kilograms; a delivery the works quotes by hand is null. */
 interface Figures {
@@ -116,9 +114,7 @@ describe.skipIf(why !== null)(`Marlow Press prices on a built Adminium${why === 
         const card = { product: "business-cards", material: "silk350", size: "bcard", sides: 2 as const, qty: 500 };
         const { children } = ok(await dryRun(works.page, { delivery_method: "collect" }, [toLine(card, catalogue)]));
         const readyBy = children.jobs[0]!.data["ready_by"] ?? null;
-        // On 0.3.43 a stamp whose days are a formula is left empty on a create (fixed in 0.3.44).
-        if (READY_BY_GAP) expect(readyBy).toBeNull();
-        else expect(String(readyBy).slice(0, 10)).toBe("2026-08-10");
+        expect(String(readyBy).slice(0, 10)).toBe("2026-08-10");
       });
     });
   });

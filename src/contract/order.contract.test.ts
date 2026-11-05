@@ -27,7 +27,7 @@
  * `price` and `weight_kg` the works types for now, a dry run answers no
  * figure for them, so this holds the bodies and the shapes that come back,
  * not the amounts. The ready-by is Adminium's working-day stamp: Monday 10
- * August (`READY_BY_GAP=1` holds an older core that left it empty).
+ * August.
  *
  * It runs with `CONTRACT=1` where a built Adminium and a built add-ons
  * checkout are, and says why it skipped otherwise. It runs on SQLite: the
@@ -55,8 +55,6 @@ const PORT_BASE = Number(process.env["CONTRACT_PORT_BASE"] ?? 4990);
 const ADMIN = { email: process.env["E2E_ADMIN_EMAIL"] ?? "e2e@adminium.local", password: process.env["E2E_ADMIN_PASSWORD"] ?? "adminium-e2e-password" };
 /** 10:20 on Wednesday 5 August 2026 in Marlow (British Summer Time), before the two o'clock cut-off. */
 const WEDNESDAY = Date.parse("2026-08-05T09:20:00Z");
-/** 0.3.43 stamped no ready-by on a create whose days are a formula; 0.3.44 does (set `READY_BY_GAP=1` for the older core). */
-const READY_BY_GAP = process.env["READY_BY_GAP"] === "1";
 const CUSTOMER = { name: "Harbour Bakery", email: "hello@harbourbakery.example", address_line1: "12 Quay Street", town: "Marlow", postcode: "SL7 1BT", may_email: true, language: "en-US" };
 
 /** A print-ready PDF for 85 × 55 mm cards, both sides, but in RGB: one warning to accept. */
@@ -287,8 +285,7 @@ describe.skipIf(why !== null)(`a customer orders on a built Adminium${why === nu
           ["Business cards", 500, "prepress", 1, 1, true],
           ["Business cards", 250, "prepress", 0, 0, false],
         ]);
-        if (READY_BY_GAP) expect(order["ready_by"] ?? null).toBeNull();
-        else expect(String(order["ready_by"]).slice(0, 10)).toBe("2026-08-10");
+        expect(String(order["ready_by"]).slice(0, 10)).toBe("2026-08-10");
         // The order's own link: its code for the page, a session on it already held.
         expect(placed.link?.token).toMatch(/^[0-9A-Za-z]{16}$/);
         const own = await door.orderClient!.list<Row>("printing_orders_claimed");

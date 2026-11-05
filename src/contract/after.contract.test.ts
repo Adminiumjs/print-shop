@@ -55,8 +55,6 @@ const ADMIN = { email: process.env["E2E_ADMIN_EMAIL"] ?? "e2e@adminium.local", p
 const WEDNESDAY = Date.parse("2026-08-05T09:20:00Z");
 /** 15:00 on Thursday 6 August, past the cut-off: when the customer approves the first proof. */
 const THURSDAY_LATE = Date.parse("2026-08-06T14:00:00Z");
-/** 0.3.43 stamped no ready-by on a create whose days are a formula; 0.3.44 does (set `READY_BY_GAP=1` for the older core). */
-const READY_BY_GAP = process.env["READY_BY_GAP"] === "1";
 const HARBOUR = { name: "Harbour Bakery", email: "hello@harbourbakery.example", address_line1: "12 Quay Street", town: "Marlow", postcode: "SL7 1BT", may_email: false, language: "en-US" };
 /** A one-page PDF: the proof as the works' prepress exports it. */
 const PDF = Buffer.from("%PDF-1.4\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 258 173] >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF\n", "latin1");
@@ -185,8 +183,7 @@ describe.skipIf(why !== null)(`after the order, on a built Adminium${why === nul
         const before = (await rows("jobs")).find((j) => String(j["id"]) === String(job["id"]))!;
         expect([before["proof_state"], Number(before["proof_ok"])]).toEqual(["sent", 0]);
         // Placed at 10:20 on Wednesday, before the cut-off: three working days on, Monday 10 August.
-        if (READY_BY_GAP) expect(before["ready_by"] ?? null).toBeNull();
-        else expect(String(before["ready_by"]).slice(0, 10)).toBe("2026-08-10");
+        expect(String(before["ready_by"]).slice(0, 10)).toBe("2026-08-10");
         // The customer answers on Thursday afternoon, past the two o'clock cut-off: the work starts Friday.
         await server.setClock(THURSDAY_LATE);
         // A day on, the link in the e-mail is opened again: the session the first visit held has run out.
@@ -198,8 +195,7 @@ describe.skipIf(why !== null)(`after the order, on a built Adminium${why === nul
         const after = (await rows("jobs")).find((j) => String(j["id"]) === String(job["id"]))!;
         expect([after["proof_state"], Number(after["proof_ok"]), Number(after["turnaround_days"])]).toEqual(["approved", 1, 3]);
         // The ready-by is stored again from the approval: Friday and three working days on, Wednesday 12 August.
-        if (READY_BY_GAP) expect(after["ready_by"] ?? null).toBeNull();
-        else expect(String(after["ready_by"]).slice(0, 10)).toBe("2026-08-12");
+        expect(String(after["ready_by"]).slice(0, 10)).toBe("2026-08-12");
         expect((await rows("proofs")).find((p) => String(p["id"]) === String(proof["id"]))!["answered_at"]).not.toBeNull();
 
         // A proof answered is answered: a second answer is refused.
