@@ -230,6 +230,16 @@ describe.skipIf(why !== null)(`the works against a built Adminium${why === null 
         expect(isApiError(refused) && refused.status).toBe(403);
       });
 
+      // LIST-COLUMNS: a manifest cannot say which columns a page's list shows, and Adminium ranks money first,
+      // so the Jobs list opens on the rate card's charges, with no order or ready-by.
+      it.fails("opens the Jobs list on what the floor needs: the order, the product, the stage, the ready-by", async () => {
+        const pages = ok(await owner.get<{ data: { slug?: string; config: Record<string, unknown> }[] }>("/api/v1/pages")).data;
+        const jobs = pages.find((p) => p.slug === "printing-jobs" || JSON.stringify(p.config).includes('"slug":"printing-jobs"'))!;
+        const body = (jobs.config["config"] ?? {}) as { columns?: { name: string; hidden?: boolean }[] };
+        const shown = (body.columns ?? []).filter((c) => c.hidden !== true).map((c) => c.name);
+        expect(shown.slice(0, 4)).toEqual(["order_id", "product_name", "stage", "ready_by"]);
+      });
+
       // Last: the sessions it ends are the ones the tests above use.
       it("signs each floor role out: its session ends and its screens read nothing more", async () => {
         for (const role of ["prepress", "press", "counter"]) {
