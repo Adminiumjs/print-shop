@@ -333,32 +333,37 @@ const DELIVERY_TO_QUOTE = { if: [{ and: [{ eq: ["delivery_method", "deliver"] },
 /** The delivery as priced: empty (a sum over nothing) while it is still to quote. */
 const DELIVERY_PRICED = { if: [{ eq: ["delivery_to_quote", 1] }, { div: [0, 0] }, "delivery"] };
 /** An order with the works' delivery quote on it, before the customer accepts it: its tax and total. */
-const QUOTED_SUBTOTAL = { add: [{ coalesce: ["goods_total", 0] }, "delivery_quote"] };
+const QUOTED_SUBTOTAL = { add: ["goods_total", "delivery_quote"] };
 const QUOTED_TAX = { round: [{ div: [{ mul: [QUOTED_SUBTOTAL, { coalesce: ["tax_rate", 0] }] }, 100] }, 2] };
-const SUBTOTAL = { add: [{ coalesce: ["goods_total", 0] }, { coalesce: ["delivery", 0] }] };
+/** The lines' prices added up, while every line has one; empty while one has none. */
+const GOODS = { if: [{ lt: [{ coalesce: ["priced_lines", 0] }, { coalesce: ["item_count", 0] }] }, { div: [0, 0] }, { coalesce: ["goods_sum", 0] }] };
+const SUBTOTAL = { add: ["goods_total", { coalesce: ["delivery", 0] }] };
 /** Tax on the goods and the delivery, at the settings' rate, rounded to the penny. */
-const TAX = { round: [{ div: [{ mul: [{ coalesce: ["subtotal", 0] }, { coalesce: ["tax_rate", 0] }] }, 100] }, 2] };
-const TOTAL = { add: [{ coalesce: ["subtotal", 0] }, { coalesce: ["tax", 0] }] };
+const TAX = { round: [{ div: [{ mul: ["subtotal", { coalesce: ["tax_rate", 0] }] }, 100] }, 2] };
+const TOTAL = { add: ["subtotal", { coalesce: ["tax", 0] }] };
 
 // ── a job's configuration, shared by a job and a saved quote's line ─────────
 
 /** An option of the line's own product, of one kind. */
-function option(ref: string, kind: string, label: string, same: Record<string, unknown>[] = []): Column {
+function option(ref: string, kind: string, label: string, same: Record<string, unknown>[] = [], more: Record<string, unknown> = {}): Column {
   return fk(ref, "options", label, {
     ...opt,
-    rules: { linkable: { where: [{ column: "kind", eq: kind }, { column: "active", eq: true }], same: [{ column: "product_id", as: "product_id" }, ...same] } },
+    rules: { linkable: { where: [{ column: "kind", eq: kind }, { column: "active", eq: true }], same: [{ column: "product_id", as: "product_id" }, ...same] }, ...more },
   });
 }
+/** Asked for while the line's product is printed one way: a sheet job's preset size, a large-format job's own width and height. */
+const neededFor = (kind: "sheet" | "large") => ({ requiredWhen: { column: "product_kind", in: [kind] } });
 const always = (via: string, from: string) => ({ copy: { via, from, mode: "always" } });
 
 /**
  * What the customer chose: the product, how many, and its options, each a row
  * of that product's own. A lamination names a coated surface and goes only on
  * a stock whose option says it is coated; a spot UV goes only on a lamination.
- * A large-format job gives its own width and height.
+ * A sheet job names its preset size and a large-format job gives its own
+ * width and height: a line without them has nothing to be priced by, so it is
+ * refused rather than taken at a price that leaves the run out.
  *
- * The line's price and weight follow: for now columns the works may type, until
- * the rate card's calculated columns take their place.
+ * The line's price and weight follow, worked out from the rate card (`pricing()`).
  */
 function configuration(): Column[] {
   return [
@@ -368,11 +373,11 @@ function configuration(): Column[] {
     int("qty", "Quantity", { default: 1, rules: { validation: { min: 1, max: 100000 } } }),
     option("material_option_id", "material", "Material"),
     fk("material_id", "materials", "Stock", { ...opt, rules: always("material_option_id", "material_id") }),
-    option("size_option_id", "size", "Size"),
+    option("size_option_id", "size", "Size", [], neededFor("sheet")),
     fk("size_id", "sizes", "Preset size", { ...opt, rules: always("size_option_id", "size_id") }),
     // A large-format job's own size; a sheet job's is its preset's.
-    int("width_mm", "Width (mm)", { ...opt, rules: { validation: { min: 50, max: 5000 } } }),
-    int("height_mm", "Height (mm)", { ...opt, rules: { validation: { min: 50, max: 5000 } } }),
+    int("width_mm", "Width (mm)", { ...opt, rules: { validation: { min: 50, max: 5000 }, ...neededFor("large") } }),
+    int("height_mm", "Height (mm)", { ...opt, rules: { validation: { min: 50, max: 5000 }, ...neededFor("large") } }),
     // A large-format job's size as one text ("3000 × 1000 mm"), for its e-mails; empty for a preset size.
     text("dims", 24, "Size as made", { ...opt, rules: { formula: { join: ["width_mm", " \u00d7 ", "height_mm", "\u00a0mm"] } } }),
     option("sides_option_id", "sides", "Sides"),
@@ -559,15 +564,24 @@ function pricing(): Column[] {
       formula: { if: [isLarge, { if: [{ eq: ["framed", true] }, 0, { if: [{ lte: [{ max: ["width_mm", "height_mm"] }, "tube_max_mm"] }, 1, 0] }] }, 0] },
     }),
     figure("flat", "int", "Large format, not rolled", { formula: { if: [isLarge, { sub: [1, "rolls"] }, 0] } }),
+    // Whether the line has a price: its order's goods count it, so a line with none never drops out of them unseen.
+    figure("priced", "int", "Has a price", { formula: { if: [{ isNull: "price" }, 0, 1] } }),
   ];
 }
 
-/** The money columns an order and a saved quote share: goods, one delivery, tax, total. */
+/**
+ * The money columns an order and a saved quote share: goods, one delivery,
+ * tax, total. The goods are the lines' prices added up only while every line
+ * has one: a line Adminium could not price leaves the goods, the tax and the
+ * total empty, never a smaller sum that leaves it out.
+ */
 function basketMoney(lines: string, via: string, delivery: Record<string, unknown>): Column[] {
   return [
     choice("delivery_method", "Getting it", DELIVERY_METHODS, { default: "collect" }),
     figure("item_count", "int", "Jobs", { rollup: { from: lines, via, count: true } }),
-    money("goods_total", "Goods (ex tax)", { rollup: { from: lines, via, sum: "price" } }),
+    money("goods_sum", "Lines' prices added up", { rollup: { from: lines, via, sum: "price" } }),
+    figure("priced_lines", "int", "Lines with a price", { rollup: { from: lines, via, sum: "priced" } }),
+    money("goods_total", "Goods (ex tax)", { formula: GOODS }),
     figure("weight_kg", "decimal", "Weight (kg)", { rollup: { from: lines, via, sum: "weight_kg" } }, 2),
     // Rolled in a tube when it holds large format and every large-format line rolls; else one box by weight.
     figure("rolled_lines", "int", "Lines that roll", { rollup: { from: lines, via, sum: "rolls" } }),

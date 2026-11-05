@@ -99,9 +99,31 @@ describe("the tables of the rate card, the orders and the works", () => {
     }
     for (const c of BREAKDOWN) expect(CONFIG_SELECT, c).toContain(c);
     for (const c of BREAKDOWN) expect(CONFIG_WRITABLE, c).not.toContain(c);
-    expect(rules("orders", "goods_total")["rollup"]).toEqual({ from: "jobs", via: "order_id", sum: "price" });
+    expect(rules("orders", "goods_sum")["rollup"]).toEqual({ from: "jobs", via: "order_id", sum: "price" });
     expect(rules("orders", "weight_kg")["rollup"]).toEqual({ from: "jobs", via: "order_id", sum: "weight_kg" });
-    expect(rules("saved_quotes", "goods_total")["rollup"]).toEqual({ from: "quote_lines", via: "quote_id", sum: "price" });
+    expect(rules("saved_quotes", "goods_sum")["rollup"]).toEqual({ from: "quote_lines", via: "quote_id", sum: "price" });
+  });
+
+  it("asks a sheet line for its size and a large-format line for its width and height, by the product's kind", () => {
+    for (const t of ["jobs", "quote_lines"]) {
+      expect(rules(t, "product_kind")["copy"], t).toEqual({ via: "product_id", from: "kind", mode: "always" });
+      expect(rules(t, "size_option_id")["requiredWhen"], t).toEqual({ column: "product_kind", in: ["sheet"] });
+      for (const c of ["width_mm", "height_mm"]) expect(rules(t, c)["requiredWhen"], `${t}.${c}`).toEqual({ column: "product_kind", in: ["large"] });
+    }
+  });
+
+  it("never lets a line with no price drop out of the goods: they, the tax and the total go empty instead", () => {
+    for (const [t, lines] of [["orders", "jobs"], ["saved_quotes", "quote_lines"]] as const) {
+      expect(rules(lines, "priced")["formula"]).toEqual({ if: [{ isNull: "price" }, 0, 1] });
+      expect((rules(t, "priced_lines")["rollup"] as Json)["sum"]).toBe("priced");
+      expect(rules(t, "goods_total")["formula"]).toEqual({ if: [{ lt: [{ coalesce: ["priced_lines", 0] }, { coalesce: ["item_count", 0] }] }, { div: [0, 0] }, { coalesce: ["goods_sum", 0] }] });
+      // Nothing after the goods reads an empty one as nought.
+      const reads = (c: string) => JSON.stringify(rules(t, c)["formula"]);
+      expect(reads("subtotal")).not.toContain('"coalesce":["goods_total"');
+      expect(reads("tax")).not.toContain('"coalesce":["subtotal"');
+      expect(reads("total")).not.toContain('"coalesce":["subtotal"');
+    }
+    expect(JSON.stringify(rules("orders", "quote_tax")["formula"])).not.toContain('"coalesce":["goods_total"');
   });
 });
 

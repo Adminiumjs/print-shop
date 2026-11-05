@@ -4510,6 +4510,51 @@
             }
           },
           {
+            "ref": "goods_sum",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Lines' prices added up",
+              "de-DE": "Preise der Positionen, zusammengezählt",
+              "fr-FR": "Prix des lignes additionnés",
+              "da-DK": "Linjernes priser lagt sammen",
+              "cs-CZ": "Ceny položek sečtené",
+              "ar-EG": "مجموع أسعار البنود",
+              "zh-CN": "明细价格合计",
+              "zh-TW": "明細價格合計"
+            },
+            "rules": {
+              "rollup": {
+                "from": "jobs",
+                "via": "order_id",
+                "sum": "price"
+              }
+            }
+          },
+          {
+            "ref": "priced_lines",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Lines with a price",
+              "de-DE": "Positionen mit Preis",
+              "fr-FR": "Lignes avec un prix",
+              "da-DK": "Linjer med pris",
+              "cs-CZ": "Položky s cenou",
+              "ar-EG": "بنود لها سعر",
+              "zh-CN": "有价格的明细",
+              "zh-TW": "有價格的明細"
+            },
+            "rules": {
+              "rollup": {
+                "from": "jobs",
+                "via": "order_id",
+                "sum": "priced"
+              }
+            }
+          },
+          {
             "ref": "goods_total",
             "type": "decimal",
             "scale": "currency",
@@ -4525,10 +4570,37 @@
               "zh-TW": "商品（未稅）"
             },
             "rules": {
-              "rollup": {
-                "from": "jobs",
-                "via": "order_id",
-                "sum": "price"
+              "formula": {
+                "if": [
+                  {
+                    "lt": [
+                      {
+                        "coalesce": [
+                          "priced_lines",
+                          0
+                        ]
+                      },
+                      {
+                        "coalesce": [
+                          "item_count",
+                          0
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "div": [
+                      0,
+                      0
+                    ]
+                  },
+                  {
+                    "coalesce": [
+                      "goods_sum",
+                      0
+                    ]
+                  }
+                ]
               }
             }
           },
@@ -4842,12 +4914,7 @@
             "rules": {
               "formula": {
                 "add": [
-                  {
-                    "coalesce": [
-                      "goods_total",
-                      0
-                    ]
-                  },
+                  "goods_total",
                   {
                     "coalesce": [
                       "delivery",
@@ -4904,12 +4971,7 @@
                     "div": [
                       {
                         "mul": [
-                          {
-                            "coalesce": [
-                              "subtotal",
-                              0
-                            ]
-                          },
+                          "subtotal",
                           {
                             "coalesce": [
                               "tax_rate",
@@ -4944,12 +5006,7 @@
             "rules": {
               "formula": {
                 "add": [
-                  {
-                    "coalesce": [
-                      "subtotal",
-                      0
-                    ]
-                  },
+                  "subtotal",
                   {
                     "coalesce": [
                       "tax",
@@ -5082,12 +5139,7 @@
                         "mul": [
                           {
                             "add": [
-                              {
-                                "coalesce": [
-                                  "goods_total",
-                                  0
-                                ]
-                              },
+                              "goods_total",
                               "delivery_quote"
                             ]
                           },
@@ -5127,12 +5179,7 @@
                 "add": [
                   {
                     "add": [
-                      {
-                        "coalesce": [
-                          "goods_total",
-                          0
-                        ]
-                      },
+                      "goods_total",
                       "delivery_quote"
                     ]
                   },
@@ -5936,6 +5983,12 @@
                     "as": "product_id"
                   }
                 ]
+              },
+              "requiredWhen": {
+                "column": "product_kind",
+                "in": [
+                  "sheet"
+                ]
               }
             }
           },
@@ -5980,6 +6033,12 @@
               "validation": {
                 "min": 50,
                 "max": 5000
+              },
+              "requiredWhen": {
+                "column": "product_kind",
+                "in": [
+                  "large"
+                ]
               }
             }
           },
@@ -6001,6 +6060,12 @@
               "validation": {
                 "min": 50,
                 "max": 5000
+              },
+              "requiredWhen": {
+                "column": "product_kind",
+                "in": [
+                  "large"
+                ]
               }
             }
           },
@@ -9372,6 +9437,32 @@
                     ]
                   },
                   0
+                ]
+              }
+            }
+          },
+          {
+            "ref": "priced",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Has a price",
+              "de-DE": "Hat einen Preis",
+              "fr-FR": "A un prix",
+              "da-DK": "Har en pris",
+              "cs-CZ": "Má cenu",
+              "ar-EG": "له سعر",
+              "zh-CN": "有价格",
+              "zh-TW": "有價格"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "isNull": "price"
+                  },
+                  0,
+                  1
                 ]
               }
             }
@@ -11446,6 +11537,51 @@
             }
           },
           {
+            "ref": "goods_sum",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Lines' prices added up",
+              "de-DE": "Preise der Positionen, zusammengezählt",
+              "fr-FR": "Prix des lignes additionnés",
+              "da-DK": "Linjernes priser lagt sammen",
+              "cs-CZ": "Ceny položek sečtené",
+              "ar-EG": "مجموع أسعار البنود",
+              "zh-CN": "明细价格合计",
+              "zh-TW": "明細價格合計"
+            },
+            "rules": {
+              "rollup": {
+                "from": "quote_lines",
+                "via": "quote_id",
+                "sum": "price"
+              }
+            }
+          },
+          {
+            "ref": "priced_lines",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Lines with a price",
+              "de-DE": "Positionen mit Preis",
+              "fr-FR": "Lignes avec un prix",
+              "da-DK": "Linjer med pris",
+              "cs-CZ": "Položky s cenou",
+              "ar-EG": "بنود لها سعر",
+              "zh-CN": "有价格的明细",
+              "zh-TW": "有價格的明細"
+            },
+            "rules": {
+              "rollup": {
+                "from": "quote_lines",
+                "via": "quote_id",
+                "sum": "priced"
+              }
+            }
+          },
+          {
             "ref": "goods_total",
             "type": "decimal",
             "scale": "currency",
@@ -11461,10 +11597,37 @@
               "zh-TW": "商品（未稅）"
             },
             "rules": {
-              "rollup": {
-                "from": "quote_lines",
-                "via": "quote_id",
-                "sum": "price"
+              "formula": {
+                "if": [
+                  {
+                    "lt": [
+                      {
+                        "coalesce": [
+                          "priced_lines",
+                          0
+                        ]
+                      },
+                      {
+                        "coalesce": [
+                          "item_count",
+                          0
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "div": [
+                      0,
+                      0
+                    ]
+                  },
+                  {
+                    "coalesce": [
+                      "goods_sum",
+                      0
+                    ]
+                  }
+                ]
               }
             }
           },
@@ -11762,12 +11925,7 @@
             "rules": {
               "formula": {
                 "add": [
-                  {
-                    "coalesce": [
-                      "goods_total",
-                      0
-                    ]
-                  },
+                  "goods_total",
                   {
                     "coalesce": [
                       "delivery",
@@ -11824,12 +11982,7 @@
                     "div": [
                       {
                         "mul": [
-                          {
-                            "coalesce": [
-                              "subtotal",
-                              0
-                            ]
-                          },
+                          "subtotal",
                           {
                             "coalesce": [
                               "tax_rate",
@@ -11864,12 +12017,7 @@
             "rules": {
               "formula": {
                 "add": [
-                  {
-                    "coalesce": [
-                      "subtotal",
-                      0
-                    ]
-                  },
+                  "subtotal",
                   {
                     "coalesce": [
                       "tax",
@@ -12260,6 +12408,12 @@
                     "as": "product_id"
                   }
                 ]
+              },
+              "requiredWhen": {
+                "column": "product_kind",
+                "in": [
+                  "sheet"
+                ]
               }
             }
           },
@@ -12304,6 +12458,12 @@
               "validation": {
                 "min": 50,
                 "max": 5000
+              },
+              "requiredWhen": {
+                "column": "product_kind",
+                "in": [
+                  "large"
+                ]
               }
             }
           },
@@ -12325,6 +12485,12 @@
               "validation": {
                 "min": 50,
                 "max": 5000
+              },
+              "requiredWhen": {
+                "column": "product_kind",
+                "in": [
+                  "large"
+                ]
               }
             }
           },
@@ -15696,6 +15862,32 @@
                     ]
                   },
                   0
+                ]
+              }
+            }
+          },
+          {
+            "ref": "priced",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Has a price",
+              "de-DE": "Hat einen Preis",
+              "fr-FR": "A un prix",
+              "da-DK": "Har en pris",
+              "cs-CZ": "Má cenu",
+              "ar-EG": "له سعر",
+              "zh-CN": "有价格",
+              "zh-TW": "有價格"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "isNull": "price"
+                  },
+                  0,
+                  1
                 ]
               }
             }

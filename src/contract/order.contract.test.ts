@@ -191,6 +191,19 @@ describe.skipIf(why !== null)(`a customer orders on a built Adminium${why === nu
         expect(cappedAt(thousand)).toBeNull();
       });
 
+      it("refuses a sheet line with no size and a large-format line with no width or height, rather than pricing it without its run", async () => {
+        const refusal = async (product: string, leaveOut: string) => {
+          const p = productOf(product);
+          const { [leaveOut]: _gone, ...values } = jobValues(catalogue, p, firstChoice(catalogue, p), p.kind === "sheet" ? 250 : 1) as unknown as Record<string, unknown>;
+          const error = await door.quote({ values: { delivery_method: "collect", language: "en-US" }, children: { jobs: [{ values: values as unknown as ReturnType<typeof jobValues> }] } }).catch((e: unknown) => e);
+          expect(isShopError(error), `${product} without ${leaveOut} was priced`).toBe(true);
+          return isShopError(error) ? [error.refused.child, error.refused.column, error.refused.reason] : null;
+        };
+        expect(await refusal("flyers", "size_option_id")).toEqual(["jobs", "size_option_id", "required"]);
+        expect(await refusal("pvc-banners", "width_mm")).toEqual(["jobs", "width_mm", "required"]);
+        expect(await refusal("canvas", "height_mm")).toEqual(["jobs", "height_mm", "required"]);
+      });
+
       let uploaded: ArtFile;
       it("takes the customer's artwork as a guest upload for the order's jobs, with its checks read in the browser", async () => {
         const file = artwork();
