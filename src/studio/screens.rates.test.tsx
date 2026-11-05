@@ -10,7 +10,7 @@
 import { describe, expect, it } from "vitest";
 
 import { FakeDoor } from "./testing/fakeDoor.ts";
-import { stocked } from "./testing/fixture.ts";
+import { fixture, stocked } from "./testing/fixture.ts";
 import { button, click, freshPage, mount, press, sweep, text, toasts, type, unmount } from "./testing/render.tsx";
 import { typedRate } from "./screens/Prices.tsx";
 
@@ -48,7 +48,7 @@ describe("the price list", () => {
   it("reads the rate card from its rows, section by section, and draws the breaks", async () => {
     await mount(new FakeDoor(), "prices");
     const sections = [...document.querySelectorAll(".wk-price-card")].map((c) => c.querySelector(".wk-price-title")?.textContent);
-    expect(sections).toEqual(["Setup", "Sheet printing", "Material (per SRA3 sheet)", "Finishing", "Large format (per m²)", "Turnaround & proofs", "Packaging", "Delivery", "Quantity breaks"]);
+    expect(sections).toEqual(["Setup", "Sheet printing", "Material (per SRA3 sheet)", "Finishing", "Large format (per m²)", "Turnaround & proofs", "Packaging", "Delivery", "Quantity breaks", "Closures"]);
     const lines = [...document.querySelectorAll(".wk-price-row")].map((r) => `${r.querySelector("dt")?.textContent} ${r.querySelector("dd")?.textContent}`);
     expect(lines).toEqual([
       "Every job £18.00 / job",
@@ -78,6 +78,7 @@ describe("the price list", () => {
       "Rolled tube, up to 1.5m £14.00",
       "Over 30kg collection, or we quote",
       "Collection no charge",
+      "Summer bank holiday Mon, Aug 31",
     ]);
     expect([...document.querySelectorAll(".wk-chart-m")].map((n) => n.textContent)).toEqual(["1.00", "0.92", "0.84", "0.74", "0.66", "0.58"]);
     expect(text()).toContain("Orders already placed keep their price; saved quotes and baskets are priced again.");
@@ -121,6 +122,35 @@ describe("the price list", () => {
     await mount(new FakeDoor({ roles: ["press"] }), "prices");
     expect(button(/^Edit/)).toBeUndefined();
     expect(text()).toContain("Only the owner can change the rate card.");
+  });
+
+  it("adds a public holiday from Holiday calendars as a closure, for the owner alone", async () => {
+    const data = fixture();
+    data.holidays = [
+      { id: 71, country: "GB", region: "ENG", day: "2026-08-31", name: "Summer bank holiday" },
+      { id: 72, country: "GB", region: "ENG", day: "2026-12-25", name: "Christmas Day" },
+      { id: 70, country: "GB", region: "ENG", day: "2026-05-25", name: "Spring bank holiday" },
+    ];
+    const door = new FakeDoor({ data, facts: { addOns: ["customiser", "holiday-calendars"] } });
+    await mount(door, "prices");
+    // The summer one is a closure already (on its day), the spring one is past: only Christmas is offered.
+    expect([...document.querySelectorAll(".wk-price-holiday")].map((li) => li.querySelector("span")?.textContent)).toEqual([expect.stringContaining("Christmas Day")]);
+    await sweep("the price list with public holidays to add");
+    await click(button(/^Add Christmas Day on .+ as a closure$/));
+    expect(door.of("addClosure")).toEqual([{ holidayId: 72 }]);
+    expect(toasts()).toEqual(["Christmas Day added as a closure."]);
+    expect(door.data.closures.at(-1)).toMatchObject({ holiday_id: 72, from_date: "2026-12-25", to_date: "2026-12-25", reason: "Christmas Day", active: true });
+    expect(text()).toContain("No public holidays to come that aren't closures already.");
+    unmount();
+    await mount(new FakeDoor({ roles: ["press"], data: fixture(), facts: { addOns: ["customiser", "holiday-calendars"] } }), "prices");
+    expect(document.querySelector(".wk-price-holidays")).toBeNull();
+    expect(text()).not.toContain("Public holidays");
+  });
+
+  it("offers no public holidays while Holiday calendars is off", async () => {
+    await mount(new FakeDoor(), "prices");
+    expect(text()).toContain("Closures");
+    expect(text()).not.toContain("Public holidays");
   });
 
   it("reads a typed figure as the rate card keeps it", () => {

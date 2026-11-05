@@ -138,6 +138,15 @@ export class FakeDoor implements WorksDoor {
     return row;
   }
 
+  async addClosure(holiday: Row): Promise<Row> {
+    this.record("addClosure", { holidayId: holiday.id });
+    this.nextId += 1;
+    const day = String(holiday["day"]).slice(0, 10);
+    const row: Row = { id: this.nextId, holiday_id: holiday.id, from_date: day, to_date: day, reason: holiday["name"], active: true };
+    this.data.closures.push(row);
+    return row;
+  }
+
   async spoil(input: { job: Row; sheets: number; note: string | null }): Promise<Row> {
     this.record("spoil", { jobId: input.job.id, qty: input.sheets, note: input.note });
     this.nextId += 1;

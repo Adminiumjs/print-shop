@@ -150,6 +150,7 @@ export function fixture(): WorksData {
     links: [],
     stock: [],
     shipments: [],
+    holidays: [],
   };
 }
 

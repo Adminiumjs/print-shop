@@ -1927,6 +1927,39 @@ a.wk-art-name {
   font-size: 12px;
   color: var(--fg-muted);
 }
+.wk-price-lede {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+.wk-price-subtitle {
+  margin: 14px 0 4px;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+.wk-price-holidays {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wk-price-holiday {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 6px 0;
+  border-block-end: 1px solid var(--border);
+  font-size: 12.5px;
+}
+.wk-price-holiday:last-child {
+  border-block-end: 0;
+}
+.wk-price-holiday .wk-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 .wk-chart {
   inline-size: 100%;
   block-size: auto;

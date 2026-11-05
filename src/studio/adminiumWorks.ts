@@ -44,6 +44,8 @@ export const MOMENTS: Readonly<Partial<Record<Table | AddOnTable, readonly strin
 const SHIPMENT_MOMENTS = ["created_at", "collection_from", "collection_to"];
 /** The contract a delivery company's add-on provides. */
 export const CARRIER_CONTRACT = "shipping-carrier";
+/** The add-on that keeps public holidays, each one the works may add as a closure. */
+export const HOLIDAYS = "holiday-calendars";
 
 /** The yes/no columns each table holds: SQLite and MySQL hand back 0 or 1. */
 export const YES_NO: Readonly<Partial<Record<Table, readonly string[]>>> = {
@@ -242,6 +244,8 @@ export class AdminiumWorks implements WorksDoor {
       // The delivery company attached and on, and what it booked.
       this.carrier = await this.findCarrier(on);
       const shipments = this.carrier === null ? [] : await this.listAddOn(`${this.carrier.key}:shipments`, { order: "created_at.desc" });
+      // The public holidays, to add one as a closure: Holiday calendars on, and read by whoever may (the owner).
+      const holidays = on.has(HOLIDAYS) ? await this.listAddOn(`${HOLIDAYS}:holidays`, { order: "day.asc" }) : [];
       return {
         settings: settings![0] ?? null,
         products: products!,
@@ -265,6 +269,7 @@ export class AdminiumWorks implements WorksDoor {
         links,
         stock,
         shipments,
+        holidays,
       };
     });
   }
@@ -358,6 +363,11 @@ export class AdminiumWorks implements WorksDoor {
 
   saveRate(table: Table, row: Row, values: Record<string, unknown>): Promise<Row> {
     return this.run(() => this.change(table, row.id, values));
+  }
+
+  addClosure(holiday: Row): Promise<Row> {
+    const day = String(holiday["day"] ?? "").slice(0, 10);
+    return this.run(() => this.create("closures", { holiday_id: holiday.id, from_date: day, to_date: day, reason: text(holiday["name"]), active: true }));
   }
 
   // ── the add-ons ───────────────────────────────────────────────────────────

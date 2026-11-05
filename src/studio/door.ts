@@ -72,6 +72,8 @@ export interface WorksData {
   stock: Row[];
   /** What the delivery company booked, when one is on and the person may read it. */
   shipments: Row[];
+  /** The public holidays Holiday calendars keeps, when it is on and the person may read them (the owner). */
+  holidays: Row[];
 }
 
 /** The works' facts that are not rows: its zone, money, working week, clock and add-ons. */
@@ -166,6 +168,8 @@ export interface WorksDoor {
   spoil(input: { job: Row; sheets: number; note: string | null }): Promise<Row>;
   /** A row of the rate card, changed. */
   saveRate(table: Table, row: Row, values: Record<string, unknown>): Promise<Row>;
+  /** A public holiday of Holiday calendars added as one of the works' closures: its day and its name, linked to it. */
+  addClosure(holiday: Row): Promise<Row>;
 
   /** The add-ons installed, as Adminium lists them for this app. */
   addOns(): Promise<InstalledAddOn[]>;

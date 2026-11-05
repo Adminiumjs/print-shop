@@ -7,10 +7,17 @@
  * own row, and every quote after that is worked out from it. A job already
  * taken keeps the rate card it was written with; saved quotes and baskets are
  * priced again.
+ *
+ * Under it the works' closures, the days no job is due on, and, while Holiday
+ * calendars is on, the public holidays to come that are not closures yet: the
+ * owner adds one as a closure (its day and its name, linked to the holiday).
+ * The comp draws no closures here; this is the smallest place the owner
+ * already edits the works' rate card and calendar from.
  */
 import { useEffect, useId, useState } from "react";
-import { Pencil, UserRoundCog } from "lucide-react";
+import { CalendarPlus, Pencil, UserRoundCog } from "lucide-react";
 
+import { HOLIDAYS } from "../adminiumWorks.ts";
 import { useData, useEnv, useRun } from "../env.tsx";
 import { useFmt } from "../format.ts";
 import { mayEditRates } from "../roles.ts";
@@ -116,6 +123,7 @@ export function PricesScreen() {
           <PriceSection key={section.key} section={section} editable={owner && editing === null} editing={editing === section.key} onEdit={() => setEditing(section.key)} onDone={() => setEditing(null)} />
         ))}
         <BreaksChart data={data} />
+        <ClosuresCard data={data} owner={owner} />
       </div>
       <p className="wk-price-note">
         <UserRoundCog size={14} aria-hidden="true" />
@@ -223,6 +231,96 @@ function PriceSection({ section, editable, editing, onEdit, onDone }: { section:
             </button>
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+const dayOf = (value: unknown): string | null => (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value) ? value.slice(0, 10) : null);
+
+/** The public holidays to come that no closure is for yet: none linked to it, none on its day. */
+export function holidaysToAdd(data: WorksData, today: string): Row[] {
+  const linked = new Set(data.closures.map((c) => String(c["holiday_id"] ?? "")));
+  const shut = (day: string) => data.closures.some((c) => c["active"] !== false && (dayOf(c["from_date"]) ?? "") <= day && day <= (dayOf(c["to_date"]) ?? ""));
+  return data.holidays.filter((h) => {
+    const day = dayOf(h["day"]);
+    return day !== null && day >= today && !linked.has(String(h.id)) && !shut(day);
+  });
+}
+
+/** The works' closures, and the public holidays the owner may add as one. */
+function ClosuresCard({ data, owner }: { data: WorksData; owner: boolean }) {
+  const t = useT();
+  const fmt = useFmt();
+  const { door } = useEnv();
+  const { busy, run } = useRun();
+  const headId = useId();
+  const holidaysId = useId();
+  const closures = data.closures.filter((c) => c["active"] !== false).sort((a, b) => String(a["from_date"]).localeCompare(String(b["from_date"])));
+  const on = door.facts().addOns.includes(HOLIDAYS) && owner;
+  const toAdd = on ? holidaysToAdd(data, fmt.today(door.now())) : [];
+  const span = (c: Row) => {
+    const from = dayOf(c["from_date"]);
+    const to = dayOf(c["to_date"]);
+    return from === to || to === null ? fmt.day(from) : `${fmt.day(from)} – ${fmt.day(to)}`;
+  };
+  return (
+    <div className="wk-panel wk-price-card" aria-labelledby={headId} role="group">
+      <div className="wk-price-head">
+        <h2 className="wk-price-title" id={headId}>
+          {t("works.prices.closures")}
+        </h2>
+      </div>
+      <p className="wk-price-lede">{t("works.prices.closuresLede")}</p>
+      {closures.length === 0 ? (
+        <p className="wk-price-lede">{t("works.prices.closuresNone")}</p>
+      ) : (
+        <dl className="wk-price-rows">
+          {closures.map((c) => (
+            <div key={String(c.id)} className="wk-price-row">
+              <dt>{text(c["reason"]) ?? ""}</dt>
+              <dd className="wk-mono">{span(c)}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {on && (
+        <>
+          <h3 className="wk-price-subtitle" id={holidaysId}>
+            {t("works.prices.holidays")}
+          </h3>
+          <p className="wk-price-lede">{t(toAdd.length === 0 ? "works.prices.holidaysNone" : "works.prices.holidaysLede")}</p>
+          {toAdd.length > 0 && (
+            <ul className="wk-price-holidays" aria-labelledby={holidaysId}>
+              {toAdd.map((h) => {
+                const name = text(h["name"]) ?? "";
+                const day = fmt.day(dayOf(h["day"]));
+                return (
+                  <li key={String(h.id)} className="wk-price-holiday">
+                    <span>
+                      {name} <Mono>{day}</Mono>
+                    </span>
+                    <button
+                      type="button"
+                      className="wk-btn wk-btn--small"
+                      disabled={busy}
+                      aria-label={t("works.prices.addClosureAria", { name, day })}
+                      onClick={() =>
+                        void run(async (d) => {
+                          await d.addClosure(h);
+                          return t("works.prices.closureAdded", { name });
+                        })
+                      }
+                    >
+                      <CalendarPlus size={13} aria-hidden="true" />
+                      {t("works.prices.addClosure")}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </>
       )}
     </div>
   );
