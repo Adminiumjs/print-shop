@@ -26,11 +26,13 @@ export const VERSION = "0.2.0";
  * The Adminium release that first reads everything below: delivery bands
  * picked by the basket's weight, ready-by dates in working days, a guest's
  * artwork uploaded into a job, the Customiser's design checked and
- * snapshotted by a job, its copies of a person, the panels' grants, and a
+ * snapshotted by a job, its copies of a person, the panels' grants, a
  * formula's key kept by its `normalize` rule (one sample pack per address,
- * however the address is typed).
+ * however the address is typed), and, from 0.3.47, the owner's erase of a
+ * person, a role's personal columns and deletes of an add-on's rows (more
+ * than twelve of its tables), and the columns the Jobs list opens on.
  */
-export const MIN_ADMINIUM = "0.3.45";
+export const MIN_ADMINIUM = "0.3.47";
 
 /**
  * The release that reads two more things this app says: a role's grant of

@@ -23,8 +23,8 @@ const OLDER = "0.3.43";
 describe("the manifest at the floor it ships with", () => {
   const shipped = buildManifest();
 
-  it("ships at 0.3.45, which reads the panels' grants and the copies into the versions", () => {
-    expect(MIN_ADMINIUM).toBe("0.3.45");
+  it("ships at 0.3.47, which reads the panels' grants, the copies into the versions, a role's personal columns and deletes, and the owner's erase", () => {
+    expect(MIN_ADMINIUM).toBe("0.3.47");
     expect(shipped["compatibility"]).toMatchObject({ minAdminiumVersion: MIN_ADMINIUM });
     const result = validateManifest(shipped);
     expect(result.ok ? [] : result.issues).toEqual([]);
@@ -35,7 +35,7 @@ describe("the manifest at the floor it ships with", () => {
       expect(panelsOf(shipped, key).sort()).toEqual(panels.map((p) => `page:@${p}:view`).sort());
       // A panel on a job opens over a job the role reads.
       expect(roleOf(shipped, key).permissions).toContain("table:@jobs:read");
-      expect(roleOf(shipped, key).tables).toContainEqual({ addOn: "customiser", table: "designs", actions: ["read"] });
+      expect(roleOf(shipped, key).tables?.find((g) => g.addOn === "customiser" && g.table === "designs")?.actions).toContain("read");
     }
     expect(panelsOf(shipped, "counter")).toEqual([]);
   });
@@ -47,15 +47,31 @@ describe("the manifest at the floor it ships with", () => {
     for (const key of ["owner", "prepress", "press"]) {
       const held = tablesOf(key);
       for (const table of reads) expect(held[table], `${key} reads ${table}`).toContain("read");
-      expect(held["design_versions"], key).toEqual(["read", "create", "update"]);
-      expect(held["version_files"], key).toEqual(["read", "create", "update"]);
-      // A role holds at most twelve of the add-ons' tables.
-      expect((roleOf(shipped, key).tables ?? []).length, key).toBeLessThanOrEqual(12);
+      // The customer's words, logo and photo in clear; the version's old files taken away when the files are made again.
+      expect(held["designs"], key).toEqual(["read", "read_pii"]);
+      expect(held["design_versions"], key).toEqual(["read", "read_pii", "create", "update"]);
+      expect(held["version_files"], key).toEqual(["read", "create", "update", "delete"]);
+      expect(held["features"], key).toEqual(["read"]);
+      // The starter fonts the panel prints with are handed out beside the set-up page.
+      expect(roleOf(shipped, key).permissions, key).toContain("page:@customiser:view");
+      // A role holds up to twenty-four of the add-ons' tables: Inventory's stock is read beside the panel's.
+      const all = (roleOf(shipped, key).tables ?? []) as Grant[];
+      expect(all.length, key).toBeLessThanOrEqual(24);
+      expect(all.filter((g) => g.addOn === "inventory").map((g) => g.table), key).toEqual(["links", "stock_points"]);
     }
-    // The owner reads Holiday calendars' days, and so leaves out the priced features.
-    expect(tablesOf("prepress")["features"]).toEqual(["read"]);
-    expect(tablesOf("owner")["features"]).toBeUndefined();
+    expect((roleOf(shipped, "owner").tables as Grant[]).filter((g) => g.addOn === "shipping-dhl").map((g) => g.table)).toEqual(["shipments"]);
     expect(tablesOf("counter")).toEqual({ designs: ["read"] });
+    expect(roleOf(shipped, "counter").permissions).not.toContain("page:@customiser:view");
+  });
+
+  it("lets the owner, and no floor role, find and erase a customer's data", () => {
+    expect(roleOf(shipped, "owner").permissions).toContain("privacy:@:people");
+    for (const key of ["prepress", "press", "counter"]) expect(roleOf(shipped, key).permissions.filter((p) => p.startsWith("privacy:")), key).toEqual([]);
+  });
+
+  it("opens the Jobs list on the order, the product, its quantity, its stage, its proof and its day", () => {
+    const jobs = (shipped["pages"] as { ref: string; config: Json }[]).find((p) => p.ref === "printing-jobs")!;
+    expect(jobs.config["columns"]).toEqual(["order_id", "product_name", "qty", "stage", "proof_state", "ready_by"]);
   });
 
   it("gives the owner Holiday calendars' settings, and no other role", () => {

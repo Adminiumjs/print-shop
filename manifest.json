@@ -18,7 +18,7 @@
     "commerce"
   ],
   "compatibility": {
-    "minAdminiumVersion": "0.3.45",
+    "minAdminiumVersion": "0.3.47",
     "engines": [
       "sqlite",
       "postgres",
@@ -17557,7 +17557,15 @@
               ]
             }
           ]
-        }
+        },
+        "columns": [
+          "order_id",
+          "product_name",
+          "qty",
+          "stage",
+          "proof_state",
+          "ready_by"
+        ]
       }
     },
     {
@@ -19262,6 +19270,7 @@
         "table:@messages:read_pii",
         "page:@customiser:view",
         "addOn:holiday-calendars:settings",
+        "privacy:@:people",
         "page:@customiser-line:view",
         "page:@customiser-product:view"
       ],
@@ -19334,7 +19343,8 @@
           "addOn": "customiser",
           "table": "designs",
           "actions": [
-            "read"
+            "read",
+            "read_pii"
           ]
         },
         {
@@ -19342,6 +19352,7 @@
           "table": "design_versions",
           "actions": [
             "read",
+            "read_pii",
             "create",
             "update"
           ],
@@ -19353,8 +19364,7 @@
               "values"
             ],
             "writable": [
-              "proof_file",
-              "note"
+              "proof_file"
             ]
           }
         },
@@ -19364,194 +19374,8 @@
           "actions": [
             "read",
             "create",
-            "update"
-          ],
-          "limit": {
-            "creatable": [
-              "app",
-              "version_id",
-              "kind",
-              "name",
-              "about",
-              "layers",
-              "left_out",
-              "position"
-            ],
-            "writable": [
-              "file"
-            ]
-          }
-        },
-        {
-          "addOn": "customiser",
-          "table": "bases",
-          "actions": [
-            "read"
-          ]
-        },
-        {
-          "addOn": "customiser",
-          "table": "ready_designs",
-          "actions": [
-            "read"
-          ]
-        },
-        {
-          "addOn": "customiser",
-          "table": "ready_parts",
-          "actions": [
-            "read"
-          ]
-        },
-        {
-          "addOn": "customiser",
-          "table": "base_areas",
-          "actions": [
-            "read"
-          ]
-        },
-        {
-          "addOn": "customiser",
-          "table": "base_pieces",
-          "actions": [
-            "read"
-          ]
-        },
-        {
-          "addOn": "customiser",
-          "table": "palettes",
-          "actions": [
-            "read"
-          ]
-        },
-        {
-          "addOn": "customiser",
-          "table": "palette_colours",
-          "actions": [
-            "read"
-          ]
-        },
-        {
-          "addOn": "customiser",
-          "table": "fonts",
-          "actions": [
-            "read"
-          ]
-        },
-        {
-          "addOn": "holiday-calendars",
-          "table": "holidays",
-          "actions": [
-            "read"
-          ]
-        }
-      ]
-    },
-    {
-      "key": "prepress",
-      "name": "Prepress",
-      "screensOnly": true,
-      "permissions": [
-        "app:@:staff",
-        "table:@settings:read",
-        "table:@materials:read",
-        "table:@sizes:read",
-        "table:@finishes:read",
-        "table:@breaks:read",
-        "table:@packaging:read",
-        "table:@delivery_bands:read",
-        "table:@products:read",
-        "table:@options:read",
-        "table:@option_rules:read",
-        "table:@machines:read",
-        "table:@closures:read",
-        "table:@orders:read",
-        "table:@jobs:read",
-        "table:@job_features:read",
-        "table:@artwork:read",
-        "table:@proofs:read",
-        "table:@spoils:read",
-        "table:@jobs:update",
-        "table:@proofs:create",
-        "table:@proofs:update",
-        "page:@printing-orders:view",
-        "page:@printing-jobs:view",
-        "page:@printing-proofs:view",
-        "page:@printing-artwork:view",
-        "page:@customiser-line:view"
-      ],
-      "limits": {
-        "jobs": {
-          "writable": [
-            "artwork_checked",
-            "stage",
-            "works_note"
-          ],
-          "writableValues": {
-            "stage": [
-              "printing"
-            ]
-          },
-          "writableFrom": {
-            "stage": [
-              "prepress"
-            ]
-          }
-        },
-        "proofs": {
-          "creatable": [
-            "job_id",
-            "kind",
-            "file",
-            "design_version_id",
-            "note"
-          ],
-          "writable": [
-            "state"
-          ],
-          "writableValues": {
-            "state": [
-              "superseded"
-            ]
-          }
-        }
-      },
-      "tables": [
-        {
-          "addOn": "customiser",
-          "table": "designs",
-          "actions": [
-            "read"
-          ]
-        },
-        {
-          "addOn": "customiser",
-          "table": "design_versions",
-          "actions": [
-            "read",
-            "create",
-            "update"
-          ],
-          "limit": {
-            "creatable": [
-              "app",
-              "design_id",
-              "version",
-              "values"
-            ],
-            "writable": [
-              "proof_file",
-              "note"
-            ]
-          }
-        },
-        {
-          "addOn": "customiser",
-          "table": "version_files",
-          "actions": [
-            "read",
-            "create",
-            "update"
+            "update",
+            "delete"
           ],
           "limit": {
             "creatable": [
@@ -19631,6 +19455,238 @@
           "actions": [
             "read"
           ]
+        },
+        {
+          "addOn": "inventory",
+          "table": "links",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "inventory",
+          "table": "stock_points",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "shipping-dhl",
+          "table": "shipments",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "holiday-calendars",
+          "table": "holidays",
+          "actions": [
+            "read"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "prepress",
+      "name": "Prepress",
+      "screensOnly": true,
+      "permissions": [
+        "app:@:staff",
+        "table:@settings:read",
+        "table:@materials:read",
+        "table:@sizes:read",
+        "table:@finishes:read",
+        "table:@breaks:read",
+        "table:@packaging:read",
+        "table:@delivery_bands:read",
+        "table:@products:read",
+        "table:@options:read",
+        "table:@option_rules:read",
+        "table:@machines:read",
+        "table:@closures:read",
+        "table:@orders:read",
+        "table:@jobs:read",
+        "table:@job_features:read",
+        "table:@artwork:read",
+        "table:@proofs:read",
+        "table:@spoils:read",
+        "table:@jobs:update",
+        "table:@proofs:create",
+        "table:@proofs:update",
+        "page:@printing-orders:view",
+        "page:@printing-jobs:view",
+        "page:@printing-proofs:view",
+        "page:@printing-artwork:view",
+        "page:@customiser:view",
+        "page:@customiser-line:view"
+      ],
+      "limits": {
+        "jobs": {
+          "writable": [
+            "artwork_checked",
+            "stage",
+            "works_note"
+          ],
+          "writableValues": {
+            "stage": [
+              "printing"
+            ]
+          },
+          "writableFrom": {
+            "stage": [
+              "prepress"
+            ]
+          }
+        },
+        "proofs": {
+          "creatable": [
+            "job_id",
+            "kind",
+            "file",
+            "design_version_id",
+            "note"
+          ],
+          "writable": [
+            "state"
+          ],
+          "writableValues": {
+            "state": [
+              "superseded"
+            ]
+          }
+        }
+      },
+      "tables": [
+        {
+          "addOn": "customiser",
+          "table": "designs",
+          "actions": [
+            "read",
+            "read_pii"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "design_versions",
+          "actions": [
+            "read",
+            "read_pii",
+            "create",
+            "update"
+          ],
+          "limit": {
+            "creatable": [
+              "app",
+              "design_id",
+              "version",
+              "values"
+            ],
+            "writable": [
+              "proof_file"
+            ]
+          }
+        },
+        {
+          "addOn": "customiser",
+          "table": "version_files",
+          "actions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "limit": {
+            "creatable": [
+              "app",
+              "version_id",
+              "kind",
+              "name",
+              "about",
+              "layers",
+              "left_out",
+              "position"
+            ],
+            "writable": [
+              "file"
+            ]
+          }
+        },
+        {
+          "addOn": "customiser",
+          "table": "bases",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "ready_designs",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "ready_parts",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "base_areas",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "base_pieces",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "palettes",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "palette_colours",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "fonts",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "features",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "inventory",
+          "table": "links",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "inventory",
+          "table": "stock_points",
+          "actions": [
+            "read"
+          ]
         }
       ]
     },
@@ -19662,6 +19718,7 @@
         "table:@spoils:create",
         "table:@orders:update",
         "page:@printing-jobs:view",
+        "page:@customiser:view",
         "page:@customiser-line:view"
       ],
       "limits": {
@@ -19711,7 +19768,8 @@
           "addOn": "customiser",
           "table": "designs",
           "actions": [
-            "read"
+            "read",
+            "read_pii"
           ]
         },
         {
@@ -19719,6 +19777,7 @@
           "table": "design_versions",
           "actions": [
             "read",
+            "read_pii",
             "create",
             "update"
           ],
@@ -19730,8 +19789,7 @@
               "values"
             ],
             "writable": [
-              "proof_file",
-              "note"
+              "proof_file"
             ]
           }
         },
@@ -19741,7 +19799,8 @@
           "actions": [
             "read",
             "create",
-            "update"
+            "update",
+            "delete"
           ],
           "limit": {
             "creatable": [
@@ -19818,6 +19877,20 @@
         {
           "addOn": "customiser",
           "table": "features",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "inventory",
+          "table": "links",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "inventory",
+          "table": "stock_points",
           "actions": [
             "read"
           ]

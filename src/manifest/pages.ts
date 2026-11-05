@@ -79,6 +79,9 @@ const MONEY_FIELDS: Field[] = [
   money("total"),
 ];
 
+/** A records page whose list opens on these columns, in this order (1 to 8 of its table's), beside its form. */
+const listed = (columns: string[], config: Record<string, unknown>) => ({ ...config, columns });
+
 interface PageSpec {
   ref: string;
   title: string;
@@ -123,14 +126,15 @@ const SPECS: PageSpec[] = [
     icon: "clipboard-list",
     order: 2,
     table: "jobs",
-    config: form(
+    // The list opens on what the floor works from: the order, the product and its quantity, where it is, its proof, the day it is due.
+    config: listed(["order_id", "product_name", "qty", "stage", "proof_state", "ready_by"], form(
       [title("product_name"), ref("order_id"), f("stage", { control: "segmented" }), f("ready_by", { control: "date" })],
       CONFIG_FIELDS,
       ...PRICE_SECTIONS,
       [f("design_code")],
       [f("proof_state", { control: "segmented" }), number("changes"), number("turnaround_days"), toggle("artwork_checked"), number("artwork_count"), number("warnings_accepted")],
       [when("printing_at"), f("printed_by"), when("finishing_at"), when("ready_at"), when("handed_over_at"), number("spoiled_sheets"), wide("works_note", "text")],
-    ),
+    )),
   },
   {
     ref: "printing-proofs",

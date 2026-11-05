@@ -28,12 +28,11 @@
  * only whether a job names a design. The owner reads Holiday calendars'
  * public holidays, to add one as a closure.
  *
- * A role holds at most twelve of the add-ons' tables, and the panel alone
- * reads twelve of the Customiser's. So the panel's roles leave out what
- * fits no more: the owner the Customiser's priced features (the panel draws a
- * design without them), Inventory's stock and DHL's collections; prepress
- * and the press Inventory's stock. Their screens read those as closed, and
- * show none.
+ * The panel reads the customer's own words, logo and photo (the designs'
+ * and versions' personal columns) and makes the files again by taking the
+ * version's old files away, so its roles hold `read_pii` there and `delete`
+ * on the files. The owner finds and erases a customer's data
+ * (`privacy:@:people`, on the dashboard's privacy page).
  *
  * The screens show or hide a button by the role, but the grants and limits
  * below are what refuse the write: a hidden button is not a lock.
@@ -57,17 +56,18 @@ const pii = (table: string) => `table:@${table}:read_pii`;
  * the browser and saves them as the person signed in.
  */
 const CUSTOMISER_PANEL = [
-  { addOn: CUSTOMISER, table: "designs", actions: ["read"] },
+  { addOn: CUSTOMISER, table: "designs", actions: ["read", "read_pii"] },
   {
     addOn: CUSTOMISER,
     table: "design_versions",
-    actions: ["read", "create", "update"],
-    limit: { creatable: ["app", "design_id", "version", "values"], writable: ["proof_file", "note"] },
+    actions: ["read", "read_pii", "create", "update"],
+    // The proof is the version's one column the panel writes: the rest the order's posting copied, and stays as copied.
+    limit: { creatable: ["app", "design_id", "version", "values"], writable: ["proof_file"] },
   },
   {
     addOn: CUSTOMISER,
     table: "version_files",
-    actions: ["read", "create", "update"],
+    actions: ["read", "create", "update", "delete"],
     limit: { creatable: ["app", "version_id", "kind", "name", "about", "layers", "left_out", "position"], writable: ["file"] },
   },
   { addOn: CUSTOMISER, table: "bases", actions: ["read"] },
@@ -81,8 +81,6 @@ const CUSTOMISER_PANEL = [
   { addOn: CUSTOMISER, table: "features", actions: ["read"] },
 ];
 
-/** The owner reads Holiday calendars' days too, so of the panel's twelve it leaves out the priced features. */
-const OWNER_CUSTOMISER = CUSTOMISER_PANEL.filter((grant) => grant.table !== "features");
 
 /** The rules by which Adminium decides a column: nobody writes one, whatever their role. */
 export const DECIDING_RULES = ["rollup", "formula", "copy", "band", "stamp", "sequence", "format", "code", "lookup"] as const;
@@ -138,12 +136,14 @@ export const ROLES = [
       view(CUSTOMISER),
       // Holiday calendars' one setting, the days the works is closed: the owner's to keep, not only an administrator's.
       `addOn:${HOLIDAYS}:settings`,
+      // A customer's data found, handed to them and erased, on the dashboard's privacy page.
+      "privacy:@:people",
     ],
     limits: {
       orders: { writable: typed("orders", ...CUSTOMERS_OWN), creatable: typed("orders", ...CUSTOMERS_OWN) },
       saved_quotes: { writable: typed("saved_quotes", ...CUSTOMERS_OWN), creatable: typed("saved_quotes", ...CUSTOMERS_OWN) },
     },
-    tables: [...OWNER_CUSTOMISER, ...HOLIDAY_READS],
+    tables: [...CUSTOMISER_PANEL, ...STOCK_READS, ...SHIPMENT_READS, ...HOLIDAY_READS],
   },
   {
     key: "prepress",
@@ -158,6 +158,8 @@ export const ROLES = [
       view("printing-jobs"),
       view("printing-proofs"),
       view("printing-artwork"),
+      // The Customiser's set-up page: never opened from the works' screens, but the starter fonts the panel prints with are handed out beside it.
+      view(CUSTOMISER),
     ],
     limits: {
       // The artwork looked over, and an approved job onto the press.
@@ -169,7 +171,7 @@ export const ROLES = [
         writableValues: { state: ["superseded"] },
       },
     },
-    tables: CUSTOMISER_PANEL,
+    tables: [...CUSTOMISER_PANEL, ...STOCK_READS],
   },
   {
     key: "press",
@@ -182,6 +184,8 @@ export const ROLES = [
       ...grant("spoils", "create"),
       ...grant("orders", "update"),
       view("printing-jobs"),
+      // The starter fonts the panel prints with, handed out beside the Customiser's set-up page.
+      view(CUSTOMISER),
     ],
     limits: {
       jobs: { writable: ["stage", "works_note"], writableValues: { stage: ["finishing", "ready"] }, writableFrom: { stage: ["printing", "finishing"] } },
@@ -190,7 +194,7 @@ export const ROLES = [
       // The order ready to hand over, once its last job is.
       orders: { writable: ["status"], writableValues: { status: ["ready"] }, writableFrom: { status: ["placed"] } },
     },
-    tables: CUSTOMISER_PANEL,
+    tables: [...CUSTOMISER_PANEL, ...STOCK_READS],
   },
   {
     key: "counter",

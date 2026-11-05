@@ -50,7 +50,7 @@ describe("manifest.json is what src/manifest/ writes", () => {
     expect(manifest.requiredSchema.prefixed).toBe(true);
     expect(manifest["key"]).toBe("printing");
     expect(manifest["version"]).toBe("0.2.0");
-    expect((manifest["compatibility"] as Json)["minAdminiumVersion"]).toBe("0.3.45");
+    expect((manifest["compatibility"] as Json)["minAdminiumVersion"]).toBe("0.3.47");
   });
 
   it("holds its English-only labels to the list recorded, so a new one cannot slip in untranslated", () => {
@@ -395,7 +395,8 @@ describe("the works writes only what its work needs", () => {
 
   it("reads the design a job names, for every role that sees jobs", () => {
     for (const key of ["owner", "prepress", "press", "counter"]) {
-      expect(role(key).tables, key).toEqual(expect.arrayContaining([{ addOn: "customiser", table: "designs", actions: ["read"] }]));
+      const designs = (role(key).tables ?? []).find((g) => g["addOn"] === "customiser" && g["table"] === "designs");
+      expect(designs?.["actions"], key).toContain("read");
     }
   });
 
