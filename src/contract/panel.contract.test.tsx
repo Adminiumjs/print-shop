@@ -17,7 +17,9 @@
  *     as each of those roles, through the same door calls the host's
  *     `useWrite` and `useUpload` make (the drawing itself needs a browser's
  *     canvas, which this suite has not);
- *   - the product's panel is served to the owner, and refused to the press.
+ *   - the product's panel is served to the owner, and refused to the press;
+ *   - the owner keeps Holiday calendars' closed days (its settings grant),
+ *     and finds a customer to erase (an engine gap: no app role holds it).
  *
  * What an app's role cannot yet hold on 0.3.46 (the shopper's words, a
  * write of a version, a delete of a file) is held as `it.fails`, each named
@@ -165,6 +167,8 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
         return data.jobs.find((j) => String(j["order_id"]) === String(order.id) && j["design_id"] !== null && j["design_id"] !== undefined)!;
       };
       const panelsOf = (who: string): PanelDoor => doors[who]!.panels();
+      /** The session's write token, as the person's screens take it from the staff config. */
+      const tokenOf = async (who: string): Promise<Record<string, string>> => ({ "x-adminium-csrf": (await loadStaffConfig({ hostedStaff: true, base: "/apps/printing/staff/", fetchImpl: callers[who]!.fetchAs() }))!.csrfToken ?? "" });
 
       beforeAll(async () => {
         server = await boot(engine as Engine, PORT_BASE + index * PORTS_PER_ENGINE, WEDNESDAY - 60_000, { database: `printing_panel_${engine}${process.env["CONTRACT_DB_SUFFIX"] ?? ""}` });
@@ -178,16 +182,18 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
         } else {
           connectionId = ok(await admin.get<{ connections: { id: string; name: string }[] }>("/api/v1/connections")).connections.find((c) => c.name === "northwind")!.id;
         }
-        const customiser = addOnBundle("customiser");
-        const stagedAddOn = await admin.post(`/api/v1/add-ons/upload?expectedSha512=${encodeURIComponent(customiser.integrity)}`, customiser.buffer);
-        expect([200, 201], JSON.stringify(stagedAddOn.body).slice(0, 800)).toContain(stagedAddOn.status);
+        const bundles = ["customiser", "holiday-calendars"].map((key) => addOnBundle(key));
+        for (const addOn of bundles) {
+          const stagedAddOn = await admin.post(`/api/v1/add-ons/upload?expectedSha512=${encodeURIComponent(addOn.integrity)}`, addOn.buffer);
+          expect([200, 201], JSON.stringify(stagedAddOn.body).slice(0, 800)).toContain(stagedAddOn.status);
+        }
         const app = appBundle({ manifest: MANIFEST_TEXT });
         const staged = await admin.post(`/api/v1/apps/upload?expectedSha512=${encodeURIComponent(app.integrity)}`, app.buffer);
         expect([200, 201], JSON.stringify(staged.body).slice(0, 800)).toContain(staged.status);
         const body = { key: app.key, version: app.version, connectionId };
-        const plan = ok(await admin.post<{ plan: { installable: boolean; checksum: string } }>("/api/v1/apps/plan", body)).plan;
+        const plan = ok(await admin.post<{ plan: { installable: boolean; checksum: string } }>("/api/v1/apps/plan", { ...body, addOns: bundles.map((addOn) => addOn.key) })).plan;
         expect(plan.installable, JSON.stringify(plan).slice(0, 3000)).toBe(true);
-        const install = await admin.post("/api/v1/apps/install", { ...body, planChecksum: plan.checksum, addOns: [{ key: customiser.key, version: customiser.version }] });
+        const install = await admin.post("/api/v1/apps/install", { ...body, planChecksum: plan.checksum, addOns: bundles.map((addOn) => ({ key: addOn.key, version: addOn.version })) });
         if (install.status !== 200) throw new Error(`install refused: ${JSON.stringify(install.body).slice(0, 3000)}`);
         ok(await admin.patch(`/api/v1/connections/${connectionId}`, { timezone: "Europe/London", currency: "GBP" }));
         await server.setClock(WEDNESDAY, true);
@@ -239,6 +245,29 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
           expect(answer.status).toBe(200);
         });
       }
+
+      // ── the owner's own: Holiday calendars' closed days, and a customer erased ──
+
+      it("lets the owner keep Holiday calendars' closed days, and refuses the press", async () => {
+        const days = [{ day: "2026-12-28", name: "Bank holiday", from: { country: "GB", region: "england-and-wales", year: 2026 } }];
+        const kept = await callers["owner"]!.put<{ values: Record<string, unknown> }>("/api/v1/add-ons/holiday-calendars/settings", { values: { days } }, await tokenOf("owner"));
+        expect(kept.status, JSON.stringify(kept.body).slice(0, 400)).toBe(200);
+        // The works' screens read them back from the staff config, as the add-on's public setting.
+        const cfg = (await loadStaffConfig({ hostedStaff: true, base: "/apps/printing/staff/", fetchImpl: callers["owner"]!.fetchAs() }))!;
+        expect(cfg.addOns["holiday-calendars"]?.settings["days"]).toEqual(days);
+        const refused = await callers["press"]!.put("/api/v1/add-ons/holiday-calendars/settings", { values: { days: [] } }, await tokenOf("press"));
+        expect([refused.status, refused.code === "CSRF_FAILED"]).toEqual([403, false]);
+      });
+
+      /*
+       * Finding and erasing a person is `system:privacy:manage`, which an
+       * app's manifest may not hand out: the works' owner, who is not an
+       * administrator, is refused Adminium's privacy page.
+       */
+      it.fails("lets the owner find a customer to erase them (gap: an app role cannot hold the erase right)", async () => {
+        const found = await callers["owner"]!.post("/api/v1/privacy/find", { address: "hello@harbourbakery.example" }, await tokenOf("owner"));
+        expect(found.status, JSON.stringify(found.body).slice(0, 400)).toBe(200);
+      });
 
       /** The Customiser's own job panel, drawn here with the works' host as this role: what it says. */
       const drawnFor = async (who: string, job: Row): Promise<string> => {

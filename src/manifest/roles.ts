@@ -2,8 +2,9 @@
  * Who may do what, enforced by Adminium on every read and write.
  *
  *   owner     everything: the dashboard section, the rate card and the
- *             catalogue, the settings, the customers, the e-mails; and the
- *             works' own screens.
+ *             catalogue, the settings, the customers, the e-mails; the
+ *             works' own screens; and Holiday calendars' closed days (its
+ *             settings).
  *   prepress  the works' screens, never the dashboard: the jobs and their
  *             artwork, marking the artwork checked, sending a proof (with its
  *             file) or sending one again, and putting an approved job on the
@@ -135,6 +136,8 @@ export const ROLES = [
       ...["orders", "customers", "saved_quotes", "sample_requests", "messages"].map(pii),
       // The Customiser's set-up page (fonts, palettes, ready-made designs): the works' Designs opens it.
       view(CUSTOMISER),
+      // Holiday calendars' one setting, the days the works is closed: the owner's to keep, not only an administrator's.
+      `addOn:${HOLIDAYS}:settings`,
     ],
     limits: {
       orders: { writable: typed("orders", ...CUSTOMERS_OWN), creatable: typed("orders", ...CUSTOMERS_OWN) },

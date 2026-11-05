@@ -58,6 +58,11 @@ describe("the manifest at the floor it ships with", () => {
     expect(tablesOf("counter")).toEqual({ designs: ["read"] });
   });
 
+  it("gives the owner Holiday calendars' settings, and no other role", () => {
+    expect(roleOf(shipped, "owner").permissions).toContain("addOn:holiday-calendars:settings");
+    for (const key of ["prepress", "press", "counter"]) expect(roleOf(shipped, key).permissions.filter((p) => p.startsWith("addOn:"))).toEqual([]);
+  });
+
   it("follows a person into their designs' logo, photo, versions and files", () => {
     expect(copiesOf(shipped)).toEqual(["designs.email", "designs.values", "designs.logo_file", "designs.photo_file", "design_versions.values", "design_versions.proof_file", "version_files.file"]);
   });

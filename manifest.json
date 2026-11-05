@@ -19261,6 +19261,7 @@
         "table:@sample_requests:read_pii",
         "table:@messages:read_pii",
         "page:@customiser:view",
+        "addOn:holiday-calendars:settings",
         "page:@customiser-line:view",
         "page:@customiser-product:view"
       ],
