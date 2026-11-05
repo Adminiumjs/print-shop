@@ -47,6 +47,7 @@ import { AdminiumShop } from "../shop/door.ts";
 import { isShopError, type Catalogue, type Row } from "../shop/port.ts";
 import { orderBody, useShop, type ArtFile, type BasketLine } from "../shop/store.ts";
 import { addOnBundle, appBundle, boot, Caller, ENGINES, missing, missingAddOn, ok, PORTS_PER_ENGINE, until, type Engine, type Server } from "./harness.ts";
+import { MANIFEST_TEXT } from "./release.ts";
 
 const why = missing() ?? missingAddOn("customiser");
 if (why !== null && process.env["ADMINIUM_REQUIRE_CONTRACT"] === "1") throw new Error(`the contract must run here, and cannot: ${why}`);
@@ -66,7 +67,7 @@ function artwork(): File {
 }
 
 describe.skipIf(why !== null)(`a customer orders on a built Adminium${why === null ? "" : ` — skipped: ${why}`}`, () => {
-  ENGINES.filter(([engine]) => engine === "sqlite").forEach(([engine, available], index) => {
+  ENGINES.forEach(([engine, available], index) => {
     describe.skipIf(!available)(`on ${engine}`, () => {
       let server: Server;
       let staff: Caller;
@@ -78,16 +79,21 @@ describe.skipIf(why !== null)(`a customer orders on a built Adminium${why === nu
         staff = new Caller(server.base, { origin: server.base });
         await staff.signIn(ADMIN.email, ADMIN.password);
         // The works' own empty database (on the e2e Northwind beside it the install meets its bare `products`, `orders` and `customers`).
-        const file = join(tmpdir(), `printing-shop-contract-${engine}-${String(PORT_BASE)}.db`);
-        rmSync(file, { force: true });
-        writeFileSync(file, "");
-        const connectionId = ok(await staff.post<{ id: string }>("/api/v1/connections", { name: "marlow-press", engine: "sqlite", dsn: `sqlite:${file}` }), 201).id;
+        let connectionId: string;
+        if (engine === "sqlite") {
+          const file = join(tmpdir(), `printing-shop-contract-${engine}-${String(PORT_BASE)}.db`);
+          rmSync(file, { force: true });
+          writeFileSync(file, "");
+          connectionId = ok(await staff.post<{ id: string }>("/api/v1/connections", { name: "marlow-press", engine: "sqlite", dsn: `sqlite:${file}` }), 201).id;
+        } else {
+          connectionId = ok(await staff.get<{ connections: { id: string; name: string }[] }>("/api/v1/connections")).connections.find((c) => c.name === "northwind")!.id;
+        }
 
         // The Customiser first, staged at the release the app asks for; then the app, with it ticked.
         const addOn = addOnBundle("customiser");
         const stagedAddOn = await staff.post(`/api/v1/add-ons/upload?expectedSha512=${encodeURIComponent(addOn.integrity)}`, addOn.buffer);
         if (![200, 201].includes(stagedAddOn.status)) throw new Error(`add-on upload: ${JSON.stringify(stagedAddOn.body).slice(0, 600)}`);
-        const app = appBundle();
+        const app = appBundle({ manifest: MANIFEST_TEXT });
         const staged = await staff.post(`/api/v1/apps/upload?expectedSha512=${encodeURIComponent(app.integrity)}`, app.buffer);
         if (![200, 201].includes(staged.status)) throw new Error(`upload: ${JSON.stringify(staged.body).slice(0, 600)}`);
         const body = { key: app.key, version: app.version, connectionId };
@@ -102,6 +108,8 @@ describe.skipIf(why !== null)(`a customer orders on a built Adminium${why === nu
         await server.setClock(WEDNESDAY, true);
         ok(await staff.post("/api/v1/apps/printing/sample-data"));
         await until(async () => (ok(await staff.get<{ loaded: boolean }>("/api/v1/apps/printing/sample-data")).loaded ? true : undefined), "the sample to be added");
+        // On Postgres and MySQL the sample says it is loaded before the rows it adds through the Customiser's section are in.
+        await until(async () => (ok(await staff.get<{ data: unknown[] }>(`/api/v1/data/${connectionId}/printing_jobs?limit=200`)).data.length >= 15 ? true : undefined), "the sample's jobs to be added");
         await server.setClock(WEDNESDAY);
         ok(await staff.put("/api/v1/public-api", { enabled: true }));
         ok(await staff.put("/api/v1/settings/email", { publicOrigin: server.base }));

@@ -27,10 +27,9 @@
  * checkout are, and says why it skipped otherwise. Its ports start at
  * `CONTRACT_PORT_BASE` (4980), three an engine.
  */
-import { readFileSync, rmSync, writeFileSync } from "node:fs";
+import { rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -40,6 +39,7 @@ import { AdminiumShop } from "../shop/door.ts";
 import { type Catalogue, type Row } from "../shop/port.ts";
 import { orderBody, useShop, type BasketLine } from "../shop/store.ts";
 import { addOnBundle, appBundle, boot, Caller, ENGINES, missing, missingAddOn, ok, PORTS_PER_ENGINE, until, type Engine, type Server } from "./harness.ts";
+import { MANIFEST_TEXT } from "./release.ts";
 import { delivered, sinkMail } from "./mail.ts";
 
 const why = missing() ?? missingAddOn("customiser");
@@ -48,7 +48,7 @@ const PORT_BASE = Number(process.env["CONTRACT_PORT_BASE"] ?? 4980);
 const ADMIN = { email: process.env["E2E_ADMIN_EMAIL"] ?? "e2e@adminium.local", password: process.env["E2E_ADMIN_PASSWORD"] ?? "adminium-e2e-password" };
 /** 10:20 on Wednesday 5 August 2026 in Marlow (British Summer Time), before the two o'clock cut-off. */
 const WEDNESDAY = Date.parse("2026-08-05T09:20:00Z");
-const MANIFEST = readFileSync(fileURLToPath(new URL("../../manifest.json", import.meta.url)), "utf8");
+const MANIFEST = MANIFEST_TEXT;
 /** A shopper the outbox sends to: not a reserved example domain. */
 const SHOPPER = { name: "Ruth Okafor", email: "ruth@okafor-studio.dev", address_line1: "4 Mill Lane", town: "Bourne End", postcode: "SL8 5PQ", may_email: false, language: "en-US" };
 /** The works' own address for its copies. */
@@ -140,7 +140,7 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
         const addOn = addOnBundle("customiser");
         const stagedAddOn = await staff.post(`/api/v1/add-ons/upload?expectedSha512=${encodeURIComponent(addOn.integrity)}`, addOn.buffer);
         if (![200, 201].includes(stagedAddOn.status)) throw new Error(`add-on upload: ${JSON.stringify(stagedAddOn.body).slice(0, 600)}`);
-        const app = appBundle();
+        const app = appBundle({ manifest: MANIFEST_TEXT });
         const staged = await staff.post(`/api/v1/apps/upload?expectedSha512=${encodeURIComponent(app.integrity)}`, app.buffer);
         if (![200, 201].includes(staged.status)) throw new Error(`upload: ${JSON.stringify(staged.body).slice(0, 600)}`);
         const body = { key: app.key, version: app.version, connectionId };

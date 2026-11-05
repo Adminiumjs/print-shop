@@ -29,7 +29,8 @@
  *
  * It runs with `CONTRACT=1` where a built Adminium and a built add-ons
  * checkout are, and says why it skipped otherwise. It runs on SQLite (the
- * works' database is a file it makes).
+ * works' database is a file it makes), and on Postgres and MySQL beside the
+ * e2e Northwind's bare tables when their URLs are set.
  */
 import { rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -43,6 +44,7 @@ import { AdminiumShop } from "../shop/door.ts";
 import { isShopError, type Catalogue, type Row } from "../shop/port.ts";
 import { orderBody, useShop, type BasketLine } from "../shop/store.ts";
 import { addOnBundle, appBundle, boot, Caller, ENGINES, missing, missingAddOn, ok, PORTS_PER_ENGINE, until, type Engine, type Server } from "./harness.ts";
+import { MANIFEST_TEXT } from "./release.ts";
 
 const why = missing() ?? missingAddOn("customiser");
 if (why !== null && process.env["ADMINIUM_REQUIRE_CONTRACT"] === "1") throw new Error(`the contract must run here, and cannot: ${why}`);
@@ -66,7 +68,7 @@ interface Mail {
 }
 
 describe.skipIf(why !== null)(`after the order, on a built Adminium${why === null ? "" : ` — skipped: ${why}`}`, () => {
-  ENGINES.filter(([engine]) => engine === "sqlite").forEach(([engine, available], index) => {
+  ENGINES.forEach(([engine, available], index) => {
     describe.skipIf(!available)(`on ${engine}`, () => {
       let server: Server;
       let staff: Caller;
@@ -96,14 +98,19 @@ describe.skipIf(why !== null)(`after the order, on a built Adminium${why === nul
         server = await boot(engine as Engine, PORT_BASE + index * PORTS_PER_ENGINE, WEDNESDAY - 60_000, { database: `printing_after_${engine}${process.env["CONTRACT_DB_SUFFIX"] ?? ""}` });
         staff = new Caller(server.base, { origin: server.base });
         await staff.signIn(ADMIN.email, ADMIN.password);
-        const file = join(tmpdir(), `printing-after-contract-${engine}-${String(PORT_BASE)}.db`);
-        rmSync(file, { force: true });
-        writeFileSync(file, "");
-        connectionId = ok(await staff.post<{ id: string }>("/api/v1/connections", { name: "marlow-press", engine: "sqlite", dsn: `sqlite:${file}` }), 201).id;
+        if (engine === "sqlite") {
+          const file = join(tmpdir(), `printing-after-contract-${engine}-${String(PORT_BASE)}.db`);
+          rmSync(file, { force: true });
+          writeFileSync(file, "");
+          connectionId = ok(await staff.post<{ id: string }>("/api/v1/connections", { name: "marlow-press", engine: "sqlite", dsn: `sqlite:${file}` }), 201).id;
+        } else {
+          // The e2e Northwind: the install's prefixed tables sit beside its bare `orders`, `products` and `customers`.
+          connectionId = ok(await staff.get<{ connections: { id: string; name: string }[] }>("/api/v1/connections")).connections.find((c) => c.name === "northwind")!.id;
+        }
         const addOn = addOnBundle("customiser");
         const stagedAddOn = await staff.post(`/api/v1/add-ons/upload?expectedSha512=${encodeURIComponent(addOn.integrity)}`, addOn.buffer);
         if (![200, 201].includes(stagedAddOn.status)) throw new Error(`add-on upload: ${JSON.stringify(stagedAddOn.body).slice(0, 600)}`);
-        const app = appBundle();
+        const app = appBundle({ manifest: MANIFEST_TEXT });
         const staged = await staff.post(`/api/v1/apps/upload?expectedSha512=${encodeURIComponent(app.integrity)}`, app.buffer);
         if (![200, 201].includes(staged.status)) throw new Error(`upload: ${JSON.stringify(staged.body).slice(0, 600)}`);
         const body = { key: app.key, version: app.version, connectionId };
@@ -118,6 +125,8 @@ describe.skipIf(why !== null)(`after the order, on a built Adminium${why === nul
         await server.setClock(WEDNESDAY, true);
         ok(await staff.post("/api/v1/apps/printing/sample-data"));
         await until(async () => (ok(await staff.get<{ loaded: boolean }>("/api/v1/apps/printing/sample-data")).loaded ? true : undefined), "the sample to be added");
+        // On Postgres and MySQL the sample says it is loaded before the rows it adds through the Customiser's section are in.
+        await until(async () => (ok(await staff.get<{ data: Row[] }>(`/api/v1/data/${connectionId}/printing_jobs?limit=200`)).data.length >= 15 ? true : undefined), "the sample's jobs to be added");
         await server.setClock(WEDNESDAY);
         ok(await staff.put("/api/v1/public-api", { enabled: true }));
         ok(await staff.put("/api/v1/settings/email", { publicOrigin: server.base }));

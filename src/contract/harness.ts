@@ -187,7 +187,8 @@ export function appBundle(options: { built?: boolean; manifest?: string; sample?
   // Another app's manifest brings its own sample (`sample`); this repo's is read from its file.
   if (manifest.sampleData !== undefined) files[manifest.sampleData.file] = options.sample !== undefined ? Buffer.from(options.sample) : readFileSync(join(REPO, manifest.sampleData.file));
   // …and the rows it adds to an add-on's tables, one file for each add-on.
-  if (options.manifest === undefined) for (const section of Object.values(manifest.sampleData?.addOns ?? {})) files[section.file] = readFileSync(join(REPO, section.file));
+  // (this repo's own, also when its manifest is written for another floor; never another app's).
+  if (options.sample === undefined) for (const section of Object.values(manifest.sampleData?.addOns ?? {})) files[section.file] = readFileSync(join(REPO, section.file));
   return { ...bundle(files), key: manifest.key, version: manifest.version };
 }
 

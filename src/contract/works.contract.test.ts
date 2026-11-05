@@ -34,6 +34,7 @@ import { createSessionTransport } from "../studio/transport/sessionSource.ts";
 import { loadStaffConfig } from "../studio/transport/staffConnection.ts";
 import { isApiError, num, type Row } from "../studio/wire.ts";
 import { addOnBundle, appBundle, boot, Caller, ENGINES, missing, missingAddOn, ok, PORTS_PER_ENGINE, until, type Engine, type Server } from "./harness.ts";
+import { MANIFEST_TEXT } from "./release.ts";
 
 const why = missing() ?? missingAddOn("customiser");
 if (why !== null && process.env["ADMINIUM_REQUIRE_CONTRACT"] === "1") throw new Error(`the contract must run here, and cannot: ${why}`);
@@ -106,7 +107,7 @@ describe.skipIf(why !== null)(`the works against a built Adminium${why === null 
         const customiser = addOnBundle("customiser");
         const stagedAddOn = await owner.post(`/api/v1/add-ons/upload?expectedSha512=${encodeURIComponent(customiser.integrity)}`, customiser.buffer);
         expect([200, 201], JSON.stringify(stagedAddOn.body).slice(0, 800)).toContain(stagedAddOn.status);
-        const app = appBundle();
+        const app = appBundle({ manifest: MANIFEST_TEXT });
         const staged = await owner.post(`/api/v1/apps/upload?expectedSha512=${encodeURIComponent(app.integrity)}`, app.buffer);
         expect([200, 201], JSON.stringify(staged.body).slice(0, 800)).toContain(staged.status);
         const body = { key: app.key, version: app.version, connectionId };
