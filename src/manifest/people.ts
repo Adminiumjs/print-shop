@@ -16,6 +16,8 @@
  * which the law keeps, so an erasure leaves those as they are; the artwork a
  * customer sent goes with them, as every file a guest uploads does.
  */
+import { shop } from "../i18n/strings/shop.ts";
+import { LOCALES } from "./labels.ts";
 import { CUSTOMISER } from "./postings.ts";
 
 /** The sentence shown beside the tick at checkout, and its version. */
@@ -24,8 +26,8 @@ export const NEWS_TICK = {
   purpose: "newsletter",
   wording: {
     version: 1,
-    // The other languages come with the checkout's own words.
-    text: { "en-US": "Send me news from Marlow Press now and then. You can say no to news at any time — every e-mail has a link." },
+    // The checkout's own words beside the tick, in each language it shows them.
+    text: Object.fromEntries(LOCALES.map((tag) => [tag, `${shop[tag]["shop.checkout.news"].replace("{works}", "Marlow Press")}. ${shop[tag]["shop.checkout.newsLine"]}`])),
   },
 };
 

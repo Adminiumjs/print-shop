@@ -22,7 +22,8 @@
  *   warnings-accepted   a new order whose customer accepted artwork warnings.
  *
  * The code a customer signs in with and the saved design's link are not here:
- * Adminium sends the first, the Customiser the second.
+ * Adminium sends the first (in its own eight languages), the Customiser the
+ * second. Every template is in `emails.ts`, in the app's eight languages.
  */
 
 export const KINDS = [
@@ -82,8 +83,9 @@ export const OUTBOX = {
     fallback: { via: "order_id", email: "email", name: "name", language: "language" },
   },
   settings: { table: "settings", name: "works_name", phone: "phone" },
-  // An order's own link opens its page on the customer side; its code rides the fragment.
-  pages: { manage: "/order", booking: "/" },
+  // An order's own link opens its page on the customer side, a saved quote's its own; each code rides the fragment.
+  // (`booking_url` is the outbox's second page: here, a saved quote's.)
+  pages: { manage: "/order", booking: "/quote" },
   kinds: Object.fromEntries(KINDS.map((kind) => [kind, `printing-${kind}`])),
   classes: Object.fromEntries(KINDS.filter((kind) => !TO_WORKS.has(kind)).map((kind) => [kind, "service"])),
   producers: [

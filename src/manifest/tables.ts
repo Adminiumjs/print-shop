@@ -330,6 +330,11 @@ const DELIVERY = {
 const QUOTE_DELIVERY = { if: [{ eq: ["delivery_method", "collect"] }, 0, { coalesce: ["band_price", 0] }] };
 /** Delivered, and over every band: the works prices the delivery by hand. */
 const DELIVERY_TO_QUOTE = { if: [{ and: [{ eq: ["delivery_method", "deliver"] }, { isNull: "delivery_band_id" }] }, 1, 0] };
+/** The delivery as priced: empty (a sum over nothing) while it is still to quote. */
+const DELIVERY_PRICED = { if: [{ eq: ["delivery_to_quote", 1] }, { div: [0, 0] }, "delivery"] };
+/** An order with the works' delivery quote on it, before the customer accepts it: its tax and total. */
+const QUOTED_SUBTOTAL = { add: [{ coalesce: ["goods_total", 0] }, "delivery_quote"] };
+const QUOTED_TAX = { round: [{ div: [{ mul: [QUOTED_SUBTOTAL, { coalesce: ["tax_rate", 0] }] }, 100] }, 2] };
 const SUBTOTAL = { add: [{ coalesce: ["goods_total", 0] }, { coalesce: ["delivery", 0] }] };
 /** Tax on the goods and the delivery, at the settings' rate, rounded to the penny. */
 const TAX = { round: [{ div: [{ mul: [{ coalesce: ["subtotal", 0] }, { coalesce: ["tax_rate", 0] }] }, 100] }, 2] };
@@ -368,6 +373,8 @@ function configuration(): Column[] {
     // A large-format job's own size; a sheet job's is its preset's.
     int("width_mm", "Width (mm)", { ...opt, rules: { validation: { min: 50, max: 5000 } } }),
     int("height_mm", "Height (mm)", { ...opt, rules: { validation: { min: 50, max: 5000 } } }),
+    // A large-format job's size as one text ("3000 × 1000 mm"), for its e-mails; empty for a preset size.
+    text("dims", 24, "Size as made", { ...opt, rules: { formula: { join: ["width_mm", " \u00d7 ", "height_mm", "\u00a0mm"] } } }),
     option("sides_option_id", "sides", "Sides"),
     figure("sides", "int", "Printed sides", always("sides_option_id", "sides")),
     option("lamination_option_id", "lamination", "Lamination", [{ column: "coated", as: "material_option_id.coated" }]),
@@ -573,6 +580,8 @@ function basketMoney(lines: string, via: string, delivery: Record<string, unknow
     money("band_price", "Band price", always("delivery_band_id", "price")),
     money("delivery", "Delivery", { formula: delivery }),
     figure("delivery_to_quote", "int", "Delivery to quote", { formula: DELIVERY_TO_QUOTE }),
+    // The delivery as a priced figure, empty while the works is still to price it: what an e-mail prints.
+    money("delivery_priced", "Delivery as priced", { formula: DELIVERY_PRICED }),
     money("subtotal", "Subtotal (ex tax)", { formula: SUBTOTAL }),
     figure("tax_rate", "decimal", "Tax rate (%)", fromSetting("tax_rate"), 2),
     money("tax", "Tax", { formula: TAX }),
@@ -931,6 +940,9 @@ export const TABLES: Table[] = [
       // Over the delivery bands: the works types the delivery's price and sends it; the customer accepts it.
       price("delivery_quote", "Delivery quote", { ...opt, rules: { validation: { min: 0 } } }),
       choice("delivery_quote_state", "Delivery quote", DELIVERY_QUOTE_STATES, { ...opt, tones: { to_quote: "warn", sent: "info", accepted: "pos" } }),
+      // What the order comes to with the works' quote on it, as the quote's e-mail and page show it.
+      money("quote_tax", "Tax with the delivery quote", { formula: QUOTED_TAX }),
+      money("quote_total", "Total with the delivery quote", { formula: { add: [QUOTED_SUBTOTAL, "quote_tax"] } }),
       at("delivery_quote_sent_at", "Delivery quote sent", { ...opt, rules: stamp("now", onState("delivery_quote_state", "sent")) }),
       at("delivery_quote_accepted_at", "Delivery quote accepted", { ...opt, rules: stamp("now", onState("delivery_quote_state", "accepted")) }),
       // Artwork warnings the customer accepted at checkout, on all its jobs.
