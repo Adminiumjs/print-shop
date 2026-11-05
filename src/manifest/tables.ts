@@ -957,7 +957,7 @@ export const TABLES: Table[] = [
       language("language"),
       fk("customer_id", "customers", "Customer", opt),
       ...basketMoney("jobs", "order_id", DELIVERY),
-      // The DHL service the customer chose, which Dispatch books when DHL is on.
+      // The DHL service the counter books the parcel with, when DHL is on: the works' choice, never the customer's.
       text("dhl_service", 32, "DHL service", opt),
       // Over the delivery bands: the works types the delivery's price and sends it; the customer accepts it.
       price("delivery_quote", "Delivery quote", { ...opt, rules: { validation: { min: 0 } } }),

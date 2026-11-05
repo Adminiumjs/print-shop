@@ -3,8 +3,9 @@
  * delivery order going out with the delivery company that is on. The parcel,
  * its rates, booking the collection, the label and the tracking are the
  * company's own screens (its `order.dispatch.actions` fill), handed the order
- * as the works keeps it and the service the customer chose at checkout
- * (`orders.dhl_service`), so they open with it picked. Under them the works
+ * as the works keeps it and the service the counter booked it with before
+ * (`orders.dhl_service`, the works' own: no customer writes it), so they open
+ * with it picked. Under them the works
  * hands the order over: dispatched, with the tracking number the booking
  * gave, which sends the customer their "on its way" e-mail. Beside them, the
  * other orders ready to go.

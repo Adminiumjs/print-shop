@@ -20348,7 +20348,6 @@
         "postcode",
         "language",
         "delivery_method",
-        "dhl_service",
         "client_key",
         "may_email"
       ],

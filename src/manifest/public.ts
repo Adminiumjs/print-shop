@@ -299,7 +299,7 @@ export const PUBLIC_ACCESS = [
     humanCheck: true,
     level: "verified",
     select: PLACED_SELECT,
-    writable: ["name", "email", "address_line1", "address_line2", "town", "postcode", "language", "delivery_method", "dhl_service", "client_key", "may_email"],
+    writable: ["name", "email", "address_line1", "address_line2", "town", "postcode", "language", "delivery_method", "client_key", "may_email"],
     requires: ["name", "email", "delivery_method"],
     requireSetting: [{ table: "settings", column: "taking_orders" }],
     claimedBy: { table: "customers", column: "customer_id", optional: true },

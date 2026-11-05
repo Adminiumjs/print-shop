@@ -271,6 +271,11 @@ describe("a customer reads nothing of anyone else's, and nothing the works keeps
     }
   });
 
+  it("leaves the DHL service to the counter: no customer write names it", () => {
+    for (const entry of manifest.publicAccess) expect(entry.writable ?? [], `${entry.table} ${entry.methods.join(",")}`).not.toContain("dhl_service");
+    expect(role("counter").limits!["orders"]!["writable"]).toContain("dhl_service");
+  });
+
   it("reads orders and quotes only through a signed-in customer, or one by its own link", () => {
     for (const entry of manifest.publicAccess.filter((e) => ["orders", "saved_quotes"].includes(e.table) && e.methods.includes("GET"))) {
       const claimed = entry["claimedBy"] !== undefined && entry["level"] === "verified";
