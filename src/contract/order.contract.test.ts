@@ -73,13 +73,14 @@ describe.skipIf(why !== null)(`a customer orders on a built Adminium${why === nu
       let staff: Caller;
       let door: AdminiumShop;
       let catalogue: Catalogue;
+      let connectionId: string;
+      let names: Record<string, string> = {};
 
       beforeAll(async () => {
         server = await boot(engine as Engine, PORT_BASE + index * PORTS_PER_ENGINE, WEDNESDAY - 60_000, { database: `printing_shop_${engine}${process.env["CONTRACT_DB_SUFFIX"] ?? ""}` });
         staff = new Caller(server.base, { origin: server.base });
         await staff.signIn(ADMIN.email, ADMIN.password);
         // The works' own empty database (on the e2e Northwind beside it the install meets its bare `products`, `orders` and `customers`).
-        let connectionId: string;
         if (engine === "sqlite") {
           const file = join(tmpdir(), `printing-shop-contract-${engine}-${String(PORT_BASE)}.db`);
           rmSync(file, { force: true });
@@ -121,6 +122,7 @@ describe.skipIf(why !== null)(`a customer orders on a built Adminium${why === nu
           headers.set("origin", server.base);
           return fetch(input, { ...init, headers });
         };
+        names = served.tables ?? {};
         door = new AdminiumShop({ baseUrl: server.base, publishableKey: served.publishableKey, ...(served.tables === undefined ? {} : { tables: served.tables }), ...(served.publicKeys === undefined ? {} : { publicKeys: served.publicKeys }) }, { fetch: originFetch });
         catalogue = await door.catalogue();
         // The shop's state holds the catalogue it read, as the page does.
@@ -226,6 +228,31 @@ describe.skipIf(why !== null)(`a customer orders on a built Adminium${why === nu
         const saved = await api.create({ base_id: base, ready_design_id: harbour["id"] as number, values: { layout: "left", sides: 2, parts: { name: { text: "Harbour Bakery" } } } }, CUSTOMER.email);
         expect(saved.code).toMatch(/^[0-9A-Z-]{8,}$/);
         code = saved.code!;
+      });
+
+      it("charges the design's priced feature on the job: the option's price, in its breakdown and its price", async () => {
+        // The works prices printing the back at 4.00 a job (the sample offers it at no charge).
+        const feature = optionOf("business-cards", "feature", "print-back");
+        ok(await staff.patch(`/api/v1/data/${connectionId}/${encodeURIComponent(names["options"] ?? "printing_options")}/${String(feature)}`, { values: { price: "4.00" } }));
+        const cards = productOf("business-cards");
+        const own = { ...firstChoice(catalogue, cards), qty: 250, laminationId: optionOf("business-cards", "lamination", "lam-both"), look: "matt" as const };
+        const design = { id: 0, code, base_id: 0, ready_design_id: null, values: { parts: {} }, state: "draft" as const, updatedAt: null, session: null, files: {} };
+        const lines: BasketLine[] = [
+          { id: "plain", productId: cards.id, choice: own, design: null, features: [], artwork: [] },
+          { id: "back", productId: cards.id, choice: own, design, features: [feature], artwork: [] },
+        ];
+        const quoted = await door.quote(orderBody({ delivery_method: "collect", language: "en-US" }, lines)).catch((e: unknown) => {
+          throw new Error(`refused: ${JSON.stringify(isShopError(e) ? { ...e.refused, raw: undefined } : String(e))}`);
+        });
+        const [plain, back] = quoted.jobs;
+        expect(Number(figure(plain, "features_charge") ?? 0)).toBe(0);
+        expect(Number(back!["features_charge"])).toBe(4);
+        expect(partsOf(back).map((p) => p.part.column)).toContain("features_charge");
+        expect(partsOf(plain).map((p) => p.part.column)).not.toContain("features_charge");
+        // Neither is capped at 250, and neither goes express: the feature is the whole difference.
+        expect([cappedAt(plain), cappedAt(back)]).toEqual([null, null]);
+        expect(Math.round((Number(back!["price"]) - Number(plain!["price"])) * 100)).toBe(400);
+        expect(Math.round(Number(quoted.order["goods_total"]) * 100)).toBe(Math.round((Number(plain!["price"]) + Number(back!["price"])) * 100));
       });
 
       let placed: Awaited<ReturnType<AdminiumShop["place"]>>;

@@ -57,11 +57,11 @@ const CONFIG_FIELDS: Field[] = [
 ];
 
 /**
- * How the rate card priced a line, in its form: each amount of the breakdown
+ * How the rate card priced a job, in its form: each amount of the breakdown
  * and its price, then what they were counted from. Adminium's, never typed.
  */
 const PRICE_SECTIONS: Field[][] = [
-  [money("setup"), money("print_charge"), money("material_charge"), ...FINISH_LINES.map(({ group }) => money(`${group}_charge`)), money("minimum_charge"), money("packaging_charge"), money("proof_charge"), money("express_charge"), money("cap_charge"), money("price")],
+  [money("setup"), money("print_charge"), money("material_charge"), ...FINISH_LINES.map(({ group }) => money(`${group}_charge`)), money("minimum_charge"), money("features_charge"), money("packaging_charge"), money("proof_charge"), money("express_charge"), money("cap_charge"), money("price")],
   [number("up"), number("sheets"), money("print_rate"), number("sheet_rate"), money("material_rate"), number("multiplier"), number("next_qty"), money("next_work"), number("area_each"), number("area_total"), number("perimeter_m"), number("weight_kg"), number("rolls")],
 ];
 

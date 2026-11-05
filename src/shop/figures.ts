@@ -39,6 +39,8 @@ export const PARTS: Part[] = [
   { column: "edges_charge", label: { finish: "edges" }, lever: true, shown: nonZero },
   { column: "canvas_charge", label: { finish: "canvas" }, lever: true, shown: nonZero },
   { column: "minimum_charge", label: "shop.quote.part.minimum", lever: false, shown: (amount) => Number(amount) > 0 },
+  // The design's priced features (printing its back), one price a job: shown when they add something.
+  { column: "features_charge", label: "shop.quote.part.features", lever: true, shown: (amount) => Number(amount) > 0 },
   { column: "packaging_charge", label: "shop.quote.part.packaging", lever: true, shown: (_, job) => job["packaging_id"] !== null && job["packaging_id"] !== undefined },
   { column: "proof_charge", label: "shop.quote.part.proof", lever: true, shown: (_, job) => yes(job["proof_by_post"]) },
   { column: "express_charge", label: "shop.quote.part.express", lever: true, shown: (_, job) => yes(job["express"]) },

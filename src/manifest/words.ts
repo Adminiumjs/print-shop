@@ -72,6 +72,7 @@ export const WORDS: Record<string, Translation> = {
   "Customiser base": { "de-DE": "Customiser-Grundform", "fr-FR": "Base du Customiser", "da-DK": "Customiser-grundform", "cs-CZ": "Základ z Customiseru", "ar-EG": "قاعدة Customiser", "zh-CN": "Customiser 底版", "zh-TW": "Customiser 底版" },
   "Customiser feature": { "de-DE": "Customiser-Extra", "fr-FR": "Supplément du Customiser", "da-DK": "Customiser-ekstra", "cs-CZ": "Doplněk z Customiseru", "ar-EG": "إضافة من Customiser", "zh-CN": "Customiser 附加项", "zh-TW": "Customiser 附加項" },
   "Customising feature": { "de-DE": "Gestaltungsextra", "fr-FR": "Supplément de personnalisation", "da-DK": "Ekstra til personliggørelse", "cs-CZ": "Doplněk k personalizaci", "ar-EG": "إضافة تخصيص", "zh-CN": "定制附加项", "zh-TW": "訂製附加項" },
+  "Design extras": { "de-DE": "Design-Extras", "fr-FR": "Options du design", "da-DK": "Designtilvalg", "cs-CZ": "Doplňky návrhu", "ar-EG": "إضافات التصميم", "zh-CN": "设计附加项", "zh-TW": "設計附加項" },
   "DHL service": { "de-DE": "DHL-Dienst", "fr-FR": "Service DHL", "da-DK": "DHL-service", "cs-CZ": "Služba DHL", "ar-EG": "خدمة DHL", "zh-CN": "DHL 服务", "zh-TW": "DHL 服務" },
   "Days a change adds": { "de-DE": "Tage je Änderung", "fr-FR": "Jours par modification", "da-DK": "Dage pr. ændring", "cs-CZ": "Dny za změnu", "ar-EG": "أيام كل تعديل", "zh-CN": "每次修改天数", "zh-TW": "每次修改天數" },
   "Delivery": { "de-DE": "Lieferung", "fr-FR": "Livraison", "da-DK": "Levering", "cs-CZ": "Doprava", "ar-EG": "التوصيل", "zh-CN": "配送", "zh-TW": "配送" },

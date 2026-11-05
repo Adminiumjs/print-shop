@@ -365,7 +365,7 @@ const always = (via: string, from: string) => ({ copy: { via, from, mode: "alway
  *
  * The line's price and weight follow, worked out from the rate card (`pricing()`).
  */
-function configuration(): Column[] {
+function configuration(features: boolean): Column[] {
   return [
     fk("product_id", "products", "Product", { rules: { linkable: { where: [{ column: "published", eq: true }] } } }),
     text("product_name", 80, "Product name", { ...opt, rules: always("product_id", "name") }),
@@ -394,7 +394,7 @@ function configuration(): Column[] {
     }),
     bool("proof_by_post", "Printed proof by post", false),
     bool("express", "Express", false),
-    ...pricing(),
+    ...pricing(features),
   ];
 }
 
@@ -448,12 +448,14 @@ const SHEET_FINISHES = ["lamination", "spot_uv", "corners"] as const;
 
 const NOW_UNITS: Units = { sheets: "sheets", qty: "qty", metres: { mul: ["perimeter_m", "qty"] }, area: "area_total" };
 
-/** The work before express: setup, the run, its finishing, its packing and a printed proof. */
-const BEFORE_EXPRESS = { add: [zero("setup"), zero("print_charge"), "material_charge", "finishing", zero("packaging_charge"), "proof_charge"] };
+/** The work before express: setup, the run, its finishing, the design's priced features, its packing and a printed proof. */
+const beforeExpress = (features: boolean) => ({
+  add: [zero("setup"), zero("print_charge"), "material_charge", "finishing", ...(features ? [zero("features_charge")] : []), zero("packaging_charge"), "proof_charge"],
+});
 /** Express adds its percentage of the work, rounded to the penny. */
 const expressOn = (work: unknown) => ({ if: [yes("express"), cents({ div: [{ mul: [work, zero("express_percent")] }, 100] }), 0] });
-/** The next break's work, priced as the line would be at its quantity: setup, run, finishes, packing and proof, then express. */
-const NEXT_BEFORE_EXPRESS = { add: [zero("setup"), "next_run", "next_extras", "proof_charge"] };
+/** The next break's work, priced as the line would be at its quantity: setup, run, finishes, the features (one price a job), packing and proof, then express. */
+const nextBeforeExpress = (features: boolean) => ({ add: [zero("setup"), "next_run", "next_extras", ...(features ? [zero("features_charge")] : []), "proof_charge"] });
 
 /**
  * What a configured line costs, ex tax and without its delivery, and what it
@@ -471,8 +473,9 @@ const NEXT_BEFORE_EXPRESS = { add: [zero("setup"), "next_run", "next_extras", "p
  * the piece or the box. A large-format job is its own size: its stock by the
  * square metre, its edges by the metre or the piece, a canvas frame by the
  * square metre, and never less than the large-format minimum on that work.
- * A printed proof by post and express (a percentage of all the work) go on
- * top. A sheet line never costs more than the next break's quantity would:
+ * A job's priced features (the Customiser's, printing a design's back) are
+ * each one price for the job, added up from the rows it pays for. A printed
+ * proof by post and express (a percentage of all the work) go on top. A sheet line never costs more than the next break's quantity would:
  * 999 flyers cost what 1000 do (`cap_charge` takes the difference off).
  *
  * The weight is the finished pieces' paper and the packing (a sheet job), or
@@ -480,7 +483,7 @@ const NEXT_BEFORE_EXPRESS = { add: [zero("setup"), "next_run", "next_extras", "p
  * the line rolls into a tube (`rolls`) is large format that is not on a frame
  * and is no longer than the tube takes. The order sums both.
  */
-function pricing(): Column[] {
+function pricing(features: boolean): Column[] {
   const finishColumns = FINISH_LINES.flatMap(({ group, option: via, label }) => [
     money(`${group}_price`, `${label} price`, always(via, "unit_price")),
     choice(`${group}_basis`, `${label} charged by`, FINISH_BASES, { ...opt, rules: always(via, "finish_basis") }),
@@ -532,9 +535,11 @@ function pricing(): Column[] {
       formula: { if: [isLarge, { max: [0, { sub: ["lf_minimum", { add: [zero("material_charge"), zero("edges_charge"), zero("canvas_charge")] }] }] }, 0] },
     }),
     money("finishing", "Finishing", { formula: { add: [...FINISH_LINES.map(({ group }) => zero(`${group}_charge`)), "minimum_charge"] } }),
+    // The design's priced features: a job pays for each a row of its own (`job_features`); a saved quote's line takes none.
+    ...(features ? [money("features_charge", "Design extras", { rollup: { from: "job_features", via: "job_id", sum: "price" } })] : []),
     money("packaging_charge", "Packaging", { formula: cents({ mul: ["packaging_price", packUnits("qty")] }) }),
     money("proof_charge", "Printed proof", { formula: { if: [yes("proof_by_post"), zero("proof_price"), 0] } }),
-    money("before_express", "Work before express", { formula: BEFORE_EXPRESS }),
+    money("before_express", "Work before express", { formula: beforeExpress(features) }),
     money("express_charge", "Express", { formula: expressOn("before_express") }),
     money("work", "Work", { formula: { add: ["before_express", "express_charge"] } }),
     // The next break's price, worked out as the line's own: a line never costs more.
@@ -545,7 +550,7 @@ function pricing(): Column[] {
     money("next_extras", "Finishing and packing at the next break", {
       formula: { add: [...SHEET_FINISHES.map((group) => zero({ mul: [`${group}_price`, nextUnitsOf(`${group}_basis`)] })), zero({ mul: ["packaging_price", packUnits("next_qty")] })] },
     }),
-    money("next_work", "Work at the next break", { formula: { add: [NEXT_BEFORE_EXPRESS, expressOn(NEXT_BEFORE_EXPRESS)] } }),
+    money("next_work", "Work at the next break", { formula: { add: [nextBeforeExpress(features), expressOn(nextBeforeExpress(features))] } }),
     money("cap_charge", "Capped at the next break", { formula: { if: [{ and: [isSheet, { lt: ["next_work", "work"] }] }, { sub: ["next_work", "work"] }, 0] } }),
     money("price", "Price (ex tax)", { formula: { add: ["work", "cap_charge"] } }),
     // The price a piece, ex tax: what the quantity chips and the quote panel say "each" by.
@@ -1013,7 +1018,7 @@ export const TABLES: Table[] = [
       id,
       fk("order_id", "orders", "Order", { index: true }),
       int("position", "Position", opt),
-      ...configuration(),
+      ...configuration(true),
       // A design in the Customiser, found by its code: the customer's browser sends the code, Adminium fills the link.
       text("design_code", 40, "Design code", opt),
       link("design_id", "designs", "Design", { lookup: { from: "design_code", table: { addOn: CUSTOMISER, table: "designs" }, column: "code" } }),
@@ -1194,7 +1199,7 @@ export const TABLES: Table[] = [
       id,
       fk("quote_id", "saved_quotes", "Quote", { index: true }),
       int("position", "Position", opt),
-      ...configuration(),
+      ...configuration(false),
       // A design the customer made for it, kept so the quote orders again with it: found by its code, as a job's is.
       text("design_code", 40, "Design code", opt),
       link("design_id", "designs", "Design", { lookup: { from: "design_code", table: { addOn: CUSTOMISER, table: "designs" }, column: "code" } }),
@@ -1302,6 +1307,9 @@ export const BREAKDOWN = [
   "cap_charge",
   "price",
 ] as const;
+
+/** A job's breakdown line a saved quote's line has not: the design's priced features. */
+export const JOB_BREAKDOWN = ["features_charge"] as const;
 
 /** What the breakdown's words are counted from: sheets, up, the rates and the break. */
 export const BREAKDOWN_DETAIL = [

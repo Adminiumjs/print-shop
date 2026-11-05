@@ -8554,6 +8554,29 @@
             }
           },
           {
+            "ref": "features_charge",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Design extras",
+              "de-DE": "Design-Extras",
+              "fr-FR": "Options du design",
+              "da-DK": "Designtilvalg",
+              "cs-CZ": "Doplňky návrhu",
+              "ar-EG": "إضافات التصميم",
+              "zh-CN": "设计附加项",
+              "zh-TW": "設計附加項"
+            },
+            "rules": {
+              "rollup": {
+                "from": "job_features",
+                "via": "job_id",
+                "sum": "price"
+              }
+            }
+          },
+          {
             "ref": "packaging_charge",
             "type": "decimal",
             "scale": "currency",
@@ -8681,6 +8704,12 @@
                   },
                   "material_charge",
                   "finishing",
+                  {
+                    "coalesce": [
+                      "features_charge",
+                      0
+                    ]
+                  },
                   {
                     "coalesce": [
                       "packaging_charge",
@@ -9095,6 +9124,12 @@
                       },
                       "next_run",
                       "next_extras",
+                      {
+                        "coalesce": [
+                          "features_charge",
+                          0
+                        ]
+                      },
                       "proof_charge"
                     ]
                   },
@@ -9122,6 +9157,12 @@
                                       },
                                       "next_run",
                                       "next_extras",
+                                      {
+                                        "coalesce": [
+                                          "features_charge",
+                                          0
+                                        ]
+                                      },
                                       "proof_charge"
                                     ]
                                   },
@@ -17289,6 +17330,10 @@
                   "control": "currency"
                 },
                 {
+                  "column": "features_charge",
+                  "control": "currency"
+                },
+                {
                   "column": "packaging_charge",
                   "control": "currency"
                 },
@@ -19777,6 +19822,7 @@
         "packaging_price",
         "express_percent",
         "rolls",
+        "features_charge",
         "design_id",
         "design_code",
         "proof_state",
@@ -20451,6 +20497,7 @@
             "packaging_price",
             "express_percent",
             "rolls",
+            "features_charge",
             "design_id",
             "design_code",
             "proof_state",
@@ -20898,6 +20945,7 @@
         "packaging_price",
         "express_percent",
         "rolls",
+        "features_charge",
         "design_id",
         "design_code",
         "proof_state",

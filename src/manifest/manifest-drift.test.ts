@@ -17,7 +17,7 @@ import { describe, expect, it } from "vitest";
 import { buildManifest, CUSTOMER_ROUTES, manifestText } from "./build.ts";
 import { untranslated } from "./labels.ts";
 import { DESIGN_POSTING } from "./postings.ts";
-import { CONFIG_SELECT, CONFIG_WRITABLE, PUBLIC_REFS } from "./public.ts";
+import { CONFIG_SELECT, CONFIG_WRITABLE, JOB_SELECT, PUBLIC_REFS } from "./public.ts";
 import { DECIDING_RULES } from "./roles.ts";
 import { BREAKDOWN, PRICED } from "./tables.ts";
 import UNTRANSLATED from "./untranslated-labels.json" with { type: "json" };
@@ -102,6 +102,16 @@ describe("the tables of the rate card, the orders and the works", () => {
     expect(rules("orders", "goods_sum")["rollup"]).toEqual({ from: "jobs", via: "order_id", sum: "price" });
     expect(rules("orders", "weight_kg")["rollup"]).toEqual({ from: "jobs", via: "order_id", sum: "weight_kg" });
     expect(rules("saved_quotes", "goods_sum")["rollup"]).toEqual({ from: "quote_lines", via: "quote_id", sum: "price" });
+  });
+
+  it("charges a job for the design's priced features it pays for, before express and at the next break alike", () => {
+    expect(rules("jobs", "features_charge")["rollup"]).toEqual({ from: "job_features", via: "job_id", sum: "price" });
+    expect(rules("job_features", "price")["copy"]).toEqual({ via: "option_id", from: "price", mode: "always" });
+    expect(JSON.stringify(rules("jobs", "before_express")["formula"])).toContain('{"coalesce":["features_charge",0]}');
+    expect(JSON.stringify(rules("jobs", "next_work")["formula"])).toContain('{"coalesce":["features_charge",0]}');
+    // A saved quote's line pays for no feature: it has no such column.
+    expect(table("quote_lines").columns.map((c) => c.ref)).not.toContain("features_charge");
+    expect(JOB_SELECT).toContain("features_charge");
   });
 
   it("asks a sheet line for its size and a large-format line for its width and height, by the product's kind", () => {

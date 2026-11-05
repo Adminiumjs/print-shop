@@ -25,7 +25,7 @@
  * did what, the works' notes, an order's link code and retry key, the stock.
  */
 import { NEWS_TICK } from "./people.ts";
-import { BREAKDOWN, BREAKDOWN_DETAIL } from "./tables.ts";
+import { BREAKDOWN, BREAKDOWN_DETAIL, JOB_BREAKDOWN } from "./tables.ts";
 
 /** What a customer sees of an order: its progress, their details, what it costs. */
 export const ORDER_SELECT = [
@@ -119,6 +119,8 @@ export const JOB_SELECT = [
   "order_id",
   "position",
   ...CONFIG_SELECT,
+  // What the design's priced features add, a line of the job's breakdown.
+  ...JOB_BREAKDOWN,
   "design_id",
   // The design's code: the customer's own pages open each design by it (Your designs).
   "design_code",
