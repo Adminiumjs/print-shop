@@ -97,6 +97,8 @@ describe("the dispatch page", () => {
     expect(payload.order.origin).toEqual({ name: "Marlow Press", lines: ["3 Market Square"], city: "Marlow", postcode: "SL7 1AA", country: "GB" });
     expect(payload.order.destination).toEqual({ name: "Marsh Lane Dental", lines: ["12 Marsh Lane"], city: "Marlow", postcode: "SL7 2BB", country: "GB" });
     expect(payload.order.items).toEqual([{ id: "6", key: "2", label: "500 × Flyers & leaflets", quantity: 1, unitWeightGrams: 1550 }]);
+    // The parcel's weight is the order's own, as its delivery band was read from: the carrier works out none of its own.
+    expect(payload.order.parcelWeightGrams).toBe(1550);
     expect(payload.now).toEqual({ iso: "2026-08-05", hour: 10, minute: 20 });
     await sweep("the dispatch page");
   });

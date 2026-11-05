@@ -257,6 +257,13 @@ export interface OutboundOrder {
   promisedFor?: string;
   /** What the whole thing is worth, for a customs line or an insured value. */
   value?: Money;
+  /**
+   * What the parcel weighs, packed, in grams, when the shop keeps that figure
+   * (goods and packing). The dispatch flow starts from it as it is, so the
+   * weight the shop shows beside the order and the weight sent to the carrier
+   * are one number; absent, the add-on works one out from the items.
+   */
+  parcelWeightGrams?: number;
 }
 
 // ── the eleven payloads ─────────────────────────────────────────────────────

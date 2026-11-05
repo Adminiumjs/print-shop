@@ -2,7 +2,8 @@
  * An order as a delivery company's dispatch flow reads it
  * (`order.dispatch.actions`, `DispatchPayload`): the works' own address it
  * goes from, the customer's it goes to, each job as a line with what it
- * weighs (Adminium's `weight_kg`, in grams), the day it was promised, what
+ * weighs (Adminium's `weight_kg`, in grams) and the whole parcel's weight as
+ * the order adds it up, the day it was promised, what
  * it is worth, the works' clock, and the service the customer chose at
  * checkout, so the flow opens with it picked.
  */
@@ -42,6 +43,8 @@ export function outboundOrder(data: WorksData, order: Row, currency: string): Ou
   const country = countryOf(currency);
   const line1 = text(order["address_line1"]);
   const total = num(order["total"]);
+  // The order's own weight, as Adminium adds it up and the delivery band reads it: the one number the carrier is sent.
+  const weight = num(order["weight_kg"]);
   return {
     ref: text(order["number"]) ?? String(order.id),
     recipient: { name: text(order["name"]) ?? "", key: String(order["customer_id"] ?? order.id) },
@@ -71,6 +74,7 @@ export function outboundOrder(data: WorksData, order: Row, currency: string): Ou
         }),
     ...(dayOf(order["ready_by"]) === null ? {} : { promisedFor: dayOf(order["ready_by"])! }),
     ...(total === null ? {} : { value: { amount: Math.round(total * 100), currency } }),
+    ...(weight === null ? {} : { parcelWeightGrams: Math.round(weight * 1000) }),
   };
 }
 
