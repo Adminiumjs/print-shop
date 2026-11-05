@@ -99,7 +99,15 @@ export const declaresAppGrants = (tables: readonly AppGrantTableShape[]): boolea
 
 const LIST_OF: Record<ColumnAction, 'readable' | 'writable' | 'creatable'> = { read: 'readable', update: 'writable', create: 'creatable' };
 
-/** The columns of a table the ledgers' code writes: the ones a posting inserts, and the ones it sets on a row it changes. */
+/** The link a row a posting adds carries back to its receipt: Adminium fills it, on every table a ledger adds rows to. */
+const RECEIPT_LINK = 'receipt_id';
+
+/**
+ * The columns of a table the ledgers' code writes: the ones a posting
+ * inserts, the ones it sets on a row it changes, and the link to the receipt
+ * of a row it adds. No app's change reaches them: on a row the ledger made,
+ * they are its record.
+ */
 function ledgerColumnsOf(ledgers: readonly AppGrantLedgerShape[], table: string): Set<string> {
   const out = new Set<string>();
   for (const ledger of ledgers) {
@@ -107,6 +115,27 @@ function ledgerColumnsOf(ledgers: readonly AppGrantLedgerShape[], table: string)
     if (writes === undefined) continue;
     for (const column of Array.isArray(writes.insert) ? writes.insert : []) if (typeof column === 'string') out.add(column);
     for (const column of Array.isArray(writes.update?.set) ? writes.update.set : []) if (typeof column === 'string') out.add(column);
+    if (writes.insert !== undefined) out.add(RECEIPT_LINK);
+  }
+  return out;
+}
+
+/**
+ * The columns of a table a ledger keeps, which no app's NEW row is given:
+ * the ones its code sets on rows it changes (a hold's state, a design's
+ * "ordered"), and the link to the receipt of a row it adds. A row an app's
+ * role adds is its own, never the ledger's record: it may carry the columns
+ * a posting fills on the rows the ledger adds (a proof version's words), but
+ * a value the ledger alone moves, or a link that would pass the row off as a
+ * posting's, would let the role skip the posting.
+ */
+function ledgerKeptOf(ledgers: readonly AppGrantLedgerShape[], table: string): Set<string> {
+  const out = new Set<string>();
+  for (const ledger of ledgers) {
+    const writes = ledger.writes?.[table] as { insert?: unknown; update?: { set?: unknown } } | undefined;
+    if (writes === undefined) continue;
+    for (const column of Array.isArray(writes.update?.set) ? writes.update.set : []) if (typeof column === 'string') out.add(column);
+    if (writes.insert !== undefined) out.add(RECEIPT_LINK);
   }
   return out;
 }
@@ -135,6 +164,13 @@ export function appGrantsIssues(tables: readonly AppGrantTableShape[], ledgers: 
       const copied = ledgerColumnsOf(ledgers, table.ref);
       (grants.writable ?? []).forEach((ref, c) => {
         if (copied.has(ref)) out.push({ path: at('writable', c), message: `a ledger's code writes "${table.ref}.${ref}": no app's role changes it` });
+      });
+      // A new row of an app's is its own: never given what the ledger alone moves, nor a posting's receipt.
+      const keptByLedger = ledgerKeptOf(ledgers, table.ref);
+      (grants.creatable ?? []).forEach((ref, c) => {
+        if (!keptByLedger.has(ref)) return;
+        const why = ref === RECEIPT_LINK ? `"${table.ref}.${ref}" links a row to the receipt of the posting that added it, which Adminium fills` : `a ledger's code keeps "${table.ref}.${ref}"`;
+        out.push({ path: at('creatable', c), message: `${why}: no app's role gives it to a new row` });
       });
     }
     const columns = new Map(table.columns.map((column) => [column.ref, column]));
@@ -259,11 +295,13 @@ export function roleTableHold(entry: RoleAddOnTable, addOn: { tables: readonly A
   const secret = new Set(shape.columns.filter((column) => column.rules?.secret === true).map((column) => column.ref));
   /** On a ledger's table, the columns its code writes: no app's update reaches them, whatever the add-on lists. */
   const copied = written ? ledgerColumnsOf(addOn.ledgers, entry.table) : new Set<string>();
+  /** …and the ones it keeps: no app's new row is given them, whatever the add-on lists. */
+  const keptByLedger = written ? ledgerKeptOf(addOn.ledgers, entry.table) : new Set<string>();
   /** The columns the add-on lets an app's action reach: null, every column (an add-on with no `appGrants`). */
   const ceilingOf = (action: ColumnAction): ReadonlySet<string> | null => {
     if (grants === undefined) return null;
     const listed = grants[LIST_OF[action]];
-    if (listed !== undefined) return new Set(listed.filter((ref) => !never.has(ref) && !(action === 'update' && copied.has(ref))));
+    if (listed !== undefined) return new Set(listed.filter((ref) => !never.has(ref) && !(action === 'update' && copied.has(ref)) && !(action === 'create' && keptByLedger.has(ref))));
     // Only a read may be "every column": every one but `never`'s and the secrets no response carries.
     return action === 'read' ? new Set(all.filter((ref) => !never.has(ref) && !secret.has(ref))) : new Set();
   };
