@@ -183,6 +183,10 @@ export class FakeDoor implements WorksDoor {
     return structuredClone(this.shelf);
   }
 
+  async signOut(): Promise<void> {
+    this.record("signOut", {});
+  }
+
   async activity(): Promise<ActivityEntry[]> {
     this.record("activity", {});
     return structuredClone(this.log);

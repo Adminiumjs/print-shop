@@ -61,6 +61,7 @@ export const DASHBOARD_LINKS: Omit<WorksEnv, "door"> = {
   recordHref: (page, id) => `/p/${encodeURIComponent(page)}/r/${encodeURIComponent(String(id))}`,
   addOnPageHref: (key, ref) => `/add-ons/${encodeURIComponent(key)}/${encodeURIComponent(ref)}`,
   addOnsHref: "/studio/add-ons",
+  signInHref: "/login",
 };
 
 export async function bootWorks(mount: HTMLElement): Promise<void> {

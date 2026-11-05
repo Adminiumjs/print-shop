@@ -179,4 +179,6 @@ export interface WorksDoor {
   catalog(): Promise<CatalogEntry[]>;
   /** What the add-ons did, newest first; empty for someone who may not read Adminium's log. */
   activity(): Promise<ActivityEntry[]>;
+  /** The person's Adminium session ended. Absent where nobody signed in (the demo): no sign-out is drawn. */
+  signOut?(): Promise<void>;
 }

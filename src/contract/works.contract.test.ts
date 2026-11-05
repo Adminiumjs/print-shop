@@ -14,7 +14,8 @@
  *   - the press records spoilage (a row, added up on the job) and marks the
  *     job ready, and its order with it (the "ready to collect" e-mail);
  *   - the counter hands it over: the job and the order collected;
- *   - the owner saves a figure of the rate card to its row.
+ *   - the owner saves a figure of the rate card to its row;
+ *   - each floor role signs out, and its session reads nothing more.
  *
  * Each role is refused what its limits keep from it. It runs with
  * `CONTRACT=1` where a built Adminium (`ADMINIUM_REPO`) and a built add-ons
@@ -227,6 +228,16 @@ describe.skipIf(why !== null)(`the works against a built Adminium${why === null 
         const press = doors["press"]!;
         const refused = await press.saveRate("settings", (await press.load()).settings!, { setup: 1 }).catch((e: unknown) => e);
         expect(isApiError(refused) && refused.status).toBe(403);
+      });
+
+      // Last: the sessions it ends are the ones the tests above use.
+      it("signs each floor role out: its session ends and its screens read nothing more", async () => {
+        for (const role of ["prepress", "press", "counter"]) {
+          const door = doors[role]!;
+          await door.signOut();
+          const after = await door.load().catch((e: unknown) => e);
+          expect(isApiError(after) && after.status, role).toBe(401);
+        }
       });
     });
   });

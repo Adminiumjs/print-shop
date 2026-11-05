@@ -10,7 +10,7 @@
  * add-ons to the owner. What their roles cannot do, Adminium refuses anyway.
  */
 import { useEffect, useId, useState, type ReactNode } from "react";
-import { FileQuestion, LayoutGrid, LayoutTemplate, Layers, List, Menu, Moon, Package, Printer, Puzzle, ReceiptText, Search, Sun, X } from "lucide-react";
+import { FileQuestion, LayoutGrid, LayoutTemplate, Layers, List, LogOut, Menu, Moon, Package, Printer, Puzzle, ReceiptText, Search, Sun, X } from "lucide-react";
 
 import { useData, useEnv } from "./env.tsx";
 import { onBoard, orderOf, refOf } from "./facts.ts";
@@ -29,7 +29,7 @@ import { ActivityScreen, AddOnScreen, AddOnsScreen } from "./screens/AddOns.tsx"
 import { Overlays } from "./screens/Overlays.tsx";
 import { Mono, Typed } from "./ui.tsx";
 import { text } from "./wire.ts";
-import type { Person, WorksData } from "./door.ts";
+import type { Person, WorksData, WorksDoor } from "./door.ts";
 import { useT, type MessageKey } from "../i18n/index.tsx";
 
 const ICON: Record<string, ReactNode> = {
@@ -125,7 +125,7 @@ function Shell() {
   const t = useT();
   const fmt = useFmt();
   const data = useData();
-  const { door } = useEnv();
+  const { door, signInHref } = useEnv();
   const view = useWorks((s) => s.view);
   const navOpen = useWorks((s) => s.navOpen);
   const toasts = useWorks((s) => s.toasts);
@@ -174,6 +174,11 @@ function Shell() {
               <Mono className="wk-user-initials">{initials}</Mono>
               <span className="wk-user-name">{role === undefined ? first : t("works.user", { name: first, role: t(ROLE_WORD[role]!) })}</span>
             </span>
+            {door.signOut !== undefined && (
+              <button type="button" className="wk-iconbtn" aria-label={t("works.signOut")} title={t("works.signOut")} onClick={() => void signOut(door, signInHref)}>
+                <LogOut size={16} aria-hidden="true" />
+              </button>
+            )}
           </div>
         </header>
         <main className="wk-main" id="wk-main">
@@ -203,6 +208,26 @@ function Shell() {
       </div>
     </div>
   );
+}
+
+/**
+ * "Sign out": the session ended, then Adminium's sign-in, in the whole
+ * window when the screens are drawn inside the dashboard. A sign-out that
+ * failed still leaves: the sign-in says whether the session is still there.
+ */
+async function signOut(door: WorksDoor, signInHref: string): Promise<void> {
+  try {
+    await door.signOut?.();
+  } catch {
+    // Signed out or not, the sign-in page is where this person goes next.
+  }
+  let target: Window = window;
+  try {
+    if (window.top !== null && window.top.location.origin === window.location.origin) target = window.top;
+  } catch {
+    // A frame of another origin: this window leaves alone.
+  }
+  target.location.assign(signInHref);
 }
 
 const WEEK = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];

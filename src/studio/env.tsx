@@ -24,6 +24,8 @@ export interface WorksEnv {
   addOnPageHref: (key: string, ref: string) => string;
   /** Adminium's own add-ons page, where an add-on is installed and its keys are kept. */
   addOnsHref: string;
+  /** Adminium's sign-in, where a sign-out lands. */
+  signInHref: string;
 }
 
 /** A job held in prepress by its proof, said before Adminium is asked. */

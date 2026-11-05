@@ -301,6 +301,25 @@ describe("the shell", () => {
     expect(document.querySelector(".wk-footer")?.textContent).toContain("© 2026 Marlow Press · 3 Market Square, Marlow SL7 1AA");
   });
 
+  it("signs every role out from the header, to Adminium's sign-in", async () => {
+    for (const roles of [["owner"], ["prepress"], ["press"], ["counter"]]) {
+      const door = new FakeDoor({ roles });
+      // The sign-in as a place on this page: a test's window cannot leave it.
+      await mount(door, "today", {}, { signInHref: `#signed-out-${roles[0]!}` });
+      await click(button("Sign out"));
+      expect(door.of("signOut"), roles[0]).toHaveLength(1);
+      expect(window.location.hash).toBe(`#signed-out-${roles[0]!}`);
+    }
+  });
+
+  it("leaves to the sign-in even when ending the session failed", async () => {
+    const door = new FakeDoor();
+    door.refuse("signOut", new ApiError(500, "INTERNAL", "Down."));
+    await mount(door, "today", {}, { signInHref: "#signed-out-anyway" });
+    await click(button("Sign out"));
+    expect(window.location.hash).toBe("#signed-out-anyway");
+  });
+
   it("goes back to the board from the 404", async () => {
     await mount(new FakeDoor(), "notfound");
     await click(button("Back to the board"));

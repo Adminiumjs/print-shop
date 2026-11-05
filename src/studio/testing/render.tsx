@@ -41,10 +41,10 @@ export function unmount(): void {
 }
 
 /** The app drawn over this door, before it has read anything. */
-export async function mountBare(door: FakeDoor): Promise<void> {
+export async function mountBare(door: FakeDoor, links: Partial<Omit<WorksEnv, "door">> = {}): Promise<void> {
   // A second mount in one test replaces the first.
   if (root !== null) unmount();
-  const env: WorksEnv = { door, ...DASHBOARD_LINKS };
+  const env: WorksEnv = { door, ...DASHBOARD_LINKS, ...links };
   await act(async () => {
     root = createRoot(host);
     root.render(
@@ -57,9 +57,9 @@ export async function mountBare(door: FakeDoor): Promise<void> {
   });
 }
 
-export async function mount(door: FakeDoor, view: View = "today", more: Partial<WorksState> = {}): Promise<void> {
+export async function mount(door: FakeDoor, view: View = "today", more: Partial<WorksState> = {}, links: Partial<Omit<WorksEnv, "door">> = {}): Promise<void> {
   useWorks.setState({ data: await door.load(), view, ...more });
-  await mountBare(door);
+  await mountBare(door, links);
   await settle();
 }
 

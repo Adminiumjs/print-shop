@@ -430,6 +430,11 @@ export class AdminiumWorks implements WorksDoor {
     });
   }
 
+  async signOut(): Promise<void> {
+    await this.t.port.config();
+    await this.t.mutate("/api/v1/auth/logout", "POST", {});
+  }
+
   activity(): Promise<ActivityEntry[]> {
     return this.run(async () => {
       try {
