@@ -84,7 +84,7 @@ describe("the demo, with no server", () => {
     const s = useShop.getState();
     expect([s.view, s.productCode, s.choice?.qty, s.choice?.look]).toEqual(["product", "business-cards", 500, "matt"]);
     expect(currentScreen()).toBe("config");
-    // The comp's quote of these cards (P1-C5): £66.46 of work, delivery £6.50, total £87.55.
+    // The comp's quote of these cards: £66.46 of work, delivery £6.50, total £87.55.
     expect(host.textContent).toContain("Material£6.65");
     expect(host.textContent).toContain("Total£87.55");
   });

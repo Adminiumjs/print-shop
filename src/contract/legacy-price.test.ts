@@ -41,7 +41,7 @@ describe("the old browser's price, kept for the parity check", () => {
   it("puts each slip right where the plan found it", () => {
     const price = (job: Parameters<typeof toLegacy>[0], fixes: ReadonlySet<Fix>) => legacyQuote(toLegacy(job), fixes);
     const none = new Set<Fix>();
-    // 100 A6 vinyl stickers, collected: 618.79 by the old code (plan §2.4), sheet-area priced once fixed.
+    // 100 A6 vinyl stickers, collected: 618.79 by the old code, sheet-area priced once fixed.
     const vinyl = { product: "stickers", material: "vinyl", size: "a6", sides: 1 as const, qty: 100 };
     expect(price(vinyl, none).totalCents).toBe(61879);
     expect(price(vinyl, new Set<Fix>(["vinylBySheetArea"])).workCents).toBeLessThan(price(vinyl, none).workCents / 4);
