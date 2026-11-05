@@ -4,7 +4,7 @@
  * THE WORKS' SCREENS, DRAWN AND USED: every screen and every state a person
  * reaches (the board and a card's menu, a ticket in each stage, the jobs,
  * the send-a-proof sheet, spoilage, the delivery quote, the 404, the shell's
- * loading and failure), each swept by axe; and the writes the screens make,
+ * loading and failure), each swept by axe in English, Arabic and German; and the writes the screens make,
  * against a stand-in door that records them, with the bodies they send.
  */
 import { act } from "react";
@@ -43,6 +43,18 @@ describe("every screen and state, swept by axe", () => {
       expect(text()).toContain(shows);
       await sweep(label);
     });
+  }
+  // And every one again in Arabic, right to left, and in German, whose words run longest.
+  for (const locale of ["ar-EG", "de-DE"] as const) {
+    for (const [label, view, more] of states) {
+      it(`draws ${label} in ${locale}`, async () => {
+        localStorage.setItem("print-shop-locale", locale);
+        await mount(new FakeDoor(), view, more);
+        expect(document.documentElement.getAttribute("lang")).toBe(locale);
+        expect(document.documentElement.getAttribute("dir")).toBe(locale === "ar-EG" ? "rtl" : "ltr");
+        await sweep(`${locale} · ${label}`);
+      });
+    }
   }
 
   it("draws the proof sheet, the spoilage dialog and the delivery quote", async () => {
