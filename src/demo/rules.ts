@@ -21,7 +21,7 @@
  */
 import { requiredSchema } from "../../manifest.json";
 import { addDays, isStudioDay, type Closure } from "../studio/time.ts";
-import { evaluateFormula, formulaOrder, holds, rollupValue, type FormulaCondition, type FormulaExpr } from "./formula.ts";
+import { evaluateFormula, formulaKeepOf, formulaOrder, holds, rollupValue, type FormulaCondition, type FormulaExpr } from "./formula.ts";
 
 export type Row = Record<string, unknown> & { id: number };
 export type Tables = Record<string, Row[]>;
@@ -29,6 +29,7 @@ export type Tables = Record<string, Row[]>;
 interface Column {
   ref: string;
   type: string;
+  maxLength?: number;
   scale?: number | "currency";
   references?: string;
   rules?: Record<string, unknown>;
@@ -121,7 +122,8 @@ function deriveRow(table: Table, row: Row, tables: Tables): void {
     }
     for (const ref of formulaOrder(formulas)) {
       const column = columns.get(ref)!;
-      row[ref] = kept(column, evaluateFormula(formulas.get(ref)!, row, placesOf(column)));
+      // Kept as the server keeps it: by the column's `normalize` rule, a join cut to the column's length.
+      row[ref] = kept(column, evaluateFormula(formulas.get(ref)!, row, placesOf(column), formulaKeepOf(column)));
     }
     // A copy of a formula column of another row (a finish's price a piece) is read again once that row's formulas are in.
   }

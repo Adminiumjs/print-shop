@@ -163,6 +163,11 @@ describe("the demo's Adminium", () => {
       .askSamples({ values: { name: "Harbour Bakery", email: "orders@harbourbakery.example", address_line1: "12 Quay Street", town: "Marlow", postcode: "SL7 1BT", language: "en-US", client_key: "demo-pack-1" }, children: { sample_stocks: [{ values: { material_id: silk.id } }] } })
       .catch((e: unknown) => e);
     expect(isShopError(refused) && refused.refused.column).toBe("address_key");
+    // Typed another way, it is the same address: the key is kept by its `normalize: "code"` rule, as Adminium keeps it.
+    const retyped = await demo.after
+      .askSamples({ values: { name: "Harbour Bakery", email: "post@harbourbakery.example", address_line1: "12 quay street", town: "Marlow", postcode: "sl7 1bt", language: "en-US", client_key: "demo-pack-3" }, children: { sample_stocks: [{ values: { material_id: silk.id } }] } })
+      .catch((e: unknown) => e);
+    expect(isShopError(retyped) && retyped.refused.column).toBe("address_key");
     const taken = await demo.after.askSamples({ values: { name: "Two Rivers", email: "ride@tworivers.example", address_line1: "8 Station Road", town: "Bourne End", postcode: "SL8 5QH", language: "en-US", client_key: "demo-pack-2" }, children: { sample_stocks: [{ values: { material_id: silk.id } }] } });
     expect(taken["status"]).toBe("new");
   });
