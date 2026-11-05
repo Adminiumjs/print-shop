@@ -348,6 +348,12 @@ export interface CheckoutPayload extends SlotPayload {
 export interface DispatchPayload extends SlotPayload {
   order: OutboundOrder;
   /**
+   * The service the order stores, as the checkout's delivery company named
+   * it, or null: the dispatch flow opens with it picked. Only `addOn` and
+   * `code` are needed; a code another add-on made is left alone.
+   */
+  chosen?: Pick<DeliveryChoice, "addOn" | "code"> | null;
+  /**
    * When the shop thinks it is. Required, and the field this surface cannot be
    * honest without: "has today's van gone?" and "which day does the driver
    * come?" are questions about THIS shop's clock, and an add-on answering them

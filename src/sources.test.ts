@@ -54,7 +54,7 @@ const ALL = walk(SRC).filter((f) => /\.(ts|tsx)$/.test(f));
  * held to every rule here. `contract/` boots a real Adminium for the contract
  * tests: it never ships either.
  */
-const BUILD_TIME = ['testing', 'manifest', 'sample', 'contract'];
+const BUILD_TIME = ['testing', 'studio/testing', 'manifest', 'sample', 'contract'];
 const READ_BY_SCREENS = ['/src/sample/rate-card.ts'];
 const SHIPPED = ALL.filter(
   (f) => !f.includes('.test.') && (READ_BY_SCREENS.some((file) => f.endsWith(file)) || !BUILD_TIME.some((dir) => f.includes(`/src/${dir}/`))),
@@ -78,6 +78,8 @@ const read = (file: string) => readFileSync(file, 'utf8');
  * drives both of those rather than asserting them in prose.
  */
 const CONNECTED_SOURCE = 'data/adminiumSource.ts';
+/** The staff build's one reading of the device's clock, moved onto the server's (`studio/clock.ts`). */
+const STAFF_CLOCK = 'studio/clock.ts';
 
 /** The clock half of `IMPURITIES`, by the exact words that file emits. */
 const CLOCKS: readonly string[] = [
@@ -279,6 +281,25 @@ const DECLARED_SENDERS: Readonly<Record<string, { means: readonly string[]; why:
       'connected add-on mode (26 \u00a76). It fetches this shop\u2019s own add-on list over a ' +
       'same-origin session and imports the bundles that reply names \u2014 refusing any URL that ' +
       'does not resolve same-origin and under /api/v1/add-ons/. See add-ons/connected.test.ts.',
+  },
+  /*
+   * THE WORKS' OWN SCREENS (the staff build), served BY the works' Adminium at
+   * /apps/printing/staff/ and reading it over the signed-in person's session.
+   * The transport reads the data API at its own origin; the door sends a
+   * proof's PDF through the files route at the same origin; the start sends a
+   * person who is not signed in to Adminium's own sign-in and back.
+   */
+  'studio/transport/sessionSource.ts': {
+    means: ['fetch reached through a global'],
+    why: 'the staff build reads its own Adminium at the same origin, on the signed-in session, and nowhere else',
+  },
+  'studio/adminiumWorks.ts': {
+    means: ['fetch reached through a global'],
+    why: 'a proof PDF goes to the same Adminium\u2019s files route as the request body, on the signed-in session',
+  },
+  'studio/boot.tsx': {
+    means: ['location.assign()/replace(), a navigation'],
+    why: 'nobody signed in is sent to the same Adminium\u2019s sign-in, with the way back',
   },
 };
 
@@ -574,7 +595,7 @@ describe('no real third-party call, no real clock', () => {
     // in a year still match the running demo.
     const offenders = SHIPPED.flatMap((file) =>
       impuritiesIn(codeOf(file))
-        .filter((means) => !(relative(file) === CONNECTED_SOURCE && CLOCKS.includes(means)))
+        .filter((means) => !((relative(file) === CONNECTED_SOURCE || relative(file) === STAFF_CLOCK) && CLOCKS.includes(means)))
         .map((means) => `${relative(file)} → ${means}`),
     );
     expect(offenders).toEqual([]);

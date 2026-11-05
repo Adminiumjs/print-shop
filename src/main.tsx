@@ -48,6 +48,16 @@ async function boot(): Promise<void> {
     await bootShop(container as HTMLElement);
     return;
   }
+  /*
+   * The staff build is the works' own screens, served by Adminium on the
+   * signed-in person's session: its own start (`studio/boot.tsx`).
+   * `SURFACE_SIDE` folds at build time, so no other build carries it.
+   */
+  if (SURFACE_SIDE === "staff") {
+    const { bootWorks } = await import("./studio/boot.tsx");
+    await bootWorks(container as HTMLElement);
+    return;
+  }
 
   const client = clientFromEnv();
   if (client !== null) {

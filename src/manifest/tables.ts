@@ -44,8 +44,9 @@
  *     never more than the next break; an order's goods add them up, and it
  *     goes in a tube only when all its large format rolls.
  *
- * Stock is the works' sheets and rolls, kept by Inventory; a job without it
- * counts its own spoiled sheets.
+ * Stock is the works' sheets and rolls, kept by Inventory. Sheets spoiled
+ * on a run are a row each (`spoils`), added up on the job, and Inventory is
+ * told of them when it keeps the stock.
  */
 import { l, type Labels } from "./labels.ts";
 import { KIND_NAMES } from "./outbox.ts";
@@ -312,6 +313,8 @@ const PROOF_WAIT_DAYS = {
     },
   ],
 };
+/** Whether a job is still on the works' floor. */
+const ON_FLOOR = { if: [{ or: [{ eq: ["stage", "prepress"] }, { eq: ["stage", "printing"] }, { eq: ["stage", "finishing"] }] }, 1, 0] };
 /** Whether a job may go to press: only once its latest proof is approved. */
 const PROOF_OK = { if: [{ eq: ["proof_state", "approved"] }, 1, 0] };
 
@@ -576,6 +579,22 @@ function basketMoney(lines: string, via: string, delivery: Record<string, unknow
     money("total", "Total", { formula: TOTAL }),
   ];
 }
+
+/**
+ * With Inventory keeping the stock (the feature `stock`), sheets a run spoils
+ * are taken off Inventory's shelf in the same save: the material is the row
+ * Inventory links to its item. A delivery and a count are Inventory's own, on
+ * its own pages.
+ */
+const SPOIL_POSTINGS = [
+  {
+    id: "spoiled",
+    into: { addOn: "inventory", ledger: "stock", action: "use" },
+    needs: "stock",
+    post: { on: { create: true } },
+    map: { what: "material_id", quantity: "qty", kind: { value: "written_off" } },
+  },
+];
 
 // ── the tables ──────────────────────────────────────────────────────────────
 
@@ -881,7 +900,8 @@ export const TABLES: Table[] = [
       column: "status",
       initial: "placed",
       moves: {
-        placed: ["ready", "cancelled"],
+        // Ready once none of its jobs is still on the floor.
+        placed: [{ to: "ready", requires: { where: [{ column: "jobs_on_floor", eq: 0 }] } }, "cancelled"],
         ready: ["collected", "dispatched", "placed"],
       },
       lock: { when: ["collected", "dispatched", "cancelled"], except: ["link_stopped", "tracking"] },
@@ -917,6 +937,8 @@ export const TABLES: Table[] = [
       figure("warnings_accepted", "int", "Warnings accepted", { rollup: { from: "jobs", via: "order_id", sum: "warnings_accepted" } }),
       figure("has_warnings", "int", "Has accepted warnings", { formula: { if: [{ gt: ["warnings_accepted", 0] }, 1, 0] } }),
       at("placed_at", "Placed", { ...opt, rules: stamp("now", onCreate) }),
+      // How many of its jobs are still in prepress, on the press or in finishing.
+      figure("jobs_on_floor", "int", "Jobs still on the floor", { rollup: { from: "jobs", via: "order_id", sum: "on_floor" } }),
       // The day the last of its jobs is ready: its latest job's.
       date("ready_by", "Ready by", { ...opt, rules: { rollup: { from: "jobs", via: "order_id", latest: { of: "ready_by", by: "ready_by" } } } }),
       at("ready_at", "Ready", { ...opt, rules: stamp("now", onState("status", "ready")) }),
@@ -1008,8 +1030,10 @@ export const TABLES: Table[] = [
       at("ready_at", "Ready", { ...opt, rules: stamp("now", onState("stage", "ready")) }),
       text("printed_by", 80, "Printed by", { ...opt, rules: stamp("user-name", onState("stage", "printing")) }),
       at("handed_over_at", "Handed over", { ...opt, rules: stamp("now", onState("stage", "collected", "dispatched")) }),
-      // Sheets spoiled on the press, when Inventory is not keeping the stock.
-      int("spoiled_sheets", "Spoiled sheets", { default: 0, rules: { validation: { min: 0 } } }),
+      // Still on the floor: in prepress, on the press or in finishing. Its order is ready once none is.
+      figure("on_floor", "int", "On the floor", { formula: ON_FLOOR }),
+      // What its runs spoiled, added up: sheets for sheet work, metres of the roll for large format.
+      figure("spoiled_sheets", "decimal", "Spoiled", { rollup: { from: "spoils", via: "job_id", sum: "qty" } }, 2),
       text("works_note", 280, "Works note", opt),
     ],
   },
@@ -1086,6 +1110,25 @@ export const TABLES: Table[] = [
       at("sent_at", "Sent", { ...opt, rules: stamp("now", onCreate) }),
       text("sent_by", 80, "Sent by", { ...opt, rules: stamp("user-name", onCreate) }),
       at("answered_at", "Answered", { ...opt, rules: stamp("now", onState("state", "approved", "change_asked")) }),
+    ],
+  },
+  {
+    // Sheets a job's run spoiled (metres of the roll for large format): one row each time the press says so.
+    ref: "spoils",
+    label: l("Spoilage"),
+    labelPlural: l("Spoilage"),
+    keyField: "qty",
+    postings: SPOIL_POSTINGS,
+    columns: [
+      id,
+      fk("job_id", "jobs", "Job", { index: true }),
+      fk("order_id", "orders", "Order", { ...opt, rules: always("job_id", "order_id") }),
+      // The stock the job runs on: what Inventory takes the spoiled sheets off.
+      fk("material_id", "materials", "Stock", { ...opt, rules: always("job_id", "material_id") }),
+      num("qty", 2, "Spoiled", { rules: { validation: { min: 0.01, max: 5000 } } }),
+      text("note", 200, "Note", opt),
+      at("spoiled_at", "Recorded", { ...opt, rules: stamp("now", onCreate) }),
+      text("spoiled_by", 80, "Recorded by", { ...opt, rules: stamp("user-name", onCreate) }),
     ],
   },
   {

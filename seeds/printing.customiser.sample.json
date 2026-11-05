@@ -5825,8 +5825,7 @@
             "@week": true
           },
           "stage": "printing",
-          "artwork_checked": true,
-          "spoiled_sheets": 0
+          "artwork_checked": true
         },
         {
           "@label": "job:MP-4125",
@@ -5867,8 +5866,7 @@
             "@week": true
           },
           "stage": "finishing",
-          "artwork_checked": true,
-          "spoiled_sheets": 0
+          "artwork_checked": true
         },
         {
           "@label": "job:MP-4124",
@@ -5911,8 +5909,7 @@
             "@week": true
           },
           "stage": "printing",
-          "artwork_checked": true,
-          "spoiled_sheets": 0
+          "artwork_checked": true
         },
         {
           "@label": "job:MP-4123",
@@ -5951,8 +5948,7 @@
             "@week": true
           },
           "stage": "prepress",
-          "artwork_checked": true,
-          "spoiled_sheets": 0
+          "artwork_checked": true
         },
         {
           "@label": "job:MP-4122",
@@ -5995,8 +5991,7 @@
             "@week": true
           },
           "stage": "prepress",
-          "artwork_checked": false,
-          "spoiled_sheets": 0
+          "artwork_checked": false
         },
         {
           "@label": "job:MP-4121",
@@ -6037,8 +6032,7 @@
             "@week": true
           },
           "stage": "prepress",
-          "artwork_checked": true,
-          "spoiled_sheets": 0
+          "artwork_checked": true
         },
         {
           "@label": "job:MP-4120",
@@ -6077,8 +6071,7 @@
             "@week": true
           },
           "stage": "finishing",
-          "artwork_checked": true,
-          "spoiled_sheets": 0
+          "artwork_checked": true
         },
         {
           "@label": "job:MP-4119",
@@ -6119,8 +6112,7 @@
             "@week": true
           },
           "stage": "ready",
-          "artwork_checked": true,
-          "spoiled_sheets": 0
+          "artwork_checked": true
         },
         {
           "@label": "job:MP-4118",
@@ -6161,8 +6153,7 @@
             "@week": true
           },
           "stage": "printing",
-          "artwork_checked": true,
-          "spoiled_sheets": 0
+          "artwork_checked": true
         },
         {
           "@label": "job:MP-4117",
@@ -6201,8 +6192,7 @@
             "@week": true
           },
           "stage": "prepress",
-          "artwork_checked": false,
-          "spoiled_sheets": 0
+          "artwork_checked": false
         },
         {
           "@label": "job:MP-4116",
@@ -6245,8 +6235,7 @@
             "@week": true
           },
           "stage": "finishing",
-          "artwork_checked": true,
-          "spoiled_sheets": 0
+          "artwork_checked": true
         },
         {
           "@label": "job:MP-4115",
@@ -6287,8 +6276,7 @@
             "@week": true
           },
           "stage": "ready",
-          "artwork_checked": true,
-          "spoiled_sheets": 0
+          "artwork_checked": true
         },
         {
           "@label": "job:MP-4114",
@@ -6331,8 +6319,7 @@
             "@week": true
           },
           "stage": "prepress",
-          "artwork_checked": true,
-          "spoiled_sheets": 0
+          "artwork_checked": true
         },
         {
           "@label": "job:MP-4113",
@@ -6371,8 +6358,7 @@
             "@week": true
           },
           "stage": "prepress",
-          "artwork_checked": true,
-          "spoiled_sheets": 0
+          "artwork_checked": true
         },
         {
           "@label": "job:MP-4112",
@@ -6417,8 +6403,7 @@
             "@week": true
           },
           "stage": "prepress",
-          "artwork_checked": true,
-          "spoiled_sheets": 0
+          "artwork_checked": true
         }
       ]
     },

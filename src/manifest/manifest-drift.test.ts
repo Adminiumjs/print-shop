@@ -79,6 +79,7 @@ describe("the tables of the rate card, the orders and the works", () => {
       "job_features",
       "artwork",
       "proofs",
+      "spoils",
       "saved_quotes",
       "quote_lines",
       "sample_requests",
