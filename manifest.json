@@ -282,7 +282,8 @@
                 "desc": "product_name",
                 "qty": "qty",
                 "amount": "price"
-              }
+              },
+              "unless": "cancelled_at"
             }
           ]
         },
@@ -4505,7 +4506,8 @@
               "rollup": {
                 "from": "jobs",
                 "via": "order_id",
-                "count": true
+                "count": true,
+                "unlessSet": "cancelled_at"
               }
             }
           },
@@ -4528,7 +4530,8 @@
               "rollup": {
                 "from": "jobs",
                 "via": "order_id",
-                "sum": "price"
+                "sum": "price",
+                "unlessSet": "cancelled_at"
               }
             }
           },
@@ -4550,7 +4553,8 @@
               "rollup": {
                 "from": "jobs",
                 "via": "order_id",
-                "sum": "priced"
+                "sum": "priced",
+                "unlessSet": "cancelled_at"
               }
             }
           },
@@ -4622,7 +4626,8 @@
               "rollup": {
                 "from": "jobs",
                 "via": "order_id",
-                "sum": "weight_kg"
+                "sum": "weight_kg",
+                "unlessSet": "cancelled_at"
               }
             },
             "scale": 2
@@ -4645,7 +4650,8 @@
               "rollup": {
                 "from": "jobs",
                 "via": "order_id",
-                "sum": "rolls"
+                "sum": "rolls",
+                "unlessSet": "cancelled_at"
               }
             }
           },
@@ -4667,7 +4673,8 @@
               "rollup": {
                 "from": "jobs",
                 "via": "order_id",
-                "sum": "flat"
+                "sum": "flat",
+                "unlessSet": "cancelled_at"
               }
             }
           },
@@ -5355,7 +5362,8 @@
                 "latest": {
                   "of": "ready_by",
                   "by": "ready_by"
-                }
+                },
+                "unlessSet": "cancelled_at"
               }
             }
           },
@@ -10274,6 +10282,32 @@
                   "values": [
                     "collected",
                     "dispatched"
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "ref": "cancelled_at",
+            "type": "timestamptz",
+            "label": {
+              "en-US": "Cancelled",
+              "de-DE": "Storniert",
+              "fr-FR": "Annulée",
+              "da-DK": "Annulleret",
+              "cs-CZ": "Zrušeno",
+              "ar-EG": "ملغى",
+              "zh-CN": "已取消",
+              "zh-TW": "已取消"
+            },
+            "nullable": true,
+            "rules": {
+              "stamp": {
+                "set": "now",
+                "on": {
+                  "column": "stage",
+                  "values": [
+                    "cancelled"
                   ]
                 }
               }
@@ -21522,6 +21556,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -21651,6 +21696,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -21780,6 +21836,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -21909,6 +21976,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -22038,6 +22116,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -22167,6 +22256,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -22296,6 +22396,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -22425,6 +22536,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -22579,6 +22701,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -22661,6 +22794,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -22743,6 +22887,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -22825,6 +22980,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -22907,6 +23073,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -22989,6 +23166,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -23071,6 +23259,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -23153,6 +23352,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -23273,6 +23483,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -23342,6 +23563,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -23411,6 +23643,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -23480,6 +23723,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -23549,6 +23803,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -23618,6 +23883,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -23687,6 +23963,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -23756,6 +24043,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -23839,6 +24137,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -23921,6 +24230,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -24003,6 +24323,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -24085,6 +24416,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -24167,6 +24509,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -24249,6 +24602,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -24331,6 +24695,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -24413,6 +24788,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -24522,6 +24908,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -24631,6 +25028,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -24740,6 +25148,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -24849,6 +25268,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -24958,6 +25388,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -25067,6 +25508,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -25176,6 +25628,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -25285,6 +25748,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -26858,6 +27332,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -26950,6 +27435,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -27042,6 +27538,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -27134,6 +27641,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -27226,6 +27744,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -27318,6 +27847,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -27410,6 +27950,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -27502,6 +28053,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -28172,6 +28734,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -28241,6 +28814,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -28310,6 +28894,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -28379,6 +28974,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -28448,6 +29054,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -28517,6 +29134,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -28586,6 +29214,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {
@@ -28655,6 +29294,17 @@
                   "table": "jobs",
                   "via": "order_id",
                   "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
                   "limit": 50
                 },
                 "row": {

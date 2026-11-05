@@ -578,19 +578,22 @@ function pricing(features: boolean): Column[] {
  * The money columns an order and a saved quote share: goods, one delivery,
  * tax, total. The goods are the lines' prices added up only while every line
  * has one: a line Adminium could not price leaves the goods, the tax and the
- * total empty, never a smaller sum that leaves it out.
+ * total empty, never a smaller sum that leaves it out. A line stamped in
+ * `unlessSet` (an order's cancelled job) counts for none of them: not its
+ * price, its weight, its parcel, nor (on an order) its ready-by.
  */
-function basketMoney(lines: string, via: string, delivery: Record<string, unknown>): Column[] {
+function basketMoney(lines: string, via: string, delivery: Record<string, unknown>, unlessSet?: string): Column[] {
+  const total = (rule: Record<string, unknown>) => ({ rollup: { from: lines, via, ...rule, ...(unlessSet === undefined ? {} : { unlessSet }) } });
   return [
     choice("delivery_method", "Getting it", DELIVERY_METHODS, { default: "collect" }),
-    figure("item_count", "int", "Jobs", { rollup: { from: lines, via, count: true } }),
-    money("goods_sum", "Lines' prices added up", { rollup: { from: lines, via, sum: "price" } }),
-    figure("priced_lines", "int", "Lines with a price", { rollup: { from: lines, via, sum: "priced" } }),
+    figure("item_count", "int", "Jobs", total({ count: true })),
+    money("goods_sum", "Lines' prices added up", total({ sum: "price" })),
+    figure("priced_lines", "int", "Lines with a price", total({ sum: "priced" })),
     money("goods_total", "Goods (ex tax)", { formula: GOODS }),
-    figure("weight_kg", "decimal", "Weight (kg)", { rollup: { from: lines, via, sum: "weight_kg" } }, 2),
+    figure("weight_kg", "decimal", "Weight (kg)", total({ sum: "weight_kg" }), 2),
     // Rolled in a tube when it holds large format and every large-format line rolls; else one box by weight.
-    figure("rolled_lines", "int", "Lines that roll", { rollup: { from: lines, via, sum: "rolls" } }),
-    figure("flat_lines", "int", "Large format that doesn't roll", { rollup: { from: lines, via, sum: "flat" } }),
+    figure("rolled_lines", "int", "Lines that roll", total({ sum: "rolls" })),
+    figure("flat_lines", "int", "Large format that doesn't roll", total({ sum: "flat" })),
     figure("tube", "int", "In a tube", { formula: { if: [{ and: [{ gt: [zero("rolled_lines"), 0] }, { lte: [zero("flat_lines"), 0] }] }, 1, 0] } }),
     fk("delivery_band_id", "delivery_bands", "Delivery band", {
       ...opt,
@@ -956,7 +959,7 @@ export const TABLES: Table[] = [
       text("postcode", 16, "Postcode", { ...opt, rules: { requiredWhen: { column: "delivery_method", in: ["deliver"] } } }),
       language("language"),
       fk("customer_id", "customers", "Customer", opt),
-      ...basketMoney("jobs", "order_id", DELIVERY),
+      ...basketMoney("jobs", "order_id", DELIVERY, "cancelled_at"),
       // The DHL service the counter books the parcel with, when DHL is on: the works' choice, never the customer's.
       text("dhl_service", 32, "DHL service", opt),
       // Over the delivery bands: the works types the delivery's price and sends it; the customer accepts it.
@@ -973,8 +976,8 @@ export const TABLES: Table[] = [
       at("placed_at", "Placed", { ...opt, rules: stamp("now", onCreate) }),
       // How many of its jobs are still in prepress, on the press or in finishing.
       figure("jobs_on_floor", "int", "Jobs still on the floor", { rollup: { from: "jobs", via: "order_id", sum: "on_floor" } }),
-      // The day the last of its jobs is ready: its latest job's.
-      date("ready_by", "Ready by", { ...opt, rules: { rollup: { from: "jobs", via: "order_id", latest: { of: "ready_by", by: "ready_by" } } } }),
+      // The day the last of its jobs is ready: its latest job's, a cancelled job's left out.
+      date("ready_by", "Ready by", { ...opt, rules: { rollup: { from: "jobs", via: "order_id", latest: { of: "ready_by", by: "ready_by" }, unlessSet: "cancelled_at" } } }),
       at("ready_at", "Ready", { ...opt, rules: stamp("now", onState("status", "ready")) }),
       at("collected_at", "Collected", { ...opt, rules: stamp("now", onState("status", "collected")) }),
       at("dispatched_at", "Dispatched", { ...opt, rules: stamp("now", onState("status", "dispatched")) }),
@@ -1064,6 +1067,8 @@ export const TABLES: Table[] = [
       at("ready_at", "Ready", { ...opt, rules: stamp("now", onState("stage", "ready")) }),
       text("printed_by", 80, "Printed by", { ...opt, rules: stamp("user-name", onState("stage", "printing")) }),
       at("handed_over_at", "Handed over", { ...opt, rules: stamp("now", onState("stage", "collected", "dispatched")) }),
+      // Cancelled: its order no longer charges for it, weighs it or waits on it, and its invoice leaves it out.
+      at("cancelled_at", "Cancelled", { ...opt, rules: stamp("now", onState("stage", "cancelled")) }),
       // Still on the floor: in prepress, on the press or in finishing. Its order is ready once none is.
       figure("on_floor", "int", "On the floor", { formula: ON_FLOOR }),
       // What its runs spoiled, added up: sheets for sheet work, metres of the roll for large format.

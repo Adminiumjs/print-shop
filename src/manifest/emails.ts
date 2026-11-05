@@ -34,6 +34,7 @@
 import { EMAIL_TRANSLATIONS } from "./emails-i18n.ts";
 import type { Tag } from "./labels.ts";
 import { TO_WORKS, type Kind } from "./outbox.ts";
+import { STAGES } from "./tables.ts";
 
 /** One e-mail's own sentences. */
 export interface Words {
@@ -239,12 +240,12 @@ const JOB_ROW = {
   note: "{{row.lamination_option.name|}}{{row.edges_option.name|}}",
 };
 
-/** An order's jobs, with their prices or without. */
+/** An order's jobs, with their prices or without: a cancelled job is no longer listed, as the order's money leaves it out. */
 const jobs = (priced: boolean): Block => ({
   block: "email.rows",
   id: "jobs",
   data: {
-    from: { link: "order", table: "jobs", via: "order_id", orderBy: "position", limit: 50 },
+    from: { link: "order", table: "jobs", via: "order_id", orderBy: "position", where: { column: "stage", in: STAGES.filter((s) => s !== "cancelled") }, limit: 50 },
     row: priced ? { ...JOB_ROW, amount: "{{row.price.money}}" } : JOB_ROW,
   },
 });

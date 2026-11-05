@@ -131,10 +131,13 @@ function deriveRow(table: Table, row: Row, tables: Tables): void {
 function rollRow(table: Table, row: Row, tables: Tables): void {
   for (const column of table.columns) {
     const rollup = column.rules?.["rollup"] as
-      | { from: string; via: string; sum?: string; count?: true; times?: string; where?: { column: string; eq: unknown }; latest?: { of: string; by: string } }
+      | { from: string; via: string; sum?: string; count?: true; times?: string; where?: { column: string; eq: unknown }; unlessSet?: string; latest?: { of: string; by: string } }
       | undefined;
     if (rollup === undefined) continue;
-    const children = (tables[rollup.from] ?? []).filter((c) => same(c[rollup.via], row.id) && (rollup.where === undefined || holds({ eq: [rollup.where.column, rollup.where.eq as string] }, c, 4)));
+    // A child row with a value in `unlessSet` (a cancelled job) is left out.
+    const children = (tables[rollup.from] ?? []).filter(
+      (c) => same(c[rollup.via], row.id) && (rollup.where === undefined || holds({ eq: [rollup.where.column, rollup.where.eq as string] }, c, 4)) && (rollup.unlessSet === undefined || blank(c[rollup.unlessSet])),
+    );
     if (rollup.latest !== undefined) {
       const by = rollup.latest.by;
       const later = (a: unknown, b: unknown) => (Number.isFinite(Number(a)) && Number.isFinite(Number(b)) ? Number(a) - Number(b) : String(a) < String(b) ? -1 : String(a) > String(b) ? 1 : 0);

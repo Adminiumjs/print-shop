@@ -306,6 +306,24 @@ describe.skipIf(why !== null)(`a customer orders on a built Adminium${why === nu
         expect([again.replayed, again.order["number"]]).toEqual([true, "MP-4127"]);
       });
 
+      it("charges nothing for a job the works cancels: the order's goods, weight, total and ready-by leave it out", async () => {
+        const rows = async (ref: string) => ok(await staff.get<{ data: Row[] }>(`/api/v1/data/${connectionId}/${encodeURIComponent(names[ref] ?? `printing_${ref}`)}?limit=200`)).data;
+        const order = (await rows("orders")).find((o) => o["number"] === "MP-4127")!;
+        const jobs = (await rows("jobs")).filter((j) => String(j["order_id"]) === String(order["id"]));
+        expect(jobs).toHaveLength(2);
+        const [kept, cancelled] = [jobs.find((j) => Number(j["qty"]) === 500)!, jobs.find((j) => Number(j["qty"]) === 250)!];
+        ok(await staff.patch(`/api/v1/data/${connectionId}/${encodeURIComponent(names["jobs"] ?? "printing_jobs")}/${String(cancelled["id"])}`, { values: { stage: "cancelled" }, from: "prepress" }));
+        const job = (await rows("jobs")).find((j) => String(j["id"]) === String(cancelled["id"]))!;
+        expect([job["stage"], job["cancelled_at"] !== null && job["cancelled_at"] !== undefined]).toEqual(["cancelled", true]);
+        const after = (await rows("orders")).find((o) => String(o["id"]) === String(order["id"]))!;
+        expect(Number(after["item_count"])).toBe(1);
+        expect(Number(after["goods_total"])).toBe(Number(kept["price"]));
+        expect(Number(after["weight_kg"])).toBe(Number(kept["weight_kg"]));
+        expect(Number(after["total"])).toBeLessThan(Number(order["total"]));
+        expect(Math.round(Number(after["total"]) * 100)).toBe(Math.round((Number(after["subtotal"]) + Number(after["tax"])) * 100));
+        expect(String(after["ready_by"]).slice(0, 10)).toBe(String(kept["ready_by"]).slice(0, 10));
+      });
+
       it("refuses a total that moved, with the figures the save came to, and keeps nothing", async () => {
         const letterheads = productOf("letterheads");
         const job: BasketLine = { id: "j3", productId: letterheads.id, choice: firstChoice(catalogue, letterheads), design: null, features: [], artwork: [] };

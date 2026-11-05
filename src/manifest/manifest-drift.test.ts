@@ -99,8 +99,8 @@ describe("the tables of the rate card, the orders and the works", () => {
     }
     for (const c of BREAKDOWN) expect(CONFIG_SELECT, c).toContain(c);
     for (const c of BREAKDOWN) expect(CONFIG_WRITABLE, c).not.toContain(c);
-    expect(rules("orders", "goods_sum")["rollup"]).toEqual({ from: "jobs", via: "order_id", sum: "price" });
-    expect(rules("orders", "weight_kg")["rollup"]).toEqual({ from: "jobs", via: "order_id", sum: "weight_kg" });
+    expect(rules("orders", "goods_sum")["rollup"]).toEqual({ from: "jobs", via: "order_id", sum: "price", unlessSet: "cancelled_at" });
+    expect(rules("orders", "weight_kg")["rollup"]).toEqual({ from: "jobs", via: "order_id", sum: "weight_kg", unlessSet: "cancelled_at" });
     expect(rules("saved_quotes", "goods_sum")["rollup"]).toEqual({ from: "quote_lines", via: "quote_id", sum: "price" });
   });
 
@@ -112,6 +112,29 @@ describe("the tables of the rate card, the orders and the works", () => {
     // A saved quote's line pays for no feature: it has no such column.
     expect(table("quote_lines").columns.map((c) => c.ref)).not.toContain("features_charge");
     expect(JOB_SELECT).toContain("features_charge");
+  });
+
+  it("leaves a cancelled job out of its order's money, weight, parcel and ready-by, its invoice and its e-mails", () => {
+    expect((rules("jobs", "cancelled_at")["stamp"] as Json)["on"]).toEqual({ column: "stage", values: ["cancelled"] });
+    const rolled = table("orders").columns.filter((c) => ((c["rules"] as Json | undefined)?.["rollup"] as Json | undefined)?.["from"] === "jobs");
+    const left = rolled.filter((c) => ((c["rules"] as Json)["rollup"] as Json)["unlessSet"] !== "cancelled_at").map((c) => c.ref);
+    // Its floor count is the jobs still on the floor (a cancelled job is not), its warnings the customer's own.
+    expect(left.sort()).toEqual(["jobs_on_floor", "warnings_accepted"]);
+    expect(rolled.length).toBeGreaterThan(left.length + 6);
+    const invoice = ((manifest["documents"] as Json[])[0]!["mapping"] as Json)["items"] as { collections: Json[] };
+    expect(invoice.collections[0]!["unless"]).toBe("cancelled_at");
+    const lists: Json[] = [];
+    const walk = (v: unknown): void => {
+      if (Array.isArray(v)) v.forEach(walk);
+      else if (v !== null && typeof v === "object") {
+        const o = v as Json;
+        if (o["table"] === "jobs" && o["via"] === "order_id" && o["link"] === "order") lists.push(o);
+        Object.values(o).forEach(walk);
+      }
+    };
+    walk(manifest["emailTemplates"]);
+    expect(lists.length).toBeGreaterThan(0);
+    for (const from of lists) expect(from["where"]).toEqual({ column: "stage", in: ["prepress", "printing", "finishing", "ready", "collected", "dispatched"] });
   });
 
   it("asks a sheet line for its size and a large-format line for its width and height, by the product's kind", () => {
@@ -166,7 +189,7 @@ describe("every total, number and date is Adminium's", () => {
       closures: { table: "closures", from: "from_date", to: "to_date", active: "active" },
     });
     expect((rules("jobs", "ready_by")["stamp"] as Json)["on"]).toEqual(["create", { column: "proof_state", values: ["approved"] }, { columns: ["turnaround_days"] }]);
-    expect(rules("orders", "ready_by")["rollup"]).toEqual({ from: "jobs", via: "order_id", latest: { of: "ready_by", by: "ready_by" } });
+    expect(rules("orders", "ready_by")["rollup"]).toEqual({ from: "jobs", via: "order_id", latest: { of: "ready_by", by: "ready_by" }, unlessSet: "cancelled_at" });
     const settings = manifest["settings"] as Json[];
     expect(settings.map((s) => [s["key"], s["default"]])).toEqual([["working_days", "mon,tue,wed,thu,fri"], ["cutoff", "14:00"]]);
   });

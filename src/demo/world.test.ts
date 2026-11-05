@@ -89,6 +89,20 @@ describe("the demo's Adminium", () => {
     expect(isShopError(refused) && Number(refused.refused.changed?.order["total"])).toBeGreaterThan(Number(dry.order["total"]));
   });
 
+  it("leaves a cancelled job out of its order's goods, weight and total, as the manifest's `unlessSet` says", async () => {
+    const demo = makeDemo();
+    const two = cards(demo);
+    two.children.jobs.push({ values: { ...two.children.jobs[0]!.values, qty: 250 } });
+    const placed = await demo.shop.place(two, "demo-test-0000000009", String((await demo.shop.quote(two)).order["total"]));
+    const data = await demo.works.load();
+    const jobs = data.jobs.filter((j) => String(j["order_id"]) === String(placed.order["id"]));
+    const kept = jobs.find((j) => Number(j["qty"]) === 500)!;
+    await demo.works.moveJob(jobs.find((j) => Number(j["qty"]) === 250)!, "cancelled");
+    const order = (await demo.works.load()).orders.find((o) => String(o.id) === String(placed.order["id"]))!;
+    expect([Number(order["item_count"]), order["goods_total"], order["weight_kg"]]).toEqual([1, kept["price"], kept["weight_kg"]]);
+    expect(Number(order["total"])).toBeLessThan(Number(placed.order["total"]));
+  });
+
   it("holds a job in prepress until its proof is approved, then dates it again from the approval", async () => {
     const demo = makeDemo();
     const placed = await demo.shop.place(cards(demo), "demo-test-0000000003", String((await demo.shop.quote(cards(demo))).order["total"]));
