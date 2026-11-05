@@ -175,7 +175,13 @@ function Toasts() {
   );
 }
 
-export default function ShopApp() {
+/** The theme the page is told (the demo card's), and who to tell when the customer switches it; without them the shop keeps its own. */
+export interface ShopAppProps {
+  theme?: "light" | "dark";
+  onTheme?: (theme: "light" | "dark") => void;
+}
+
+export default function ShopApp({ theme: given, onTheme }: ShopAppProps = {}) {
   const { t, locale } = useI18n();
   tellWords(t);
   const view = useShop((s) => s.view);
@@ -186,7 +192,9 @@ export default function ShopApp() {
   const heldDesigns = useShop((s) => hasSavedDesigns(s.held));
   const orderDesigns = useAfter((s) => (s.opened?.read?.jobs ?? s.mine.rows?.jobs ?? []).some((j) => typeof j["design_code"] === "string" && j["design_code"] !== ""));
   const designs = heldDesigns || orderDesigns;
-  const [theme, setTheme] = useState(initialTheme);
+  const [own, setOwn] = useState(initialTheme);
+  const theme = given ?? own;
+  const setTheme = (next: "light" | "dark") => (onTheme === undefined ? setOwn(next) : onTheme(next));
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);

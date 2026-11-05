@@ -722,13 +722,20 @@ describe('the host names no company', () => {
    */
   const RULED_LINE = /^"shop\.artwork\.export\.(title|body)": /;
 
+  /**
+   * The demo card lists the add-ons a works may switch on by their marketplace
+   * keys and names (`shipping-dhl`, "DHL Shipping"), as the marketplace does:
+   * a line of the demo's that names the add-on by its key, and no other.
+   */
+  const ADD_ON_KEY_LINE = /shipping-dhl/;
+
   it('mentions one only where an add-on bundle is imported', () => {
     const own = SHIPPED.filter((file) => !file.includes(`/vendor/`));
     const offenders = own.flatMap((file) =>
       codeOf(file)
         .split('\n')
         .map((line) => line.trim())
-        .filter((line) => COMPANIES.test(line) && !IMPORT_LINE.test(line) && !(relative(file) === "i18n/strings/shop.ts" && RULED_LINE.test(line)))
+        .filter((line) => COMPANIES.test(line) && !IMPORT_LINE.test(line) && !(relative(file) === "i18n/strings/shop.ts" && RULED_LINE.test(line)) && !(relative(file).startsWith("demo/") && ADD_ON_KEY_LINE.test(line)))
         .map((line) => `${relative(file)} · ${line}`),
     );
     expect(offenders).toEqual([]);

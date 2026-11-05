@@ -2,6 +2,8 @@ import { defineConfig, type UserConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 import { surfaceJsonPlugin } from "./surface-emit.ts";
+import { demoJsonPlugin } from "./demo-emit.ts";
+import { CARD_MESSAGES, DEMO_CARD } from "./src/demo/card.ts";
 import { MESSAGES } from "./src/i18n/messages/index.ts";
 import { APP_KEY, APP_LABEL_KEY, SURFACE_NAV } from "./src/surface-nav.ts";
 
@@ -39,8 +41,8 @@ interface ViteWithVitest extends UserConfig {
 
 // https://vite.dev/config/
 // `base` defaults to "/" (root deploy on Vercel / DigitalOcean). The
-// `build:demo` script overrides it with --base=/demo/print-shop/ so the app
-// can be served from the Adminium demo sub-path.
+// `build:demo` script overrides it with --base=/demo/print-shop/app/, where the
+// website frames the demo.
 const config: ViteWithVitest = {
   define,
   plugins: [
@@ -51,6 +53,13 @@ const config: ViteWithVitest = {
      * nothing, so the demo and standalone builds stay as they were.
      */
     surfaceJsonPlugin({ appKey: APP_KEY, appLabelKey: APP_LABEL_KEY, nav: SURFACE_NAV, messages: MESSAGES }),
+    /*
+     * `demo.json` beside the demo build's `index.html`, for the website's demo
+     * card: the customer's screens and the shop's, the shortcuts, the two
+     * people, the clock and the add-ons, in the card's eight languages. Only a
+     * `/demo/` build writes it.
+     */
+    demoJsonPlugin({ ...DEMO_CARD, messages: CARD_MESSAGES }),
   ],
   /*
    * ── THE DEV SERVER, AND THE ONE THING IT PROXIES ──────────────────────────

@@ -195,6 +195,36 @@ function works(row: Row): Works {
   };
 }
 
+/** The catalogue's rows, as the public entries answer them. */
+export interface CatalogueRows {
+  products: Row[];
+  options: Row[];
+  materials: Row[];
+  sizes: Row[];
+  finishes: Row[];
+  breaks: Row[];
+  packaging: Row[];
+  bands: Row[];
+  rules: Row[];
+  settings: Row[];
+}
+
+/** The catalogue the pages read, from its rows: the same reading whoever answers them. */
+export function catalogueFrom(rows: CatalogueRows, photo: (row: Row) => string | null): Catalogue {
+  return {
+    products: rows.products.map((row) => product(row, photo(row))),
+    options: rows.options.map(option),
+    materials: rows.materials.map(material),
+    sizes: rows.sizes.map(size),
+    finishes: rows.finishes.map(finish),
+    breaks: rows.breaks.map(breakRow).sort((a, b) => a.minQty - b.minQty),
+    packaging: rows.packaging.map(packaging),
+    bands: rows.bands.map(band),
+    rules: rows.rules.map(rule),
+    works: works(rows.settings[0] ?? {}),
+  };
+}
+
 /** The order and each job, out of a client's answer. */
 const figuresOf = (made: { data: Row; children: Record<string, { data: Row }[]> }): Figures => ({ order: made.data, jobs: (made.children[JOBS] ?? []).map((job) => job.data) });
 
@@ -256,18 +286,7 @@ export class AdminiumShop implements ShopPort {
       );
       const config = await this.clientConfig();
       const photo = (row: Row) => pictureUrl(this.served.baseUrl, config, r.products, String(row["id"]), "photo", row["photo"]);
-      return {
-        products: products!.map((row) => product(row, photo(row))),
-        options: options!.map(option),
-        materials: materials!.map(material),
-        sizes: sizes!.map(size),
-        finishes: finishes!.map(finish),
-        breaks: breaks!.map(breakRow).sort((a, b) => a.minQty - b.minQty),
-        packaging: packs!.map(packaging),
-        bands: bands!.map(band),
-        rules: rules!.map(rule),
-        works: works(settings![0] ?? {}),
-      };
+      return catalogueFrom({ products: products!, options: options!, materials: materials!, sizes: sizes!, finishes: finishes!, breaks: breaks!, packaging: packs!, bands: bands!, rules: rules!, settings: settings! }, photo);
     });
   }
 
