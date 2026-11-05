@@ -339,6 +339,14 @@ describe.skipIf(why !== null)(`after the order, on a built Adminium${why === nul
         const order = (await rows("orders")).find((o) => String(o["id"]) === id)!;
         expect([order["delivery_quote_state"], Number(order["delivery"])]).toEqual(["accepted", 48]);
         expect(Number(order["total"])).toBeCloseTo((Number(order["goods_total"]) + 48) * 1.2, 1);
+        // Accepted, the amount is the price agreed: the works changes it no more, nor takes the quote back to send again.
+        const path = `/api/v1/data/${connectionId}/${table("orders")}/${id}`;
+        for (const values of [{ delivery_quote: "52.00" }, { delivery_quote_state: "sent" }, { delivery_quote: "52.00", delivery_quote_state: "sent" }]) {
+          const moved = await staff.patch(path, { values });
+          expect([moved.status, moved.code], JSON.stringify(values)).toEqual([403, "COLUMN_FORBIDDEN"]);
+        }
+        const held = (await rows("orders")).find((o) => String(o["id"]) === id)!;
+        expect([held["delivery_quote_state"], Number(held["delivery_quote"]), Number(held["delivery"])]).toEqual(["accepted", 48, 48]);
         // Nothing else of the order is the customer's to change.
         const refused = await door.answerDelivery("link", id, { delivery_quote_state: "accepted" }).catch((e: unknown) => e);
         expect(isShopError(refused)).toBe(true);

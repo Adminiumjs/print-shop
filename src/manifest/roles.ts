@@ -173,7 +173,7 @@ export const ROLES = [
       view("printing-samples"),
     ],
     limits: {
-      // Ready, then handed over; a delivery over the bands priced and its quote sent.
+      // Ready, then handed over; a delivery over the bands priced and its quote sent (fixed once the customer accepts it).
       orders: {
         writable: ["status", "tracking", "dhl_service", "delivery_quote", "delivery_quote_state"],
         writableValues: { status: ["ready", "collected", "dispatched"], delivery_quote_state: ["to_quote", "sent"] },

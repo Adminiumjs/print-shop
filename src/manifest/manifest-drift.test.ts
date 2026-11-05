@@ -333,6 +333,13 @@ describe("a customer reads nothing of anyone else's, and nothing the works keeps
     }
   });
 
+  it("holds an accepted delivery quote to its amount: no writer changes it or takes it back once accepted", () => {
+    const until = { while: { column: "delivery_quote_accepted_at", isNull: true } };
+    expect(rules("orders", "delivery_quote")["changes"]).toEqual([until]);
+    expect(rules("orders", "delivery_quote_state")["changes"]).toEqual([{ to: ["to_quote", "sent"], ...until }]);
+    expect((rules("orders", "delivery_quote_accepted_at")["stamp"] as Json)["on"]).toEqual({ column: "delivery_quote_state", values: ["accepted"] });
+  });
+
   it("places an order with a retry key, a quote first, and a refusal if the total moved", () => {
     const placed = create("orders");
     expect([placed["dryRun"], placed["expect"], placed["clientKey"], placed["humanCheck"]]).toEqual([true, "total", "client_key", true]);

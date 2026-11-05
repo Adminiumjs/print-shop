@@ -290,6 +290,8 @@ const PROOF_STATE_LABELS: Record<(typeof PROOF_STATES)[number], string> = {
 
 /** Where a delivery the works prices by hand stands. */
 const DELIVERY_QUOTE_STATES: Record<string, string> = { to_quote: "To quote", sent: "Quote sent", accepted: "Accepted" };
+/** A change the delivery quote takes only while the customer has never accepted it (`delivery_quote_accepted_at` is its stamp). */
+const UNTIL_ACCEPTED = { while: { column: "delivery_quote_accepted_at", isNull: true } };
 
 // ── formulas ────────────────────────────────────────────────────────────────
 
@@ -964,8 +966,13 @@ export const TABLES: Table[] = [
       // The DHL service the counter books the parcel with, when DHL is on: the works' choice, never the customer's.
       text("dhl_service", 32, "DHL service", opt),
       // Over the delivery bands: the works types the delivery's price and sends it; the customer accepts it.
-      price("delivery_quote", "Delivery quote", { ...opt, rules: { validation: { min: 0 } } }),
-      choice("delivery_quote_state", "Delivery quote", DELIVERY_QUOTE_STATES, { ...opt, tones: { to_quote: "warn", sent: "info", accepted: "pos" } }),
+      // Once accepted it is the price agreed: nobody, the owner included, changes the amount or takes the quote back.
+      price("delivery_quote", "Delivery quote", { ...opt, rules: { validation: { min: 0 }, changes: [UNTIL_ACCEPTED] } }),
+      choice("delivery_quote_state", "Delivery quote", DELIVERY_QUOTE_STATES, {
+        ...opt,
+        tones: { to_quote: "warn", sent: "info", accepted: "pos" },
+        rules: { changes: [{ to: ["to_quote", "sent"], ...UNTIL_ACCEPTED }] },
+      }),
       // What the order comes to with the works' quote on it, as the quote's e-mail and page show it.
       money("quote_tax", "Tax with the delivery quote", { formula: QUOTED_TAX }),
       money("quote_total", "Total with the delivery quote", { formula: { add: [QUOTED_SUBTOTAL, "quote_tax"] } }),
