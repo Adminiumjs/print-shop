@@ -73,30 +73,20 @@ describe("the data kit over the works' door", () => {
     act(() => root.unmount());
   });
 
-  it("says the reader's rights as Adminium answers them, and takes every right as held when they cannot be read", async () => {
+  it("says the reader's rights as the staff config says them, and takes every right as held where it says none", async () => {
     const door = new FakePanels();
-    door.rights = { tables: { design_versions: { can: { read: true, create: false, update: true, delete: false }, unreadable: ["values"] }, fonts: { can: { read: true, create: false, update: false, delete: false }, unreadable: [] } }, has: {}, currency: "GBP" };
-    const seen: string[] = [];
+    door.rights = { design_versions: ["read", "update"], fonts: ["read"], palettes: [] };
+    let seen = "";
     function Probe() {
       const access = useAccess();
-      seen.push(access.ready ? [access.canRead("fonts"), access.canRead("design_versions", ["values"]), access.canCreate("design_versions"), access.canUpdate("design_versions"), access.canRead("palettes")].join(",") : "waiting");
+      seen = [access.ready, access.canRead("fonts"), access.canCreate("design_versions"), access.canUpdate("design_versions"), access.canRead("palettes"), access.canCreate("version_files")].join(",");
       return null;
     }
     const host = document.createElement("div");
     const root = createRoot(host);
     await act(async () => root.render(<PanelScopeProvider scope={{ door, addOn: "customiser", locale: "en-US" }}><Probe /></PanelScopeProvider>));
-    expect(seen[0]).toBe("waiting");
-    expect(seen.at(-1)).toBe("true,false,false,true,false");
+    expect(seen).toBe("true,true,false,true,false,true");
     act(() => root.unmount());
-    // An Adminium that does not answer: the panel is not held back, and the server refuses what it refuses.
-    door.access = async () => {
-      throw new Error("404");
-    };
-    seen.length = 0;
-    const again = createRoot(document.createElement("div"));
-    await act(async () => again.render(<PanelScopeProvider scope={{ door, addOn: "customiser", locale: "en-US" }}><Probe /></PanelScopeProvider>));
-    expect(seen.at(-1)).toBe("true,true,true,true,true");
-    act(() => again.unmount());
   });
 
   it("publishes the host a panel bundle reads: version 1, the data kit 1, every part the two panels draw", () => {

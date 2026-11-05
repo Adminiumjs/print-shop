@@ -9,7 +9,7 @@
  */
 import type { ReactNode } from "react";
 
-import type { PanelAccess, PanelDoor, PanelList, PanelOpen, PanelUploaded } from "../door.ts";
+import type { Action, PanelDoor, PanelList, PanelOpen, PanelUploaded } from "../door.ts";
 import { ApiError, same, type Id, type Row } from "../wire.ts";
 import { installRuntime, PanelRefused } from "../../add-ons/connected.ts";
 import { PANEL_HOST } from "../panels/host.tsx";
@@ -113,11 +113,10 @@ export class FakePanels implements PanelDoor {
     this.tables[table] = this.rows(table).filter((row) => !same(row.id, key));
   }
 
-  /** Every table of the add-on read, written and changed, unless a test says otherwise. */
-  rights: PanelAccess = { tables: {}, has: {}, currency: "GBP" };
-  async access(addOn: string): Promise<PanelAccess> {
-    this.calls.push({ method: "access", args: [addOn] });
-    return this.rights;
+  /** What the role may do with each table, by its short name; a table not named here, everything (as when Adminium does not say). */
+  rights: Record<string, readonly Action[]> = {};
+  access(_addOn: string, table: string): readonly Action[] | null {
+    return this.rights[table] ?? null;
   }
 
   async upload(addOn: string, table: string, column: string, key: Id, file: Blob, name: string): Promise<PanelUploaded> {

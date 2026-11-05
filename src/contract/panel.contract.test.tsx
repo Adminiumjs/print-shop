@@ -199,13 +199,14 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
         await server.setClock(WEDNESDAY, true);
         ok(await admin.post("/api/v1/apps/printing/sample-data"));
         await until(async () => (ok(await admin.get<{ loaded: boolean }>("/api/v1/apps/printing/sample-data")).loaded ? true : undefined), "the sample to be added");
+        // The clock runs again before the four sign-ins: a fifth sign-in in a window waits for the window to pass.
+        await server.setClock(WEDNESDAY);
         for (const [role, name] of [["owner", "Rosa Marlow"], ["prepress", "Priya Shah"], ["press", "Tom Ellis"], ["counter", "Jo Marsh"]] as const) {
           callers[role] = await personWith(role, name);
           doors[role] = await doorFor(callers[role]!);
         }
         // On Postgres and MySQL the sample says it is loaded before the rows it adds through the Customiser's section are in.
         await until(async () => ((await doors["owner"]!.load()).jobs.some((j) => j["design_id"] !== null && j["design_id"] !== undefined) ? true : undefined), "the sample's designed job");
-        await server.setClock(WEDNESDAY);
       }, 600_000);
 
       afterAll(async () => {
@@ -230,17 +231,17 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
         expect(await panelsOf("press").load({ id: "customiser-product", table: "products", row: product.id }).catch((e: unknown) => (e as PanelRefused).status)).toBe(403);
       });
 
-      it("tells the panel each role's rights on the Customiser's tables, as the dashboard's kit reads them", async () => {
+      it("tells the panel each role's rights on the Customiser's tables, as the staff config says them", async () => {
         for (const who of ["owner", "prepress", "press"]) {
-          const access = await panelsOf(who).access("customiser");
-          expect(access.tables["fonts"]?.can.read, who).toBe(true);
-          expect(access.tables["version_files"]?.can.create, who).toBe(true);
+          expect(panelsOf(who).access("customiser", "fonts"), who).toContain("read");
+          expect(panelsOf(who).access("customiser", "version_files"), who).toEqual(expect.arrayContaining(["read", "create", "update"]));
         }
+        expect(panelsOf("counter").access("customiser", "version_files")).toEqual([]);
       });
 
       // G1: the starter fonts' files are handed out beside the set-up page, which Adminium serves only while the Customiser is attached to the dashboard.
       for (const who of ["owner", "prepress", "press"] as const) {
-        it.fails(`hands ${who} a starter font's file to make the print files with (gap G1: the set-up page's files are closed to an app-attached add-on)`, async () => {
+        it.fails(`hands ${who} a starter font's file to make the print files with (gap G1: the set-up page's files are closed to an app-attached add-on and to screens-only people)`, async () => {
           const answer = await callers[who]!.fetchAs()("/api/v1/add-ons/customiser/pages/customiser/files/fonts/Manrope-OFL.txt");
           expect(answer.status).toBe(200);
         });
@@ -325,8 +326,8 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
           expect((await panels.get("customiser", "version_files", made.data.id))?.["file"]).toEqual(file.row["file"]);
         }, 60_000);
 
-        // LEDGER-WRITE: the Customiser's `designs` ledger writes `design_versions`, and an app's role is held to read on a table a ledger writes.
-        it.fails(`stores the proof the panel makes as ${who} (gap: an app role cannot write design_versions)`, async () => {
+        // G2b: the Customiser's `designs` ledger writes `design_versions`, and an app's role is held to read on a table a ledger writes.
+        it.fails(`stores the proof the panel makes as ${who} (gap G2b: an app role cannot write design_versions)`, async () => {
           const job = designedJob(await doors[who]!.load());
           const panels = panelsOf(who);
           const version = (await panels.list("customiser", "design_versions", { where: { column: "design_id", op: "eq", value: job["design_id"] }, order: "version.desc", limit: 51, offset: 0 }))[0]!;

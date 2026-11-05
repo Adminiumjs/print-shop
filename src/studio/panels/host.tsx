@@ -32,7 +32,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ComponentType, type MouseEvent, type ReactNode } from "react";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Box, Download, FileCode2, FileDown, FileText, Image, LockKeyhole, TriangleAlert, type LucideIcon } from "lucide-react";
 
-import type { PanelAccess, PanelDoor, PanelList } from "../door.ts";
+import type { PanelDoor, PanelList } from "../door.ts";
 import { toast } from "../store.ts";
 import type { Id, Row } from "../wire.ts";
 
@@ -185,41 +185,28 @@ export function useRecord(table: string, key: Id | null) {
   return { row: key === null ? null : asked.value, loading: asked.loading, error: asked.error, refetch: asked.refetch };
 }
 
-/** What the reader may do, as the dashboard's kit says it: answered from Adminium's own reply for this person. */
-export interface Access {
-  ready: boolean;
-  canRead: (table: string, columns?: readonly string[]) => boolean;
-  canCreate: (table: string) => boolean;
-  canUpdate: (table: string) => boolean;
-  canMove: (table: string, actionId: string, from?: string) => boolean;
-  has: (feature: string) => boolean;
-  currency: string | null;
-}
-
 /**
- * The reader's rights on the add-on's tables (`useAccess`), from the same
- * reply the dashboard's kit reads. Until it is in, `ready` is false; where it
- * cannot be read at all every right is taken as held, and the server still
- * refuses what it refuses.
+ * What the reader may do with the add-on's tables (`useAccess`), as Adminium
+ * said it in the staff config. Where it did not say, every right is taken as
+ * held, and the server still refuses what it refuses.
  */
-export function useAccess(): Access {
+export function useAccess() {
   const { door, addOn } = useScope();
-  const asked = useAsk<PanelAccess | null>(JSON.stringify(["access", addOn]), () => door.access(addOn), null);
-  const reply = asked.value;
-  const unknown = reply === null && asked.error !== null;
-  return useMemo<Access>(() => {
-    const own = (table: string) => reply?.tables[table];
-    const may = (table: string, right: "read" | "create" | "update") => unknown || own(table)?.can[right] === true;
-    return {
-      ready: reply !== null || unknown,
-      canRead: (table, columns) => may(table, "read") && (columns ?? []).every((column) => !(own(table)?.unreadable ?? []).includes(column)),
-      canCreate: (table) => may(table, "create"),
-      canUpdate: (table) => may(table, "update"),
-      canMove: (table) => may(table, "update"),
-      has: (feature) => reply?.has[feature] === true,
-      currency: reply?.currency ?? null,
+  return useMemo(() => {
+    const may = (table: string, action: "read" | "create" | "update") => {
+      const held = door.access(addOn, table);
+      return held === null || held.includes(action);
     };
-  }, [reply, unknown]);
+    return {
+      ready: true,
+      canRead: (table: string) => may(table, "read"),
+      canCreate: (table: string) => may(table, "create"),
+      canUpdate: (table: string) => may(table, "update"),
+      canMove: () => false,
+      has: () => false,
+      currency: null,
+    };
+  }, [door, addOn]);
 }
 
 export function useRead() {

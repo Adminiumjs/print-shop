@@ -23,7 +23,7 @@ import { deviceNow } from "./clock.ts";
 import type { StaffConfig } from "./transport/staffConnection.ts";
 import { SessionPortError, type SessionTransport } from "./transport/sessionSource.ts";
 import { momentOf } from "./time.ts";
-import type { Action, ActivityEntry, AddOnTable, CatalogEntry, InstalledAddOn, PanelAccess, PanelDoor, PanelList, PanelOpen, PanelUploaded, Person, ProofFile, Table, WorksData, WorksDoor, WorksFacts } from "./door.ts";
+import type { Action, ActivityEntry, AddOnTable, CatalogEntry, InstalledAddOn, PanelDoor, PanelList, PanelOpen, PanelUploaded, Person, ProofFile, Table, WorksData, WorksDoor, WorksFacts } from "./door.ts";
 import { ApiError, text, type Id, type Row } from "./wire.ts";
 import { loadPanelModule } from "../add-ons/connected.ts";
 import { PANEL_HOST } from "./panels/host.tsx";
@@ -243,10 +243,8 @@ export class AdminiumWorks implements WorksDoor {
         await ready();
         await this.t.mutate(await at(addOn, table, `${one(key)}?confirm=true`), "DELETE");
       },
-      access: async (addOn: string) => {
-        const reply = await this.t.get<{ tables?: PanelAccess["tables"]; has?: Record<string, boolean>; currency?: string | null }>(`/api/v1/add-ons/${encodeURIComponent(addOn)}/kit`);
-        return { tables: reply.tables ?? {}, has: reply.has ?? {}, currency: reply.currency ?? null };
-      },
+      // Said by Adminium in the staff config, by the add-on's tables' real names (the dashboard's kit route is not a screen's).
+      access: (addOn: string, table: string) => (this.cfg.access === null ? null : (this.cfg.access.tables[this.realOf(addOn, table)] ?? [])),
       upload: async (addOn: string, table: string, column: string, key: Id, file: Blob, name: string): Promise<PanelUploaded> => {
         await ready();
         const real = this.realOf(addOn, table);

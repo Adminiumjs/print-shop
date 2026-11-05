@@ -191,15 +191,8 @@ export interface PanelDoor {
   remove(addOn: string, table: string, key: Id): Promise<void>;
   /** The bytes stored for a file column of the row `key`, then the row saved with them; a save refused throws the file away. */
   upload(addOn: string, table: string, column: string, key: Id, file: Blob, name: string): Promise<PanelUploaded>;
-  /** What the person signed in may do with the add-on's tables, as Adminium answers the dashboard's kit. */
-  access(addOn: string): Promise<PanelAccess>;
-}
-
-/** What a person may do with each of an add-on's tables (by its short name), and which of its columns they may not read. */
-export interface PanelAccess {
-  tables: Record<string, { can: { read: boolean; create: boolean; update: boolean; delete: boolean }; unreadable: string[] }>;
-  has: Record<string, boolean>;
-  currency: string | null;
+  /** What the person may do with one of the add-on's tables, as Adminium said it in the staff config; null when it did not say. */
+  access(addOn: string, table: string): readonly Action[] | null;
 }
 
 export interface WorksDoor {
