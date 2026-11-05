@@ -15,15 +15,15 @@
 
 /**
  * Each fix is where Adminium's price differs from the old code's, and why.
- * The first four are the slips the plan found (§2.4, items 1 to 4; Q9 for the
- * break, CR16/CR17 for the delivery over the bands).
+ * The first four are the known slips of the old price (the next break, and
+ * the delivery over the bands among them).
  */
 export const FIXES = {
   /** Slip 1. A roll stock on a sheet product (vinyl stickers) was charged its square-metre rate for every press sheet. */
   vinylBySheetArea: "a roll stock on the sheet press costs the area a sheet prints, not a square metre a sheet",
-  /** Slip 2 (Q9). 999 flyers cost more than 1000: the break was picked at or below, with no cap. */
+  /** Slip 2. 999 flyers cost more than 1000: the break was picked at or below, with no cap. */
   neverDearerThanNextBreak: "a line never costs more than the next break's quantity would",
-  /** Slip 3 (Q8, CR16/CR17). Over 30 kg was charged the 30 kg band. */
+  /** Slip 3. Over 30 kg was charged the 30 kg band. */
   over30kgQuotedByHand: "an order over the top band has no delivery price: the works quotes it",
   /** Slip 4. Gloss lamination was always one side and matt always two (soft-touch on one side too). */
   laminationBySides: "a lamination is priced by the sides it covers, the look at the same price",
@@ -31,7 +31,7 @@ export const FIXES = {
   upFromTheSize: "a size prints as many up as the rate card says",
   /** What a parcel weighs: the finished pieces and the packing, a canvas's frame; not the press sheets plus 8 % (and vinyl at its 300 gsm, not nothing). */
   weightAsPosted: "the weight is the finished pieces, the frames and the packing",
-  /** CR9. Every large-format job went in a tube, a stretched canvas and a 3 m banner too. */
+  /** Every large-format job went in a tube, a stretched canvas and a 3 m banner too. */
   tubeOnlyWhenItRolls: "the tube only for large format that rolls: not on a frame, no longer than the tube",
   /** Areas and edges are counted to the hundredth of a square metre and of a metre, as the comp counts them. */
   areaToTheHundredth: "areas and edges to the hundredth",

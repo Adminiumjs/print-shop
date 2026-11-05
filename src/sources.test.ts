@@ -715,8 +715,8 @@ describe('the host names no company', () => {
   const IMPORT_LINE = /^import \{ register as \w+ \} from '\.\/vendor\/[a-z-]+\/index\.ts';$/;
 
   /**
-   * The one sentence the owner ruled the customer side says by name (plan 73
-   * §0.4 Q-T1, "Made it in Canva? Download it as PDF Print"): the artwork
+   * The one sentence the customer side says by name ("Made it in Canva?
+   * Download it as PDF Print"): the artwork
    * step's two `shop.artwork.export.*` lines, in each language. It points the
    * customer at an export, and no Canva integration ships.
    */

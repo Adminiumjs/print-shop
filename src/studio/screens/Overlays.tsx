@@ -1,7 +1,7 @@
 /**
  * The overlays over the works' screens: the send-a-proof sheet and the
  * spoilage dialog (comp `I - Marlow Press` 1388-1430), the delivery quote
- * drawn on the proof sheet's anatomy (plan CR16, CR17), and the add-ons'
+ * drawn on the proof sheet's anatomy, and the add-ons'
  * dialogs (`AddOnOverlays`). Each is a dialog with its own label, focus kept
  * inside it and given back to what opened it, closed by Escape.
  */
@@ -269,7 +269,7 @@ function QuoteSheet({ order }: { order: Row }) {
   const maxKg = num(band?.["max_kg"]);
   const price = num(band?.["price"]);
   const weight = num(order["weight_kg"]) ?? 0;
-  // The ruled starting value (plan CR17): as many of the heaviest band's boxes as the weight needs, at its price. The works types over it.
+  // The starting value: as many of the heaviest band's boxes as the weight needs, at its price. The works types over it.
   const parcels = maxKg === null || maxKg <= 0 ? 0 : Math.ceil(weight / maxKg);
   const start = price === null ? "" : (parcels * price).toFixed(2);
   const [value, setValue] = useState(start);
