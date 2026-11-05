@@ -2,7 +2,8 @@
  * Order a sample pack: the works' stocks to tick, and where to post them.
  * One guest write behind the human check, with the stocks as links; a
  * second pack to the same address Adminium refuses (the address is kept as
- * one code, unique), and the page says so on the address.
+ * one code, unique) without saying why, so the page says on the address
+ * that one may already have gone there.
  */
 import { Check, CircleAlert, Mail } from "lucide-react";
 

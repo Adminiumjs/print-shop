@@ -38,7 +38,7 @@ import { join } from "node:path";
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { valuesOf } from "../shop/after.ts";
+import { sampleRefusal, samePlace, valuesOf } from "../shop/after.ts";
 import type { DeliveryAnswer } from "../shop/after-port.ts";
 import { firstChoice, jobValues } from "../shop/config.ts";
 import { AdminiumShop } from "../shop/door.ts";
@@ -297,7 +297,8 @@ describe.skipIf(why !== null)(`after the order, on a built Adminium${why === nul
           .askSamples({ values: { name: "Harbour Bakery", email: "orders@harbourbakery.example", address_line1: "12 Quay Street", town: "Marlow", postcode: "SL7 1BT", language: "en-US", client_key: `printing-after-${engine}-pack-000002` }, children: { sample_stocks: stocks.slice(0, 1) } })
           .catch((e: unknown) => e);
         expect(isShopError(refused), "kept a second pack to the same address").toBe(true);
-        if (isShopError(refused)) expect(refused.refused.column ?? refused.refused.code, said(refused)).toMatch(/address_key|PUBLIC_/);
+        // The page's sentence on the address shows for exactly what Adminium answers.
+        expect(samePlace(sampleRefusal(refused)), said(refused)).toBe(true);
         expect((await rows("sample_requests")).length).toBe(before);
       }, 60_000);
 
@@ -309,6 +310,7 @@ describe.skipIf(why !== null)(`after the order, on a built Adminium${why === nul
           .askSamples({ values: { name: "Harbour Bakery", email: "post@harbourbakery.example", address_line1: "12 quay street", town: "Marlow", postcode: "sl7 1bt", language: "en-US", client_key: `printing-after-${engine}-pack-000003` }, children: { sample_stocks: stock } })
           .catch((e: unknown) => e);
         expect(isShopError(refused)).toBe(true);
+        expect(samePlace(sampleRefusal(refused)), said(refused)).toBe(true);
       }, 60_000);
 
       it("accepts the works' delivery quote through the order's own link: the order's delivery and total move to it", async () => {

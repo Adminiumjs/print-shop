@@ -909,15 +909,26 @@ export async function sendSamples(): Promise<"sent" | "fix" | "failed"> {
     toast("after.toast.samples");
     return "sent";
   } catch (error) {
-    const refused = isShopError(error) ? { column: error.refused.column, reason: error.refused.reason, code: error.refused.code } : { column: null, reason: null, code: "UNREACHABLE" };
-    set({ samples: { ...get().samples, sending: false, refused } });
+    set({ samples: { ...get().samples, sending: false, refused: sampleRefusal(error) } });
     return isShopError(error) ? "fix" : "failed";
   }
 }
 
-/** Whether Adminium refused the pack because one has already gone to the address. */
+/** What the page keeps of a refused pack: Adminium's code and, where it named them, the column and the reason. */
+export function sampleRefusal(error: unknown): NonNullable<AfterState["samples"]["refused"]> {
+  return isShopError(error) ? { column: error.refused.column, reason: error.refused.reason, code: error.refused.code } : { column: null, reason: null, code: "UNREACHABLE" };
+}
+
+/**
+ * Whether the refusal is the one an address that has had its pack meets.
+ * Adminium answers a second pack with a bare refusal on purpose (naming the
+ * address would let anyone probe who has asked), so a refusal naming no
+ * column counts too; the page's sentence says only that one may have gone.
+ */
 export function samePlace(refused: AfterState["samples"]["refused"]): boolean {
-  return refused !== null && (refused.column === "address_key" || refused.reason === "unique" || refused.reason === "taken" || refused.code === "PUBLIC_DUPLICATE");
+  if (refused === null) return false;
+  if (refused.column === "address_key" || refused.reason === "unique" || refused.reason === "taken" || refused.code === "PUBLIC_DUPLICATE") return true;
+  return refused.code === "PUBLIC_WRITE_REFUSED" && refused.column === null;
 }
 
 // ── templates ──────────────────────────────────────────────────────────────

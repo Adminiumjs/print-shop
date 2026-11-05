@@ -32,7 +32,7 @@ function refusal(code: string, status: number, more: Partial<Refused> = {}): Sho
   return new ShopError({ code, status, column: null, child: null, index: null, reason: null, changed: null, raw: { code, params: {} }, ...more }, code);
 }
 
-/** A unique column a new row would share with a row already kept: refused, by its column, as Adminium refuses it. */
+/** A unique column a new row would share with a row already kept: the write is refused, as Adminium refuses it. */
 function clash(world: DemoWorld, table: string, row: Row): string | null {
   for (const column of TABLE_OF.get(table)?.columns ?? []) {
     if ((column as { unique?: boolean }).unique !== true) continue;
@@ -389,7 +389,8 @@ export class DemoAfter implements AfterPort {
       for (const stock of write.children.sample_stocks) w.insert("sample_stocks", { request_id: row.id, material_id: stock.values.material_id });
       return row;
     });
-    if (refused !== null) throw refusal("PUBLIC_WRITE_REFUSED", 400, { column: refused, reason: "unique" });
+    // Adminium names no column here, so nobody can learn which addresses have asked.
+    if (refused !== null) throw refusal("PUBLIC_WRITE_REFUSED", 400);
     return copy(w.get("sample_requests", made.id)!);
   }
 }

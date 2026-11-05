@@ -261,7 +261,7 @@ describe("the writes and reads the pages after an order send", () => {
     expect(useShop.getState().basket.map((b) => [b.productId, b.choice.qty])).toEqual([[1, 500]]);
   });
 
-  it("asks for a sample pack with the stocks as links, and says when the address has had one", async () => {
+  it("asks for a sample pack with the stocks as links, and says on the address when Adminium refuses it bare", async () => {
     await mount();
     await go("samples");
     await press(".ma-start");
@@ -274,14 +274,16 @@ describe("the writes and reads the pages after an order send", () => {
     await type("#ma-s-line1", "12 Quay Street");
     await type("#ma-s-town", "Marlow");
     await type("#ma-s-postcode", "SL7 1BT");
-    port.afterPort.refuseNext({ code: "PUBLIC_WRITE_REFUSED", column: "address_key", reason: "unique" });
+    // Refused as Adminium refuses a second pack: bare, no column named.
+    port.afterPort.refuseNext({ code: "PUBLIC_WRITE_REFUSED" });
     await press(".ma-start");
     const [sent] = calls("askSamples");
     expect(sent!.args[0]).toEqual({
       values: { name: "Harbour Bakery", email: "hello@harbourbakery.example", address_line1: "12 Quay Street", town: "Marlow", postcode: "SL7 1BT", language: "en-US", client_key: expect.any(String) },
       children: { sample_stocks: [{ values: { material_id: 1 } }, { values: { material_id: 4 } }] },
     });
-    expect(text()).toContain("A pack has already gone to this address.");
+    expect(text()).toContain("We send one pack to each address, so one may already have gone here.");
+    expect(text()).not.toContain("We couldn't take that request. Check the details and try again.");
     expect(document.activeElement?.id).toBe("ma-s-line1");
   });
 

@@ -15,6 +15,7 @@ import { describe, expect, it } from "vitest";
 import { JOB_FIGURES } from "../sample/marlow-press.ts";
 import type { OrderBody } from "../shop/port.ts";
 import { holidaysToAdd } from "../studio/screens/Prices.tsx";
+import { sampleRefusal, samePlace } from "../shop/after.ts";
 import { isShopError } from "../shop/port.ts";
 import { makeDemo } from "./adminium.ts";
 import { DEMO_HOLIDAYS } from "./world.ts";
@@ -166,12 +167,14 @@ describe("the demo's Adminium", () => {
     const refused = await demo.after
       .askSamples({ values: { name: "Harbour Bakery", email: "orders@harbourbakery.example", address_line1: "12 Quay Street", town: "Marlow", postcode: "SL7 1BT", language: "en-US", client_key: "demo-pack-1" }, children: { sample_stocks: [{ values: { material_id: silk.id } }] } })
       .catch((e: unknown) => e);
-    expect(isShopError(refused) && refused.refused.column).toBe("address_key");
+    // Refused as Adminium refuses it: no column named, so nobody learns which addresses have asked; the page still says one may have gone.
+    expect(isShopError(refused) && [refused.refused.code, refused.refused.column]).toEqual(["PUBLIC_WRITE_REFUSED", null]);
+    expect(samePlace(sampleRefusal(refused))).toBe(true);
     // Typed another way, it is the same address: the key is kept by its `normalize: "code"` rule, as Adminium keeps it.
     const retyped = await demo.after
       .askSamples({ values: { name: "Harbour Bakery", email: "post@harbourbakery.example", address_line1: "12 quay street", town: "Marlow", postcode: "sl7 1bt", language: "en-US", client_key: "demo-pack-3" }, children: { sample_stocks: [{ values: { material_id: silk.id } }] } })
       .catch((e: unknown) => e);
-    expect(isShopError(retyped) && retyped.refused.column).toBe("address_key");
+    expect(isShopError(retyped) && [retyped.refused.code, retyped.refused.column]).toEqual(["PUBLIC_WRITE_REFUSED", null]);
     const taken = await demo.after.askSamples({ values: { name: "Two Rivers", email: "ride@tworivers.example", address_line1: "8 Station Road", town: "Bourne End", postcode: "SL8 5QH", language: "en-US", client_key: "demo-pack-2" }, children: { sample_stocks: [{ values: { material_id: silk.id } }] } });
     expect(taken["status"]).toBe("new");
   });
