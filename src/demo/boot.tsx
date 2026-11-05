@@ -56,8 +56,8 @@ export function DemoRoot() {
   const generation = useDemo((s) => s.generation);
   const theme = useOneTheme();
   const env = useMemo<WorksEnv>(
-    // A record's own page and an add-on's are the dashboard's, which the demo does not have: the links stay on this page.
-    () => ({ door: demoAdminium().works, recordHref: () => "#", addOnPageHref: () => "#", addOnsHref: "#", signInHref: "#" }),
+    // An add-on's page is the dashboard's, which the demo does not have: the links stay on this page.
+    () => ({ door: demoAdminium().works, addOnPageHref: () => "#", addOnsHref: "#", signInHref: "#" }),
     // A fresh world is a new door.
     [generation],
   );

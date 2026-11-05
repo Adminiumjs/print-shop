@@ -1,6 +1,6 @@
 /**
  * What every works screen reaches through React: the door into Adminium,
- * where a record's own page is in the dashboard, and the hooks that read the
+ * where the dashboard's pages are, and the hooks that read the
  * rows and run a write.
  *
  * A write is run the same way everywhere: while it is on, the screen says
@@ -13,13 +13,11 @@ import { createContext, useCallback, useContext, useState, type ReactNode } from
 
 import type { WorksData, WorksDoor } from "./door.ts";
 import { toast, useWorks } from "./store.ts";
-import { isApiError, type Id } from "./wire.ts";
+import { isApiError } from "./wire.ts";
 import { useT } from "../i18n/index.tsx";
 
 export interface WorksEnv {
   door: WorksDoor;
-  /** A record's own page in the dashboard (where the Customiser's panels are drawn). */
-  recordHref: (page: string, id: Id) => string;
   /** An add-on's own page in the dashboard (the Customiser's designs, Inventory's receiving). */
   addOnPageHref: (key: string, ref: string) => string;
   /** Adminium's own add-ons page, where an add-on is installed and its keys are kept. */

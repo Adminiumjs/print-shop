@@ -1,0 +1,318 @@
+/**
+ * THE CUSTOMISER'S PANELS ON THE WORKS' SCREENS, AGAINST A REAL ADMINIUM.
+ *
+ * This repo's manifest and sample, installed with the built Customiser on a
+ * BUILT Adminium (`ADMINIUM_REPO`), on every engine this run reaches. The
+ * works' own door is booted on an owner's, a prepress's, a press's and a
+ * counter's sessions (each holding the app's role and no other), as their
+ * screens boot it, and the Customiser's panels are asked for as the ticket
+ * asks for them:
+ *
+ *   - the job's panel is served to the owner, prepress and the press (the
+ *     last two open only the works' screens), and refused to the counter;
+ *   - the REAL panel code Adminium serves is imported and drawn here with the
+ *     works' host (`studio/panels/host.tsx`), and draws the design from the
+ *     Customiser's rows, read as that role;
+ *   - what the panel saves when it makes a proof and the print files is saved
+ *     as each of those roles, through the same door calls the host's
+ *     `useWrite` and `useUpload` make (the drawing itself needs a browser's
+ *     canvas, which this suite has not);
+ *   - the product's panel is served to the owner, and refused to the press.
+ *
+ * What an app's role cannot yet hold on 0.3.46 (the shopper's words, a
+ * write of a version, a delete of a file) is held as `it.fails`, each named
+ * with its gap.
+ *
+ * It runs with `CONTRACT=1` where a built Adminium (`ADMINIUM_REPO`) and a
+ * built add-ons checkout (`ADD_ONS_REPO`) are, and says why it skipped
+ * otherwise. Its ports start at `CONTRACT_PORT_BASE` (4980), three an engine.
+ */
+import { createHash, randomBytes } from "node:crypto";
+import { rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { deflateSync } from "node:zlib";
+import { Blob as NodeBlob } from "node:buffer";
+
+import { JSDOM } from "jsdom";
+import { act } from "react";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+
+import { PanelRefused } from "../add-ons/connected.ts";
+import { AdminiumWorks } from "../studio/adminiumWorks.ts";
+import type { PanelDoor, WorksData } from "../studio/door.ts";
+import { PanelScopeProvider } from "../studio/panels/host.tsx";
+import { createSessionTransport } from "../studio/transport/sessionSource.ts";
+import { loadStaffConfig } from "../studio/transport/staffConnection.ts";
+import type { Row } from "../studio/wire.ts";
+import { addOnBundle, appBundle, boot, Caller, ENGINES, missing, missingAddOn, ok, PORTS_PER_ENGINE, until, type Engine, type Server } from "./harness.ts";
+import { MANIFEST_TEXT } from "./release.ts";
+
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
+/** The names a page gives React and the panel, put on this process for the drawing and taken away after. */
+const PAGE_NAMES = ["window", "document", "navigator", "Node", "Element", "HTMLElement", "SVGElement", "HTMLCanvasElement", "HTMLIFrameElement", "Text", "Event", "CustomEvent", "MutationObserver", "getComputedStyle", "requestAnimationFrame", "cancelAnimationFrame", "Image"] as const;
+
+/** Draw something in a page of its own, at the server's address (the panel reads its files from there). */
+async function inAPage<T>(base: string, work: (page: Document) => Promise<T>): Promise<T> {
+  const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: base, pretendToBeVisual: true });
+  const held = globalThis as unknown as Record<string, unknown>;
+  const before = new Map(PAGE_NAMES.map((name) => [name, Object.getOwnPropertyDescriptor(held, name)]));
+  for (const name of PAGE_NAMES) Object.defineProperty(held, name, { value: (dom.window as unknown as Record<string, unknown>)[name], configurable: true, writable: true });
+  try {
+    return await work(dom.window.document);
+  } finally {
+    for (const [name, descriptor] of before) {
+      if (descriptor === undefined) delete held[name];
+      else Object.defineProperty(held, name, descriptor);
+    }
+    dom.window.close();
+  }
+}
+
+const CRC = (() => {
+  const table = new Uint32Array(256);
+  for (let n = 0; n < 256; n += 1) {
+    let c = n;
+    for (let k = 0; k < 8; k += 1) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    table[n] = c >>> 0;
+  }
+  return (bytes: Buffer) => {
+    let c = 0xffffffff;
+    for (const b of bytes) c = table[(c ^ b) & 0xff]! ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+  };
+})();
+
+/** A real PNG of one colour: what a browser's canvas hands back for a proof. */
+function png(width = 12, height = 8): Buffer {
+  const chunk = (type: string, data: Buffer) => {
+    const head = Buffer.alloc(4);
+    head.writeUInt32BE(data.length);
+    const body = Buffer.concat([Buffer.from(type, "latin1"), data]);
+    const crc = Buffer.alloc(4);
+    crc.writeUInt32BE(CRC(body));
+    return Buffer.concat([head, body, crc]);
+  };
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8;
+  ihdr[9] = 2;
+  const rows = Buffer.alloc((width * 3 + 1) * height);
+  for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) rows.set([0xd9, 0x2b, 0x6b], y * (width * 3 + 1) + 1 + x * 3);
+  return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk("IHDR", ihdr), chunk("IDAT", deflateSync(rows)), chunk("IEND", Buffer.alloc(0))]);
+}
+
+const why = missing() ?? missingAddOn("customiser");
+if (why !== null && process.env["ADMINIUM_REQUIRE_CONTRACT"] === "1") throw new Error(`the contract must run here, and cannot: ${why}`);
+const PORT_BASE = Number(process.env["CONTRACT_PORT_BASE"] ?? 4980);
+const ADMIN = { email: process.env["E2E_ADMIN_EMAIL"] ?? "e2e@adminium.local", password: process.env["E2E_ADMIN_PASSWORD"] ?? "adminium-e2e-password" };
+/** 10:20 on Wednesday 5 August 2026 in Marlow (British Summer Time). */
+const WEDNESDAY = Date.parse("2026-08-05T09:20:00Z");
+const newPassword = (): string => `${randomBytes(18).toString("base64url")}Aa1!`;
+
+/** Files as the browser hands them over, in the bytes this process's `fetch` sends. */
+const pngFile = () => new NodeBlob([new Uint8Array(png())], { type: "image/png" }) as unknown as Blob;
+const pdfFile = () => new NodeBlob(["%PDF-1.4\n1 0 obj << /Type /Page /MediaBox [0 0 252 156] >>\n%%EOF\n"], { type: "application/pdf" }) as unknown as Blob;
+
+/** A file reference as a row holds it: the bare id, or the column's `{ id }`. */
+const fileIdOf = (value: unknown): string | null => (typeof value === "string" ? value : value !== null && typeof value === "object" && typeof (value as { id?: unknown }).id === "string" ? (value as { id: string }).id : null);
+
+describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, against a built Adminium${why === null ? "" : ` — skipped: ${why}`}`, () => {
+  ENGINES.forEach(([engine, available], index) => {
+    describe.skipIf(!available)(`on ${engine}`, () => {
+      let server: Server;
+      let admin: Caller;
+      let connectionId = "";
+      const doors: Record<string, AdminiumWorks> = {};
+      const callers: Record<string, Caller> = {};
+
+      /** A door booted as the staff build boots it, on a person's own session; a panel's code imported as the browser imports it. */
+      const doorFor = async (caller: Caller): Promise<AdminiumWorks> => {
+        const cfg = (await loadStaffConfig({ hostedStaff: true, base: "/apps/printing/staff/", fetchImpl: caller.fetchAs() }))!;
+        const transport = createSessionTransport({
+          tableOfRef: cfg.tables,
+          connectionId: cfg.connectionId ?? undefined,
+          staff: { csrfToken: cfg.csrfToken, timezone: cfg.timezone, timezoneSource: cfg.timezoneSource, serverTimezone: cfg.serverTimezone, currency: cfg.currency },
+          fetchImpl: caller.fetchAs(),
+        });
+        const importBundle = async (url: string) => {
+          const code = await (await caller.fetchAs()(url)).text();
+          const file = join(tmpdir(), `printing-panel-${createHash("sha256").update(code).digest("hex").slice(0, 16)}.mjs`);
+          writeFileSync(file, code);
+          return import(/* @vite-ignore */ pathToFileURL(file).href);
+        };
+        const said = Date.parse(String(cfg.now));
+        return new AdminiumWorks(transport, cfg, { fetchImpl: caller.fetchAs(), origin: server.base, importBundle, skew: Number.isNaN(said) ? 0 : said - Date.now() });
+      };
+      /** Someone holding one of the app's roles and no other, signed in as their screens sign them in. */
+      const personWith = async (role: string, name: string): Promise<Caller> => {
+        const roles = ok(await admin.get<{ roles: { id: string; name: string; slug?: string }[] }>("/api/v1/roles")).roles;
+        const found = roles.find((r) => r.slug === `printing-${role}`) ?? roles.find((r) => r.name.toLowerCase() === role)!;
+        const email = `${role}.panel.${engine}@marlowpress.example`;
+        const invited = ok(await admin.post<{ invite: { token: string } }>("/api/v1/users", { email, name, roleIds: [found.id] }), 201);
+        const password = newPassword();
+        ok(await new Caller(server.base).post("/api/v1/auth/password/reset", { token: invited.invite.token, newPassword: password }));
+        const caller = new Caller(server.base);
+        ok(await caller.post("/api/v1/auth/login", { email, password }));
+        return caller;
+      };
+      /** Harbour Bakery's business cards (MP-4112): the sample's job made in the Customiser. */
+      const designedJob = (data: WorksData): Row => {
+        const order = data.orders.find((o) => o["number"] === "MP-4112")!;
+        return data.jobs.find((j) => String(j["order_id"]) === String(order.id) && j["design_id"] !== null && j["design_id"] !== undefined)!;
+      };
+      const panelsOf = (who: string): PanelDoor => doors[who]!.panels();
+
+      beforeAll(async () => {
+        server = await boot(engine as Engine, PORT_BASE + index * PORTS_PER_ENGINE, WEDNESDAY - 60_000, { database: `printing_panel_${engine}${process.env["CONTRACT_DB_SUFFIX"] ?? ""}` });
+        admin = new Caller(server.base, { origin: server.base });
+        await admin.signIn(ADMIN.email, ADMIN.password);
+        if (engine === "sqlite") {
+          const file = join(tmpdir(), `printing-panel-contract-${String(PORT_BASE)}.db`);
+          rmSync(file, { force: true });
+          writeFileSync(file, "");
+          connectionId = ok(await admin.post<{ id: string }>("/api/v1/connections", { name: "marlow-press", engine: "sqlite", dsn: `sqlite:${file}` }), 201).id;
+        } else {
+          connectionId = ok(await admin.get<{ connections: { id: string; name: string }[] }>("/api/v1/connections")).connections.find((c) => c.name === "northwind")!.id;
+        }
+        const customiser = addOnBundle("customiser");
+        const stagedAddOn = await admin.post(`/api/v1/add-ons/upload?expectedSha512=${encodeURIComponent(customiser.integrity)}`, customiser.buffer);
+        expect([200, 201], JSON.stringify(stagedAddOn.body).slice(0, 800)).toContain(stagedAddOn.status);
+        const app = appBundle({ manifest: MANIFEST_TEXT });
+        const staged = await admin.post(`/api/v1/apps/upload?expectedSha512=${encodeURIComponent(app.integrity)}`, app.buffer);
+        expect([200, 201], JSON.stringify(staged.body).slice(0, 800)).toContain(staged.status);
+        const body = { key: app.key, version: app.version, connectionId };
+        const plan = ok(await admin.post<{ plan: { installable: boolean; checksum: string } }>("/api/v1/apps/plan", body)).plan;
+        expect(plan.installable, JSON.stringify(plan).slice(0, 3000)).toBe(true);
+        const install = await admin.post("/api/v1/apps/install", { ...body, planChecksum: plan.checksum, addOns: [{ key: customiser.key, version: customiser.version }] });
+        if (install.status !== 200) throw new Error(`install refused: ${JSON.stringify(install.body).slice(0, 3000)}`);
+        ok(await admin.patch(`/api/v1/connections/${connectionId}`, { timezone: "Europe/London", currency: "GBP" }));
+        await server.setClock(WEDNESDAY, true);
+        ok(await admin.post("/api/v1/apps/printing/sample-data"));
+        await until(async () => (ok(await admin.get<{ loaded: boolean }>("/api/v1/apps/printing/sample-data")).loaded ? true : undefined), "the sample to be added");
+        for (const [role, name] of [["owner", "Rosa Marlow"], ["prepress", "Priya Shah"], ["press", "Tom Ellis"], ["counter", "Jo Marsh"]] as const) {
+          callers[role] = await personWith(role, name);
+          doors[role] = await doorFor(callers[role]!);
+        }
+        // On Postgres and MySQL the sample says it is loaded before the rows it adds through the Customiser's section are in.
+        await until(async () => ((await doors["owner"]!.load()).jobs.some((j) => j["design_id"] !== null && j["design_id"] !== undefined) ? true : undefined), "the sample's designed job");
+        await server.setClock(WEDNESDAY);
+      }, 600_000);
+
+      afterAll(async () => {
+        await server?.stop();
+      });
+
+      it("serves the job's panel to the owner, prepress and the press, and refuses it to the counter", async () => {
+        const job = designedJob(await doors["press"]!.load());
+        for (const who of ["owner", "prepress", "press"]) {
+          const loaded = await panelsOf(who).load({ id: "customiser-line", table: "jobs", row: job.id });
+          expect(typeof loaded, who).toBe("function");
+        }
+        const refused = await panelsOf("counter").load({ id: "customiser-line", table: "jobs", row: job.id }).catch((e: unknown) => e);
+        expect(refused).toBeInstanceOf(PanelRefused);
+        expect((refused as PanelRefused).status).toBe(403);
+      });
+
+      it("serves the product's panel to the owner, and refuses it to the press", async () => {
+        const data = await doors["owner"]!.load();
+        const product = data.products.find((p) => p["base_id"] !== null && p["base_id"] !== undefined)!;
+        expect(typeof (await panelsOf("owner").load({ id: "customiser-product", table: "products", row: product.id }))).toBe("function");
+        expect(await panelsOf("press").load({ id: "customiser-product", table: "products", row: product.id }).catch((e: unknown) => (e as PanelRefused).status)).toBe(403);
+      });
+
+      it("tells the panel each role's rights on the Customiser's tables, as the dashboard's kit reads them", async () => {
+        for (const who of ["owner", "prepress", "press"]) {
+          const access = await panelsOf(who).access("customiser");
+          expect(access.tables["fonts"]?.can.read, who).toBe(true);
+          expect(access.tables["version_files"]?.can.create, who).toBe(true);
+        }
+      });
+
+      // G1: the starter fonts' files are handed out beside the set-up page, which Adminium serves only while the Customiser is attached to the dashboard.
+      for (const who of ["owner", "prepress", "press"] as const) {
+        it.fails(`hands ${who} a starter font's file to make the print files with (gap G1: the set-up page's files are closed to an app-attached add-on)`, async () => {
+          const answer = await callers[who]!.fetchAs()("/api/v1/add-ons/customiser/pages/customiser/files/fonts/Manrope-OFL.txt");
+          expect(answer.status).toBe(200);
+        });
+      }
+
+      /** The Customiser's own job panel, drawn here with the works' host as this role: what it says. */
+      const drawnFor = async (who: string, job: Row): Promise<string> => {
+        const Panel = (await panelsOf(who).load({ id: "customiser-line", table: "jobs", row: job.id })) as (props: Record<string, unknown>) => null;
+        return inAPage(server.base, async (page) => {
+          // React's page half, imported once there is a page for it.
+          const { createRoot } = await import("react-dom/client");
+          const host = page.createElement("div");
+          page.body.append(host);
+          const root = createRoot(host);
+          await act(async () =>
+            root.render(
+              <PanelScopeProvider scope={{ door: panelsOf(who), addOn: "customiser", locale: "en-US" }}>
+                <Panel connectionId={doors[who]!.facts().connectionId} table="jobs" row={String(job.id)} linked={String(job["design_id"])} />
+              </PanelScopeProvider>,
+            ),
+          );
+          const deadline = Date.now() + 30_000;
+          while (!(host.textContent ?? "").includes("Make the proof") && Date.now() < deadline) await act(async () => new Promise((resolve) => setTimeout(resolve, 200)));
+          const said = host.textContent ?? "";
+          act(() => root.unmount());
+          return said;
+        });
+      };
+      /** The customer's own words on the job's design, as the operator reads them. */
+      const wordsOf = async (job: Row): Promise<string[]> => {
+        const design = (await admin.get<{ data: Row }>(`/api/v1/data/${connectionId}/customiser_designs/${String(job["design_id"])}`)).body.data;
+        const values = typeof design["values"] === "string" ? (JSON.parse(design["values"]) as { parts?: Record<string, { text?: string }> }) : ((design["values"] ?? {}) as { parts?: Record<string, { text?: string }> });
+        return Object.values(values.parts ?? {}).map((part) => part.text).filter((text): text is string => typeof text === "string" && text !== "");
+      };
+
+      for (const who of ["owner", "prepress", "press"] as const) {
+        it(`draws the Customiser's own panel on a job for ${who}, from the rows of the design that role reads`, async () => {
+          const drawn = await drawnFor(who, designedJob(await doors[who]!.load()));
+          // Past "Loading": the design, its ready-made design and base, the parts, fonts, palettes and versions all read as this role.
+          expect(drawn, drawn.slice(0, 600)).toContain("Make the proof");
+          expect(drawn).toContain("Design");
+        }, 60_000);
+
+        // G2: an app's role holds read, create and update of an add-on's table, never its personal columns in clear (`read_pii`).
+        it.fails(`shows ${who} the customer's own words in the panel (gap G2: an app role cannot read the Customiser's personal columns)`, async () => {
+          const job = designedJob(await doors[who]!.load());
+          const words = await wordsOf(job);
+          expect(words.length).toBeGreaterThan(0);
+          expect(await drawnFor(who, job)).toContain(words[0]!);
+        }, 60_000);
+
+        it(`stores the print file the panel makes as ${who}: a row of the design's version, then its file`, async () => {
+          const job = designedJob(await doors[who]!.load());
+          const panels = panelsOf(who);
+          const version = (await panels.list("customiser", "design_versions", { where: { column: "design_id", op: "eq", value: job["design_id"] }, order: "version.desc", limit: 51, offset: 0 }))[0]!;
+          const made = await panels.create("customiser", "version_files", { app: version["app"], version_id: version.id, kind: "print", name: `cards-${who}.pdf`, about: "Business cards · 85 × 55 mm", position: 1 });
+          const file = await panels.upload("customiser", "version_files", "file", made.data.id, pdfFile(), `cards-${who}.pdf`);
+          expect(fileIdOf(file.row["file"])).toMatch(/^file_[0-9A-Z]{26}$/);
+          expect((await panels.get("customiser", "version_files", made.data.id))?.["file"]).toEqual(file.row["file"]);
+        }, 60_000);
+
+        // LEDGER-WRITE: the Customiser's `designs` ledger writes `design_versions`, and an app's role is held to read on a table a ledger writes.
+        it.fails(`stores the proof the panel makes as ${who} (gap: an app role cannot write design_versions)`, async () => {
+          const job = designedJob(await doors[who]!.load());
+          const panels = panelsOf(who);
+          const version = (await panels.list("customiser", "design_versions", { where: { column: "design_id", op: "eq", value: job["design_id"] }, order: "version.desc", limit: 51, offset: 0 }))[0]!;
+          const proof = await panels.upload("customiser", "design_versions", "proof_file", version.id, pngFile(), `${String(job["design_id"])}-v${String(version["version"])}-proof-${who}.png`);
+          expect(fileIdOf(proof.row["proof_file"])).toMatch(/^file_[0-9A-Z]{26}$/);
+        }, 60_000);
+      }
+
+      // G2: "Make the files again" takes the version's old files away first; an app's role never deletes an add-on's rows.
+      it.fails("lets prepress make the files again: the version's old files taken away (gap G2: an app role cannot delete version_files)", async () => {
+        const panels = panelsOf("prepress");
+        const files = await panels.list("customiser", "version_files", { where: { column: "name", op: "eq", value: "cards-prepress.pdf" }, limit: 2, offset: 0 });
+        expect(files.length).toBe(1);
+        await panels.remove("customiser", "version_files", files[0]!.id);
+      });
+    });
+  });
+});

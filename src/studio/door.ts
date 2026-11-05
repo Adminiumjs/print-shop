@@ -9,6 +9,7 @@
  * and never adds a figure of its own.
  */
 import type { Id, Row } from "./wire.ts";
+import type { PanelId } from "../manifest/panels.ts";
 
 /** The app's tables, by the names the manifest gives them. */
 export type Table =
@@ -145,8 +146,66 @@ export interface ActivityEntry {
 /** The proof file: a PDF picked in this browser, or a copy of one the Customiser made. */
 export type ProofFile = { blob: Blob; filename: string } | { copyOf: string };
 
+/** One of the Customiser's record panels, opened on a row of the app's: a job's design, a product's base. */
+export interface PanelOpen {
+  id: PanelId;
+  table: "jobs" | "products";
+  row: Id;
+}
+
+/** A list of one of an add-on's tables, as the data routes take it. */
+export interface PanelList {
+  where?: unknown;
+  /** `column.dir,column.dir` */
+  order?: string;
+  select?: readonly string[];
+  limit: number;
+  offset: number;
+}
+
+/** What a file put into one of an add-on's file columns answers: the reference the row now holds, the file, the row saved. */
+export interface PanelUploaded {
+  ref: string;
+  id: string;
+  name: string;
+  mime: string;
+  size: number;
+  removed: string[];
+  row: Row;
+}
+
+/**
+ * What a Customiser panel drawn on a works screen reads and writes through:
+ * the add-on's own tables by their short names, as the person signed in, and
+ * the panel's code as Adminium serves it to them for that row. A refusal is
+ * the server's, with its code, its words and what it said beside.
+ */
+export interface PanelDoor {
+  /** The panel's code (its default export), served for that row only to a role that holds the panel; refused (403) otherwise. */
+  load(panel: PanelOpen): Promise<unknown>;
+  list(addOn: string, table: string, query: PanelList): Promise<Row[]>;
+  /** One row by its key; null when it is not there or out of reach. */
+  get(addOn: string, table: string, key: Id): Promise<Row | null>;
+  create(addOn: string, table: string, values: Record<string, unknown>): Promise<{ data: Row; postings?: unknown[] }>;
+  update(addOn: string, table: string, key: Id, values: Record<string, unknown>): Promise<{ data: Row; postings?: unknown[] }>;
+  remove(addOn: string, table: string, key: Id): Promise<void>;
+  /** The bytes stored for a file column of the row `key`, then the row saved with them; a save refused throws the file away. */
+  upload(addOn: string, table: string, column: string, key: Id, file: Blob, name: string): Promise<PanelUploaded>;
+  /** What the person signed in may do with the add-on's tables, as Adminium answers the dashboard's kit. */
+  access(addOn: string): Promise<PanelAccess>;
+}
+
+/** What a person may do with each of an add-on's tables (by its short name), and which of its columns they may not read. */
+export interface PanelAccess {
+  tables: Record<string, { can: { read: boolean; create: boolean; update: boolean; delete: boolean }; unreadable: string[] }>;
+  has: Record<string, boolean>;
+  currency: string | null;
+}
+
 export interface WorksDoor {
   who(): Person;
+  /** The door the Customiser's panels draw through on these screens; null where no Adminium serves them (the demo). */
+  panels(): PanelDoor | null;
   facts(): WorksFacts;
   /** The server's clock, as epoch ms. */
   now(): number;

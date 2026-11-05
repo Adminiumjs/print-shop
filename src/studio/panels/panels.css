@@ -1,0 +1,130 @@
+/*
+ * The Customiser's panel in the works' sheet.
+ *
+ * The panel draws with the dashboard's utility classes (`flex`, `gap-2`,
+ * `text-fg-muted`): the ones its two panels use are given here, inside the
+ * sheet only (`.wk-cz`), on the works' own tokens, which carry the same
+ * names as the dashboard's. Below them, the parts `host.tsx` draws.
+ */
+
+.wk-sheet:has(> .wk-cz) { inline-size: min(760px, 96vw); }
+
+/* ── the dashboard's utilities the panels use ─────────────────────────── */
+.wk-cz .flex { display: flex; }
+.wk-cz .inline-flex { display: inline-flex; }
+.wk-cz .flex-col { flex-direction: column; }
+.wk-cz .flex-wrap { flex-wrap: wrap; }
+.wk-cz .flex-1 { flex: 1 1 0%; }
+.wk-cz .min-w-0 { min-inline-size: 0; }
+.wk-cz .items-center { align-items: center; }
+.wk-cz .self-start { align-self: flex-start; }
+.wk-cz .relative { position: relative; }
+.wk-cz .absolute { position: absolute; }
+.wk-cz .inset-0 { inset: 0; }
+.wk-cz .w-full { inline-size: 100%; }
+.wk-cz .size-full { inline-size: 100%; block-size: 100%; }
+.wk-cz .aspect-square { aspect-ratio: 1 / 1; }
+.wk-cz .overflow-hidden { overflow: hidden; }
+.wk-cz .list-none { list-style: none; }
+.wk-cz .m-0 { margin: 0; }
+.wk-cz .p-0 { padding: 0; }
+.wk-cz .p-3 { padding: 12px; }
+.wk-cz .px-1\.5 { padding-inline: 6px; }
+.wk-cz .px-3 { padding-inline: 12px; }
+.wk-cz .px-4 { padding-inline: 16px; }
+.wk-cz .py-1\.5 { padding-block: 6px; }
+.wk-cz .py-2\.5 { padding-block: 10px; }
+.wk-cz .py-3 { padding-block: 12px; }
+.wk-cz .gap-0\.5 { gap: 2px; }
+.wk-cz .gap-1 { gap: 4px; }
+.wk-cz .gap-1\.5 { gap: 6px; }
+.wk-cz .gap-2 { gap: 8px; }
+.wk-cz .gap-2\.5 { gap: 10px; }
+.wk-cz .gap-3 { gap: 12px; }
+.wk-cz .border { border: 1px solid var(--border); }
+.wk-cz .border-b { border-block-end: 1px solid var(--border); }
+.wk-cz .border-border { border-color: var(--border); }
+.wk-cz .border-border-strong { border-color: var(--border-strong); }
+.wk-cz .rounded-xl { border-radius: 12px; }
+.wk-cz .rounded-\[10px\] { border-radius: 10px; }
+.wk-cz .bg-surface-2 { background: var(--surface-2); }
+.wk-cz .bg-surface-3 { background: var(--surface-3); }
+.wk-cz .font-mono { font-family: var(--font-mono); }
+.wk-cz .font-bold { font-weight: 700; }
+.wk-cz .font-extrabold { font-weight: 800; }
+.wk-cz .text-\[10px\] { font-size: 10px; }
+.wk-cz .text-\[11px\] { font-size: 11px; }
+.wk-cz .text-\[11\.5px\] { font-size: 11.5px; }
+.wk-cz .text-\[12px\] { font-size: 12px; }
+.wk-cz .text-\[12\.5px\] { font-size: 12.5px; }
+.wk-cz .text-\[14px\] { font-size: 14px; }
+.wk-cz .text-fg-muted { color: var(--fg-muted); }
+.wk-cz .text-fg-subtle { color: var(--fg-subtle); }
+.wk-cz .text-accent { color: var(--accent); }
+.wk-cz .text-danger { color: var(--danger); }
+.wk-cz .text-warn { color: var(--warn); }
+.wk-cz svg.lucide { inline-size: 15px; block-size: 15px; flex: none; }
+
+/* The Customiser's drawing: as wide as its box, its own outlines on (the editor's rings stay off here). */
+.wk-cz .cz-drawing { inline-size: 100%; block-size: auto; display: block; }
+.wk-cz .cz-part-ring, .wk-cz .cz-part-on, .wk-cz .cz-part-lock-on { stroke: none; }
+.wk-cz .cz-lock-badge { display: grid; place-items: center; inline-size: 100%; block-size: 100%; border-radius: 99px; background: var(--fg); color: var(--bg); }
+
+/* ── the parts the host draws ──────────────────────────────────────────── */
+.wk-cz-card { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.wk-cz-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 14px 16px; border-block-end: 1px solid var(--border); }
+.wk-cz-card-titles { display: flex; flex-direction: column; gap: 2px; min-inline-size: 0; }
+.wk-cz-card-title { margin: 0; font-size: 15px; font-weight: 800; }
+.wk-cz-card-sub { font-size: 12px; color: var(--fg-subtle); }
+.wk-cz-card-body { padding: 16px; }
+
+.wk-cz-stack { display: flex; flex-direction: column; gap: 12px; }
+.wk-cz-stack[data-direction="row"] { flex-direction: row; }
+.wk-cz-stack[data-wrap] { flex-wrap: wrap; }
+.wk-cz-stack[data-align="center"] { align-items: center; }
+.wk-cz-stack[data-align="start"] { align-items: flex-start; }
+.wk-cz-stack[data-justify="between"] { justify-content: space-between; }
+.wk-cz-stack[data-gap="none"], .wk-cz-grid[data-gap="none"] { gap: 0; }
+.wk-cz-stack[data-gap="xs"], .wk-cz-grid[data-gap="xs"] { gap: 4px; }
+.wk-cz-stack[data-gap="sm"], .wk-cz-grid[data-gap="sm"] { gap: 8px; }
+.wk-cz-stack[data-gap="lg"], .wk-cz-grid[data-gap="lg"] { gap: 18px; }
+.wk-cz-stack[data-gap="xl"], .wk-cz-grid[data-gap="xl"] { gap: 24px; }
+
+.wk-cz-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.wk-cz-grid[data-columns="1"] { grid-template-columns: minmax(0, 1fr); }
+.wk-cz-grid[data-columns="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 640px) {
+  .wk-cz-grid, .wk-cz-grid[data-columns="3"] { grid-template-columns: minmax(0, 1fr); }
+}
+
+.wk-cz-facts { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.wk-cz-fact { display: grid; grid-template-columns: minmax(96px, 30%) minmax(0, 1fr); gap: 10px; font-size: 12.5px; }
+.wk-cz-fact dt { color: var(--fg-subtle); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+.wk-cz-fact dd { margin: 0; overflow-wrap: anywhere; }
+
+.wk-cz-pill { display: inline-flex; align-items: center; font-family: var(--font-mono); font-size: 11px; font-weight: 700; border-radius: 6px; padding: 3px 7px; white-space: nowrap; color: var(--fg-muted); background: var(--surface-3); }
+.wk-cz-pill[data-tone="pos"] { color: var(--pos); background: var(--pos-soft); }
+.wk-cz-pill[data-tone="warn"] { color: var(--warn); background: var(--warn-soft); }
+.wk-cz-pill[data-tone="danger"] { color: var(--danger); background: var(--danger-soft); }
+.wk-cz-pill[data-tone="info"] { color: var(--info); background: var(--info-soft); }
+.wk-cz-pill[data-tone="accent"] { color: var(--accent); background: var(--accent-soft); }
+
+.wk-cz-segments { display: inline-flex; gap: 2px; padding: 2px; border-radius: 10px; background: var(--surface-3); }
+.wk-cz-segment { border: 0; background: transparent; border-radius: 8px; padding: 5px 10px; font: inherit; font-size: 12px; font-weight: 700; color: var(--fg-muted); cursor: pointer; }
+.wk-cz-segment[aria-checked="true"] { background: var(--surface); color: var(--fg); box-shadow: var(--shadow); }
+
+.wk-cz-alert { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 10px; font-size: 12.5px; background: var(--info-soft); color: var(--fg); }
+.wk-cz-alert[data-tone="warn"] { background: var(--warn-soft); }
+.wk-cz-alert[data-tone="danger"] { background: var(--danger-soft); }
+.wk-cz-alert[data-tone="pos"] { background: var(--pos-soft); }
+
+.wk-cz-body { margin: 0; }
+.wk-cz-actions { margin-block-start: 12px; display: flex; justify-content: center; gap: 8px; }
+.wk-cz-divider { border: 0; border-block-start: 1px solid var(--border); margin: 0; }
+.wk-cz-skeleton { display: block; block-size: 14px; border-radius: 6px; background: var(--surface-3); }
+.wk-cz-spinner { font-size: 12.5px; color: var(--fg-subtle); }
+
+.wk-cz-small {
+  font-size: 12.5px;
+  color: var(--fg-muted);
+}

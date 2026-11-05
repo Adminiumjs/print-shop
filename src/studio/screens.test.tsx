@@ -13,6 +13,7 @@ import { describe, expect, it } from "vitest";
 import { screensFor } from "./WorksApp.tsx";
 import { useWorks, type View, type WorksState } from "./store.ts";
 import { FakeDoor } from "./testing/fakeDoor.ts";
+import { FakePanels } from "./testing/fakePanels.tsx";
 import { button, choose, click, freshPage, mount, mountBare, settle, sweep, text, toasts, type, unmount } from "./testing/render.tsx";
 import { ApiError } from "./wire.ts";
 
@@ -318,6 +319,78 @@ describe("the shell", () => {
     await mount(door, "today", {}, { signInHref: "#signed-out-anyway" });
     await click(button("Sign out"));
     expect(window.location.hash).toBe("#signed-out-anyway");
+  });
+
+  it("opens the Customiser's panel on a designed job for the owner, prepress and the press, where the proof is made and stored", async () => {
+    for (const role of ["owner", "prepress", "press"]) {
+      const door = new FakeDoor({ roles: [role] });
+      const panels = new FakePanels({ designs: door.data.designs, design_versions: door.data.versions.map((v) => ({ ...v, proof_file: null })) });
+      door.panelDoor = panels;
+      await mount(door, "ticket", { jobId: 8 });
+      // A button on the works' own screen, never a link into the dashboard, which prepress and the press cannot open.
+      expect([...document.querySelectorAll("a")].some((a) => (a.getAttribute("href") ?? "").includes("/p/printing-jobs/"))).toBe(false);
+      await click(button("Make the proof and the print file"));
+      const sheet = document.querySelector("[role='dialog']")!;
+      expect(document.getElementById(sheet.getAttribute("aria-labelledby")!)?.textContent, role).toBe("MP-4127/1 · the design");
+      expect(panels.calls[0]).toEqual({ method: "load", args: [{ id: "customiser-line", table: "jobs", row: 8 }] });
+      // The panel's own reads, by the add-on's short names: the design the job links to, its versions.
+      expect(sheet.textContent).toContain("HB-CARD");
+      expect(sheet.textContent).toContain("1 version");
+      await click([...sheet.querySelectorAll("button")].find((b) => b.textContent === "Make the proof"));
+      expect(panels.calls.find((c) => c.method === "upload")?.args, role).toEqual(["customiser", "design_versions", "proof_file", 700, "proof.png", "image/png"]);
+      expect(toasts()).toContain("The proof is made.");
+      if (role === "prepress") await sweep("the Customiser's panel on a job");
+      unmount();
+    }
+  });
+
+  it("says the server's refusal of a write in the panel, and leaves nothing made", async () => {
+    const door = new FakeDoor({ roles: ["prepress"] });
+    const panels = new FakePanels({ designs: door.data.designs, design_versions: door.data.versions });
+    panels.refuseWrite = new ApiError(403, "TABLE_FORBIDDEN", "You may not change design versions.");
+    door.panelDoor = panels;
+    await mount(door, "ticket", { jobId: 8 });
+    await click(button("Make the proof and the print file"));
+    await click([...document.querySelectorAll("[role='dialog'] button")].find((b) => b.textContent === "Make the proof"));
+    expect(document.querySelector("[role='dialog'] [role='alert']")?.textContent).toBe("You may not change design versions.");
+  });
+
+  it("shows the counter the design it is handing over, but neither the way to the Customiser's panel nor its set-up", async () => {
+    await mount(new FakeDoor({ roles: ["counter"] }), "ticket", { jobId: 8 });
+    expect(text()).toContain("Made in the customiser · HB-CARD · version 1");
+    expect([...document.querySelectorAll("button")].some((b) => b.textContent === "Make the proof and the print file")).toBe(false);
+    expect(text()).not.toContain("send-a-proof sheet attaches the proof it makes");
+    expect([...document.querySelectorAll("a")].some((a) => (a.getAttribute("href") ?? "").startsWith("/add-ons/customiser/"))).toBe(false);
+  });
+
+  it("offers the Customiser's set-up to the owner alone", async () => {
+    const setUp = () => [...document.querySelectorAll("a")].filter((a) => a.getAttribute("href") === "/add-ons/customiser/customiser").length;
+    for (const [role, links] of [["owner", 1], ["prepress", 0], ["press", 0], ["counter", 0]] as const) {
+      await mount(new FakeDoor({ roles: [role] }));
+      expect(setUp(), role).toBe(links);
+      unmount();
+    }
+  });
+
+  it("says so when Adminium will not serve the panel to this role, or has none here", async () => {
+    const door = new FakeDoor({ roles: ["press"] });
+    const panels = new FakePanels();
+    door.panelDoor = panels;
+    panels.refuseLoad = 403;
+    await mount(door, "ticket", { jobId: 8 });
+    await click(button("Make the proof and the print file"));
+    expect(document.querySelector("[role='dialog']")?.textContent).toContain("Your role does not open the Customiser's panel.");
+    act(() => useWorks.setState({ overlay: null }));
+    panels.refuseLoad = 404;
+    await click(button("Make the proof and the print file"));
+    expect(document.querySelector("[role='dialog']")?.textContent).toContain("The Customiser has no panel here");
+  });
+
+  it("says where the panel is drawn when no Adminium serves it (the demo)", async () => {
+    await mount(new FakeDoor({ roles: ["prepress"] }), "ticket", { jobId: 8 });
+    await click(button("Make the proof and the print file"));
+    expect(document.querySelector("[role='dialog']")?.textContent).toContain("On your own Adminium the Customiser draws its panel here");
+    await sweep("the Customiser's panel where no Adminium serves it");
   });
 
   it("goes back to the board from the 404", async () => {

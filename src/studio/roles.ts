@@ -61,3 +61,6 @@ export const mayManageAddOns = (who: Person): boolean => isOwner(who) || who.rol
  * of anyone else.
  */
 export const mayOpenPanel = (who: Person, panel: PanelId): boolean => who.roles.length === 0 || who.roles.some((role) => ROLE_PANELS[role]?.includes(panel) === true);
+
+/** Whether this person sets up the Customiser (its fonts, palettes, ready-made designs): the owner, whose role opens its page. */
+export const maySetUpDesigns = (who: Person): boolean => isOwner(who) || who.roles.length === 0;

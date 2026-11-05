@@ -92,11 +92,36 @@
  */
 
 import * as React from 'react';
+import * as ReactDOM from 'react-dom';
 import * as JsxRuntime from 'react/jsx-runtime';
 
 import type { AddOn } from './host.ts';
 import { registerAddOnMessages } from '../i18n/messages/index.ts';
-import { installAddOnRuntime } from './vendor/host/runtime/index.ts';
+import { installAddOnRuntime, type AddOnRuntime } from './vendor/host/runtime/index.ts';
+
+/** The panels' host API, once a screen has asked for one: kept, so a later install never takes it away. */
+let panelHost: unknown;
+
+/**
+ * The host's React on the well-known global, for every bundle this page
+ * imports: a slot's client half (DHL's) reads React and its JSX runtime from
+ * it; a record panel also reads `react-dom` and the host API it is drawn with
+ * (`host`, see `studio/panels/host.tsx`). One object for both, so whichever
+ * loads second never takes away what the first was given.
+ */
+export function installRuntime(host?: unknown): void {
+  if (host !== undefined) panelHost = host;
+  installAddOnRuntime({
+    react: React as unknown as Readonly<Record<string, unknown>>,
+    jsx: {
+      jsx: (JsxRuntime as unknown as { jsx: unknown }).jsx,
+      jsxs: (JsxRuntime as unknown as { jsxs: unknown }).jsxs,
+      Fragment: (JsxRuntime as unknown as { Fragment: unknown }).Fragment,
+    },
+    reactDom: ReactDOM as unknown as Readonly<Record<string, unknown>>,
+    ...(panelHost === undefined ? {} : { host: panelHost }),
+  } as AddOnRuntime);
+}
 
 /** One add-on's client bundle, as `GET /api/v1/add-ons` describes it. */
 export interface ConnectedBundle {
@@ -311,14 +336,7 @@ export async function loadConnectedAddOns(options: ConnectedOptions): Promise<Co
    * StrictMode double-mount, a refresh of the list) simply republishes the same
    * two namespaces.
    */
-  installAddOnRuntime({
-    react: React as unknown as Readonly<Record<string, unknown>>,
-    jsx: {
-      jsx: (JsxRuntime as unknown as { jsx: unknown }).jsx,
-      jsxs: (JsxRuntime as unknown as { jsxs: unknown }).jsxs,
-      Fragment: (JsxRuntime as unknown as { Fragment: unknown }).Fragment,
-    },
-  });
+  installRuntime();
 
   const problems: ConnectedProblem[] = [];
   let listed: readonly unknown[];
@@ -538,4 +556,53 @@ export async function loadConnectedAddOns(options: ConnectedOptions): Promise<Co
   }
 
   return { addOns, problems };
+}
+
+/** A refusal of a panel's code: the server's status and code, and its words. */
+export class PanelRefused extends Error {
+  readonly status: number;
+  readonly code: string;
+  constructor(status: number, code: string, message: string) {
+    super(message);
+    this.name = 'PanelRefused';
+    this.status = status;
+    this.code = code;
+  }
+}
+
+export interface PanelLoadOptions {
+  /** `/api/v1/add-ons/<key>/panels/<id>/bundle?connection=…&table=…&row=…`, built by the door. */
+  url: string;
+  /** The origin serving this page. */
+  origin: string;
+  /** The panels' host API (`studio/panels/host.tsx`), published before the module is imported. */
+  host: unknown;
+  request?: typeof fetch;
+  importBundle?: (url: string) => Promise<unknown>;
+}
+
+/**
+ * A record panel's code, as Adminium serves it for one row to the person
+ * signed in, imported: its default export. Adminium answers it only for a row
+ * they reach, with a grant on the panel's table and the panel's own
+ * permission; a refusal is thrown with its status (403 not theirs, 404 no
+ * panel there). The bytes are hashed against the pin the server sends with
+ * them (`x-adminium-integrity`), as a slot's bundle is against the list's.
+ */
+export async function loadPanelModule(options: PanelLoadOptions): Promise<unknown> {
+  const request = options.request ?? globalThis.fetch.bind(globalThis);
+  const importBundle = options.importBundle ?? ((url: string): Promise<unknown> => import(/* @vite-ignore */ url));
+  if (!bundleUrlIsSafe(options.url, options.origin)) throw new PanelRefused(0, 'UNSAFE_URL', options.url);
+  const absolute = new URL(options.url, options.origin).toString();
+  const res = await request(absolute, { credentials: 'same-origin' });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { error?: { code?: string; message?: string } } | null;
+    throw new PanelRefused(res.status, body?.error?.code ?? 'PANEL_UNAVAILABLE', body?.error?.message ?? `the panel answered ${String(res.status)}`);
+  }
+  const pinned = res.headers.get('x-adminium-integrity');
+  const seen = await sha256Integrity(await res.arrayBuffer());
+  if (pinned !== null && !sameIntegrity(seen, pinned)) throw new PanelRefused(0, 'INTEGRITY_MISMATCH', `expected ${pinned}, got ${seen}`);
+  installRuntime(options.host);
+  const module = (await importBundle(absolute)) as { default?: unknown } | null;
+  return module?.default;
 }

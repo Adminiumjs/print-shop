@@ -39,6 +39,11 @@ export class DemoWorks implements WorksDoor {
     this.world = world;
   }
 
+  /** No Adminium serves the Customiser's panels to the demo: the sheet says where they are drawn. */
+  panels(): null {
+    return null;
+  }
+
   who(): Person {
     return DEMO_PERSON;
   }

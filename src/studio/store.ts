@@ -6,7 +6,7 @@
 import { create } from "zustand";
 
 import type { AddOnRegistry } from "../add-ons/host.ts";
-import type { CatalogEntry, InstalledAddOn, WorksData } from "./door.ts";
+import type { CatalogEntry, InstalledAddOn, PanelOpen, WorksData } from "./door.ts";
 import type { Id } from "./wire.ts";
 
 import type { View } from "./view.ts";
@@ -21,6 +21,8 @@ export type Overlay =
   | { kind: "manage"; key: string }
   | { kind: "disconnect"; key: string }
   | { kind: "holes" }
+  /** The Customiser's panel on a row: its link into the add-on (the job's design), and the sheet's title. */
+  | { kind: "panel"; panel: PanelOpen; linked: Id | null; title: string }
   | null;
 
 export interface Toast {

@@ -8,7 +8,7 @@
  *
  * Tests only; nothing that ships imports it.
  */
-import type { ActivityEntry, CatalogEntry, InstalledAddOn, Person, ProofFile, Table, WorksData, WorksDoor, WorksFacts } from "../door.ts";
+import type { ActivityEntry, CatalogEntry, InstalledAddOn, PanelDoor, Person, ProofFile, Table, WorksData, WorksDoor, WorksFacts } from "../door.ts";
 import { JOB_MOVES } from "../roles.ts";
 import { ApiError, num, same, type Id, type Row } from "../wire.ts";
 import { FACTS, fixture, person, WEDNESDAY } from "./fixture.ts";
@@ -181,6 +181,12 @@ export class FakeDoor implements WorksDoor {
   async catalog(): Promise<CatalogEntry[]> {
     this.record("catalog", {});
     return structuredClone(this.shelf);
+  }
+
+  /** The Customiser's panels' door a test hands in; none by default, as in the demo. */
+  panelDoor: PanelDoor | null = null;
+  panels(): PanelDoor | null {
+    return this.panelDoor;
   }
 
   async signOut(): Promise<void> {

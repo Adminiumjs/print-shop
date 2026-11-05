@@ -16,7 +16,7 @@ import { useData, useEnv } from "./env.tsx";
 import { onBoard, orderOf, refOf } from "./facts.ts";
 import { useFmt } from "./format.ts";
 import { navOf, WORKS_NAV, type WorksNavEntry } from "./nav.ts";
-import { mayManageAddOns } from "./roles.ts";
+import { mayManageAddOns, maySetUpDesigns } from "./roles.ts";
 import { go, useWorks, type View } from "./store.ts";
 import { TodayScreen } from "./screens/Today.tsx";
 import { TicketScreen } from "./screens/Ticket.tsx";
@@ -273,6 +273,8 @@ function Brand({ name }: { name: string }) {
 function Nav({ view, reach }: { view: View; reach: string[] }) {
   const t = useT();
   const env = useEnv();
+  // The Customiser's set-up (fonts, palettes, ready-made designs) is the owner's: no other role's grant opens it.
+  const setsUp = maySetUpDesigns(env.door.who());
   const lit = navOf(view);
   const items = WORKS_NAV.filter((entry) => reach.includes(entry.id));
   const designs = items.findIndex((e) => e.id === "prices") + 1;
@@ -285,10 +287,12 @@ function Nav({ view, reach }: { view: View; reach: string[] }) {
   return (
     <nav className="wk-nav" aria-label={t("works.nav.label")}>
       {items.slice(0, designs).map(button)}
-      <a className="wk-nav-item" href={env.addOnPageHref("customiser", "customiser")} target="_top">
-        <LayoutTemplate size={17} aria-hidden="true" />
-        {t("works.nav.designs")}
-      </a>
+      {setsUp && (
+        <a className="wk-nav-item" href={env.addOnPageHref("customiser", "customiser")} target="_top">
+          <LayoutTemplate size={17} aria-hidden="true" />
+          {t("works.nav.designs")}
+        </a>
+      )}
       {items.slice(designs).map(button)}
     </nav>
   );

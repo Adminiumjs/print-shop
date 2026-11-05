@@ -10,7 +10,7 @@
  * the files the Customiser made of it; its panel on the job's own page makes
  * the proof and the print files.
  */
-import { ArrowLeft, Calculator, CircleCheckBig, CircleX, Download, ExternalLink, FileCheck, HandCoins, LayoutTemplate, PackageCheck, Printer, Scissors, Send, Truck, TriangleAlert, Check, MessageSquareText } from "lucide-react";
+import { ArrowLeft, Calculator, CircleCheckBig, CircleX, Download, FileCheck, HandCoins, LayoutTemplate, PackageCheck, Printer, Scissors, Send, Truck, TriangleAlert, Check, MessageSquareText } from "lucide-react";
 
 import { collectJob, dispatchOrder, walkJob } from "../actions.ts";
 import { useData, useEnv, useRun } from "../env.tsx";
@@ -38,10 +38,10 @@ import {
   isSheetWork,
 } from "../facts.ts";
 import { useFmt } from "../format.ts";
-import { mayHandOver, movesFor } from "../roles.ts";
+import { mayHandOver, mayOpenPanel, movesFor } from "../roles.ts";
 import { go, useWorks } from "../store.ts";
 import { DueChip, FamilyTile, Mono, Typed } from "../ui.tsx";
-import { num, same, text, type Row } from "../wire.ts";
+import { num, same, text, type Id, type Row } from "../wire.ts";
 import { STAGE_LABEL, targetsFor } from "./Today.tsx";
 import { BLEED_MM } from "../../shop/checks.ts";
 import { useT, type MessageKey } from "../../i18n/index.tsx";
@@ -343,8 +343,7 @@ function Actions({ job, order }: { job: Row; order: Row | undefined }) {
   const t = useT();
   const fmt = useFmt();
   const data = useData();
-  const env = useEnv();
-  const { door } = env;
+  const { door } = useEnv();
   const { busy, run } = useRun();
   const who = door.who();
   const stage = String(job["stage"]);
@@ -404,12 +403,19 @@ function Actions({ job, order }: { job: Row; order: Row | undefined }) {
                 </div>
               );
             })}
-            <a className="wk-action" href={env.recordHref("printing-jobs", job.id)} target="_top">
-              <FileCheck size={16} aria-hidden="true" />
-              {t("works.design.make")}
-              <ExternalLink size={13} className="wk-action-end" aria-hidden="true" />
-            </a>
-            <span className="wk-design-note">{t("works.design.note")}</span>
+            {mayOpenPanel(who, "customiser-line") && (
+              <>
+                <button
+                  type="button"
+                  className="wk-action"
+                  onClick={() => useWorks.setState({ overlay: { kind: "panel", panel: { id: "customiser-line", table: "jobs", row: job.id }, linked: job["design_id"] as Id, title: t("works.panel.title", { ref }) } })}
+                >
+                  <FileCheck size={16} aria-hidden="true" />
+                  {t("works.design.make")}
+                </button>
+                <span className="wk-design-note">{t("works.design.note")}</span>
+              </>
+            )}
           </div>
         )}
 
