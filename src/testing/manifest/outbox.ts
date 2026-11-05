@@ -41,7 +41,7 @@ import { z } from 'zod';
 
 import type { AddOnNeeds } from './add-ons.ts';
 import { formulaColumns, type FormulaExpr } from './formula.ts';
-import { OTHERWISE_BLOCKS, placeholderPattern } from './placeholders.ts';
+import { namesAPlaceholder, OTHERWISE_BLOCKS, placeholderPattern, rowPictureName } from './placeholders.ts';
 import { MAIL_CLASSES, MAIL_PURPOSES } from './mail-classes.ts';
 import { personalColumn, unlistedColumn } from './public-access.ts';
 import { reachedOnlyByUndo, type StateMove } from './states.ts';
@@ -1123,6 +1123,17 @@ const sectionRowsDataSchema = z
 export const emailRowsDataSchema = z.union([outboxRowsDataSchema, sectionRowsDataSchema]);
 export type EmailRowsData = z.infer<typeof emailRowsDataSchema>;
 
+/**
+ * A picture from a row's file column (`email.image` with `fileId:
+ * "{{job.photo}}"`): the kinds of file it may be, and the most it may weigh.
+ * A file that is neither is never sent: the picture is left out, or the
+ * message is not sent when the image is `required`.
+ */
+export const ROW_PICTURE_TYPES: readonly string[] = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+/** The `file.accept` kinds a picture's column takes at least one of. */
+const ROW_PICTURE_ACCEPTS: readonly string[] = ['png', 'jpeg', 'gif', 'webp'];
+export const ROW_PICTURE_MAX_BYTES = 2 * 1024 * 1024;
+
 /** A QR code of a code column, as the whole value of an image: `{{ticket.code.qr}}`. */
 const QR_VALUE = /^\{\{\s*([A-Za-z0-9_.-]+)\.qr\s*\}\}$/;
 
@@ -1176,6 +1187,30 @@ function emailBlockIssues(
     return null;
   };
 
+  /** Why an image's `fileId` placeholder shows no picture from a row's file column, or null. */
+  const pictureIssue = (fileId: unknown): string | null => {
+    const name = rowPictureName(fileId);
+    if (name === null) return 'a picture from a row is written {{<link>.<file column>}}, as the whole value of "fileId"';
+    if (name.startsWith('row.')) return 'a row of a list shows no picture of its own';
+    const parts = name.split('.');
+    if (parts.length < 2) return `{{${name}}} names no row: write {{<link>.<file column>}}`;
+    const prefix = parts.slice(0, -1).join('.');
+    const column = parts.at(-1)!;
+    const table = prefixTable(prefix);
+    if (table === undefined) return `"${prefix}" is not a row this message reaches: one of the outbox's links, or a row one of them points at`;
+    const found = index.column(table, column) as (ReturnType<typeof index.column> & { rules?: { file?: { accept?: unknown; maxCount?: unknown } } }) | undefined;
+    if (found === undefined) return `"${table}" has no column "${column}"`;
+    const file = found.rules?.file;
+    if (found.type !== 'text' || file === undefined) return `"${table}.${column}" is not a file column holding one file`;
+    const accepts = Array.isArray(file.accept) ? file.accept : [];
+    if (!accepts.some((kind) => typeof kind === 'string' && ROW_PICTURE_ACCEPTS.includes(kind))) return `"${table}.${column}" takes no picture (png, jpeg, gif or webp)`;
+    const kept = unlisted(table, column);
+    if (kept !== null) return `"${table}.${column}" is ${kept}, which an email never shows`;
+    const shape = index.table(table);
+    if (shape !== undefined && personalColumn(shape as never, column) !== null) return `"${table}.${column}" is personal data, which an email never shows`;
+    return null;
+  };
+
   templates.forEach((template, t) => {
     let rowsOf: string | undefined;
     for (const [locale, content] of Object.entries(template.locales)) {
@@ -1203,6 +1238,13 @@ function emailBlockIssues(
           if (size !== undefined && (typeof size !== 'number' || !Number.isInteger(size) || size < 80 || size > 200)) {
             out.push({ path: at('data', 'size'), message: 'a QR code is 80 to 200 pixels across' });
           }
+        }
+        // A picture from a row's file column: one placeholder, of a file column of a row the message reaches, never personal.
+        if (block.block === 'email.image' && namesAPlaceholder(block.data?.['fileId'])) {
+          const issue = pictureIssue(block.data?.['fileId']);
+          if (issue !== null) out.push({ path: at('data', 'fileId'), message: issue });
+          const required = block.data?.['required'];
+          if (required !== undefined && typeof required !== 'boolean') out.push({ path: at('data', 'required'), message: 'an image\'s "required" is true or false' });
         }
         if (block.block !== 'email.rows') {
           // Only a block that lists rows has a row to read.

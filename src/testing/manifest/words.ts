@@ -249,6 +249,8 @@ export const INSTALL_FLOOR_WORD_NAMES = [
   'agrees.length',
   // A copy of a person one or two links further into an add-on (a design's versions, and their files).
   'people.addOnCopyFrom',
+  // A picture from a row's file column in an email (`email.image` with `fileId: "{{job.photo}}"`).
+  'email.rowPicture',
 ] as const;
 export type ManifestWordName = (typeof INSTALL_FLOOR_WORD_NAMES)[number];
 
@@ -467,6 +469,8 @@ export const WORD_FLOORS: Readonly<Partial<Record<ManifestWordName, string>>> = 
   'agrees.length': '0.3.44',
   // A copy reached through the add-on's own links: a release before refuses the key.
   'people.addOnCopyFrom': '0.3.44',
+  // A picture from a row's file column in an email: a release before leaves the picture out, or refuses a long name.
+  'email.rowPicture': '0.3.45',
 };
 
 /** The kinds of file a column takes from the release that cleans SVG and reads models and fonts whole (`ASSET_FILE_KINDS`). */
@@ -759,6 +763,7 @@ export function installFloorWords(document: unknown): ManifestWord[] {
         if (isDoc(block) && block['showWhen'] !== undefined) out.push({ word: 'email.showWhen', path: `emailTemplates.${String(t)}.locales.${locale}.blocks.${String(b)}.showWhen` });
         for (const mark of ['onlyWith', 'onlyWithout'] as const) if (data[mark] !== undefined) out.push({ word: `email.${mark}`, path: `${here}.${mark}` });
         if (isDoc(data['from']) && data['from']['addOn'] !== undefined) out.push({ word: 'rows.pair', path: `${here}.from` });
+        if (isDoc(block) && block['block'] === 'email.image' && typeof data['fileId'] === 'string' && data['fileId'].includes('{{')) out.push({ word: 'email.rowPicture', path: `${here}.fileId` });
       });
     }
   });
