@@ -149,10 +149,15 @@ describe.skipIf(why !== null)(`the works against a built Adminium${why === null 
         const prepress = doors["prepress"]!;
         const { data, job: cards } = await job(prepress, "MP-4122");
         expect(cards["stage"]).toBe("prepress");
+        // Prepress reads the order's name, which the proof sheet says; never the customer's e-mail or address.
+        const order = data.orders.find((o) => String(o.id) === String(cards["order_id"]))!;
+        expect([order["name"], order["email"] ?? null, order["postcode"] ?? null]).toEqual(["Ostara Flowers", null, null]);
         const pdf = new Blob([new TextEncoder().encode("%PDF-1.4\n1 0 obj << /Type /Page /MediaBox [0 0 306 431] >>\n%%EOF\n")], { type: "application/pdf" });
         await sendProof(prepress, data, cards, { file: { blob: pdf, filename: "proof-mp-4122.pdf" }, kind: "email", note: "The fold is marked in blue." }, prepress.who());
         const proofs = (await rows("proofs")).filter((p) => String(p["job_id"]) === String(cards.id));
         expect(proofs.map((p) => [p["version"], p["state"], p["kind"], p["note"]])).toEqual([[1, "sent", "email", "The fold is marked in blue."]]);
+        // Sent with no order: Adminium takes its job's.
+        expect(String(proofs[0]!["order_id"])).toBe(String(cards["order_id"]));
         expect(String(proofs[0]!["file"])).toMatch(/file_/);
         const after = await job(prepress, "MP-4122");
         expect(after.job["proof_state"]).toBe("sent");

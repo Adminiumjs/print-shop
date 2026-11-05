@@ -7,7 +7,9 @@
  *   prepress  the works' screens, never the dashboard: the jobs and their
  *             artwork, marking the artwork checked, sending a proof (with its
  *             file) or sending one again, and putting an approved job on the
- *             press. Never a price, a customer or the settings.
+ *             press. Never a price, a customer's e-mail or address, or the
+ *             settings: an order's name, which the ticket and the proof
+ *             sheet say, is not personal data to Adminium.
  *   press     the works' screens: the jobs on the press, moving them through
  *             finishing to ready (and the order with its last job), and the
  *             sheets spoiled.
@@ -109,7 +111,6 @@ export const ROLES = [
     permissions: [
       "app:@:staff",
       ...[...RATE_CARD, ...ORDER_READS].flatMap((table) => grant(table, "read")),
-      pii("orders"),
       ...grant("jobs", "update"),
       ...grant("proofs", "create", "update"),
       view("printing-orders"),

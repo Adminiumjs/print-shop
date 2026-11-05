@@ -375,6 +375,14 @@ describe("the works writes only what its work needs", () => {
     }
   });
 
+  it("shows a customer's e-mail and address only to the owner and the counter, who hand the order over", () => {
+    const readers = manifest.roles.filter((r) => r.permissions.includes("table:@orders:read_pii")).map((r) => r.key);
+    expect(readers).toEqual(["owner", "counter"]);
+    // The name the board and the proof sheet say is no personal column, so prepress and the press read it without.
+    expect(column("orders", "name")["semantic"]).toBe("name");
+    expect(rules("orders", "name")["personal"]).toBeUndefined();
+  });
+
   it("leaves the rate card to the owner", () => {
     for (const key of ["prepress", "press", "counter"]) {
       for (const t of ["settings", "materials", "sizes", "finishes", "breaks", "packaging", "delivery_bands", "products", "options", "option_rules"]) {

@@ -19349,7 +19349,6 @@
         "table:@artwork:read",
         "table:@proofs:read",
         "table:@spoils:read",
-        "table:@orders:read_pii",
         "table:@jobs:update",
         "table:@proofs:create",
         "table:@proofs:update",
