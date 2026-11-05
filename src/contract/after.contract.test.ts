@@ -39,6 +39,7 @@ import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { valuesOf } from "../shop/after.ts";
+import type { DeliveryAnswer } from "../shop/after-port.ts";
 import { firstChoice, jobValues } from "../shop/config.ts";
 import { AdminiumShop } from "../shop/door.ts";
 import { isShopError, type Catalogue, type Row } from "../shop/port.ts";
@@ -333,6 +334,12 @@ describe.skipIf(why !== null)(`after the order, on a built Adminium${why === nul
         expect(await door.openShared(made.link!.token)).toBe("opened");
         const read = (await door.readShared())!;
         expect([read.order["delivery_quote_state"], Number(read.order["delivery_quote"])]).toEqual(["sent", 48]);
+        // The customer answers the quote; its amount is never theirs to write, alone or beside the answer.
+        const typed = (values: Record<string, unknown>) => door.answerDelivery("link", id, values as unknown as DeliveryAnswer).catch((e: unknown) => e);
+        for (const values of [{ delivery_quote: "1.00" }, { delivery_quote_state: "accepted", delivery_quote: "1.00" }]) {
+          expect(isShopError(await typed(values)), JSON.stringify(values)).toBe(true);
+        }
+        expect(Number((await rows("orders")).find((o) => String(o["id"]) === id)!["delivery_quote"])).toBe(48);
         await door.answerDelivery("link", id, { delivery_quote_state: "accepted" }).catch((e: unknown) => {
           throw new Error(`the answer was refused: ${said(e)}`);
         });
@@ -347,9 +354,10 @@ describe.skipIf(why !== null)(`after the order, on a built Adminium${why === nul
         }
         const held = (await rows("orders")).find((o) => String(o["id"]) === id)!;
         expect([held["delivery_quote_state"], Number(held["delivery_quote"]), Number(held["delivery"])]).toEqual(["accepted", 48, 48]);
-        // Nothing else of the order is the customer's to change.
-        const refused = await door.answerDelivery("link", id, { delivery_quote_state: "accepted" }).catch((e: unknown) => e);
-        expect(isShopError(refused)).toBe(true);
+        // Answered, the quote is the customer's no more: neither a second answer nor its amount.
+        for (const values of [{ delivery_quote_state: "accepted" }, { delivery_quote: "1.00" }]) {
+          expect(isShopError(await typed(values)), JSON.stringify(values)).toBe(true);
+        }
         expect(yes(order["link_stopped"] ?? false)).toBe(false);
       }, 120_000);
     });

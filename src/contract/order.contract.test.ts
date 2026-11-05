@@ -155,7 +155,8 @@ describe.skipIf(why !== null)(`a customer orders on a built Adminium${why === nu
         const jobs = catalogue.products.map((p) => ({ values: jobValues(catalogue, p, firstChoice(catalogue, p), p.kind === "sheet" ? p.fromQty : 1) }));
         const quoted = await door.quote({ values: { delivery_method: "collect", language: "en-US" }, children: { jobs } });
         expect(quoted.jobs.map((j) => j["product_name"])).toEqual(catalogue.products.map((p) => p.name));
-        expect(quoted.jobs.every((j) => "price" in j && "weight_kg" in j)).toBe(true);
+        // Every product has a price and a weight from its first choice: none comes back empty or nought.
+        expect(quoted.jobs.filter((j) => !(Number(j["price"]) > 0) || !(Number(j["weight_kg"]) > 0)).map((j) => j["product_name"])).toEqual([]);
         expect(Number(quoted.order["delivery"])).toBe(0);
       });
 
