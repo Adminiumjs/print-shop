@@ -29,7 +29,7 @@ const CONFIG: StaffConfig = {
   csrfToken: "tok",
   publicKeys: {},
   access: null,
-  addOns: { customiser: { version: "1.0.16", settings: {}, tables: {} }, "shipping-dhl": { version: "1.0.16", settings: { demo_transport: true }, tables: { shipments: "shipments" } } },
+  addOns: { customiser: { version: "1.0.17", settings: {}, tables: {} }, "shipping-dhl": { version: "1.0.17", settings: { demo_transport: true }, tables: { shipments: "shipments" } } },
   sharedTables: {},
 };
 

@@ -15,7 +15,7 @@ import { l } from "./labels.ts";
 import { CUSTOMISER } from "./postings.ts";
 
 /** The add-ons' release that first carries the Customiser and attaches them all to this app. */
-export const ADD_ONS_RANGE = "^1.0.16";
+export const ADD_ONS_RANGE = "^1.0.17";
 
 export const ADD_ONS = {
   requires: [{ key: CUSTOMISER, range: ADD_ONS_RANGE, reason: l("Customers fill in a ready-made design, or start from blank, with their own words and logo.") }],

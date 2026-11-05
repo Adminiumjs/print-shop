@@ -21,8 +21,8 @@ the two o'clock cut-off — and the works prints Monday to Friday.
 
 ## What it needs
 
-- Adminium **0.3.44** or later, on SQLite, Postgres or MySQL.
-- The **Customiser** add-on (1.0.16 or later): it is where a customer fills in a
+- Adminium **0.3.45** or later, on SQLite, Postgres or MySQL.
+- The **Customiser** add-on (1.0.17 or later): it is where a customer fills in a
   ready-made design or starts from blank, and the job names the design they
   made. Adminium installs it with the app.
 - Nothing else. Four add-ons are offered at install, and the app is whole without
@@ -35,8 +35,8 @@ the two o'clock cut-off — and the works prints Monday to Friday.
     takes and spoils.
   - **Invoices & Receipts** — an invoice with each delivery, printed at the
     counter.
-  - **Holiday calendars** — the coming public holidays on the works' price list,
-    each added as a closure in a tap, so no job is due on one.
+  - **Holiday calendars** — the coming bank holidays of England and Wales on the
+    works' price list, each added as a closure in a tap, so no job is due on one.
 
 ## What it does
 
