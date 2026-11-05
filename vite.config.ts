@@ -131,14 +131,14 @@ const config: ViteWithVitest = {
           if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return "react";
           if (id.includes("node_modules/lucide-react")) return "icons";
           /*
-           * The three add-ons in one chunk of their own. In demo mode they are
-           * compiled in and always loaded, so this is not code-splitting — it is
-           * keeping the app's own bundle a readable size, and it draws the same
-           * line in the build output that `src/add-ons/vendor/` draws in the
-           * tree. Phase B imports these from the server by SRI hash instead, at
-           * which point the chunk becomes the thing that is fetched.
+           * The vendored Customiser's editor in a chunk of its own: it is
+           * another repo's code, reviewed there, and `builtOutput.test.ts`
+           * tells it from this app's by the chunk's provenance, which a chunk
+           * that mixed the two would not have. Its 3D preview (`stage3d.js`)
+           * is left to the editor's own `import()`, so it still loads only
+           * when a customer turns the piece round.
            */
-          if (id.includes("/src/add-ons/vendor/")) return "add-ons";
+          if (id.endsWith("/vendor/customiser/index.js")) return "customiser";
           return undefined;
         },
       },

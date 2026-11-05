@@ -7,7 +7,7 @@
  * is what the runtime looks keys up in.
  *
  * Keys must be unique across areas — a later area silently wins a collision,
- * so namespace them (`chrome.*`, `screen.*`, `data.*`, `addon.*`).
+ * so namespace them (`chrome.*`, `shop.*`, `after.*`, `works.*`, `addon.*`).
  *
  * ── WHERE THE ADD-ONS' STRINGS COME FROM, AND WHAT THAT COST ────────────────
  *
@@ -20,7 +20,7 @@
  * add a fourth add-on does not have an add-on system.
  *
  * An add-on now REGISTERS its bundle (`registerAddOnMessages`, called from
- * `add-ons/registry.ts` at module load), and here is the honest accounting of
+ * `add-ons/connected.ts` when an add-on's bundle loads), and here is the honest accounting of
  * what moved:
  *
  *   LOST   — an add-on's keys are no longer members of `MessageKey`, so
@@ -38,20 +38,17 @@
  *            including the demo, so it cannot be skipped the way a test can.
  *   KEPT   — the runtime suite in `messages.test.ts`, which asserts parity,
  *            placeholders and the vocabulary ban over the MERGED bundle, and
- *            which now imports the registry for the side effect of registering.
- *   KEPT   — full compile-time parity for the HOST's own five areas, below,
+ *            over the host's own areas.
+ *   KEPT   — full compile-time parity for the HOST's own areas, below,
  *            unchanged.
  *
- * The three bundles are VENDORED copies (see `src/add-ons/vendor/`), synced
- * from the add-ons monorepo by `scripts/sync-add-ons.sh` and never hand-edited.
+ * No add-on is vendored any more: each connected add-on's bundle arrives
+ * from Adminium and registers its own strings.
  */
 import type { Translated } from "../untranslated.ts";
 import { LOCALE_TAGS, type LocaleTag } from "../locales.ts";
 import { addOns } from "../strings/addOns.ts";
 import { chrome } from "../strings/chrome.ts";
-import { screensCustomer } from "../strings/screensCustomer.ts";
-import { screensShop } from "../strings/screensShop.ts";
-import { data } from "../strings/data.ts";
 import { shop } from "../strings/shop.ts";
 import { after } from "../strings/after.ts";
 import { works } from "../strings/works.ts";
@@ -69,14 +66,11 @@ type Area<EN extends Record<string, string>> = { "en-US": EN } & Record<
 
 const AREAS: [
   Area<(typeof chrome)["en-US"]>,
-  Area<(typeof screensCustomer)["en-US"]>,
-  Area<(typeof screensShop)["en-US"]>,
-  Area<(typeof data)["en-US"]>,
   Area<(typeof addOns)["en-US"]>,
   Area<(typeof shop)["en-US"]>,
   Area<(typeof after)["en-US"]>,
   Area<(typeof works)["en-US"]>,
-] = [chrome, screensCustomer, screensShop, data, addOns, shop, after, works];
+] = [chrome, addOns, shop, after, works];
 
 export const MESSAGES = Object.fromEntries(
   LOCALE_TAGS.map((t) => [t, Object.assign({}, ...AREAS.map((a) => a[t] ?? {}))]),
@@ -85,9 +79,6 @@ export const MESSAGES = Object.fromEntries(
 /** Keys are typed off English — the source of truth — so a typo is a compile error. */
 export type MessageKey =
   | keyof (typeof chrome)["en-US"]
-  | keyof (typeof screensCustomer)["en-US"]
-  | keyof (typeof screensShop)["en-US"]
-  | keyof (typeof data)["en-US"]
   | keyof (typeof addOns)["en-US"]
   | keyof (typeof shop)["en-US"]
   | keyof (typeof after)["en-US"]

@@ -39,9 +39,22 @@
  * missing there.
  */
 
-import type { DeliveryChoice } from '../state/store.ts';
 import type { AddOnSettingValues } from './host.ts';
 import type { SlotId } from './slots.ts';
+
+/** A delivery service a carrier quoted, as its picker hands it back and its dispatch page re-selects it. */
+export interface DeliveryChoice {
+  /** The add-on that quoted it, for the summary's "quoted by" line. */
+  addOn: string;
+  /** The add-on's own service code. Opaque here; it is how the fill re-selects. */
+  code: string;
+  /** Already in the reader's language — the add-on renders its own names. */
+  label: string;
+  amount: number;
+  currency: string;
+  /** ISO date the add-on estimated. */
+  estimatedDelivery: string;
+}
 
 /**
  * Every fill is handed the shop's saved values FOR ITS OWN ADD-ON under

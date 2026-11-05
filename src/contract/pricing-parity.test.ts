@@ -17,29 +17,18 @@
  *   on every job; and every job whose figures moved is moved by a fix named in
  *   `FIXES` (the four slips the plan found, or a place the old code had left
  *   the works' own rate card), each slip on at least one job.
- *
- * - on SQLite, the old screens' price book (`src/data/price-book.json`) is
- *   Adminium's: each entry checked is what a dry run of that one line answers
- *   (every twelfth one; every one with `PRICE_BOOK_ALL=1`, and
- *   `UPDATE_PRICE_BOOK=1` writes the book again from those answers).
+
  *
  * It runs with `CONTRACT=1` where a built Adminium and a built add-ons
  * checkout are (`TEST_POSTGRES_URL`, `TEST_MYSQL_URL` add those engines), and
  * says why it skipped otherwise.
  */
-import { writeFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-
-import BOOK from "../data/price-book.json" with { type: "json" };
-import { bookKey, type PricedLine } from "../lib/priced.ts";
 
 import { JOB_FIGURES } from "../sample/marlow-press.ts";
 import { ENGINES, missing, missingAddOn, ok, PORTS_PER_ENGINE, type Engine } from "./harness.ts";
 import { ALL_FIXES, FIXES, legacyQuote, SLIPS, type Fix, type LegacyQuote } from "./legacy-price.ts";
 import { describeJob, parityJobs, toLegacy, toLine, type Catalogue, type Job } from "./parity-configs.ts";
-import { bookConfigs, entryOf, jobOf } from "./price-book.ts";
 import { ADDRESS, dryRun, openWorks, PACE_MS, readCatalogue, type Row, type Works } from "./works.ts";
 
 const why = missing() ?? missingAddOn("customiser");
@@ -47,10 +36,6 @@ if (why !== null && process.env["ADMINIUM_REQUIRE_CONTRACT"] === "1") throw new 
 const PORT_BASE = Number(process.env["CONTRACT_PORT_BASE"] ?? 4980);
 /** The core leaves a formula-dated ready-by empty on a create until 0.3.44; `READY_BY_GAP=0` asserts the date. */
 const READY_BY_GAP = process.env["READY_BY_GAP"] !== "0";
-/** `UPDATE_PRICE_BOOK=1` prices every configuration of the book and writes it; `PRICE_BOOK_ALL=1` checks every one. */
-const UPDATE_BOOK = process.env["UPDATE_PRICE_BOOK"] === "1";
-const BOOK_ALL = UPDATE_BOOK || process.env["PRICE_BOOK_ALL"] === "1";
-const BOOK_FILE = fileURLToPath(new URL("../data/price-book.json", import.meta.url));
 
 /** The figures compared, in pence and kilograms; a delivery the works quotes by hand is null. */
 interface Figures {
@@ -135,35 +120,6 @@ describe.skipIf(why !== null)(`Marlow Press prices on a built Adminium${why === 
         if (READY_BY_GAP) expect(readyBy).toBeNull();
         else expect(String(readyBy).slice(0, 10)).toBe("2026-08-10");
       });
-
-      // The old screens' price book: on one engine, the figures being the same on every engine (as above).
-      it.skipIf(engine !== "sqlite")(`prices ${BOOK_ALL ? "every" : "every twelfth"} configuration of the old screens' price book as the book says`, async () => {
-        const configs = bookConfigs().filter((_, i) => BOOK_ALL || i % 12 === 0);
-        const got: Record<string, PricedLine | null> = {};
-        for (const config of configs) {
-          const job = jobOf(config);
-          let line: Row;
-          try {
-            line = toLine(job, catalogue);
-          } catch {
-            // A choice the works' catalogue does not have on this product.
-            got[bookKey(config)] = null;
-            continue;
-          }
-          await new Promise((resolve) => setTimeout(resolve, PACE_MS));
-          const reply = await dryRun(works.page, job.deliver ? { delivery_method: "deliver", ...ADDRESS } : { delivery_method: "collect" }, [line]);
-          if (reply.status !== 200) {
-            // Refused as the save would refuse it: spot UV with no lamination, a lamination on an uncoated stock.
-            expect([reply.status, reply.code], JSON.stringify(reply.body).slice(0, 400)).toEqual([400, "PUBLIC_WRITE_REFUSED"]);
-            got[bookKey(config)] = null;
-            continue;
-          }
-          got[bookKey(config)] = entryOf(reply.body.data, reply.body.children.jobs[0]!.data);
-        }
-        // One entry a line, so a change to the rate card reads as the lines it moved.
-        if (UPDATE_BOOK) writeFileSync(BOOK_FILE, `{\n${Object.entries(got).map(([key, entry]) => `${JSON.stringify(key)}:${JSON.stringify(entry)}`).join(",\n")}\n}\n`);
-        else expect(got).toEqual(Object.fromEntries(Object.keys(got).map((key) => [key, (BOOK as Record<string, unknown>)[key]])));
-      }, 1_800_000);
     });
   });
 });

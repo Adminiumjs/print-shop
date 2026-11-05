@@ -232,11 +232,11 @@ describe.each(["en-US", "ar-EG"] as const)("the customer side in %s", (locale) =
     const release = port.hold();
     await press(document.querySelectorAll<HTMLButtonElement>(".mp-tile")[0]!);
     expect(window.location.pathname).toBe("/product/business-cards");
-    expect(document.querySelector(".mp-pricing")).not.toBeNull();
+    expect(document.querySelector(".mp-working")).not.toBeNull();
     await sweep(`${locale} · configure, working out the price`);
     release();
     await settle();
-    expect(document.querySelector(".mp-pricing")).toBeNull();
+    expect(document.querySelector(".mp-working")).toBeNull();
     if (english) {
       expect(text()).toContain("Your quote");
       expect(text()).toContain("Setup");

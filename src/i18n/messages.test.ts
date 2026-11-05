@@ -5,25 +5,16 @@
  * is the two things a type cannot see — that a translation still carries the
  * placeholders its English does, and that nobody has reached for a banned word.
  *
- * It runs over the MERGED bundle, which means it covers the add-ons' vendored
- * strings as well as the app's own. That is the point: an add-on translates its
- * copy in its own repo, and this is the only place all eight locales of every
- * source are in one object at once.
- *
- * IMPORTING THE REGISTRY IS LOAD-BEARING, not tidiness. An add-on's strings are
- * no longer imported by `messages/index.ts`; they arrive when the add-on
- * REGISTERS, which happens at module load in `add-ons/registry.ts`. Without
- * this import the bundle here would hold the host's own areas and nothing else,
- * and every assertion below would pass while proving nothing about the add-ons.
+ * An add-on's own strings arrive only when a connected add-on's bundle
+ * registers them (`add-ons/connected.ts`); its repo holds them to the same
+ * rules.
  */
 
 import { describe, expect, it } from 'vitest';
 
-import { demoAddOns } from '../add-ons/registry.ts';
 import { bannedSubstringsIn, TIERING_WORDS } from '../testing/lexicon.ts';
-import { isConnectable } from '../add-ons/host.ts';
 import { LOCALE_TAGS, type LocaleTag } from './locales.ts';
-import { MESSAGES, registeredAddOnMessageKeys } from './messages/index.ts';
+import { MESSAGES } from './messages/index.ts';
 
 /** Placeholder names are not copy — `{spare}` is a number, not a word. */
 const strip = (value: string) => value.replace(/\{\w+\}/g, '');
@@ -166,41 +157,6 @@ describe('the vocabulary ban', () => {
     for (const locale of LOCALE_TAGS) {
       for (const [key, value] of Object.entries(MESSAGES[locale])) {
         expect({ key, hit: /\/mo\b/.test(value) }).toEqual({ key, hit: false });
-      }
-    }
-  });
-});
-
-describe('the add-ons’ own strings arrived', () => {
-  /*
-   * The runtime half of what used to be a type. `registerAddOnMessages` throws
-   * on a bundle that is short a locale or a key, so the fact that this module
-   * loaded at all is already an assertion; these check the other direction —
-   * that every add-on the demo registers actually got merged, and that the keys
-   * its own object points at resolve rather than rendering as raw dotted text.
-   */
-  const CONNECTABLE = demoAddOns().filter(isConnectable);
-
-  it('registered a bundle for every add-on that can be connected', () => {
-    expect(registeredAddOnMessageKeys()).toEqual(CONNECTABLE.map((a) => a.key).sort());
-  });
-
-  it('resolves every key each add-on hands the host, in English and in Arabic', () => {
-    for (const addOn of CONNECTABLE) {
-      const keys = [
-        addOn.lineKey,
-        addOn.whatKey,
-        addOn.disconnect!.goesKey,
-        addOn.disconnect!.staysKey,
-        ...addOn.permissions.map((p) => p.key),
-        ...(addOn.activity ?? []).map((e) => e.messageKey),
-        ...(addOn.demoSwitch === undefined
-          ? []
-          : [addOn.demoSwitch.labelKey, addOn.demoSwitch.noteOnKey, addOn.demoSwitch.noteOffKey]),
-      ];
-      for (const key of keys) {
-        expect(MESSAGES['en-US'][key], `en-US ${key}`).toBeTruthy();
-        expect(MESSAGES['ar-EG'][key], `ar-EG ${key}`).toBeTruthy();
       }
     }
   });

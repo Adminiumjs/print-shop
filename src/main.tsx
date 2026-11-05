@@ -1,84 +1,37 @@
 /*
- * Entry point.
+ * Entry point: which of the app's starts this bundle runs.
  *
- * The four stylesheets are imported here, before `App`, so the cascade order is
- * deterministic in the built bundle: tokens (custom properties) → base (reset,
- * fonts, behaviour classes) → components (shared UI) → screens (view-specific
- * rules, which therefore always win a tie).
+ *   the customer build   the shop, on the key Adminium binds to it;
+ *   the staff build      the works' own screens, on the signed-in person's
+ *                        session;
+ *   a connected build    the shop on its own domain, on the address and key
+ *                        baked in (`VITE_ADMINIUM_API_BASE_URL` and
+ *                        `VITE_ADMINIUM_PUBLISHABLE_KEY`).
+ *
+ * Each start is a dynamic import behind a flag `surface.ts` folds at build
+ * time, so a bundle carries only its own: the shop holds no session
+ * transport, the works no publishable key.
+ *
+ * The two stylesheets are the tokens both sides draw with and the reset
+ * under them, first, so every side's own sheet wins a tie.
  */
-
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
 
 import "./styles/tokens.css";
 import "./styles/base.css";
-import "./styles/components.css";
-import "./styles/screens.css";
 
-import { I18nProvider } from "./i18n/index.tsx";
-import { setDataSource } from "./data/source.ts";
-import { clientFromEnv, loadSnapshot, snapshotSource } from "./data/adminiumSource.ts";
 import { SURFACE_SIDE } from "./surface.ts";
 
 const container = document.getElementById("root");
 if (!container) throw new Error("Missing #root — check index.html");
 
-/*
- * ONE condition decides demo vs connected: whether the API base URL and key are
- * present at build time. `createPublicClient` returns null when either is
- * missing, so the fallback is structural rather than a catch, and there is no
- * second flag to drift. The marketplace demo builds set neither and behave
- * byte-identically to before this file changed.
- *
- * The dynamic `import()` of `App` is load-bearing, not stylistic: `App` pulls
- * `state/store.ts`, which reads the seam at MODULE SCOPE — the board, the
- * ledger, the stock and the clock — and `add-ons/records.ts`, which reads the
- * works' own address at module scope to stamp it on dispatch labels. A static
- * import would evaluate both during this module's own imports, before the fetch
- * below could resolve, and the shop would run on demo data whatever the server
- * said. The `await` has to sit between the swap and the import, so the import
- * has to be dynamic. The seam's `setDataSource` throws if that ordering is ever
- * broken, because the failure is otherwise silent and looks exactly like a
- * working app.
- */
-async function boot(): Promise<void> {
-  // The shop's own build (`build:surface:customer`): the customer's side alone.
-  if (SURFACE_SIDE === "customer") {
-    const { bootShop } = await import("./shop/boot.tsx");
-    await bootShop(container as HTMLElement);
-    return;
-  }
-  /*
-   * The staff build is the works' own screens, served by Adminium on the
-   * signed-in person's session: its own start (`studio/boot.tsx`).
-   * `SURFACE_SIDE` folds at build time, so no other build carries it.
-   */
+async function boot(mount: HTMLElement): Promise<void> {
   if (SURFACE_SIDE === "staff") {
     const { bootWorks } = await import("./studio/boot.tsx");
-    await bootWorks(container as HTMLElement);
+    await bootWorks(mount);
     return;
   }
-
-  const client = clientFromEnv();
-  if (client !== null) {
-    const snap = await loadSnapshot(client);
-    if (snap !== null) {
-      setDataSource(snapshotSource(snap));
-      console.info(
-        `[adminium] connected: ${String(snap.jobs.length)} jobs on the board, ` +
-          `${String(snap.customers.length)} customers`,
-      );
-    }
-  }
-
-  const { default: App } = await import("./app/App.tsx");
-  createRoot(container as HTMLElement).render(
-    <StrictMode>
-      <I18nProvider>
-        <App />
-      </I18nProvider>
-    </StrictMode>,
-  );
+  const { bootShop } = await import("./shop/boot.tsx");
+  await bootShop(mount);
 }
 
-void boot();
+void boot(container);

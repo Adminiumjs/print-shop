@@ -454,8 +454,8 @@ function QuotePanel({ catalogue, product, choice }: { catalogue: Catalogue; prod
         <div>
           <div role="status" aria-live="polite">
             {busy && (
-              <div className="mp-pricing">
-                <div className="mp-pricing-title">
+              <div className="mp-working">
+                <div className="mp-working-title">
                   <Calculator size={14} aria-hidden="true" />
                   {t("shop.quote.working")}
                 </div>

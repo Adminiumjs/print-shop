@@ -16,8 +16,6 @@
     "preview": "vite preview",
     "test": "vitest run",
     "contract": "CONTRACT=1 vitest run src/contract/",
-    "add-ons:status": "bash scripts/sync-add-ons.sh status",
-    "add-ons:sync": "bash scripts/sync-add-ons.sh sync",
     "typecheck": "tsc -b",
     "manifest": "vite-node scripts/write-manifest.ts",
     "manifest:check": "vite-node scripts/check-manifest.ts",
