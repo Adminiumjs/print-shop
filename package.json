@@ -25,7 +25,7 @@
     "sync:customiser": "node scripts/sync-customiser.mjs"
   },
   "dependencies": {
-    "@adminiumjs/public-client": "^0.3.43",
+    "@adminiumjs/public-client": "^0.3.45",
     "lucide-react": "^0.462.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
