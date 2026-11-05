@@ -308,9 +308,10 @@ describe.skipIf(why !== null)(`after the order, on a built Adminium${why === nul
        * WAITS ON THE CORE (named in the piece's report): `address_key` is a `join` over the postcode and the
        * first line, kept with `normalize: "code"`, but the normalising is not applied to a formula's result, so
        * "12 quay street" makes a key the sample's "12 Quay Street" does not clash with, and a second pack goes.
-       * When the core normalises a formula column's value, this flips red: take the `.fails` off.
+       * When the core normalises a formula column's value, this flips red: take the `.fails` off. On MySQL it
+       * holds already, by the column's case-insensitive collation rather than by the rule.
        */
-      it.fails("refuses a second pack to the same address typed another way", async () => {
+      (engine === "mysql" ? it : it.fails)("refuses a second pack to the same address typed another way", async () => {
         const door = browser().after();
         const stock = catalogue.materials.filter((m) => m.code === "silk170").map((m) => ({ values: { material_id: m.id } }));
         const refused = await door
