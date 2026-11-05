@@ -254,7 +254,7 @@ export function holidaysToAdd(data: WorksData, today: string): Row[] {
 function ClosuresCard({ data, owner }: { data: WorksData; owner: boolean }) {
   const t = useT();
   const fmt = useFmt();
-  const { door } = useEnv();
+  const { door, addOnSettingsHref } = useEnv();
   const { busy, run } = useRun();
   const headId = useId();
   const holidaysId = useId();
@@ -292,6 +292,9 @@ function ClosuresCard({ data, owner }: { data: WorksData; owner: boolean }) {
             {t("works.prices.holidays")}
           </h3>
           <p className="wk-price-lede">{t(toAdd.length === 0 ? "works.prices.holidaysNone" : "works.prices.holidaysLede")}</p>
+          <a className="wk-btn wk-btn--link" href={addOnSettingsHref(HOLIDAYS)} target="_top">
+            {t("works.prices.holidaySettings")}
+          </a>
           {toAdd.length > 0 && (
             <ul className="wk-price-holidays" aria-labelledby={holidaysId}>
               {toAdd.map((h) => {

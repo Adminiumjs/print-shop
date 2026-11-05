@@ -64,3 +64,6 @@ export const mayOpenPanel = (who: Person, panel: PanelId): boolean => who.roles.
 
 /** Whether this person sets up the Customiser (its fonts, palettes, ready-made designs): the owner, whose role opens its page. */
 export const maySetUpDesigns = (who: Person): boolean => isOwner(who) || who.roles.length === 0;
+
+/** Whether this person finds and erases a customer's data on the dashboard's privacy page: the owner, whose role holds it. */
+export const mayErase = (who: Person): boolean => isOwner(who) || who.roles.length === 0;

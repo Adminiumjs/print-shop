@@ -145,9 +145,13 @@ describe("the price list", () => {
     expect(toasts()).toEqual(["Christmas Day added as a closure."]);
     expect(door.data.closures.at(-1)).toMatchObject({ holiday_id: 72, from_date: "2026-12-25", to_date: "2026-12-25", reason: "Christmas Day", active: true });
     expect(text()).toContain("No public holidays to come that aren't closures already.");
+    // The days Holiday calendars keeps the works closed: the owner keeps them on the add-on's own settings, in the dashboard.
+    const keep = [...document.querySelectorAll("a")].find((a) => a.textContent === "Keep the closed days in Holiday calendars");
+    expect([keep?.getAttribute("href"), keep?.getAttribute("target")]).toEqual(["/add-on-settings/holiday-calendars", "_top"]);
     unmount();
     await mount(new FakeDoor({ roles: ["press"], data: fixture(), facts: { addOns: ["customiser", "holiday-calendars"] } }), "prices");
     expect(document.querySelector(".wk-price-holidays")).toBeNull();
+    expect(text()).not.toContain("Keep the closed days in Holiday calendars");
     expect(text()).not.toContain("Public holidays");
   });
 

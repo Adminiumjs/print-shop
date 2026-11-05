@@ -10,13 +10,13 @@
  * add-ons to the owner. What their roles cannot do, Adminium refuses anyway.
  */
 import { useEffect, useId, useState, type ReactNode } from "react";
-import { FileQuestion, LayoutGrid, LayoutTemplate, Layers, List, LogOut, Menu, Moon, Package, Printer, Puzzle, ReceiptText, Search, Sun, X } from "lucide-react";
+import { FileQuestion, LayoutGrid, LayoutTemplate, Layers, List, LogOut, Menu, Moon, Package, Printer, Puzzle, ReceiptText, Search, Sun, UserX, X } from "lucide-react";
 
 import { useData, useEnv } from "./env.tsx";
 import { onBoard, orderOf, refOf } from "./facts.ts";
 import { useFmt } from "./format.ts";
 import { navOf, WORKS_NAV, type WorksNavEntry } from "./nav.ts";
-import { mayManageAddOns, maySetUpDesigns } from "./roles.ts";
+import { mayErase, mayManageAddOns, maySetUpDesigns } from "./roles.ts";
 import { go, useWorks, type View } from "./store.ts";
 import { TodayScreen } from "./screens/Today.tsx";
 import { TicketScreen } from "./screens/Ticket.tsx";
@@ -291,6 +291,12 @@ function Nav({ view, reach }: { view: View; reach: string[] }) {
         <a className="wk-nav-item" href={env.addOnPageHref("customiser", "customiser")} target="_top">
           <LayoutTemplate size={17} aria-hidden="true" />
           {t("works.nav.designs")}
+        </a>
+      )}
+      {mayErase(env.door.who()) && (
+        <a className="wk-nav-item" href={env.privacyHref} target="_top">
+          <UserX size={17} aria-hidden="true" />
+          {t("works.nav.privacy")}
         </a>
       )}
       {items.slice(designs).map(button)}

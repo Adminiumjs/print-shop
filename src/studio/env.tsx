@@ -24,6 +24,10 @@ export interface WorksEnv {
   addOnsHref: string;
   /** Adminium's sign-in, where a sign-out lands. */
   signInHref: string;
+  /** An add-on's own settings in the dashboard (Holiday calendars' closed days), for a role that keeps them. */
+  addOnSettingsHref: (key: string) => string;
+  /** The dashboard's privacy page, on a person's data: where the owner finds and erases a customer's. */
+  privacyHref: string;
 }
 
 /** A job held in prepress by its proof, said before Adminium is asked. */

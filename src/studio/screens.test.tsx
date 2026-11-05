@@ -363,11 +363,12 @@ describe("the shell", () => {
     expect([...document.querySelectorAll("a")].some((a) => (a.getAttribute("href") ?? "").startsWith("/add-ons/customiser/"))).toBe(false);
   });
 
-  it("offers the Customiser's set-up to the owner alone", async () => {
-    const setUp = () => [...document.querySelectorAll("a")].filter((a) => a.getAttribute("href") === "/add-ons/customiser/customiser").length;
-    for (const [role, links] of [["owner", 1], ["prepress", 0], ["press", 0], ["counter", 0]] as const) {
+  it("offers the Customiser's set-up and a customer's data on the privacy page to the owner alone", async () => {
+    const links = (href: string) => [...document.querySelectorAll("a")].filter((a) => a.getAttribute("href") === href).length;
+    for (const [role, held] of [["owner", 1], ["prepress", 0], ["press", 0], ["counter", 0]] as const) {
       await mount(new FakeDoor({ roles: [role] }));
-      expect(setUp(), role).toBe(links);
+      expect(links("/add-ons/customiser/customiser"), role).toBe(held);
+      expect(links("/studio/privacy?tab=person"), role).toBe(held);
       unmount();
     }
   });

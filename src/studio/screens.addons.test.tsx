@@ -259,7 +259,7 @@ describe("an add-on's page and the activity", () => {
 describe("the shell, with a delivery company on", () => {
   it("offers Shipments, and the board's Book a collection leads to the dispatch page", async () => {
     await mount(shipping(), "today");
-    expect([...document.querySelectorAll(".wk-nav-item")].map((n) => n.textContent)).toEqual(["Today", "Jobs", "Materials", "Price list", "Designs", "Shipments", "Add-ons"]);
+    expect([...document.querySelectorAll(".wk-nav-item")].map((n) => n.textContent)).toEqual(["Today", "Jobs", "Materials", "Price list", "Designs", "A customer's data", "Shipments", "Add-ons"]);
     await click(button("Book a collection"));
     expect(useWorks.getState().view).toBe("dispatch");
     await act(async () => undefined);
