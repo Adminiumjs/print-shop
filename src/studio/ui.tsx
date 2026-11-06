@@ -44,7 +44,7 @@ export function FamilyDot({ family }: { family: string }) {
   return <span className={`wk-dot wk-dot--${familyClass(family)}`} aria-hidden="true" />;
 }
 
-const DUE_KEY: Record<Exclude<DueTone, "later">, MessageKey> = {
+const DUE_KEY: Record<Exclude<DueTone, "later" | "next">, MessageKey> = {
   ready: "works.due.ready",
   overdue: "works.due.overdue",
   today: "works.due.today",
@@ -56,10 +56,10 @@ const DUE_KEY: Record<Exclude<DueTone, "later">, MessageKey> = {
 export function useDueLabel(): (tone: DueTone, day: string | null) => string {
   const t = useT();
   const fmt = useFmt();
-  return (tone, day) => (tone === "later" ? t("works.due.on", { day: fmt.day(day) }) : t(DUE_KEY[tone]));
+  return (tone, day) => (tone === "later" ? t("works.due.on", { day: fmt.day(day) }) : tone === "next" ? t("works.due.weekday", { day: fmt.weekday(day) }) : t(DUE_KEY[tone]));
 }
 
-/** A ready-by chip: ready, overdue, due today or tomorrow, or the day. */
+/** A ready-by chip: ready, overdue, due today, tomorrow or on the next working day, or the day. */
 export function DueChip({ tone, day, big = false }: { tone: DueTone; day: string | null; big?: boolean }) {
   const label = useDueLabel();
   return <span className={`wk-due wk-due--${tone}${big ? " wk-due--big" : ""}`}>{label(tone, day)}</span>;

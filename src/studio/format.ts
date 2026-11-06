@@ -15,6 +15,8 @@ export interface Fmt {
   money(value: unknown): string;
   /** A stored date (`YYYY-MM-DD`): "Wed 5 Aug". */
   day(day: string | null): string;
+  /** A stored date's weekday alone: "Monday". */
+  weekday(day: string | null): string;
   /** A stored date in full, with its year: "Wednesday 5 August 2026". */
   dayLong(day: string | null): string;
   /** A stored date's day heading: "Wednesday 5 August". */
@@ -43,6 +45,7 @@ export function useFmt(): Fmt {
     const short = new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
     const long = new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
     const heading = new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+    const weekday = new Intl.DateTimeFormat(locale, { weekday: "long", timeZone: "UTC" });
     const year = new Intl.DateTimeFormat(locale, { year: "numeric", timeZone: zone });
     const clock = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: zone });
     return {
@@ -51,6 +54,7 @@ export function useFmt(): Fmt {
         return n === null ? "—" : money(n, currency);
       },
       day: (day) => (day === null ? "—" : short.format(noon(day))),
+      weekday: (day) => (day === null ? "—" : weekday.format(noon(day))),
       dayLong: (day) => (day === null ? "—" : long.format(noon(day))),
       dayHeading: (day) => (day === null ? "—" : heading.format(noon(day))),
       moment: (iso) => (typeof iso === "string" && iso !== "" ? short.format(noon(dayIn(iso, zone))) : "—"),

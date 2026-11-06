@@ -682,7 +682,8 @@
   background: var(--danger-soft);
 }
 .wk-due--today,
-.wk-due--tomorrow {
+.wk-due--tomorrow,
+.wk-due--next {
   color: var(--warn);
   background: var(--warn-soft);
 }

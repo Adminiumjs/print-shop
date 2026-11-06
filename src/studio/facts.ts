@@ -6,7 +6,7 @@
  * out in the browser.
  */
 import type { WorksData } from "./door.ts";
-import { isStudioDay, studioDaysBetween, type Closure, type Day } from "./time.ts";
+import { addDays, isStudioDay, studioDaysBetween, type Closure, type Day } from "./time.ts";
 import { dayOf, num, same, text, type Id, type Row } from "./wire.ts";
 
 /** The floor's four columns, in order. */
@@ -86,7 +86,8 @@ export function closuresOf(data: WorksData): Closure[] {
     });
 }
 
-export type DueTone = "ready" | "overdue" | "today" | "tomorrow" | "later" | "none";
+/** `next`: the next day the works prints on, when that is not tomorrow (Monday, seen on a Friday). */
+export type DueTone = "ready" | "overdue" | "today" | "tomorrow" | "next" | "later" | "none";
 
 /** Where a job's ready-by stands against today, in the works' days. */
 export function dueOf(job: Row, today: Day, workingDays: readonly string[], closures: readonly Closure[]): { tone: DueTone; day: Day | null } {
@@ -96,7 +97,8 @@ export function dueOf(job: Row, today: Day, workingDays: readonly string[], clos
   if (due < today) return { tone: "overdue", day: due };
   const days = studioDaysBetween(today, due, workingDays, closures);
   if (days === 0) return { tone: "today", day: due };
-  if (days === 1) return { tone: "tomorrow", day: due };
+  // The next working day is "tomorrow" only when it is the next day on the calendar.
+  if (days === 1) return { tone: due === addDays(today, 1) ? "tomorrow" : "next", day: due };
   return { tone: "later", day: due };
 }
 
