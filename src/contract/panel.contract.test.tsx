@@ -348,6 +348,29 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
         await panels.remove("customiser", "version_files", files[0]!.id);
       });
 
+      // ── the Customiser's set-up page (the owner's "Customising set-up"), as the owner ──
+
+      it("reads, as the owner, every table of the Customiser's set-up page the add-on lets an app's role read", async () => {
+        for (const table of ["bases", "base_areas", "base_pieces", "ready_designs", "ready_parts", "fonts", "palettes", "palette_colours", "features"]) {
+          expect((await callers["owner"]!.get(`/api/v1/data/${connectionId}/customiser_${table}?limit=1`)).status, table).toBe(200);
+        }
+      });
+
+      /*
+       * CUSTOMISER-SETUP-GRANTS, a gap in the Customiser: its `appGrants`
+       * give an app's role nothing of `settings` and only read of the
+       * catalogue the set-up page edits, so the owner's set-up page stops at
+       * its settings (403). The app asks for both; the add-on cuts them.
+       * Passes once the Customiser lets an app's role read `settings` and
+       * change those tables: then drop `.fails`.
+       */
+      it.fails("CUSTOMISER-SETUP-GRANTS: opens the Customiser's set-up page as the owner: its settings read, a priced feature's change saved", async () => {
+        expect((await callers["owner"]!.get(`/api/v1/data/${connectionId}/customiser_settings?limit=1`)).status).toBe(200);
+        const feature = ok(await admin.get<{ data: Row[] }>(`/api/v1/data/${connectionId}/customiser_features?limit=1`)).data[0]!;
+        const saved = await callers["owner"]!.patch(`/api/v1/data/${connectionId}/customiser_features/${String(feature.id)}`, { values: { name: feature["name"] } }, await tokenOf("owner"));
+        expect(saved.status, JSON.stringify(saved.body).slice(0, 400)).toBe(200);
+      });
+
       // ── last, since it empties Harbour Bakery: the shop owner erases a customer whose design was proofed ──
 
       /** Every row of a table, as the operator reads them. */

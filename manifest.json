@@ -19466,7 +19466,10 @@
           "addOn": "customiser",
           "table": "bases",
           "actions": [
-            "read"
+            "read",
+            "create",
+            "update",
+            "delete"
           ]
         },
         {
@@ -19487,40 +19490,65 @@
           "addOn": "customiser",
           "table": "base_areas",
           "actions": [
-            "read"
+            "read",
+            "create",
+            "update",
+            "delete"
           ]
         },
         {
           "addOn": "customiser",
           "table": "base_pieces",
           "actions": [
-            "read"
+            "read",
+            "create",
+            "update",
+            "delete"
           ]
         },
         {
           "addOn": "customiser",
           "table": "palettes",
           "actions": [
-            "read"
+            "read",
+            "create",
+            "update",
+            "delete"
           ]
         },
         {
           "addOn": "customiser",
           "table": "palette_colours",
           "actions": [
-            "read"
+            "read",
+            "create",
+            "update",
+            "delete"
           ]
         },
         {
           "addOn": "customiser",
           "table": "fonts",
           "actions": [
-            "read"
+            "read",
+            "create",
+            "update",
+            "delete"
           ]
         },
         {
           "addOn": "customiser",
           "table": "features",
+          "actions": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "settings",
           "actions": [
             "read"
           ]

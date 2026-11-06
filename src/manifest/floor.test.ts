@@ -51,7 +51,7 @@ describe("the manifest at the floor it ships with", () => {
       expect(held["designs"], key).toEqual(["read", "read_pii"]);
       expect(held["design_versions"], key).toEqual(["read", "read_pii", "create", "update"]);
       expect(held["version_files"], key).toEqual(["read", "create", "update", "delete"]);
-      expect(held["features"], key).toEqual(["read"]);
+      if (key !== "owner") expect(held["features"], key).toEqual(["read"]);
       // The starter fonts the panel prints with are handed out beside the set-up page.
       expect(roleOf(shipped, key).permissions, key).toContain("page:@customiser:view");
       // A role holds up to twenty-four of the add-ons' tables: Inventory's stock is read beside the panel's.
@@ -62,6 +62,15 @@ describe("the manifest at the floor it ships with", () => {
     expect((roleOf(shipped, "owner").tables as Grant[]).filter((g) => g.addOn === "shipping-dhl").map((g) => g.table)).toEqual(["shipments"]);
     expect(tablesOf("counter")).toEqual({ designs: ["read"] });
     expect(roleOf(shipped, "counter").permissions).not.toContain("page:@customiser:view");
+  });
+
+  // The Customiser keeps these back from an app's role today (its `appGrants`): asked, so the owner holds them once it lets them.
+  it("asks for the owner everything the Customiser's set-up page reads and writes, its settings among them", () => {
+    type Grant = { addOn?: string; table: string; actions: string[] };
+    const held = Object.fromEntries((roleOf(shipped, "owner").tables as Grant[]).filter((g) => g.addOn === "customiser").map((g) => [g.table, g.actions]));
+    for (const table of ["bases", "base_areas", "base_pieces", "fonts", "palettes", "palette_colours", "features"]) expect(held[table], table).toEqual(["read", "create", "update", "delete"]);
+    for (const table of ["ready_designs", "ready_parts", "settings"]) expect(held[table], table).toEqual(["read"]);
+    expect(roleOf(shipped, "owner").permissions).toContain("page:@customiser:view");
   });
 
   it("lets the owner, and no floor role, find and erase a customer's data", () => {

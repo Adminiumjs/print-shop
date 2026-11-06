@@ -81,6 +81,20 @@ const CUSTOMISER_PANEL = [
   { addOn: CUSTOMISER, table: "features", actions: ["read"] },
 ];
 
+/** The Customiser's tables its set-up page (bases, their areas and pieces, fonts, finishes, priced features) adds to, changes and takes from. */
+const SETUP_WRITES = ["bases", "base_areas", "base_pieces", "fonts", "palettes", "palette_colours", "features"];
+
+/**
+ * The owner's: the panel's, and everything the Customiser's set-up page reads
+ * and writes, its settings among them. The Customiser holds an app's role to
+ * reading those tables and keeps its settings back (its `appGrants`), so it
+ * cuts this ask, and the install check says what it kept back; the owner's
+ * set-up page opens once the add-on lets an app's role that far.
+ */
+const CUSTOMISER_SETUP = [
+  ...CUSTOMISER_PANEL.map((entry) => (SETUP_WRITES.includes(entry.table) ? { ...entry, actions: ["read", "create", "update", "delete"] } : entry)),
+  { addOn: CUSTOMISER, table: "settings", actions: ["read"] },
+];
 
 /** The rules by which Adminium decides a column: nobody writes one, whatever their role. */
 export const DECIDING_RULES = ["rollup", "formula", "copy", "band", "stamp", "sequence", "format", "code", "lookup"] as const;
@@ -143,7 +157,7 @@ export const ROLES = [
       orders: { writable: typed("orders", ...CUSTOMERS_OWN), creatable: typed("orders", ...CUSTOMERS_OWN) },
       saved_quotes: { writable: typed("saved_quotes", ...CUSTOMERS_OWN), creatable: typed("saved_quotes", ...CUSTOMERS_OWN) },
     },
-    tables: [...CUSTOMISER_PANEL, ...STOCK_READS, ...SHIPMENT_READS, ...HOLIDAY_READS],
+    tables: [...CUSTOMISER_SETUP, ...STOCK_READS, ...SHIPMENT_READS, ...HOLIDAY_READS],
   },
   {
     key: "prepress",
