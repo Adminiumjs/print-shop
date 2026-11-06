@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "releases": [
+    {
+      "name": "@adminiumjs/app-printing",
+      "version": "0.2.0",
+      "integrity": "sha512-6oZ8poJ1Wejt1TC1mcNlQk2ZhN2SgFf1SCSDEAqEgDbYD3Kk7A3V3ahiK34Nhf73KRw+k7j12BH/7rTcXnoD1g==",
+      "publishedAt": "2026-11-06T09:41:27.000Z"
+    }
+  ]
+}
