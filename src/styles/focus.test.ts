@@ -476,19 +476,6 @@ describe("the focus ring is visible to the person using it", () => {
    * one, and the focused element's own text colour when it does not, so an
    * add-on installed in some other host never goes blind.
    */
-  it("sweeps the vendored add-on stylesheets too, not only this app's own", () => {
-    const vendored = everyStylesheet().filter((f) => f.includes("/vendor/"));
-    expect(vendored.length, "no vendored add-on stylesheet was found").toBeGreaterThan(0);
-    for (const file of vendored) {
-      const source = readFileSync(file, "utf8");
-      if (!source.includes(":focus-visible")) continue;
-      expect(
-        source,
-        `${relative(process.cwd(), file)} draws a focus ring with no host-independent fallback`,
-      ).toContain("var(--focus-ring, currentColor)");
-    }
-  });
-
   /**
    * AND THE ARITHMETIC ITSELF, driven over the value that shipped.
    *

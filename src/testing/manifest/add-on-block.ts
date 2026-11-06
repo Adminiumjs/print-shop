@@ -26,6 +26,7 @@ import { z } from 'zod';
 
 import { i18nMessageSchema, wordsByLanguageSchema } from './common.ts';
 import { contractIdSchema, hasContractVersion } from './contracts.ts';
+import { recordPanelsSchema } from './record-panels.ts';
 import { recordTabsSchema } from './record-tabs.ts';
 import { slotIdSchema } from './slots.ts';
 import { addOnAssistantSchema } from './assistant-block.ts';
@@ -36,9 +37,11 @@ import { BUILTIN_NAV_GROUP_KEYS, type BuiltinNavGroupKey } from './nav-groups.ts
  * Add-ons get their OWN closed category vocabulary, because an add-on is
  * not a vertical and forcing it into the app facet set would make a carrier a
  * "commerce" product. Wave 4 uses two of the five; the other three exist so a
- * second add-on wave does not have to reopen the vocabulary.
+ * second add-on wave does not have to reopen the vocabulary. `marketing` is
+ * for the add-ons that reach people outside the business: forms and surveys,
+ * landing pages, chat, social posts, prospecting.
  */
-export const ADD_ON_CATEGORIES = ['artwork', 'delivery', 'payments', 'email', 'data'] as const;
+export const ADD_ON_CATEGORIES = ['artwork', 'delivery', 'payments', 'email', 'data', 'marketing'] as const;
 export const addOnCategorySchema = z.enum(ADD_ON_CATEGORIES);
 export type AddOnCategory = (typeof ADD_ON_CATEGORIES)[number];
 
@@ -320,6 +323,13 @@ export const addOnBlockSchema = z
      */
     adjuster: z.record(z.string(), z.unknown()).optional(),
     /**
+     * What the add-on reads to answer whether a design may be ordered (its
+     * designs table and keyed reads from a design row), served by its
+     * `design-check` provider. Its words are the manifest's own, so
+     * `@adminium/manifest` checks the whole of it.
+     */
+    checker: z.record(z.string(), z.unknown()).optional(),
+    /**
      * Stock words: a question a page may ask of a ledger without writing
      * anything — "is this in, low or out?". Only the id is typed here; the
      * rest names the manifest's own ledgers and settings, which
@@ -332,12 +342,28 @@ export const addOnBlockSchema = z
       .optional(),
     /** Tabs on other tables' record pages that list this add-on's rows for the record (see `record-tabs.ts`). */
     recordTabs: recordTabsSchema.optional(),
+    /** The add-on's own screens on the record pages of tables that link into one of its tables (see `record-panels.ts`). */
+    panels: recordPanelsSchema.optional(),
     /**
      * What a typed or scanned code may find: the tables that hold codes and
      * the columns an answer may carry. Typed loosely here: it names the
      * manifest's own tables, so `@adminium/manifest` checks the whole of it.
      */
     lookUp: z.record(z.string(), z.unknown()).optional(),
+    /**
+     * Forms: which of the add-on's own tables hold the forms, the answers,
+     * and (optional) the survey invitations and the strangers' files. The
+     * engine reads, draws and writes them for a stranger; no add-on code
+     * runs for one. Only the two tables every forms add-on has are typed
+     * here: the columns each must have are the manifest's own vocabulary,
+     * so `@adminium/manifest` checks the whole of it.
+     */
+    forms: z
+      .looseObject({
+        forms: z.string().regex(/^[a-z][a-z0-9_]*$/, 'a table ref'),
+        answers: z.string().regex(/^[a-z][a-z0-9_]*$/, 'a table ref'),
+      })
+      .optional(),
     /**
      * Steps the add-on gives to Automations: each a named write of one row of
      * one of its own tables (see `steps.ts`). Which table and columns they are

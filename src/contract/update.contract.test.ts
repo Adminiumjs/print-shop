@@ -1,0 +1,404 @@
+/**
+ * PRINT SHOP'S UPDATE CONTRACT: A WORKS ON THE OLD EXAMPLE TAKES THE REWORK.
+ *
+ * Print Shop 0.1.x was never released as a package: what is out there is the
+ * old example's own database (`db/schema.sql` and `db/seed.sql` on the old
+ * `main`), nine bare tables a works ran its board on. So the update is not
+ * one package over another, but the reworked app installed into a database
+ * that already holds those tables. On SQLite, Postgres and MySQL, along the
+ * path a works takes:
+ *
+ *   1. A DATABASE ON THE OLD EXAMPLE: the old tables, in each engine's own
+ *      words (customers, products, materials, quotes, jobs, artwork, proofs,
+ *      dispatches, stock_movements, under their bare names, with their keys,
+ *      references, indexes and checks) and a few rows in each from the old
+ *      seed;
+ *   2. every old table read straight from the database, past Adminium: each
+ *      column as the engine declares it, each row as the engine spells it,
+ *      each key, index and check — the snapshot;
+ *   3. that database connected to a built Adminium, and the reworked app and
+ *      the Customiser it requires uploaded;
+ *   4. THE PLAN: installable, with no problem; every table it makes is the
+ *      app's own under the `printing_` prefix (or the Customiser's), and it
+ *      takes none of the old tables for its own;
+ *   5. installed, with the Customiser;
+ *   6. EVERY OLD TABLE UNTOUCHED: read again, byte for byte the snapshot;
+ *      every table that is new is the app's prefixed one or the Customiser's;
+ *   7. the sample added, into the app's own tables, and the old tables still
+ *      the snapshot;
+ *   8. A CUSTOMER ORDERS: through the shop's own door, as its checkout places
+ *      an order; it lands in the app's `printing_orders`, and the old `jobs`
+ *      is still the snapshot.
+ *
+ * It runs with `CONTRACT=1` where a built Adminium and a built add-ons
+ * checkout are, and says why it skipped otherwise. A prefixed app beside bare
+ * tables of the same names needs Adminium 0.3.44: on an older one it is
+ * skipped by name. The database drivers are the Adminium checkout's own (this
+ * repo adds none). Its servers take ports from `CONTRACT_PORT_BASE`.
+ */
+import { rmSync } from "node:fs";
+import { createRequire } from "node:module";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+
+import { firstChoice } from "../shop/config.ts";
+import { AdminiumShop } from "../shop/door.ts";
+import { orderBody, useShop, type BasketLine } from "../shop/store.ts";
+import { ADMINIUM_REPO, addOnBundle, appBundle, boot, Caller, ENGINES, missing, missingAddOn, ok, PORTS_PER_ENGINE, until, type Engine, type Server } from "./harness.ts";
+import { engineAtLeast, ENGINE_VERSION, MANIFEST_TEXT } from "./release.ts";
+
+const why = missing() ?? missingAddOn("customiser");
+if (why !== null && process.env["ADMINIUM_REQUIRE_CONTRACT"] === "1") throw new Error(`the update contract must run here, and cannot: ${why}`);
+const PORT_BASE = Number(process.env["CONTRACT_PORT_BASE"] ?? 4980);
+const ADMIN = { email: process.env["E2E_ADMIN_EMAIL"] ?? "e2e@adminium.local", password: process.env["E2E_ADMIN_PASSWORD"] ?? "adminium-e2e-password" };
+/** 10:20 on Wednesday 5 August 2026 in Marlow (British Summer Time), before the two o'clock cut-off. */
+const WEDNESDAY = Date.parse("2026-08-05T09:20:00Z");
+const BESIDE_BARE_TABLES = engineAtLeast("0.3.44");
+const CUSTOMER = { name: "Harbour Bakery", email: "orders@harbourbakery.example", address_line1: "12 Quay Street", town: "Marlow", postcode: "SL7 1BT", may_email: false, language: "en-US" };
+
+// ── the old example's database ──────────────────────────────────────────────
+
+/** The old tables, in the order they reference each other. */
+const OLD = ["customers", "products", "materials", "quotes", "jobs", "artwork", "proofs", "dispatches", "stock_movements"] as const;
+
+/** One engine's words for the old schema's types. */
+interface Words {
+  q: (name: string) => string;
+  id: string;
+  text: (length: number) => string;
+  json: string;
+  bytes: string;
+  bool: string;
+  moment: string;
+  now: string;
+  /** The unique index on an e-mail, lower-cased: an index on an expression, or on MySQL, whose collation ignores case, on the column. */
+  lowerEmail: string;
+  /** How a JSON value, a yes or no and bytes are written in an INSERT. */
+  jsonValue: (text: string) => string;
+  yes: (value: boolean) => string;
+  hex: (hex: string) => string;
+}
+
+const WORDS: Record<Engine, Words> = {
+  sqlite: { q: (n) => `"${n}"`, id: "INTEGER PRIMARY KEY", text: () => "TEXT", json: "TEXT", bytes: "BLOB", bool: "INTEGER", moment: "TEXT", now: "CURRENT_TIMESTAMP", lowerEmail: "CREATE UNIQUE INDEX customers_email_idx ON customers (lower(email))", jsonValue: (t) => `'${t}'`, yes: (v) => (v ? "1" : "0"), hex: (h) => `X'${h}'` },
+  postgres: { q: (n) => `"${n}"`, id: "integer GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY", text: () => "text", json: "jsonb", bytes: "bytea", bool: "boolean", moment: "timestamptz", now: "now()", lowerEmail: "CREATE UNIQUE INDEX customers_email_idx ON customers (lower(email))", jsonValue: (t) => `'${t}'::jsonb`, yes: (v) => (v ? "true" : "false"), hex: (h) => `'\\x${h}'::bytea` },
+  mysql: { q: (n) => `\`${n}\``, id: "INT AUTO_INCREMENT PRIMARY KEY", text: (n) => `VARCHAR(${String(n)})`, json: "JSON", bytes: "LONGBLOB", bool: "BOOLEAN", moment: "DATETIME", now: "CURRENT_TIMESTAMP", lowerEmail: "CREATE UNIQUE INDEX customers_email_idx ON customers (email)", jsonValue: (t) => `'${t}'`, yes: (v) => (v ? "1" : "0"), hex: (h) => `X'${h}'` },
+};
+
+/**
+ * The old `db/schema.sql`, each table with every column it had, in the engine's own words. MySQL refuses a
+ * check on a column a foreign key's own `ON DELETE` acts on, so there a movement's job has no cascade.
+ */
+function oldSchema(engine: Engine): string[] {
+  const { q, id, text, json, bytes, bool, moment, now, lowerEmail } = WORDS[engine];
+  return [
+    `CREATE TABLE customers (id ${id}, name ${text(200)} NOT NULL, email ${text(254)} NOT NULL, town ${text(120)} NOT NULL, created_at ${moment} NOT NULL DEFAULT ${now})`,
+    lowerEmail,
+    `CREATE TABLE products (id ${id}, ${q("key")} ${text(80)} NOT NULL UNIQUE, name ${text(200)} NOT NULL, family ${text(20)} NOT NULL CHECK (family IN ('card', 'paper', 'mail', 'label', 'large', 'fabric')), from_quantity INTEGER NOT NULL CHECK (from_quantity > 0), sides_choice ${bool} NOT NULL)`,
+    `CREATE TABLE materials (id ${id}, ${q("key")} ${text(80)} NOT NULL UNIQUE, name ${text(200)} NOT NULL, kind ${text(10)} NOT NULL CHECK (kind IN ('sheet', 'roll')), gsm INTEGER CHECK (gsm > 0), sheet_cost NUMERIC(12, 2) NOT NULL CHECK (sheet_cost >= 0), on_hand INTEGER NOT NULL CHECK (on_hand >= 0), reorder_at INTEGER NOT NULL CHECK (reorder_at >= 0))`,
+    `CREATE INDEX materials_kind_idx ON materials (kind)`,
+    `CREATE TABLE quotes (id ${id}, ref ${text(20)} NOT NULL UNIQUE, customer_id INTEGER NOT NULL REFERENCES customers (id), label ${text(200)}, configuration ${json} NOT NULL, total NUMERIC(12, 2) NOT NULL CHECK (total >= 0), saved_on DATE NOT NULL, created_at ${moment} NOT NULL DEFAULT ${now})`,
+    `CREATE INDEX quotes_customer_idx ON quotes (customer_id)`,
+    `CREATE TABLE jobs (id ${id}, ref ${text(20)} NOT NULL UNIQUE, customer_id INTEGER NOT NULL REFERENCES customers (id), product_id INTEGER NOT NULL REFERENCES products (id), material_id INTEGER NOT NULL REFERENCES materials (id), quantity INTEGER NOT NULL CHECK (quantity > 0), trim_width_mm NUMERIC(8, 1) NOT NULL CHECK (trim_width_mm > 0), trim_height_mm NUMERIC(8, 1) NOT NULL CHECK (trim_height_mm > 0), sides INTEGER NOT NULL CHECK (sides IN (1, 2)), finish_key ${text(20)} NOT NULL CHECK (finish_key IN ('none', 'gloss-lam', 'matt-lam', 'soft-touch', 'spot-uv', 'round-corners', 'plain-edges', 'hemmed', 'pole-pockets', 'stretched', 'rolled')), packaging_key ${text(20)} NOT NULL CHECK (packaging_key IN ('bundled', 'shrink-wrapped', 'boxed')), stage ${text(20)} NOT NULL CHECK (stage IN ('quoted', 'ordered', 'prepress', 'proofed', 'approved', 'printing', 'finishing', 'ready', 'dispatched', 'collected')), promised_for DATE NOT NULL, express ${bool} NOT NULL DEFAULT ${WORDS[engine].yes(false)}, spoiled_sheets INTEGER NOT NULL DEFAULT 0 CHECK (spoiled_sheets >= 0), total NUMERIC(12, 2) NOT NULL CHECK (total >= 0), created_at ${moment} NOT NULL DEFAULT ${now}, updated_at ${moment} NOT NULL DEFAULT ${now})`,
+    `CREATE INDEX jobs_stage_idx ON jobs (stage)`,
+    `CREATE INDEX jobs_customer_idx ON jobs (customer_id)`,
+    `CREATE INDEX jobs_promised_idx ON jobs (promised_for)`,
+    `CREATE TABLE artwork (id ${id}, job_id INTEGER NOT NULL REFERENCES jobs (id) ON DELETE CASCADE, filename ${text(200)} NOT NULL, file ${bytes} NOT NULL, width_px INTEGER NOT NULL CHECK (width_px > 0), height_px INTEGER NOT NULL CHECK (height_px > 0), width_mm NUMERIC(8, 1) NOT NULL CHECK (width_mm > 0), height_mm NUMERIC(8, 1) NOT NULL CHECK (height_mm > 0), bleed_mm NUMERIC(5, 1) NOT NULL CHECK (bleed_mm >= 0), nearest_ink_mm NUMERIC(5, 1) NOT NULL CHECK (nearest_ink_mm >= 0), colour_space ${text(4)} NOT NULL CHECK (colour_space IN ('CMYK', 'RGB')), fonts_embedded ${bool} NOT NULL, pages INTEGER NOT NULL CHECK (pages > 0), source ${text(40)}, created_at ${moment} NOT NULL DEFAULT ${now})`,
+    `CREATE INDEX artwork_job_idx ON artwork (job_id)`,
+    `CREATE TABLE proofs (id ${id}, job_id INTEGER NOT NULL REFERENCES jobs (id) ON DELETE CASCADE, kind ${text(20)} NOT NULL CHECK (kind IN ('sent', 'change-asked', 'approved')), note ${text(400)}, ${q("at")} DATE NOT NULL)`,
+    `CREATE INDEX proofs_job_idx ON proofs (job_id)`,
+    `CREATE TABLE dispatches (id ${id}, job_id INTEGER NOT NULL UNIQUE REFERENCES jobs (id) ON DELETE CASCADE, kind ${text(20)} NOT NULL CHECK (kind IN ('collected', 'carrier')), tracking ${text(64)}, ${q("at")} ${moment} NOT NULL, CONSTRAINT dispatches_tracking_ck CHECK (kind = 'carrier' OR tracking IS NULL))`,
+    `CREATE TABLE stock_movements (id ${id}, material_id INTEGER NOT NULL REFERENCES materials (id), job_id INTEGER REFERENCES jobs (id)${engine === "mysql" ? "" : " ON DELETE CASCADE"}, kind ${text(20)} NOT NULL CHECK (kind IN ('consumed', 'spoilage', 'delivery')), sheets INTEGER NOT NULL CHECK (sheets > 0), ${q("at")} ${moment} NOT NULL, CONSTRAINT stock_movements_job_ck CHECK ((kind = 'delivery') = (job_id IS NULL)))`,
+    `CREATE INDEX stock_movements_material_idx ON stock_movements (material_id, ${q("at")})`,
+    `CREATE INDEX stock_movements_job_idx ON stock_movements (job_id)`,
+  ];
+}
+
+/** A few rows of each, from the old `db/seed.sql`. */
+function oldRows(engine: Engine): string[] {
+  const { q, jsonValue, yes, hex } = WORDS[engine];
+  // MySQL's DATETIME has no zone: the old seed's moments, as the works' wall clock wrote them.
+  const at = (moment: string) => (engine === "mysql" ? moment.replace(/\+\d\d$/, "") : moment);
+  return [
+    `INSERT INTO customers (id, name, email, town, created_at) VALUES
+      (1, 'Harbour Bakery', 'orders@harbourbakery.example', 'Marlow', '${at("2026-04-02 09:00:00+01")}'),
+      (3, 'Bramble Yoga', 'hello@brambleyoga.example', 'Nether Wold', '${at("2026-04-02 09:00:00+01")}'),
+      (6, 'Kestrel Joinery', 'workshop@kestreljoinery.example', 'Nether Wold', '${at("2026-04-02 09:00:00+01")}')`,
+    `INSERT INTO products (id, ${q("key")}, name, family, from_quantity, sides_choice) VALUES
+      (1, 'business-cards', 'Business cards', 'card', 100, ${yes(true)}),
+      (3, 'flyers', 'Flyers & leaflets', 'paper', 250, ${yes(true)}),
+      (10, 'pvc-banners', 'PVC banners', 'large', 1, ${yes(false)})`,
+    `INSERT INTO materials (id, ${q("key")}, name, kind, gsm, sheet_cost, on_hand, reorder_at) VALUES
+      (1, 'silk-350', '350gsm silk board', 'sheet', 350, 0.42, 260, 80),
+      (3, 'silk-170', '170gsm silk', 'sheet', 170, 0.14, 980, 200),
+      (6, 'pvc-510', '510gsm PVC banner', 'roll', 510, 28.00, 18, 25),
+      (9, 'vinyl', 'Self-adhesive vinyl', 'roll', NULL, 34.00, 58, 20)`,
+    `INSERT INTO quotes (id, ref, customer_id, label, configuration, total, saved_on, created_at) VALUES
+      (1, 'MP-4111', 6, 'Workshop cards, heavier board', ${jsonValue('{"product":"business-cards","material":"silk-350","quantity":500}')}, 86.40, '2026-07-22', '${at("2026-07-22 11:00:00+01")}')`,
+    `INSERT INTO jobs (id, ref, customer_id, product_id, material_id, quantity, trim_width_mm, trim_height_mm, sides, finish_key, packaging_key, stage, promised_for, express, spoiled_sheets, total, created_at, updated_at) VALUES
+      (1, 'MP-4113', 1, 1, 1, 500, 85, 55, 2, 'matt-lam', 'boxed', 'ordered', '2026-08-11', ${yes(false)}, 0, 85.15, '${at("2026-08-04 09:00:00+01")}', '${at("2026-08-04 16:30:00+01")}'),
+      (2, 'MP-4114', 3, 3, 3, 250, 105, 148, 2, 'none', 'bundled', 'proofed', '2026-08-12', ${yes(false)}, 0, 71.58, '${at("2026-08-04 09:00:00+01")}', '${at("2026-08-04 16:30:00+01")}'),
+      (9, 'MP-4121', 3, 10, 6, 2, 900, 2000, 1, 'hemmed', 'bundled', 'printing', '2026-08-07', ${yes(false)}, 0, 226.08, '${at("2026-08-04 09:00:00+01")}', '${at("2026-08-04 16:30:00+01")}'),
+      (17, 'MP-4107', 3, 3, 3, 50, 297, 420, 1, 'none', 'bundled', 'dispatched', '2026-07-02', ${yes(false)}, 0, 76.25, '${at("2026-06-29 09:00:00+01")}', '${at("2026-07-02 16:30:00+01")}')`,
+    `INSERT INTO artwork (id, job_id, filename, file, width_px, height_px, width_mm, height_mm, bleed_mm, nearest_ink_mm, colour_space, fonts_embedded, pages, source, created_at) VALUES
+      (1, 1, 'harbour-cards.pdf', ${hex("255044462d312e340a")}, 1087, 768, 91, 61, 3, 4.5, 'CMYK', ${yes(true)}, 2, NULL, '${at("2026-08-04 09:00:00+01")}')`,
+    `INSERT INTO proofs (id, job_id, kind, note, ${q("at")}) VALUES
+      (1, 2, 'sent', NULL, '2026-08-03'),
+      (2, 2, 'change-asked', 'Make the date line bigger.', '2026-08-03')`,
+    `INSERT INTO dispatches (id, job_id, kind, tracking, ${q("at")}) VALUES
+      (1, 17, 'carrier', '00340012345678901234', '${at("2026-07-02 16:30:00+01")}')`,
+    `INSERT INTO stock_movements (id, material_id, job_id, kind, sheets, ${q("at")}) VALUES
+      (1, 1, 1, 'consumed', 24, '${at("2026-08-04 10:00:00+01")}'),
+      (2, 3, NULL, 'delivery', 500, '${at("2026-07-20 08:30:00+01")}')`,
+  ];
+}
+
+// ── the database, read past Adminium ────────────────────────────────────────
+
+/** Asked for when used, so listing the tests needs no Adminium checkout. */
+const driver = (name: string): unknown => createRequire(join(ADMINIUM_REPO, "apps", "e2e", "package.json"))(name);
+
+/** Where one engine's old database is: a file, or a database of its own on the engine's server. */
+interface Place {
+  engine: Engine;
+  /** The SQLite file, or the database's name. */
+  name: string;
+  dsn: string;
+}
+
+/** One table, as the engine itself says it: declarations, keys, indexes and checks, and every row as text. */
+interface Read {
+  shape: string[];
+  rows: (string | null)[][];
+}
+
+/** Run statements, and hand back what each query read, as text (`null` stays null). */
+async function sql(place: Place, statements: readonly string[]): Promise<Record<string, unknown>[][]> {
+  const out: Record<string, unknown>[][] = [];
+  if (place.engine === "sqlite") {
+    type Db = { prepare(sql: string): { all(): Record<string, unknown>[]; run(): unknown; reader: boolean }; close(): void };
+    const Database = driver("better-sqlite3") as new (file: string) => Db;
+    const db = new Database(place.name);
+    try {
+      for (const statement of statements) {
+        const prepared = db.prepare(statement);
+        out.push(prepared.reader ? prepared.all() : (prepared.run(), []));
+      }
+    } finally {
+      db.close();
+    }
+    return out;
+  }
+  if (place.engine === "postgres") {
+    type Client = { connect(): Promise<void>; query(sql: string): Promise<{ rows: Record<string, unknown>[] }>; end(): Promise<void> };
+    const pg = driver("pg") as { Client: new (options: { connectionString: string }) => Client };
+    const client = new pg.Client({ connectionString: place.dsn });
+    await client.connect();
+    try {
+      for (const statement of statements) out.push((await client.query(statement)).rows);
+    } finally {
+      await client.end();
+    }
+    return out;
+  }
+  type Connection = { query(sql: string): Promise<[unknown]>; end(): Promise<void> };
+  const mysql = driver("mysql2/promise") as { createConnection(options: { uri: string; dateStrings: boolean }): Promise<Connection> };
+  const connection = await mysql.createConnection({ uri: place.dsn, dateStrings: true });
+  try {
+    for (const statement of statements) {
+      const [rows] = await connection.query(statement);
+      out.push(Array.isArray(rows) ? (rows as Record<string, unknown>[]) : []);
+    }
+  } finally {
+    await connection.end();
+  }
+  return out;
+}
+
+const text = (value: unknown): string | null => (value === null || value === undefined ? null : Buffer.isBuffer(value) ? value.toString("hex") : String(value));
+
+/** Every table in the database, by name. */
+async function tablesIn(place: Place): Promise<string[]> {
+  const query =
+    place.engine === "sqlite"
+      ? "SELECT name AS t FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+      : place.engine === "postgres"
+        ? "SELECT table_name AS t FROM information_schema.tables WHERE table_schema = current_schema() ORDER BY table_name"
+        : `SELECT TABLE_NAME AS t FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${place.name}' ORDER BY TABLE_NAME`;
+  return (await sql(place, [query]))[0]!.map((r) => String(r["t"]));
+}
+
+/** The old tables, each as the engine says it: what "byte for byte" is measured on. */
+async function snapshot(place: Place): Promise<Record<string, Read>> {
+  const out: Record<string, Read> = {};
+  for (const table of OLD) {
+    let shape: string[];
+    let select: string;
+    if (place.engine === "sqlite") {
+      const [create, indexes, columns] = await sql(place, [
+        `SELECT sql FROM sqlite_master WHERE tbl_name = '${table}' AND sql IS NOT NULL ORDER BY type, name`,
+        `PRAGMA index_list("${table}")`,
+        `PRAGMA table_info("${table}")`,
+      ]);
+      shape = [...create!.map((r) => String(r["sql"])), ...indexes!.map((r) => JSON.stringify(r))];
+      select = `SELECT ${columns!.map((c) => `quote("${String(c["name"])}")`).join(", ")} FROM "${table}" ORDER BY id`;
+    } else if (place.engine === "postgres") {
+      const [columns, constraints, indexes] = await sql(place, [
+        `SELECT column_name, data_type, character_maximum_length, numeric_precision, numeric_scale, is_nullable, column_default, is_identity FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = '${table}' ORDER BY ordinal_position`,
+        `SELECT conname, pg_get_constraintdef(o.oid) AS def FROM pg_constraint o JOIN pg_class c ON c.oid = o.conrelid WHERE c.relname = '${table}' AND c.relnamespace = current_schema()::regnamespace ORDER BY conname`,
+        `SELECT indexdef FROM pg_indexes WHERE tablename = '${table}' AND schemaname = current_schema() ORDER BY indexname`,
+      ]);
+      shape = [...columns!.map((r) => JSON.stringify(r)), ...constraints!.map((r) => `${String(r["conname"])} ${String(r["def"])}`), ...indexes!.map((r) => String(r["indexdef"]))];
+      select = `SELECT ${columns!.map((c) => `"${String(c["column_name"])}"::text`).join(", ")} FROM "${table}" ORDER BY id`;
+    } else {
+      const [create, columns] = await sql(place, [`SHOW CREATE TABLE \`${table}\``, `SELECT COLUMN_NAME AS c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = '${place.name}' AND TABLE_NAME = '${table}' ORDER BY ORDINAL_POSITION`]);
+      shape = [String(create![0]!["Create Table"])];
+      select = `SELECT ${columns!.map((c) => `CAST(\`${String(c["c"])}\` AS CHAR)`).join(", ")} FROM \`${table}\` ORDER BY id`;
+    }
+    const [rows] = await sql(place, [select]);
+    out[table] = { shape, rows: rows!.map((r) => Object.values(r).map(text)) };
+  }
+  return out;
+}
+
+/** Make the old example's database on one engine, empty first. */
+async function makeOld(engine: Engine, name: string): Promise<Place> {
+  let place: Place;
+  if (engine === "sqlite") {
+    const file = join(tmpdir(), `${name}.db`);
+    rmSync(file, { force: true });
+    place = { engine, name: file, dsn: `sqlite:${file}` };
+  } else {
+    const base = new URL(engine === "postgres" ? process.env["TEST_POSTGRES_URL"]! : process.env["TEST_MYSQL_URL"]!);
+    const server: Place = { engine, name, dsn: base.toString() };
+    await sql(server, engine === "postgres" ? [`DROP DATABASE IF EXISTS ${name} WITH (FORCE)`, `CREATE DATABASE ${name}`] : [`DROP DATABASE IF EXISTS \`${name}\``, `CREATE DATABASE \`${name}\``]);
+    const url = new URL(base.toString());
+    url.pathname = `/${name}`;
+    place = { engine, name, dsn: url.toString() };
+  }
+  await sql(place, [...oldSchema(engine), ...oldRows(engine)]);
+  return place;
+}
+
+/** Throw the old example's database away again. */
+async function dropOld(place: Place): Promise<void> {
+  if (place.engine === "sqlite") {
+    rmSync(place.name, { force: true });
+    return;
+  }
+  const base = new URL(place.dsn);
+  base.pathname = place.engine === "postgres" ? "/postgres" : "/";
+  await sql({ ...place, dsn: base.toString() }, place.engine === "postgres" ? [`DROP DATABASE IF EXISTS ${place.name} WITH (FORCE)`] : [`DROP DATABASE IF EXISTS \`${place.name}\``]);
+}
+
+// ── the contract ────────────────────────────────────────────────────────────
+
+describe.skipIf(why !== null)(`a works on the old example takes the rework${why === null ? "" : ` — skipped: ${why}`}`, () => {
+  ENGINES.forEach(([engine, available], index) => {
+    describe.skipIf(!available || !BESIDE_BARE_TABLES)(`on ${engine}${BESIDE_BARE_TABLES ? "" : ` — skipped: a prefixed app beside bare tables of the same names needs Adminium 0.3.44 (this run has ${ENGINE_VERSION})`}`, () => {
+      let server: Server;
+      let staff: Caller;
+      let place: Place;
+      let before: Record<string, Read>;
+      let tablesBefore: string[];
+      let connectionId = "";
+      let app: ReturnType<typeof appBundle>;
+      let addOn: ReturnType<typeof addOnBundle>;
+      const body = () => ({ key: app.key, version: app.version, connectionId });
+      let plan: { checksum: string; installable: boolean; create: { ref: string }[]; reuse: { ref: string; missingColumns: string[] }[]; problems: unknown[]; references: { fromTable: string; to: string; resolution: string }[] };
+
+      beforeAll(async () => {
+        app = appBundle({ manifest: MANIFEST_TEXT });
+        addOn = addOnBundle("customiser");
+        // 1–2. The old example's database, and what it holds, read past Adminium.
+        place = await makeOld(engine as Engine, `printing_update_old_${engine}${process.env["CONTRACT_DB_SUFFIX"] ?? ""}`);
+        before = await snapshot(place);
+        tablesBefore = await tablesIn(place);
+        // 3. Connected to a built Adminium; the rework and the Customiser uploaded.
+        server = await boot(engine as Engine, PORT_BASE + index * PORTS_PER_ENGINE, WEDNESDAY - 60_000, { database: `printing_update_${engine}${process.env["CONTRACT_DB_SUFFIX"] ?? ""}` });
+        staff = new Caller(server.base, { origin: server.base });
+        await staff.signIn(ADMIN.email, ADMIN.password);
+        connectionId = ok(await staff.post<{ id: string }>("/api/v1/connections", { name: "marlow-press", engine, dsn: place.dsn }), 201).id;
+        const introspect = await staff.post(`/api/v1/connections/${connectionId}/introspect`);
+        expect([200, 202], JSON.stringify(introspect.body).slice(0, 600)).toContain(introspect.status);
+        await until(async () => ((ok(await staff.get<{ snapshot?: unknown }>(`/api/v1/connections/${connectionId}`)).snapshot ?? null) === null ? undefined : true), "the old database's snapshot");
+        const stagedAddOn = await staff.post(`/api/v1/add-ons/upload?expectedSha512=${encodeURIComponent(addOn.integrity)}`, addOn.buffer);
+        expect([200, 201], JSON.stringify(stagedAddOn.body).slice(0, 600)).toContain(stagedAddOn.status);
+        const staged = await staff.post(`/api/v1/apps/upload?expectedSha512=${encodeURIComponent(app.integrity)}`, app.buffer);
+        expect([200, 201], JSON.stringify(staged.body).slice(0, 600)).toContain(staged.status);
+      }, 360_000);
+
+      afterAll(async () => {
+        await server?.stop();
+        if (place !== undefined) await dropOld(place);
+      });
+
+      it("holds the old example's nine tables, bare, with their rows", () => {
+        expect(tablesBefore).toEqual([...OLD].sort());
+        expect(Object.fromEntries(OLD.map((t) => [t, before[t]!.rows.length]))).toEqual({ customers: 3, products: 3, materials: 4, quotes: 1, jobs: 4, artwork: 1, proofs: 2, dispatches: 1, stock_movements: 2 });
+      });
+
+      it("plans the rework as installable, every table it makes its own under the prefix, none of the old ones taken", async () => {
+        plan = ok(await staff.post<{ plan: typeof plan }>("/api/v1/apps/plan", { ...body(), addOns: [addOn.key] })).plan;
+        expect(plan.problems, JSON.stringify(plan.problems)).toEqual([]);
+        expect(plan.installable).toBe(true);
+        // It takes no table already there for one of its own.
+        expect(plan.reuse.map((t) => t.ref)).toEqual([]);
+        const refs = (JSON.parse(MANIFEST_TEXT) as { requiredSchema: { tables: { ref: string }[] } }).requiredSchema.tables.map((t) => t.ref);
+        expect(plan.create.map((t) => t.ref)).toEqual(expect.arrayContaining(refs));
+        // Every reference between the app's tables is the app's own: none lands on a table already there.
+        expect(plan.references.filter((r) => refs.includes(r.to) && r.resolution !== "internal").map((r) => `${r.fromTable}.${r.to} ${r.resolution}`)).toEqual([]);
+      });
+
+      it("installs with the Customiser, and leaves every old table byte for byte as it was", async () => {
+        const fresh = ok(await staff.post<{ plan: { checksum: string } }>("/api/v1/apps/plan", { ...body(), addOns: [addOn.key] })).plan;
+        const install = await staff.post<{ rules: { skipped: unknown[] } }>("/api/v1/apps/install", { ...body(), planChecksum: fresh.checksum, addOns: [{ key: addOn.key, version: addOn.version }] });
+        expect(install.status, JSON.stringify(install.body).slice(0, 3000)).toBe(200);
+        expect(JSON.stringify(install.body.rules.skipped)).toBe("[]");
+        expect(await snapshot(place)).toEqual(before);
+        // Every table that is new is the app's prefixed one or the Customiser's.
+        const added = (await tablesIn(place)).filter((t) => !tablesBefore.includes(t));
+        expect(added.filter((t) => !t.startsWith("printing_") && !t.startsWith("customiser_"))).toEqual([]);
+        expect(added).toEqual(expect.arrayContaining(["customers", "products", "materials", "jobs", "artwork", "proofs"].map((t) => `printing_${t}`)));
+      });
+
+      it("adds the sample into the app's own tables, and the old tables are still as they were", async () => {
+        ok(await staff.patch(`/api/v1/connections/${connectionId}`, { timezone: "Europe/London", currency: "GBP" }));
+        await server.setClock(WEDNESDAY, true);
+        ok(await staff.post("/api/v1/apps/printing/sample-data"));
+        await until(async () => (ok(await staff.get<{ loaded: boolean }>("/api/v1/apps/printing/sample-data")).loaded ? true : undefined), "the sample to be added");
+        await until(async () => (ok(await staff.get<{ data: unknown[] }>(`/api/v1/data/${connectionId}/printing_jobs?limit=200`)).data.length >= 15 ? true : undefined), "the sample's jobs to be added");
+        await server.setClock(WEDNESDAY);
+        const orders = ok(await staff.get<{ data: { number: string }[] }>(`/api/v1/data/${connectionId}/printing_orders?limit=200`)).data;
+        expect(orders.map((o) => o.number)).toContain("MP-4113");
+        expect(await snapshot(place)).toEqual(before);
+      }, 240_000);
+
+      it("lets a customer place an order through the shop's own door, into the app's orders and not the old ones", async () => {
+        ok(await staff.put("/api/v1/public-api", { enabled: true }));
+        ok(await staff.put("/api/v1/settings/email", { publicOrigin: server.base }));
+        const served = ok(await new Caller(server.base).get<{ publishableKey: string; publicKeys?: Record<string, string>; tables?: Record<string, string> }>("/apps/printing/customer/surface-config.json"));
+        expect(served.tables?.["orders"]).toBe("printing_orders");
+        const originFetch: typeof fetch = (input, init) => {
+          const headers = new Headers(init?.headers);
+          headers.set("origin", server.base);
+          return fetch(input, { ...init, headers });
+        };
+        const door = new AdminiumShop({ baseUrl: server.base, publishableKey: served.publishableKey, ...(served.tables === undefined ? {} : { tables: served.tables }), ...(served.publicKeys === undefined ? {} : { publicKeys: served.publicKeys }) }, { fetch: originFetch });
+        const catalogue = await door.catalogue();
+        useShop.setState({ catalogue });
+        const cards = catalogue.products.find((p) => p.code === "business-cards")!;
+        const line: BasketLine = { id: "j1", productId: cards.id, choice: { ...firstChoice(catalogue, cards), qty: 500 }, design: null, features: [], artwork: [] };
+        const order = orderBody({ ...CUSTOMER, delivery_method: "collect" }, [line], true);
+        const quoted = await door.quote(order);
+        const placed = await door.place(order, `printing-update-${engine}-0000000001`, String(quoted.order["total"]));
+        expect(placed.order["number"]).toBe("MP-4127");
+        const theirs = ok(await staff.get<{ data: { number: string }[] }>(`/api/v1/data/${connectionId}/printing_orders?limit=200`)).data;
+        expect(theirs.map((o) => o.number)).toContain("MP-4127");
+        expect(await snapshot(place)).toEqual(before);
+      }, 120_000);
+    });
+  });
+});

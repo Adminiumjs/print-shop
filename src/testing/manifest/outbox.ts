@@ -41,7 +41,8 @@ import { z } from 'zod';
 
 import type { AddOnNeeds } from './add-ons.ts';
 import { formulaColumns, type FormulaExpr } from './formula.ts';
-import { OTHERWISE_BLOCKS, placeholderPattern } from './placeholders.ts';
+import { namesAPlaceholder, OTHERWISE_BLOCKS, placeholderPattern, rowPictureName } from './placeholders.ts';
+import { MAIL_CLASSES, MAIL_PURPOSES } from './mail-classes.ts';
 import { personalColumn, unlistedColumn } from './public-access.ts';
 import { reachedOnlyByUndo, type StateMove } from './states.ts';
 import {
@@ -397,6 +398,34 @@ export const outboxSchema = z
       .optional(),
     /** Each value of the kind column, and the template it is sent with. */
     kinds: z.record(z.string().min(1).max(40), z.string().min(1).max(80)),
+    /**
+     * Each kind's class, beside `kinds` so nothing that reads a kind's
+     * template changes: `marketing` (stopped for an address on the
+     * do-not-email list, sent with an unsubscribe link) or `service` (a
+     * receipt, a confirmation, a quote: never stopped). From Adminium 0.3.38
+     * every kind says which (see `mail-class.ts`); a manifest for an older
+     * Adminium has none, and its mail reads as service.
+     */
+    classes: z.record(z.string().min(1).max(40), z.enum(MAIL_CLASSES)).optional(),
+    /**
+     * The consent purpose a kind is sent for (`newsletter`, `surveys`). A
+     * marketing kind is judged by the consent log's answer for it instead of
+     * the newsletter's; a service kind that names one is skipped for a
+     * person whose latest answer for it is "no" (a survey invitation, sent as
+     * service mail, never reaches a person who said no to surveys), and, from
+     * Adminium 0.3.42, for an address on the do-not-email list: a purpose
+     * marks the mail as an offer the person may refuse. From Adminium 0.3.40.
+     */
+    purposes: z.record(z.string().min(1).max(40), z.enum(MAIL_PURPOSES)).optional(),
+    /**
+     * The kinds whose template may print `{{survey_link}}`: a link to the
+     * survey of the invitation the message is about, filled by Adminium when
+     * the message goes and only then (a named survey's link carries a one-use
+     * token, kept on the invitation as its hash alone). Only on an add-on that
+     * declares forms with invitations, and only for a kind every producer of
+     * which reads the invitations table. From Adminium 0.3.40.
+     */
+    surveyLinks: z.array(z.string().min(1).max(40)).min(1).max(8).optional(),
     producers: z.array(outboxProducerSchema).max(24).optional(),
   })
   .strict();
@@ -487,7 +516,7 @@ export type EmailTemplate = z.infer<typeof emailTemplateSchema>;
 /** The column rules that decide a value on the server (see `columnRulesSchema`). */
 const DECIDING_RULES = ['copy', 'default', 'sequence', 'format', 'code', 'rollup', 'formula', 'stamp', 'perNight'] as const;
 /** The column rules that refuse a value: Adminium's own writes to the column would be refused by them. */
-const REFUSING_RULES = ['options', 'validation', 'required', 'requiredWhen', 'notAfter', 'notBefore'] as const;
+const REFUSING_RULES = ['options', 'validation', 'required', 'requiredWhen', 'notAfter', 'notBefore', 'changes'] as const;
 /**
  * What a producer of a removal (`onDelete`) does not take: each reads the row
  * again after the message is written (to date it, drop it, overtake it, hold
@@ -787,6 +816,15 @@ export function outboxIssues(
     }
     if (!templates.has(template)) out.push({ path: at('kinds', value), message: `"${template}" is not one of the app's emailTemplates` });
   }
+  // A class is said of a kind the outbox sends.
+  for (const value of Object.keys(box.classes ?? {})) {
+    if (box.kinds[value] === undefined) out.push({ path: at('classes', value), message: `"${value}" is not one of the outbox's kinds` });
+  }
+  // So is a purpose.
+  for (const value of Object.keys(box.purposes ?? {})) {
+    if (box.kinds[value] === undefined) out.push({ path: at('purposes', value), message: `"${value}" is not one of the outbox's kinds` });
+  }
+  out.push(...surveyLinkIssues(m, box, at));
 
   const unlisted = (table: string, column: string) => unlistedColumn(m, table, column);
   (box.producers ?? []).forEach((producer, p) => {
@@ -1085,6 +1123,17 @@ const sectionRowsDataSchema = z
 export const emailRowsDataSchema = z.union([outboxRowsDataSchema, sectionRowsDataSchema]);
 export type EmailRowsData = z.infer<typeof emailRowsDataSchema>;
 
+/**
+ * A picture from a row's file column (`email.image` with `fileId:
+ * "{{job.photo}}"`): the kinds of file it may be, and the most it may weigh.
+ * A file that is neither is never sent: the picture is left out, or the
+ * message is not sent when the image is `required`.
+ */
+export const ROW_PICTURE_TYPES: readonly string[] = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+/** The `file.accept` kinds a picture's column takes at least one of. */
+const ROW_PICTURE_ACCEPTS: readonly string[] = ['png', 'jpeg', 'gif', 'webp'];
+export const ROW_PICTURE_MAX_BYTES = 2 * 1024 * 1024;
+
 /** A QR code of a code column, as the whole value of an image: `{{ticket.code.qr}}`. */
 const QR_VALUE = /^\{\{\s*([A-Za-z0-9_.-]+)\.qr\s*\}\}$/;
 
@@ -1138,6 +1187,30 @@ function emailBlockIssues(
     return null;
   };
 
+  /** Why an image's `fileId` placeholder shows no picture from a row's file column, or null. */
+  const pictureIssue = (fileId: unknown): string | null => {
+    const name = rowPictureName(fileId);
+    if (name === null) return 'a picture from a row is written {{<link>.<file column>}}, as the whole value of "fileId"';
+    if (name.startsWith('row.')) return 'a row of a list shows no picture of its own';
+    const parts = name.split('.');
+    if (parts.length < 2) return `{{${name}}} names no row: write {{<link>.<file column>}}`;
+    const prefix = parts.slice(0, -1).join('.');
+    const column = parts.at(-1)!;
+    const table = prefixTable(prefix);
+    if (table === undefined) return `"${prefix}" is not a row this message reaches: one of the outbox's links, or a row one of them points at`;
+    const found = index.column(table, column) as (ReturnType<typeof index.column> & { rules?: { file?: { accept?: unknown; maxCount?: unknown } } }) | undefined;
+    if (found === undefined) return `"${table}" has no column "${column}"`;
+    const file = found.rules?.file;
+    if (found.type !== 'text' || file === undefined) return `"${table}.${column}" is not a file column holding one file`;
+    const accepts = Array.isArray(file.accept) ? file.accept : [];
+    if (!accepts.some((kind) => typeof kind === 'string' && ROW_PICTURE_ACCEPTS.includes(kind))) return `"${table}.${column}" takes no picture (png, jpeg, gif or webp)`;
+    const kept = unlisted(table, column);
+    if (kept !== null) return `"${table}.${column}" is ${kept}, which an email never shows`;
+    const shape = index.table(table);
+    if (shape !== undefined && personalColumn(shape as never, column) !== null) return `"${table}.${column}" is personal data, which an email never shows`;
+    return null;
+  };
+
   templates.forEach((template, t) => {
     let rowsOf: string | undefined;
     for (const [locale, content] of Object.entries(template.locales)) {
@@ -1165,6 +1238,13 @@ function emailBlockIssues(
           if (size !== undefined && (typeof size !== 'number' || !Number.isInteger(size) || size < 80 || size > 200)) {
             out.push({ path: at('data', 'size'), message: 'a QR code is 80 to 200 pixels across' });
           }
+        }
+        // A picture from a row's file column: one placeholder, of a file column of a row the message reaches, never personal.
+        if (block.block === 'email.image' && namesAPlaceholder(block.data?.['fileId'])) {
+          const issue = pictureIssue(block.data?.['fileId']);
+          if (issue !== null) out.push({ path: at('data', 'fileId'), message: issue });
+          const required = block.data?.['required'];
+          if (required !== undefined && typeof required !== 'boolean') out.push({ path: at('data', 'required'), message: 'an image\'s "required" is true or false' });
         }
         if (block.block !== 'email.rows') {
           // Only a block that lists rows has a row to read.
@@ -1357,4 +1437,44 @@ export function rowFormsOf(column: Parameters<typeof clockShaped>[0] & { rules?:
   const own = column.type === 'text' && !clockShaped(column) ? forms.filter((form) => form !== 'time') : forms;
   const coded = isCodeColumn(column) ? [...own, GROUPED_FORM] : own;
   return column.rules?.staff === true ? [...coded, STAFF_NAME_FORM] : coded;
+}
+
+/** The name a template prints a survey's link under (`outbox.surveyLinks`). */
+export const SURVEY_LINK_VARIABLE = 'survey_link';
+
+/**
+ * A survey's link is sent only to the invitation it was made for: the kinds
+ * that print it belong to an add-on that declares forms with invitations, and
+ * every producer of such a kind reads the invitations table itself (the
+ * message's own link names the invitation). A kind is named once.
+ */
+function surveyLinkIssues(m: { kind?: string | undefined }, box: Outbox, at: (...rest: (string | number)[]) => (string | number)[]): ReferenceIssue[] {
+  const out: ReferenceIssue[] = [];
+  const kinds = box.surveyLinks ?? [];
+  if (kinds.length === 0) return out;
+  const forms = m.kind === 'add-on' ? (m as { addOn?: { forms?: { invitations?: unknown } } }).addOn?.forms : undefined;
+  const invitations = typeof forms?.invitations === 'string' ? forms.invitations : undefined;
+  if (invitations === undefined) {
+    out.push({ path: at('surveyLinks'), message: 'a survey link is sent for an invitation: only an add-on that declares forms with invitations (addOn.forms.invitations) prints one' });
+    return out;
+  }
+  const seen = new Set<string>();
+  kinds.forEach((kind, k) => {
+    if (seen.has(kind)) out.push({ path: at('surveyLinks', k), message: `"${kind}" is named twice` });
+    seen.add(kind);
+    if (box.kinds[kind] === undefined) {
+      out.push({ path: at('surveyLinks', k), message: `"${kind}" is not one of the outbox's kinds` });
+      return;
+    }
+    const producers = (box.producers ?? []).map((producer, p) => ({ producer, p })).filter(({ producer }) => producer.kind === kind);
+    if (producers.length === 0) out.push({ path: at('surveyLinks', k), message: `"${kind}" prints a survey link, so a producer queues it for an invitation: none does` });
+    for (const { producer, p } of producers) {
+      const source = 'onCreate' in producer ? producer.onCreate : 'onChange' in producer ? producer.onChange : 'before' in producer ? producer.before : producer.onDelete;
+      const via = 'via' in source ? source.via : undefined;
+      if (source.table !== invitations || via !== undefined || 'onDelete' in producer) {
+        out.push({ path: at('producers', p), message: `"${kind}" prints a survey link, so its producer reads a row of the invitations ("${invitations}") itself, as it is made, changed or comes due` });
+      }
+    }
+  });
+  return out;
 }

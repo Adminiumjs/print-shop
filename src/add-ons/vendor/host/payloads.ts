@@ -1,7 +1,7 @@
 /*
  * VENDORED from add-ons/packages/host/src/payloads.ts — synced by scripts/sync-add-ons.sh.
  * Never hand-edit this copy: edit the monorepo and re-run `sync-add-ons.sh sync`.
- * The ONE shared contract; the three add-ons here import it by relative path.
+ * The shared contract the add-ons the works mounts are written against.
  */
 /**
  * WHAT EACH SLOT IS HANDED — one payload per id in the closed registry, and not
@@ -352,6 +352,13 @@ export interface OutboundOrder {
   promisedFor?: string;
   /** What the whole thing is worth, for a customs line or an insured value. */
   value?: Money;
+  /**
+   * What the parcel weighs, packed, in grams, when the shop keeps that figure
+   * (goods and packing). The dispatch flow starts from it as it is, so the
+   * weight the shop shows beside the order and the weight sent to the carrier
+   * are one number; absent, the add-on works one out from the items.
+   */
+  parcelWeightGrams?: number;
 }
 
 // ── the eleven payloads ─────────────────────────────────────────────────────
@@ -478,6 +485,20 @@ export interface DispatchPayload extends SlotPayload {
    * answers them off its own is telling a works about somebody else's Tuesday.
    */
   now: ShopClock;
+  /**
+   * THE SERVICE THE ORDER STORES, as the checkout fill named it, or null.
+   *
+   * A shopper picks a delivery service at checkout (`CheckoutPayload.chosen`)
+   * and the shop keeps it on the order, in a column of its own. At dispatch the
+   * host reads that column and hands it back here, so the add-on that quoted it
+   * opens with the same service already picked instead of the first rate on the
+   * list. Only `addOn` and `code` are needed: an add-on ignores a code another
+   * add-on made, and a code it no longer quotes leaves its usual first pick.
+   *
+   * OPTIONAL: a host whose orders keep no service passes nothing, and the add-on
+   * picks as it always did. A whole `DeliveryChoice` fits here too.
+   */
+  chosen?: Pick<DeliveryChoice, 'addOn' | 'code'> | null;
 }
 
 /** `settings.add-on.panel` — one add-on's own form inside the manage drawer. */

@@ -1,0 +1,124 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# Print Shop's own checks, beside `ci.yml` (the fleet's synced workflow: the
+# build, the unit suite, the manifest; never hand-edited).
+#
+#   the contract   `src/contract/`: this repo's manifest and sample installed,
+#                  with the Customiser, on a BUILT Adminium on SQLite,
+#                  Postgres 16 and MySQL 8.4 — every price worked out by
+#                  Adminium against the old browser code, a customer's order
+#                  and what follows it, the works' floor from proof to
+#                  collected, every e-mail sent to the SMTP sink, and the
+#                  rework installed into a database still holding the old
+#                  example's tables. It skips without the checkouts; here
+#                  `ADMINIUM_REQUIRE_CONTRACT=1` makes a skip a failure, so it
+#                  cannot go quietly green.
+#   the builds     both hosted sides and the website's demo (`demo.json`).
+#
+# Both checkouts are moved out of the workspace before the suite runs:
+# vitest collects every `*.test.ts` under the repo root, and the products' own
+# suites are not this repo's to run.
+
+name: contract
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  # The Adminium release the contract runs on, and the add-ons release the app asks for.
+  ADMINIUM_REF: v0.3.48
+  ADD_ONS_REF: v1.0.19
+
+jobs:
+  contract:
+    name: three-engine contract & the builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1"
+          --health-interval 5s --health-timeout 5s --health-retries 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check out Adminium
+        uses: actions/checkout@v4
+        with:
+          repository: MoSofi/Adminium
+          ref: ${{ env.ADMINIUM_REF }}
+          path: .adminium-product
+
+      - name: Check out the add-ons
+        uses: actions/checkout@v4
+        with:
+          repository: Adminiumjs/add-ons
+          ref: ${{ env.ADD_ONS_REF }}
+          path: .add-ons
+
+      # The e2e boot script serves the built server and the built dashboard, on
+      # the engine it is asked for — the same composition `adminium start` runs.
+      - name: Build Adminium (the server, the dashboard, the e2e boot)
+        run: |
+          cd .adminium-product
+          corepack enable
+          pnpm install --frozen-lockfile
+          pnpm turbo run build --filter="@adminium/e2e..."
+
+      # Only the add-on the contract installs: the Customiser, which the app requires.
+      - name: Build the Customiser
+        run: |
+          cd .add-ons
+          npm ci
+          npm run build -w packages/customiser
+
+      - name: Move the checkouts out of the workspace
+        run: |
+          mv "$GITHUB_WORKSPACE/.adminium-product" "$RUNNER_TEMP/adminium-product"
+          mv "$GITHUB_WORKSPACE/.add-ons" "$RUNNER_TEMP/add-ons"
+
+      - name: Types
+        run: npx tsc -b
+
+      - name: The contract, on three engines
+        env:
+          ADMINIUM_REPO: ${{ runner.temp }}/adminium-product
+          ADD_ONS_REPO: ${{ runner.temp }}/add-ons
+          ADMINIUM_REQUIRE_CONTRACT: "1"
+          TEST_POSTGRES_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+          TEST_MYSQL_URL: mysql://root@127.0.0.1:3306
+        # One file at a time: each boots a server on every engine.
+        run: npx vitest run src/contract --no-file-parallelism
+
+      - name: Both hosted sides, and the website's demo
+        run: |
+          npm run build:surface
+          npm run build:demo
+          test -f dist/demo.json

@@ -103,6 +103,40 @@ export const CONTRACT_REGISTRY = [
       'What an order is reduced by: one synchronous, pure answer per question — a reduction for every line, what was applied, what was refused — written by Adminium inside the save.',
     implementations: 1,
   },
+  {
+    /*
+     * THE EIGHTH: WHETHER A SHOPPER'S DESIGN MAY BE ORDERED. An add-on that
+     * keeps designs answers, for each order line that names one, whether it
+     * stands by its ready-made design and base and which priced features it
+     * uses. Adminium reads the rows the add-on declared, asks once a save
+     * (and once a dry run), and checks the answer against what each line
+     * pays for. A third kind of code that decides inside a save, loaded only
+     * from a package Adminium can vouch for. Its implementer is the
+     * Customiser, which both shops of the customising plan require.
+     */
+    id: 'design-check',
+    version: 1,
+    summary:
+      'Whether each order line\'s design stands and which priced features it uses: one synchronous, pure answer per question, checked by Adminium against what each line pays for, inside the save and the dry run.',
+    implementations: 1,
+  },
+  {
+    /*
+     * THE SEVENTH: MONEY THAT MOVES AT A PAYMENT SERVICE. A shop's customer
+     * pays on the provider's own hosted page; the provider half starts the
+     * checkout, says how it ended, refunds, and proves its webhooks. Consumed
+     * by the engine's payments, selected by add-on key, and loaded
+     * only from a package Adminium can vouch for. Online payments only:
+     * in-person terminals are a contract of their own when they are built.
+     * Its two implementers are the Stripe and PayPal add-ons, proven against
+     * the packed package before the release that admits it.
+     */
+    id: 'payment-provider',
+    version: 1,
+    summary:
+      'One payment service, online only: start a checkout on its hosted page, read how it ended, end one, refund, verify its webhooks, list missed events, and say which ways to pay are switched on. Answers are data; a refusal is never thrown.',
+    implementations: 2,
+  },
 ] as const satisfies readonly ContractDefinition[];
 
 export type ContractId = (typeof CONTRACT_REGISTRY)[number]['id'];

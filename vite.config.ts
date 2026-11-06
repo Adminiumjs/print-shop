@@ -1,6 +1,28 @@
 import { defineConfig, type UserConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
+import { surfaceJsonPlugin } from "./surface-emit.ts";
+import { demoJsonPlugin } from "./demo-emit.ts";
+import { CARD_MESSAGES, DEMO_CARD } from "./src/demo/card.ts";
+import { MESSAGES } from "./src/i18n/messages/index.ts";
+import { APP_KEY, APP_LABEL_KEY, SURFACE_NAV } from "./src/surface-nav.ts";
+
+/*
+ * Every build-time flag is defined, always, even when unset: Vite replaces
+ * `import.meta.env` with an object of the variables it loaded, so an unset
+ * one compiles to a lookup no minifier folds, and code meant for one build
+ * ships in another. `define` always writes a literal, so `SURFACE_SIDE` and
+ * the rest in `src/surface.ts` fold in every build.
+ */
+const FLAGS = [
+  "VITE_ADMINIUM_SURFACE_SIDE",
+  "VITE_ADMINIUM_API_BASE_URL",
+  "VITE_ADMINIUM_PUBLISHABLE_KEY",
+  "VITE_ADMINIUM_ORDER_KEY",
+  "VITE_ADMINIUM_DESIGN_KEY",
+] as const;
+const define = Object.fromEntries(FLAGS.map((name) => [`import.meta.env.${name}`, JSON.stringify(process.env[name] ?? "")]));
+
 /**
  * Vite's config type plus the block vitest reads out of the same file.
  *
@@ -19,10 +41,26 @@ interface ViteWithVitest extends UserConfig {
 
 // https://vite.dev/config/
 // `base` defaults to "/" (root deploy on Vercel / DigitalOcean). The
-// `build:demo` script overrides it with --base=/demo/print-shop/ so the app
-// can be served from the Adminium demo sub-path.
+// `build:demo` script overrides it with --base=/demo/print-shop/app/, where the
+// website frames the demo.
 const config: ViteWithVitest = {
-  plugins: [react()],
+  define,
+  plugins: [
+    react(),
+    /*
+     * `surface.json` beside `index.html`, on surface builds only: Adminium
+     * reads it to list the app's sections. A build with no side writes
+     * nothing, so the demo and standalone builds stay as they were.
+     */
+    surfaceJsonPlugin({ appKey: APP_KEY, appLabelKey: APP_LABEL_KEY, nav: SURFACE_NAV, messages: MESSAGES }),
+    /*
+     * `demo.json` beside the demo build's `index.html`, for the website's demo
+     * card: the customer's screens and the shop's, the shortcuts, the two
+     * people, the clock and the add-ons, in the card's eight languages. Only a
+     * `/demo/` build writes it.
+     */
+    demoJsonPlugin({ ...DEMO_CARD, messages: CARD_MESSAGES }),
+  ],
   /*
    * ── THE DEV SERVER, AND THE ONE THING IT PROXIES ──────────────────────────
    *
@@ -102,14 +140,14 @@ const config: ViteWithVitest = {
           if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return "react";
           if (id.includes("node_modules/lucide-react")) return "icons";
           /*
-           * The three add-ons in one chunk of their own. In demo mode they are
-           * compiled in and always loaded, so this is not code-splitting — it is
-           * keeping the app's own bundle a readable size, and it draws the same
-           * line in the build output that `src/add-ons/vendor/` draws in the
-           * tree. Phase B imports these from the server by SRI hash instead, at
-           * which point the chunk becomes the thing that is fetched.
+           * The vendored Customiser's editor in a chunk of its own: it is
+           * another repo's code, reviewed there, and `builtOutput.test.ts`
+           * tells it from this app's by the chunk's provenance, which a chunk
+           * that mixed the two would not have. Its 3D preview (`stage3d.js`)
+           * is left to the editor's own `import()`, so it still loads only
+           * when a customer turns the piece round.
            */
-          if (id.includes("/src/add-ons/vendor/")) return "add-ons";
+          if (id.endsWith("/vendor/customiser/index.js")) return "customiser";
           return undefined;
         },
       },

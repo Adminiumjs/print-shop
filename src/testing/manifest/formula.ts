@@ -22,7 +22,8 @@
  * ```
  *
  * The grammar is small on purpose: numbers, the row's own columns, the four
- * operations, `min`, `max`, `round`, `coalesce`, one `if`, the hours
+ * operations, `min`, `max`, `round` (and `ceil` / `floor`, which round up and
+ * down), `coalesce`, one `if`, the hours
  * between two moments of the row (`hoursBetween`), and the whole calendar
  * days between two dates of it (`daysBetween`: a stay's nights). A text column
  * may join columns and text into one (`join`: a guest's full name), empty
@@ -69,6 +70,8 @@ export type FormulaExpr =
   | { min: FormulaExpr[] }
   | { max: FormulaExpr[] }
   | { round: FormulaExpr | [FormulaExpr, number] }
+  | { ceil: FormulaExpr | [FormulaExpr, number] }
+  | { floor: FormulaExpr | [FormulaExpr, number] }
   | { coalesce: [FormulaExpr, FormulaExpr] }
   | { if: [FormulaCondition, FormulaExpr, FormulaExpr] }
   | { hoursBetween: [string, string] }
@@ -98,9 +101,9 @@ export const formulaExprSchema: z.ZodType<FormulaExpr> = z.lazy(() =>
     z.object({ div: z.tuple([formulaExprSchema, formulaExprSchema]) }).strict(),
     z.object({ min: z.array(formulaExprSchema).min(2).max(8) }).strict(),
     z.object({ max: z.array(formulaExprSchema).min(2).max(8) }).strict(),
-    z
-      .object({ round: z.union([formulaExprSchema, z.tuple([formulaExprSchema, z.number().int().min(0).max(4)])]) })
-      .strict(),
+    z.object({ round: placesArgs() }).strict(),
+    z.object({ ceil: placesArgs() }).strict(),
+    z.object({ floor: placesArgs() }).strict(),
     z.object({ coalesce: z.tuple([formulaExprSchema, formulaExprSchema]) }).strict(),
     z.object({ if: z.tuple([formulaConditionSchema, formulaExprSchema, formulaExprSchema]) }).strict(),
     z.object({ hoursBetween: z.tuple([columnName, columnName]) }).strict(),
@@ -108,6 +111,11 @@ export const formulaExprSchema: z.ZodType<FormulaExpr> = z.lazy(() =>
     z.object({ join: z.array(z.string().min(1).max(64)).min(2).max(8) }).strict(),
   ]),
 );
+
+/** `round`, `ceil` and `floor` take an expression, or an expression and 0–4 places. */
+function placesArgs() {
+  return z.union([formulaExprSchema, z.tuple([formulaExprSchema, z.number().int().min(0).max(4)])]);
+}
 
 /** Whether a part of a `join` names a column of the row; any other part is text written as it is. */
 export function isJoinColumn(part: string): boolean {
@@ -416,6 +424,24 @@ function roundTo(value: Ratio, scale: number): Ratio {
   return ratio(negative ? -q : q, factor);
 }
 
+/**
+ * Round up (`ceil`, towards plus infinity) or down (`floor`, towards minus
+ * infinity) to `scale` places: `ceil(-1.5)` is -1, `floor(-1.5)` is -2, and a
+ * value already at that scale (`2.000`) stays as it is. Print's sheets are
+ * `ceil(quantity / pieces per sheet)`: 101 cards at 100 a sheet need 2 sheets.
+ */
+function roundToward(value: Ratio, scale: number, up: boolean): Ratio {
+  const factor = 10n ** BigInt(scale);
+  const scaled = value.n * factor;
+  // BigInt division truncates towards zero; step one unit away from it when
+  // something was cut off and the direction asks for it.
+  let q = scaled / value.d;
+  const cut = scaled % value.d !== 0n;
+  if (cut && up && scaled > 0n) q += 1n;
+  if (cut && !up && scaled < 0n) q -= 1n;
+  return ratio(q, factor);
+}
+
 /** A fraction as decimal text with exactly `scale` places (`12.50`, `-3`, `0.125`). */
 export function ratioText(value: Ratio, scale: number): string {
   const rounded = roundTo(value, scale);
@@ -482,10 +508,60 @@ function sameValue(stored: unknown, literal: string | number | boolean): boolean
  * `scale` places, or `null` when an input it needs is empty or a divisor is
  * zero. `row` holds the stored row with the new values over it.
  */
-export function evaluateFormula(expr: FormulaExpr, row: Readonly<Record<string, unknown>>, scale: number): string | null {
-  if (typeof expr === 'object' && 'join' in expr) return joinText(expr.join, row);
+export function evaluateFormula(expr: FormulaExpr, row: Readonly<Record<string, unknown>>, scale: number, keep: FormulaKeep = {}): string | null {
+  if (typeof expr === 'object' && 'join' in expr) {
+    const joined = joinText(expr.join, row);
+    if (joined === null) return null;
+    const text = keep.normalize === undefined ? joined : normalizedText(keep.normalize, joined);
+    // A joined text longer than its column holds is cut to it (by characters), never refused: a long name is still a name.
+    return keep.maxLength !== undefined && [...text].length > keep.maxLength ? [...text].slice(0, keep.maxLength).join('').trimEnd() : text;
+  }
   const value = evaluate(expr, row, scale);
-  return value === null ? null : ratioText(value, scale);
+  if (value === null) return null;
+  const text = ratioText(value, scale);
+  return keep.normalize === undefined ? text : normalizedText(keep.normalize, text);
+}
+
+/** `column.normalize`: how a `text` value is kept, whoever writes it or works it out. */
+export type NormalizeRule = 'trim' | 'email' | 'code';
+
+/**
+ * `text` as a column with `normalize: how` keeps it: `trim` without spaces at
+ * either end, `email` trimmed and in lower case, `code` as a code is compared
+ * (upper case, spaces and dashes left out). The one rule for a typed value
+ * and a worked-out one, on the server and in an app's demo.
+ */
+export function normalizedText(how: NormalizeRule, text: string): string {
+  if (how === 'email') return text.trim().toLowerCase();
+  if (how === 'code') return text.toUpperCase().replace(/[\s-]+/g, '');
+  return text.trim();
+}
+
+/**
+ * What a formula column keeps of the value worked out: its `normalize` rule,
+ * then, for a join, its longest (cut there rather than refused).
+ */
+export interface FormulaKeep {
+  normalize?: NormalizeRule | undefined;
+  maxLength?: number | undefined;
+}
+
+/**
+ * A manifest column's {@link FormulaKeep}: its `normalize`, and for a join
+ * the shorter of its `maxLength` and its `validation.maxLength`. Passed to
+ * {@link evaluateFormula}, a demo keeps the value the server would store.
+ */
+export function formulaKeepOf(column: {
+  maxLength?: number | undefined;
+  rules?: { formula?: FormulaExpr | undefined; normalize?: NormalizeRule | undefined; validation?: { maxLength?: number | undefined } | undefined } | undefined;
+}): FormulaKeep {
+  const formula = column.rules?.formula;
+  const lengths = [column.maxLength, column.rules?.validation?.maxLength].filter((n): n is number => typeof n === 'number' && n > 0);
+  const joined = typeof formula === 'object' && 'join' in formula && lengths.length > 0 ? Math.min(...lengths) : undefined;
+  return {
+    ...(column.rules?.normalize === undefined ? {} : { normalize: column.rules.normalize }),
+    ...(joined === undefined ? {} : { maxLength: joined }),
+  };
 }
 
 function evaluate(expr: FormulaExpr, row: Readonly<Record<string, unknown>>, scale: number): Ratio | null {
@@ -521,10 +597,13 @@ function evaluate(expr: FormulaExpr, row: Readonly<Record<string, unknown>>, sca
       if (values === null || values[1]!.n === 0n) return null;
       return ratio(values[0]!.n * values[1]!.d, values[0]!.d * values[1]!.n);
     }
-    case 'round': {
+    case 'round':
+    case 'ceil':
+    case 'floor': {
       const [inner, places] = Array.isArray(args) ? (args as [FormulaExpr, number]) : [args as FormulaExpr, scale];
       const v = evaluate(inner, row, scale);
-      return v === null ? null : roundTo(v, places);
+      if (v === null) return null;
+      return op === 'round' ? roundTo(v, places) : roundToward(v, places, op === 'ceil');
     }
     case 'coalesce': {
       const [first, second] = args as [FormulaExpr, FormulaExpr];

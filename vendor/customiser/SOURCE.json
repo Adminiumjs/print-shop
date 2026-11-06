@@ -1,0 +1,11 @@
+{
+  "from": "release",
+  "package": "@adminiumjs/add-on-customiser",
+  "version": "1.0.17",
+  "integrity": "sha512-G0fcoC6t663a7jlYb+S8ZYLfwntmCmaC0M9Thw015RaPxNERW3GtXCadjHWSzJaiIgNcxvs4ftLX/A69KcCt4Q==",
+  "files": {
+    "index.js": "f86d22083be43a6ee786a314bd23f1200a30ce8b5705b4335e125b84cc898dbf",
+    "stage3d.js": "ebde9e821bdcf039148e1885a80ec09d29caca490897cb5cce3ed7ab472f55de",
+    "editor.css": "67cf89c95b18bb6b817eb9e180eb9857021cedc01c2cc25c10e38277d7437c76"
+  }
+}

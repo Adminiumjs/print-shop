@@ -9,16 +9,14 @@
  *
  * Each package in the add-ons monorepo ships this suite over its own sources.
  * This is the host's copy, and it deliberately covers `src/add-ons/vendor/` as
- * well: the vendored halves are compiled into THIS bundle, so a `fetch` that
- * reached a customer's browser would reach it from here whatever the add-on's
- * own suite said about its own package.
+ * well (the add-ons' shared host contract, the one package still vendored):
+ * it is compiled into THIS bundle.
  */
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { NOW } from './data/demo.ts';
 import { IMPURITIES, impuritiesIn, restatementsIn } from './testing/purity.ts';
 import {
   RAW_CONTROL_EXPLANATION,
@@ -46,27 +44,33 @@ function walk(dir: string): string[] {
 }
 
 const ALL = walk(SRC).filter((f) => /\.(ts|tsx)$/.test(f));
-/** The shipped half: everything that is not itself a test or a test helper. */
-const SHIPPED = ALL.filter((f) => !f.includes('.test.') && !f.includes(`${'testing'}/`));
+/**
+ * The shipped half: everything that is not itself a test or a test helper.
+ * `manifest/` and `sample/` write `manifest.json` and the sample bundle at
+ * build time: no screen imports them, so nothing in them reaches a browser,
+ * but for the rate card the price list shows (`sample/rate-card.ts`), which is
+ * held to every rule here. `contract/` boots a real Adminium for the contract
+ * tests: it never ships either.
+ */
+const BUILD_TIME = ['testing', 'studio/testing', 'manifest', 'sample', 'contract'];
+const READ_BY_SCREENS = ['/src/sample/rate-card.ts'];
+const SHIPPED = ALL.filter(
+  (f) => !f.includes('.test.') && (READ_BY_SCREENS.some((file) => f.endsWith(file)) || !BUILD_TIME.some((dir) => f.includes(`/src/${dir}/`))),
+);
 
 const read = (file: string) => readFileSync(file, 'utf8');
 
 /**
  * ── THE ONE FILE THAT MAY READ THE REAL CLOCK ──────────────────────────────
  *
- * `purity.ts`'s rule is about the DEMO's reproducibility: every date derives
- * from a pinned instant so that a test can assert a promise date and a
- * screenshot taken in a year still matches the running app. A CONNECTED build
- * is the case that rule was never about — its job is to show what the works is
- * doing NOW, and the tenant's real clock is the input it is missing.
- *
- * So this is not "`adminiumSource.ts` is exempt", which is the shape this file
- * argues against for egress and would forgive a die as readily as a clock. It
- * is TWO MEANS, in ONE FILE. A `Math.random()` in the connected source is still
- * a finding, a clock in any other file is still a finding, and the test below
- * drives both of those rather than asserting them in prose.
+ * `purity.ts`'s rule is about reproducibility: every date the screens show
+ * derives from the server's clock, so a test can assert a promise date. The
+ * staff build reads the device's clock in exactly one place, to learn how far
+ * it is from the server's. That is TWO MEANS, in ONE FILE: a `Math.random()`
+ * there is still a finding, a clock in any other file is still a finding.
  */
-const CONNECTED_SOURCE = 'data/adminiumSource.ts';
+/** The staff build's one reading of the device's clock, moved onto the server's (`studio/clock.ts`). */
+const STAFF_CLOCK = 'studio/clock.ts';
 
 /** The clock half of `IMPURITIES`, by the exact words that file emits. */
 const CLOCKS: readonly string[] = [
@@ -114,51 +118,6 @@ const declaredMeans = (file: string): readonly string[] =>
  * origin and it is exact, so `api.canva.com.somewhere-else.test` does not
  * inherit `api.canva.com`'s allowance.
  */
-/**
- * ── AN ADDRESS AN ADD-ON NAMES IS THE ADD-ON'S FACT, NOT THIS APP'S ─────────
- *
- * What stood here was a list of origins this app allows, and two of the entries
- * were Canva's — declared by an app that merely RECEIVES the add-on that names
- * them. That is portability broken both ways, and it was demonstrated in
- * both: vendoring the personalizer into this app unchanged, registration only,
- * turned this suite red on
- * `add-ons/vendor/personalizer/template.ts → http://www.w3.org/2000/svg`, and
- * vendoring Canva Import into the studio turned ITS suite red the same way.
- * Making a portable add-on pass required an edit to an exemption list inside
- * the host — the exact thing a closed slot registry exists to make unnecessary.
- *
- * This is the FOURTH host-local list found holding an add-on's fact, after
- * `HOSTED_SLOTS`, the Czech "pro" carve-out and the ar-EG numeral allowances.
- * Round 5 built the mechanism for the third; this is that mechanism, applied.
- * Every add-on exports `INERT_ORIGINS` from its own `add-on-facts.ts`, the
- * sync vendors it, and `addOnOrigins()` reads whatever THIS app has vendored.
- * Vendor an add-on and its declarations arrive; drop it and they leave; nothing
- * in this file changes either way.
- *
- * `import.meta.glob` is resolved by the bundler, so by the time this runs it is
- * a static list of modules — no filesystem read, no dynamic import.
- */
-const VENDORED_ORIGINS = import.meta.glob<{
-  INERT_ORIGINS?: readonly { origin: string; why: string }[];
-  NEVER_IN_A_BROWSER?: readonly { text: string; why: string }[];
-}>("./add-ons/vendor/*/add-on-facts.ts", { eager: true });
-
-function addOnOrigins(): InertOrigin[] {
-  return Object.values(VENDORED_ORIGINS).flatMap((module) => [...(module.INERT_ORIGINS ?? [])]);
-}
-
-/**
- * What every add-on this app vendors declares must never reach a browser.
- *
- * The same discovery the inert origins use, off the same file. See
- * `builtOutput.test.ts` for why these are the add-on's facts and not this
- * app's, and what shipped green while they were this app's.
- */
-function addOnNeedles(): { text: string; why: string }[] {
-  return Object.values(VENDORED_ORIGINS).flatMap((module) => [
-    ...(module.NEVER_IN_A_BROWSER ?? []),
-  ]);
-}
 
 
 /**
@@ -269,6 +228,25 @@ const DECLARED_SENDERS: Readonly<Record<string, { means: readonly string[]; why:
       'same-origin session and imports the bundles that reply names \u2014 refusing any URL that ' +
       'does not resolve same-origin and under /api/v1/add-ons/. See add-ons/connected.test.ts.',
   },
+  /*
+   * THE WORKS' OWN SCREENS (the staff build), served BY the works' Adminium at
+   * /apps/printing/staff/ and reading it over the signed-in person's session.
+   * The transport reads the data API at its own origin; the door sends a
+   * proof's PDF through the files route at the same origin; the start sends a
+   * person who is not signed in to Adminium's own sign-in and back.
+   */
+  'studio/transport/sessionSource.ts': {
+    means: ['fetch reached through a global'],
+    why: 'the staff build reads its own Adminium at the same origin, on the signed-in session, and nowhere else',
+  },
+  'studio/adminiumWorks.ts': {
+    means: ['fetch reached through a global'],
+    why: 'a proof PDF goes to the same Adminium\u2019s files route as the request body, on the signed-in session',
+  },
+  'studio/boot.tsx': {
+    means: ['location.assign()/replace(), a navigation'],
+    why: 'nobody signed in is sent to the same Adminium\u2019s sign-in, with the way back',
+  },
 };
 
 /** The dynamic `import()` this file is allowed, for the same reason. */
@@ -301,7 +279,6 @@ const ALLOWED_MODULES: readonly AllowedModule[] = [
  */
 const INERT: readonly InertOrigin[] = [
   ...OURS,
-  ...addOnOrigins(),
   ...connectedBackend(process.env['VITE_ADMINIUM_API_BASE_URL']),
 ];
 
@@ -394,7 +371,7 @@ describe('no real third-party call, no real clock', () => {
     expect(survives).toContain('sendBeacon(), under any receiver');
 
     // And the forgiveness is scoped to the path, not to the means globally.
-    expect(declaredMeans(join(SRC, 'data/adminiumSource.ts'))).toEqual([]);
+    expect(declaredMeans(join(SRC, 'shop/door.ts'))).toEqual([]);
   });
 
   it('declares a REASON for every exemption, not just a path', () => {
@@ -563,7 +540,7 @@ describe('no real third-party call, no real clock', () => {
     // in a year still match the running demo.
     const offenders = SHIPPED.flatMap((file) =>
       impuritiesIn(codeOf(file))
-        .filter((means) => !(relative(file) === CONNECTED_SOURCE && CLOCKS.includes(means)))
+        .filter((means) => !(relative(file) === STAFF_CLOCK && CLOCKS.includes(means)))
         .map((means) => `${relative(file)} → ${means}`),
     );
     expect(offenders).toEqual([]);
@@ -623,87 +600,8 @@ describe('no real third-party call, no real clock', () => {
     ).toEqual([]);
   });
 
-
-  it('is pinned to the demo’s Wednesday', () => {
-    expect(NOW).toEqual({ iso: '2026-08-05', hour: 10, minute: 20 });
-  });
 });
 
-describe('secrets are server-only', () => {
-  /**
-   * ── THE SAME NEEDLES, ONE BUILD EARLIER, AND THEY ARE THE ADD-ON'S ────────
-   *
-   * `builtOutput.test.ts` greps the artefact; this catches a leak at the import
-   * that would have caused one. Both used to spell the needles out — the
-   * credentialled add-on's two `secret: true` setting keys and the type its
-   * server half reads them into — inside an app that merely receives it, so a
-   * THIRD credentialled add-on would have been checked for nothing at all.
-   * They come off each vendored add-on's own `add-on-facts.ts` now; see the
-   * block in `builtOutput.test.ts` for the argument.
-   *
-   * `apiKey` in camelCase is deliberately not among them, and that stays true
-   * whoever declares it: the connect dialog holds one in component state while
-   * the shop types it and drops it on submit, and `shop.connect.apiKey` is the
-   * LABEL on that field. Banning the words a credential form has to say would
-   * be banning the form, not the leak. What must never appear is the key a
-   * value would be SAVED under.
-   *
-   * THE DECLARATION FILES THEMSELVES ARE NOT A LEAK. `add-on-facts.ts` exists
-   * to NAME these strings, so it names them; it is data, it is imported by no
-   * screen, and every other gate in this file — senders, clocks, the ban on
-   * reaching `testing/` — still applies to it exactly as to any other vendored
-   * module. Nothing else is excused.
-   */
-  it('keeps every secret setting out of the client half', () => {
-    const needles = addOnNeedles();
-    expect(needles.length, 'no add-on declared anything server-only').toBeGreaterThan(0);
-    const offenders = SHIPPED.filter(
-      (file) =>
-        !file.endsWith('add-on-facts.ts') &&
-        needles.some((needle) => codeOf(file).includes(needle.text)),
-    );
-    expect(offenders.map(relative)).toEqual([]);
-  });
-
-  it('never puts a typed credential into the store', () => {
-    // The other half of the same rule: the dialog may collect one, and the
-    // store — which any browser console can read — may never receive it.
-    const store = codeOf(join(SRC, 'state', 'store.ts'));
-    expect(/apiKey|accountNumber|credential/i.test(store)).toBe(false);
-  });
-
-  it('never lets shipped code reach the test-only directory, or zod', () => {
-    /*
-     * `src/testing/` holds the vendored manifest validator and the lexicon
-     * fixture. Both import `zod`, which is a devDependency and a runtime
-     * dependency the host does not carry — and the lexicon module
-     * spells every banned word, so shipping it would fail the very grep it
-     * defines. An import from a screen is the one way either could get out.
-     */
-    const offenders = SHIPPED.filter((file) =>
-      /from ['"][^'"]*\/testing\/|from ['"]zod['"]/.test(codeOf(file)),
-    );
-    expect(offenders.map(relative)).toEqual([]);
-  });
-
-  it('vendors no add-on’s server half', () => {
-    // `scripts/sync-add-ons.sh` names these as forbidden and fails its own
-    // status check if one appears. Asserted here as well, because that script
-    // can only COMPARE when the three add-on checkouts are beside this one,
-    // and a clean clone of this repo alone has just this.
-    const server = SHIPPED.filter((file) =>
-      /\/vendor\/[^/]+\/(carrier|http|server)\.ts$|\/vendor\/[^/]+\/server\//.test(file),
-    );
-    expect(server.map(relative)).toEqual([]);
-  });
-
-  it('holds no credential in any seeded value', () => {
-    const store = read(join(SRC, 'add-ons', 'registry.ts'));
-    for (const word of ['sk_live', 'Bearer ', 'password']) {
-      expect(store).not.toContain(word);
-    }
-  });
-});
 
 describe('CSS logical properties only', () => {
   it('uses no physical direction in any rendered style', () => {
@@ -744,7 +642,7 @@ describe('the vendored halves are copies, and say so', () => {
 
   it('carries the sync header on every vendored file', () => {
     const files = vendored();
-    expect(files.length).toBeGreaterThan(40);
+    expect(files.length).toBeGreaterThan(5);
     const offenders = files.filter((file) => {
       const head = read(file).split('\n').slice(0, 5).join('\n');
       return (
@@ -754,6 +652,20 @@ describe('the vendored halves are copies, and say so', () => {
       );
     });
     expect(offenders.map(relative)).toEqual([]);
+  });
+
+  it('ships the script the headers name, syncing exactly the files vendored', () => {
+    const script = join(SRC, '..', 'scripts', 'sync-add-ons.sh');
+    expect(existsSync(script), 'scripts/sync-add-ons.sh').toBe(true);
+    const text = read(script);
+    const listed = /FILES_host=\(([\s\S]*?)\n\)/.exec(text)?.[1] ?? '';
+    const named = listed
+      .split('\n')
+      .map((line) => line.replace(/#.*$/, '').trim())
+      .flatMap((line) => line.split(/\s+/))
+      .filter((f) => f !== '');
+    const here = vendored().map((f) => f.slice(join(SRC, 'add-ons', 'vendor', 'host').length + 1)).sort();
+    expect(named.sort()).toEqual(here);
   });
 
   /*
@@ -816,13 +728,28 @@ describe('the host names no company', () => {
   /** The three lines `registry.ts` is allowed to have, and no others. */
   const IMPORT_LINE = /^import \{ register as \w+ \} from '\.\/vendor\/[a-z-]+\/index\.ts';$/;
 
+  /**
+   * The one sentence the customer side says by name ("Made it in Canva?
+   * Download it as PDF Print"): the artwork
+   * step's two `shop.artwork.export.*` lines, in each language. It points the
+   * customer at an export, and no Canva integration ships.
+   */
+  const RULED_LINE = /^"shop\.artwork\.export\.(title|body)": /;
+
+  /**
+   * The demo card lists the add-ons a works may switch on by their marketplace
+   * keys and names (`shipping-dhl`, "DHL Shipping"), as the marketplace does:
+   * a line of the demo's that names the add-on by its key, and no other.
+   */
+  const ADD_ON_KEY_LINE = /shipping-dhl/;
+
   it('mentions one only where an add-on bundle is imported', () => {
     const own = SHIPPED.filter((file) => !file.includes(`/vendor/`));
     const offenders = own.flatMap((file) =>
       codeOf(file)
         .split('\n')
         .map((line) => line.trim())
-        .filter((line) => COMPANIES.test(line) && !IMPORT_LINE.test(line))
+        .filter((line) => COMPANIES.test(line) && !IMPORT_LINE.test(line) && !(relative(file) === "i18n/strings/shop.ts" && RULED_LINE.test(line)) && !(relative(file).startsWith("demo/") && ADD_ON_KEY_LINE.test(line)))
         .map((line) => `${relative(file)} · ${line}`),
     );
     expect(offenders).toEqual([]);
@@ -885,51 +812,6 @@ describe("the test command a reader is given is the one that is configured", () 
   });
 });
 
-/**
- * AND THE DISCOVERY ITSELF IS GUARDED, because it is only as honest as what it
- * finds.
- *
- * A vendored package that exported nothing would contribute nothing and read
- * exactly like a package with nothing to declare. A renamed export, or a sync
- * that dropped the file, would leave this app quietly allowing no origin at all
- * — which fails loudly here rather than silently on the day an add-on that
- * really does name an address is vendored.
- */
-describe('an add-on brings its own inert origins with it', () => {
-  it('reads a declaration off every add-on this app vendors', () => {
-    const declared = Object.entries(VENDORED_ORIGINS);
-    expect(declared.length, 'no vendored inert-origin declarations were found').toBeGreaterThan(0);
-    const silent = declared
-      .filter(([, module]) => module.INERT_ORIGINS === undefined)
-      .map(([file]) => file);
-    expect(silent, 'these vendored packages export no INERT_ORIGINS').toEqual([]);
-  });
-
-  it('keeps no origin of its own that belongs to an add-on', () => {
-    // The ratchet on the repair. Re-adding an add-on's address to this app's
-    // own list would work, and would put the defect straight back: every entry
-    // here has to be an address THIS app names, and this app names none.
-    expect(OURS).toEqual([]);
-  });
-
-  it('says why, for every origin it allows, wherever it came from', () => {
-    expect(INERT.length, 'nothing was discovered at all').toBeGreaterThan(0);
-    for (const entry of INERT) {
-      expect(
-        { origin: entry.origin, explained: entry.why.length > 30 },
-        `${entry.origin} is allowed with no reason a reviewer can read`,
-      ).toEqual({ origin: entry.origin, explained: true });
-    }
-  });
-
-  it('forgives the declared origin and nothing that merely starts the same', () => {
-    // The comparison is exact, and this is the case that says so: an add-on
-    // declaring `api.canva.com` does not hand a look-alike host an allowance.
-    const declared = INERT[0]!.origin;
-    expect(offendingAddresses(`const a = "${declared}/x";`, INERT)).toEqual([]);
-    expect(offendingAddresses(`const a = "${declared}.attacker.test/x";`, INERT)).not.toEqual([]);
-  });
-});
 
 /**
  * ── EVERY SOURCE FILE IS TEXT, OR THE TOOLS STOP READING IT ─────────────────

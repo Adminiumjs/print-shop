@@ -39,9 +39,22 @@
  * missing there.
  */
 
-import type { DeliveryChoice } from '../state/store.ts';
 import type { AddOnSettingValues } from './host.ts';
 import type { SlotId } from './slots.ts';
+
+/** A delivery service a carrier quoted, as its picker hands it back and its dispatch page re-selects it. */
+export interface DeliveryChoice {
+  /** The add-on that quoted it, for the summary's "quoted by" line. */
+  addOn: string;
+  /** The add-on's own service code. Opaque here; it is how the fill re-selects. */
+  code: string;
+  /** Already in the reader's language — the add-on renders its own names. */
+  label: string;
+  amount: number;
+  currency: string;
+  /** ISO date the add-on estimated. */
+  estimatedDelivery: string;
+}
 
 /**
  * Every fill is handed the shop's saved values FOR ITS OWN ADD-ON under
@@ -244,6 +257,13 @@ export interface OutboundOrder {
   promisedFor?: string;
   /** What the whole thing is worth, for a customs line or an insured value. */
   value?: Money;
+  /**
+   * What the parcel weighs, packed, in grams, when the shop keeps that figure
+   * (goods and packing). The dispatch flow starts from it as it is, so the
+   * weight the shop shows beside the order and the weight sent to the carrier
+   * are one number; absent, the add-on works one out from the items.
+   */
+  parcelWeightGrams?: number;
 }
 
 // ── the eleven payloads ─────────────────────────────────────────────────────
@@ -347,6 +367,12 @@ export interface CheckoutPayload extends SlotPayload {
 /** `order.dispatch.panel` and `order.dispatch.actions` — the same subject, two readers. */
 export interface DispatchPayload extends SlotPayload {
   order: OutboundOrder;
+  /**
+   * The service the order stores, as the checkout's delivery company named
+   * it, or null: the dispatch flow opens with it picked. Only `addOn` and
+   * `code` are needed; a code another add-on made is left alone.
+   */
+  chosen?: Pick<DeliveryChoice, "addOn" | "code"> | null;
   /**
    * When the shop thinks it is. Required, and the field this surface cannot be
    * honest without: "has today's van gone?" and "which day does the driver

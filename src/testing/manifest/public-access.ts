@@ -41,6 +41,8 @@
  */
 import { z } from 'zod';
 
+import { publicConsentSchema } from './people.ts';
+
 import { kindOf, rulesOf, type Capacity } from './capacity.ts';
 import { formulaColumns, type FormulaExpr } from './formula.ts';
 import {
@@ -52,6 +54,7 @@ import {
   type ReferenceIssue,
   type TableIndex,
 } from './refs.ts';
+import { FORMS_BECAME_TABLE_MAX } from './forms.ts';
 import { momentIssues, momentOffsetSchema, plainMomentSchema, wallTimeSchema, type Moment } from './refs.ts';
 import { conditionIssues, linkedConditionSchema, reachedOnlyByUndo, stateConditionSchema, type StateMove } from './states.ts';
 
@@ -60,6 +63,24 @@ export const SELF_UNLOCK_MIN_LENGTH = 10;
 
 /** The key every entry uses unless it names another. */
 export const CUSTOMER_KEY = 'customer';
+
+/**
+ * The reserved key name of the entries that open a table to FORMS: an answer
+ * to a form may become a new row of the table, through this entry's
+ * `writable` columns, `defaults` and `anonymous` limits. No browser key of
+ * this name is ever made, and the public API never serves such an entry: it
+ * is read by the forms door alone, so opening a table to forms does not open
+ * it to the public API.
+ */
+export const FORMS_KEY = 'forms';
+
+/**
+ * What a forms entry may say. A form only ever creates a row (it never reads
+ * one back, changes one or signs anyone in), so every word about reading,
+ * claims, sessions, children, files and the entry's own confirmation mail is
+ * left out: forms send their own.
+ */
+export const FORMS_ENTRY_WORDS = ['table', 'methods', 'key', 'writable', 'writableValues', 'defaults', 'requires', 'agrees', 'anonymous', 'requireSetting', 'module', 'source'] as const;
 
 /** The longest a plain-text value may be unless its column says longer: a name. */
 export const PLAIN_TEXT_MAX = 80;
@@ -170,17 +191,42 @@ export function claimKind(claim: Claim): 'lookup' | 'link' | 'token' {
   return 'link';
 }
 
+/** What {@link shareCodeColumns} reads of the app's tables: a table's columns, with their rules (a `tableIndex` is one). */
+export interface CodeSchema {
+  table(ref: string): { columns: readonly { ref: string; rules?: unknown }[] } | undefined;
+}
+
+/** The app's tables as {@link shareCodeColumns} reads them. */
+export function codeSchemaOf(tables: readonly { ref: string; columns: readonly { ref: string; rules?: unknown }[] }[]): CodeSchema {
+  return { table: (ref) => tables.find((table) => table.ref === ref) };
+}
+
+/** Whether a column's rules make it a code no staff member reads (`rules.code.hiddenFromStaff`). */
+export function hiddenFromStaff(rules: unknown): boolean {
+  return ((rules as { code?: { hiddenFromStaff?: unknown } } | undefined)?.code?.hiddenFromStaff ?? false) === true;
+}
+
 /**
  * The columns of one table its shared links open a row by (`claim: { by:
  * 'token' }`): codes that leave only as the link — never shown, never
- * listed, never a value the app's own package gives (its sample rows).
+ * listed, never copied, never a value the app's own package gives (its
+ * sample rows).
+ *
+ * With `schema`, every code of the table no staff member reads
+ * (`rules.code.hiddenFromStaff`) counts too, whether or not an entry claims
+ * by it yet: such a code is the link an order's or a quote's own email
+ * carries, and every guard that keeps a shared link's code keeps it the
+ * same way (a kept total, its last four, a ledger's copy, a public entry).
  */
-export function shareCodeColumns(entries: readonly PublicAccess[], table: string): string[] {
+export function shareCodeColumns(entries: readonly PublicAccess[], table: string, schema?: CodeSchema): string[] {
   const out: string[] = [];
   for (const entry of entries) {
     const claim = entry.claim;
     if (entry.table !== table || claim === undefined || !('by' in claim) || claimKind(claim) !== 'token') continue;
     if (!out.includes(claim.column)) out.push(claim.column);
+  }
+  for (const column of schema?.table(table)?.columns ?? []) {
+    if (hiddenFromStaff(column.rules) && !out.includes(column.ref)) out.push(column.ref);
   }
   return out;
 }
@@ -200,7 +246,7 @@ export function unlistedColumn(
   column: string,
 ): string | null {
   const entries = m.publicAccess ?? [];
-  if (shareCodeColumns(entries, table).includes(column)) return 'the code a shared link opens its row with';
+  if (shareCodeColumns(entries, table, codeSchemaOf(m.requiredSchema.tables)).includes(column)) return 'the code a shared link opens its row with';
   if (entries.some((entry) => entry.table === table && entry.withhold?.columns.includes(column) === true)) return 'withheld from all but its holder';
   const columns = m.requiredSchema.tables.find((candidate) => candidate.ref === table)?.columns ?? [];
   const rules = columns.find((candidate) => candidate.ref === column)?.rules;
@@ -349,12 +395,16 @@ const agreeTargetSchema = z.union([
  * A value of the row that must agree with another: `column` (followed along
  * `path` through foreign keys) equals, is at most, or is at least the target.
  * `when` applies it only to rows whose value (along its own `path`) is one of
- * `in`.
+ * `in`. `length: true` compares how many characters a text value has, with
+ * `lte` alone: a line's lettering no longer than its product allows
+ * (`{ "column": "lettering", "length": true, "lte": { "via": "product_id",
+ * "column": "lettering_limit" } }`), refused as `too-long`.
  */
 export const agreeSchema = z
   .object({
     column: refSchema,
     path: pathSchema.optional(),
+    length: z.literal(true).optional(),
     when: z.object({ path: pathSchema.optional(), in: z.array(scalarSchema).min(1).max(32) }).strict().optional(),
     eq: agreeTargetSchema.optional(),
     lte: agreeTargetSchema.optional(),
@@ -406,6 +456,8 @@ const childEntryShape = {
   plainText: plainTextSchema.optional(),
   /** The most a column may add up to across the rows of one write (a dozen items to an order). */
   sumMax: sumMaxSchema.optional(),
+  /** File columns of the child a guest may upload into (`POST /public/uploads`), as on the entry itself. */
+  uploads: z.array(refSchema).min(1).max(8).optional(),
 };
 
 const childTablesSchema = <T extends z.ZodTypeAny>(entry: T) =>
@@ -488,7 +540,8 @@ export const publicAccessSchema = z
   .object({
     table: refSchema,
     kind: z.enum(['records', 'availability']).optional(),
-    methods: z.array(z.enum(['GET', 'POST', 'PATCH'])).min(1),
+    /** `DELETE` only on an add-on's own link: its holder removes their own row while it is in a state the entry names. */
+    methods: z.array(z.enum(['GET', 'POST', 'PATCH', 'DELETE'])).min(1),
     select: z.array(refSchema).optional(),
     writable: z.array(refSchema).optional(),
     filters: z.array(z.union([valueFilterSchema, relativeFilterSchema])).optional(),
@@ -510,6 +563,24 @@ export const publicAccessSchema = z
     shareLink: refSchema.optional(),
     /** On an identity entry: what "delete my details" empties. */
     forget: forgetSchema.optional(),
+    /**
+     * A tick a stranger gives on this entry's create or change ("Email me
+     * about new shows"): `column` is the bool of the written row that carries
+     * it, `purpose` the consent it gives, and `wording` the sentence shown
+     * beside the box, with its version, so the consent log keeps what was
+     * shown and never a text from the request. Kept for the person the entry
+     * finds or works for (see `people.ts` `publicConsentIssues`). A box left
+     * unticked writes nothing: it takes back no earlier yes.
+     */
+    consent: publicConsentSchema.optional(),
+    /**
+     * On an add-on's entry, which rides the key of every app it is attached
+     * to: a text column of the table that holds the key of the app a row is
+     * for (`app`). Through an app's key the entry reads only the rows whose
+     * column holds that app's key, a create writes that key there (the
+     * browser cannot choose it), and a change never moves it.
+     */
+    appColumn: refSchema.optional(),
     /** On a signed-in person's rows: "Make a new link" for a row's own link. */
     newLink: newLinkSchema.optional(),
     /**
@@ -520,6 +591,14 @@ export const publicAccessSchema = z
     visibleWith: z.object({ table: refSchema, via: refSchema }).strict().optional(),
     /** File columns a claimed person may download (the file the row names, never by its id). */
     files: z.array(refSchema).min(1).max(8).optional(),
+    /**
+     * File columns a guest may upload into (`POST /public/uploads`): each a
+     * `writable` file column whose rule says what a guest may send
+     * (`rules.file.upload`). The upload is kept for a day; the guest's next
+     * create or change through this entry names it in the column, and it
+     * becomes the row's own file.
+     */
+    uploads: z.array(refSchema).min(1).max(8).optional(),
     /** The kinds of document a claimed person may list and open for these rows. */
     documents: z.array(z.string().regex(/^[a-z][a-z0-9-]*$/, 'a document kind')).min(1).max(8).optional(),
     /**
@@ -628,6 +707,13 @@ export const publicAccessSchema = z
       .optional(),
     /** Which browser key serves the entry: `customer`, or one of `publicKeys`. */
     key: keyNameSchema.optional(),
+    /**
+     * A forms entry only: the one `writable` text column a form's fixed
+     * "Source" value goes into (an enquiry's "From form": the form's name, or
+     * what the owner words it). The builder shows that row on this column;
+     * the answer door writes it as the form's settings say, like any other.
+     */
+    source: refSchema.optional(),
     /** The part of the app the entry belongs to: closed while it is off (see `modules.ts`). */
     module: z.string().regex(/^[a-z][a-z0-9-]{0,39}$/, 'a module id is kebab-case').optional(),
     /**
@@ -698,6 +784,13 @@ export const publicAccessSchema = z
     /** Image columns any visitor may see, through the rows this entry reads. */
     pictures: z.array(refSchema).min(1).max(4).optional(),
     /**
+     * File columns of product assets every visitor's browser may load,
+     * through the rows this entry reads (`GET /public/assets`): a preview
+     * model (GLB), a print model (STL, 3MF), a web font (WOFF2), an SVG piece.
+     * Each column holds files by a `file` rule that takes only those kinds.
+     */
+    assets: z.array(refSchema).min(1).max(8).optional(),
+    /**
      * On rows reached through a parent: `columns` are left out unless
      * `unlessHolder` is empty or names the session's own person (a ticket
      * sent to a friend keeps its code from the buyer who sent it).
@@ -737,11 +830,16 @@ export const publicKeysSchema = z
   .record(keyNameSchema, publicKeySchema)
   .refine((keys) => !(CUSTOMER_KEY in keys) || Object.keys(keys[CUSTOMER_KEY] ?? {}).every((field) => field === 'peak'), {
     message: '"customer" is the app\'s own key: only its peak is said here',
+  })
+  .refine((keys) => !(FORMS_KEY in keys), {
+    message: '"forms" is the name of the entries forms write through, and no browser key: name the key otherwise',
   });
 export type PublicKey = z.infer<typeof publicKeySchema>;
 
 interface PublicAccessContext {
   index: TableIndex;
+  /** The app's own key: a forms entry's table is stored on each answer by it (`<app>:<table>`). Absent: not checked. */
+  appKey?: string | undefined;
   /** Columns Adminium decides on a table: a browser may never write them. */
   decided: (table: string) => ReadonlySet<string>;
   /** The columns of a table a money figure Adminium works out reads (a formula, a total, a copy into one). */
@@ -752,6 +850,12 @@ interface PublicAccessContext {
   answersAvailability: (table: string) => boolean;
   /** The add-ons whose stock words an entry may be answered by: the ones the manifest names, and itself when it is one. Absent: not checked. */
   addOns?: ReadonlySet<string> | undefined;
+  /**
+   * The manifest is an add-on's: its entries with no key ride the `customer`
+   * key of each app it is attached to, whose own sign-in opens the sessions
+   * they are read with.
+   */
+  ridesAppKeys?: boolean | undefined;
   /** The table's limits, as it declares them (absent: the caller does not say). */
   capacityOf?: (table: string) => Capacity | undefined;
   publicKeys: Readonly<Record<string, PublicKey>> | undefined;
@@ -855,11 +959,93 @@ export function resendAddressOf(outbox: ResendOutbox, kind: string, table: strin
   return { columns, ...(person === undefined ? {} : { person }) };
 }
 
+/** Whether anyone at all may read rows through an entry: no claim, no session, no person, no parent row it is read with. */
+function readByAnyone(entry: PublicAccess): boolean {
+  return (
+    entry.methods.includes('GET') &&
+    entry.kind !== 'availability' &&
+    entry.claim === undefined &&
+    entry.claimedBy === undefined &&
+    entry.identity === undefined &&
+    entry.visibleWith === undefined &&
+    entry.level === undefined
+  );
+}
+
+/**
+ * A forms entry's own rules: it creates (POST) and nothing else, under the
+ * anonymous limits every stranger's create has, with the columns a form may
+ * fill named; one per table; and no entry on any key lets anyone read the
+ * rows strangers add through it.
+ */
+function formsEntryIssues(entry: PublicAccess, i: number, entries: readonly PublicAccess[], appKey: string | undefined, index: TableIndex): ReferenceIssue[] {
+  const out: ReferenceIssue[] = [];
+  const at = (...rest: (string | number)[]) => ['publicAccess', i, ...rest];
+  // Each answer keeps the row it became by its table's stored name: it must fit an answers table, whole.
+  const stored = appKey === undefined ? 0 : appKey.length + 1 + entry.table.length;
+  if (stored > FORMS_BECAME_TABLE_MAX) {
+    out.push({ path: at('table'), message: `a form's answer names the row it became by "<app>:<table>", at most ${String(FORMS_BECAME_TABLE_MAX)} characters: "${appKey ?? ''}:${entry.table}" is ${String(stored)}` });
+  }
+  const allowed: readonly string[] = FORMS_ENTRY_WORDS;
+  for (const word of Object.keys(entry)) {
+    if (!allowed.includes(word)) out.push({ path: at(word), message: `a forms entry only lets a form add a row: "${word}" is not said on it` });
+  }
+  if (entry.methods.length !== 1 || entry.methods[0] !== 'POST') out.push({ path: at('methods'), message: 'a forms entry adds a row and does nothing else: its methods are ["POST"]' });
+  if (entry.anonymous === undefined) out.push({ path: at('anonymous'), message: 'a form is sent by strangers: a forms entry says its anonymous limits' });
+  if ((entry.writable ?? []).length === 0) out.push({ path: at('writable'), message: 'a forms entry names the columns a form may fill (writable)' });
+  if (entry.source !== undefined) {
+    const named = index.column(entry.table, entry.source);
+    if (!(entry.writable ?? []).includes(entry.source)) {
+      out.push({ path: at('source'), message: `a form's source goes into one of the columns a form may fill: put "${entry.source}" in writable` });
+    } else if (named !== undefined && (named.type === 'fk' || named.references !== undefined)) {
+      out.push({ path: at('source'), message: `"${entry.source}" links to another row: a form's source is words, so it goes into a text column` });
+    } else if (named !== undefined && named.type !== 'text') {
+      out.push({ path: at('source'), message: `"${entry.source}" holds ${named.type}: a form's source is words, so it goes into a text column` });
+    }
+  }
+  if (entries.findIndex((other) => other.key === FORMS_KEY && other.table === entry.table) !== i) {
+    out.push({ path: at('table'), message: `"${entry.table}" is opened to forms by another entry already: one forms entry per table` });
+  }
+  const reader = entries.findIndex((other) => other !== entry && other.table === entry.table && readByAnyone(other));
+  if (reader !== -1) {
+    out.push({
+      path: at('table'),
+      message: `strangers add rows to "${entry.table}" through forms, and entry ${String(reader)} lets anyone read its rows: everyone could read what people typed into a form`,
+    });
+  }
+  return out;
+}
+
+/**
+ * An entry held to the app whose key serves it (`appColumn`): a text column
+ * of its table, never one a browser writes or a value the entry sets, and
+ * only on an entry that rides each app's own key (no key of the add-on's,
+ * no sign-in of its own).
+ */
+function appColumnIssues(entries: readonly PublicAccess[], index: TableIndex): ReferenceIssue[] {
+  const out: ReferenceIssue[] = [];
+  entries.forEach((entry, i) => {
+    const column = entry.appColumn;
+    if (column === undefined) return;
+    const at = ['publicAccess', i, 'appColumn'];
+    const found = index.column(entry.table, column);
+    if (found === undefined) out.push({ path: at, message: `"${entry.table}" has no column "${column}"` });
+    else if (found.type !== 'text') out.push({ path: at, message: `"${entry.table}.${column}" is not a text column, so it cannot hold an app's key` });
+    if ((entry.writable ?? []).includes(column) || Object.prototype.hasOwnProperty.call(entry.defaults ?? {}, column)) {
+      out.push({ path: at, message: `"${column}" holds the app whose key serves the entry: Adminium writes it, so it is neither writable nor a default` });
+    }
+    if ((entry.key ?? CUSTOMER_KEY) !== CUSTOMER_KEY) out.push({ path: at, message: `an entry on "${String(entry.key)}" is served by no app's key, so it has no app to be held to` });
+    if (entry.claim !== undefined || entry.identity !== undefined) out.push({ path: at, message: 'a sign-in entry is the key\'s own, and is held to no app' });
+  });
+  return out;
+}
+
 /** Everything in `publicAccess` and `publicKeys` that names something undeclared, or breaks a rule. */
 export function publicAccessIssues(entries: readonly PublicAccess[], ctx: PublicAccessContext): ReferenceIssue[] {
   const out: ReferenceIssue[] = [];
   const { index } = ctx;
   const has = index.has;
+  out.push(...appColumnIssues(entries, index));
 
   for (const [name, key] of Object.entries(ctx.publicKeys ?? {})) {
     const at = ['publicKeys', name];
@@ -949,6 +1135,10 @@ export function publicAccessIssues(entries: readonly PublicAccess[], ctx: Public
     if (entry.claim === undefined || claimKind(entry.claim) !== 'token' || !('by' in entry.claim)) continue;
     shareCodes.set(entry.table, (shareCodes.get(entry.table) ?? new Set()).add(entry.claim.column));
   }
+  // …and a code no staff member reads, which is such a link's whether or not an entry claims by it yet.
+  for (const table of index.tables()) {
+    for (const column of shareCodeColumns([], table.ref, index)) shareCodes.set(table.ref, (shareCodes.get(table.ref) ?? new Set()).add(column));
+  }
   entries.forEach((entry, i) => {
     const codes = shareCodes.get(entry.table);
     if (codes === undefined) return;
@@ -974,9 +1164,11 @@ export function publicAccessIssues(entries: readonly PublicAccess[], ctx: Public
     }
     const column = (ref: string) => index.column(entry.table, ref);
     const key = entry.key ?? CUSTOMER_KEY;
-    if (key !== CUSTOMER_KEY && ctx.publicKeys?.[key] === undefined) {
+    if (key !== CUSTOMER_KEY && key !== FORMS_KEY && ctx.publicKeys?.[key] === undefined) {
       out.push({ path: at('key'), message: `"${key}" is not one of the app's publicKeys` });
     }
+    if (key === FORMS_KEY) out.push(...formsEntryIssues(entry, i, entries, ctx.appKey, index));
+    else if (entry.source !== undefined) out.push({ path: at('source'), message: 'a source is said only on a forms entry (key "forms"): the column a form\'s fixed "Source" value goes into' });
 
     for (const list of ['select', 'writable'] as const) {
       for (const ref of entry[list] ?? []) {
@@ -986,8 +1178,8 @@ export function publicAccessIssues(entries: readonly PublicAccess[], ctx: Public
     // An entry anyone may call (no claim, no parent, no session asked) shows no personal data: the install refuses it too.
     const sessionOnly = entry.level !== undefined && entry.claim === undefined && entry.claimedBy === undefined && entry.visibleWith === undefined;
     const anyone = entry.claim === undefined && entry.visibleWith === undefined && (entry.claimedBy === undefined || entry.claimedBy.optional === true) && !sessionOnly;
-    // An availability entry shows no row, whatever it names.
-    if (anyone && entry.kind !== 'availability') {
+    // An availability entry shows no row, whatever it names; nor does a forms entry, which answers nobody with the row.
+    if (anyone && entry.kind !== 'availability' && key !== FORMS_KEY) {
       // No select shows every column but a code Adminium makes and a secret, as the install reads it.
       const shown =
         entry.select ??
@@ -1023,13 +1215,23 @@ export function publicAccessIssues(entries: readonly PublicAccess[], ctx: Public
     if (patches && entry.claim === undefined && entry.visibleWith === undefined && (entry.claimedBy === undefined || entry.claimedBy.optional === true)) {
       out.push({ path: at('methods'), message: 'PATCH is allowed only with a claim' });
     }
+    /*
+     * A removal from a browser: only through an add-on's own link (a shopper
+     * deleting their own saved draft), on the entry that opens the row by it.
+     * Nothing else a guest holds removes a row.
+     */
+    if (entry.methods.includes('DELETE')) {
+      const ownLink = ctx.ridesAppKeys === true && entry.key !== undefined && entry.claim !== undefined && 'by' in entry.claim && entry.claim.own === true;
+      if (!ownLink) out.push({ path: at('methods'), message: "DELETE is allowed only on an add-on's own link, the entry that opens the row by it (claim by token, own)" });
+    }
     // Nothing a server decides may be written by a browser.
     const decided = ctx.decided(entry.table);
     for (const ref of writable) {
       if (decided.has(ref)) out.push({ path: at('writable'), message: `"${ref}" is decided by Adminium and cannot be written publicly` });
     }
-    // A file column names a file a signed-in staff member uploaded: a browser's key uploads nothing, so it names none.
-    for (const [list, refs] of [['writable', [...writable]], ['defaults', Object.keys(entry.defaults ?? {})]] as const) {
+    // A file column names a file a signed-in staff member uploaded: a browser's key uploads nothing, so it names none —
+    // but a guest's own upload, in a column the entry lets them upload into (`uploads`).
+    for (const [list, refs] of [['writable', [...writable].filter((ref) => !(entry.uploads ?? []).includes(ref))], ['defaults', Object.keys(entry.defaults ?? {})]] as const) {
       for (const ref of refs) {
         const found = ctx.index.column(entry.table, ref) as { rules?: { file?: unknown } } | undefined;
         if (found?.rules?.file !== undefined) out.push({ path: at(list), message: `"${entry.table}.${ref}" holds files a signed-in person uploads, so a public write never sets it` });
@@ -1199,7 +1401,8 @@ export function publicAccessIssues(entries: readonly PublicAccess[], ctx: Public
       if (root === undefined) out.push({ path: at('visibleWith'), message: 'the entries it is visible with lead to no claimed person' });
     }
     for (const ref of entry.files ?? []) {
-      if (writable.has(ref)) out.push({ path: at('files'), message: `"${ref}" is offered for download, so a browser never writes it` });
+      // A guest's own upload is written by naming it, and only a file they uploaded for the column is taken there.
+      if (writable.has(ref) && !(entry.uploads ?? []).includes(ref)) out.push({ path: at('files'), message: `"${ref}" is offered for download, so a browser never writes it` });
       const found = column(ref);
       if (found === undefined) out.push({ path: at('files'), message: `"${entry.table}" has no column "${ref}"` });
       else if (found.type !== 'text') out.push({ path: at('files'), message: `"${entry.table}.${ref}" is not a text column holding a file` });
@@ -1294,7 +1497,7 @@ export function publicAccessIssues(entries: readonly PublicAccess[], ctx: Public
           [when.after, when.before].some((end) => end !== undefined) &&
           [when.after, when.before].every((end) => end === undefined || end.column !== undefined),
       );
-    if (entry.writableWhen !== undefined && !patches && !createWindow) {
+    if (entry.writableWhen !== undefined && !patches && !entry.methods.includes('DELETE') && !createWindow) {
       out.push({ path: at('writableWhen'), message: "writableWhen limits a change, and this entry changes nothing (a child's create takes a window read from its parent, keyed by the link)" });
     }
     for (const [ref, when] of Object.entries(entry.writableWhen ?? {})) {
@@ -1443,6 +1646,11 @@ export function publicAccessIssues(entries: readonly PublicAccess[], ctx: Public
     if (entry.words === undefined) out.push(...availabilityShapeIssues(entry, ctx, at));
     if (entry.unlockBy !== undefined) out.push(...unlockIssues(entry, entry.unlockBy, entries, ctx, at));
     if (entry.pictures !== undefined) out.push(...pictureIssues(entry, entry.pictures, entries, ctx, at));
+    if (entry.uploads !== undefined) {
+      if (!entry.methods.includes('POST') && !entry.methods.includes('PATCH')) out.push({ path: at('uploads'), message: "a guest's upload is named by a create or a change, and this entry makes neither" });
+      out.push(...uploadIssues(ctx.index, entry.table, entry.uploads, entry.writable ?? [], at('uploads')));
+    }
+    if (entry.assets !== undefined) out.push(...assetIssues(entry, entry.assets, entries, ctx, at));
   });
   out.push(...treeIssues(entries, ctx, identities, shareCodes));
   out.push(...personIssues(entries, ctx, identities));
@@ -1520,7 +1728,7 @@ function unlockIssues(
       if (code.rules?.code === undefined && code.rules?.normalize !== 'code') {
         out.push({ path: at('unlockBy', 'column'), message: `"${entry.table}.${code.ref}" is compared as a code: give it normalize "code"` });
       }
-      if (shareCodeColumns(entries, entry.table).includes(code.ref)) {
+      if (shareCodeColumns(entries, entry.table, index).includes(code.ref)) {
         out.push({ path: at('unlockBy', 'column'), message: "a shared link's code is never looked up" });
       }
       // The code opens the row; the row never shows it back.
@@ -1559,7 +1767,7 @@ function unlockIssues(
     if (code.rules?.code === undefined && code.rules?.normalize !== 'code') {
       out.push({ path: at('unlockBy', 'column'), message: `"${unlock.table}.${code.ref}" is compared as a code: give it normalize "code"` });
     }
-    if (shareCodeColumns(entries, unlock.table).includes(code.ref)) {
+    if (shareCodeColumns(entries, unlock.table, index).includes(code.ref)) {
       out.push({ path: at('unlockBy', 'column'), message: "a shared link's code is never looked up" });
     }
   }
@@ -1599,7 +1807,7 @@ function pictureIssues(
   }
   if ((entry.key ?? CUSTOMER_KEY) !== CUSTOMER_KEY) out.push({ path: at('key'), message: "pictures are served through the app's customer key" });
   const writes = new Set([...(entry.writable ?? []), ...Object.keys(entry.defaults ?? {})]);
-  const shareCodes = shareCodeColumns(entries, entry.table);
+  const shareCodes = shareCodeColumns(entries, entry.table, ctx.index);
   for (const ref of pictures) {
     const found = ctx.index.column(entry.table, ref) as
       | (ColumnShape & { semantic?: string; rules?: { code?: unknown; secret?: boolean; personal?: boolean } })
@@ -1618,6 +1826,100 @@ function pictureIssues(
       out.push({ path: at('pictures'), message: `"${entry.table}.${ref}" is kept from readers, so it is no picture for everyone` });
     }
     if (found.rules?.personal === true) out.push({ path: at('pictures'), message: `"${entry.table}.${ref}" is personal data, so it is no picture for everyone` });
+  }
+  return out;
+}
+
+/** The kinds of file a product asset may be (`ASSET_FILE_KINDS` in `schema.ts`, which imports this file). */
+const ASSET_KINDS: readonly string[] = ['svg', 'glb', 'stl', '3mf', 'woff2'];
+
+/**
+ * Product assets every visitor's browser loads: file columns the entry shows,
+ * held to a model's, a font's or an SVG's kinds, which no browser writes. The
+ * same shape as pictures: a viewer `fetch`es a model and `@font-face` loads a
+ * font with no session, so the rows are read by every visitor alike.
+ */
+function assetIssues(
+  entry: PublicAccess,
+  assets: readonly string[],
+  entries: readonly PublicAccess[],
+  ctx: PublicAccessContext,
+  at: (...rest: (string | number)[]) => (string | number)[],
+): ReferenceIssue[] {
+  const out: ReferenceIssue[] = [];
+  if (entry.methods.length !== 1 || entry.methods[0] !== 'GET' || entry.kind === 'availability') {
+    out.push({ path: at('assets'), message: 'assets are served through an entry that only reads rows' });
+  }
+  if (entry.claim !== undefined || entry.claimedBy !== undefined || entry.visibleWith !== undefined) {
+    out.push({ path: at('assets'), message: "assets are for every visitor; a signed-in person's own files are `files`" });
+  }
+  if (entry.unlockBy !== undefined) out.push({ path: at('assets'), message: 'assets are for every visitor; rows a code unlocks are read only by whoever gave the code' });
+  if (entry.level !== undefined && entry.claim === undefined && entry.claimedBy === undefined && entry.visibleWith === undefined) {
+    out.push({ path: at('assets'), message: 'assets are for every visitor; rows read by a signed-in session alone are no asset a page loads for anyone' });
+  }
+  if ((entry.key ?? CUSTOMER_KEY) !== CUSTOMER_KEY) out.push({ path: at('key'), message: "assets are served through the app's customer key" });
+  const writes = new Set([...(entry.writable ?? []), ...Object.keys(entry.defaults ?? {})]);
+  const shareCodes = shareCodeColumns(entries, entry.table, ctx.index);
+  const guests = guestUploadColumns(entries, entry.table);
+  if (new Set(assets).size !== assets.length) out.push({ path: at('assets'), message: 'an asset column is named twice' });
+  for (const ref of assets) {
+    const found = ctx.index.column(entry.table, ref) as
+      | (ColumnShape & { rules?: { code?: unknown; secret?: boolean; personal?: boolean; file?: { accept?: readonly string[] } } })
+      | undefined;
+    if (found === undefined) {
+      out.push({ path: at('assets'), message: `"${entry.table}" has no column "${ref}"` });
+      continue;
+    }
+    const accept = found.rules?.file?.accept;
+    if (accept === undefined || accept.length === 0 || accept.some((kind) => !ASSET_KINDS.includes(kind))) {
+      out.push({ path: at('assets'), message: `"${entry.table}.${ref}" is not a column of assets: a file rule that takes only ${ASSET_KINDS.join(', ')}` });
+    }
+    if (writes.has(ref)) out.push({ path: at('assets'), message: `"${ref}" is an asset every visitor loads, so a browser never writes it` });
+    if (entry.select !== undefined && !entry.select.includes(ref)) out.push({ path: at('assets'), message: `"${ref}" is not one of the columns the entry shows` });
+    if ((entry.files ?? []).includes(ref)) out.push({ path: at('assets'), message: `"${ref}" is a signed-in person's file, not an asset for everyone` });
+    if ((entry.pictures ?? []).includes(ref)) out.push({ path: at('assets'), message: `"${ref}" is a picture already; a column is one or the other` });
+    if (found.rules?.secret === true || found.rules?.code !== undefined || shareCodes.includes(ref)) {
+      out.push({ path: at('assets'), message: `"${entry.table}.${ref}" is kept from readers, so it is no asset for everyone` });
+    }
+    if (found.rules?.personal === true) out.push({ path: at('assets'), message: `"${entry.table}.${ref}" is personal data, so it is no asset for everyone` });
+    if (guests.has(ref)) out.push({ path: at('assets'), message: `guests upload into "${entry.table}.${ref}", and a guest's file is kept private, so it is no asset for everyone` });
+  }
+  return out;
+}
+
+/** The columns of `table` any entry lets a guest upload into, on the entry itself or on a level of its child rows. */
+function guestUploadColumns(entries: readonly PublicAccess[], table: string): Set<string> {
+  const out = new Set<string>();
+  const walk = (children: Readonly<Record<string, ChildEntry>> | undefined): void => {
+    for (const [name, child] of Object.entries(children ?? {})) {
+      if (name === table) for (const ref of child.uploads ?? []) out.add(ref);
+      walk(child.children);
+    }
+  };
+  for (const entry of entries) {
+    if (entry.table === table) for (const ref of entry.uploads ?? []) out.add(ref);
+    walk(entry.children);
+  }
+  return out;
+}
+
+/**
+ * The file columns a guest may upload into, at one level of an entry: each a
+ * column of the table, written there, whose file rule says what a guest may
+ * send (`rules.file.upload`). Named once each.
+ */
+function uploadIssues(index: TableIndex, table: string, uploads: readonly string[], writable: readonly string[], path: Path): ReferenceIssue[] {
+  const out: ReferenceIssue[] = [];
+  if (new Set(uploads).size !== uploads.length) out.push({ path, message: 'each column is named once' });
+  for (const ref of uploads) {
+    const found = ruledColumn(index, table, ref);
+    if (found === undefined) {
+      out.push({ path, message: `"${table}" has no column "${ref}"` });
+      continue;
+    }
+    if (found.rules?.file === undefined) out.push({ path, message: `"${table}.${ref}" holds no files: give it a file rule (rules.file)` });
+    else if (found.rules.file.upload === undefined) out.push({ path, message: `"${table}.${ref}" does not say what a guest may upload: give its file rule an upload (kinds, maxBytes)` });
+    if (!writable.includes(ref)) out.push({ path, message: `"${ref}" is filled by naming the upload, so it is writable` });
   }
   return out;
 }
@@ -1724,6 +2026,7 @@ interface RuledColumn extends ColumnShape {
         validation?: { min?: number | undefined; max?: number | undefined; format?: string | undefined; maxLength?: number | undefined } | undefined;
         normalize?: string | undefined;
         secret?: boolean | undefined;
+        file?: { upload?: unknown } | undefined;
       }
     | undefined;
 }
@@ -1818,8 +2121,16 @@ function agreeIssues(index: TableIndex, table: string, parent: string | undefine
       other = index.column(via.references, target.column);
       if (other === undefined) out.push({ path: at(test, 'column'), message: `"${via.references}" has no column "${target.column}"` });
     }
-  } else if (typeof reached !== 'string' && !agreeValueFits(reached.column, target.value)) {
+  } else if (agree.length !== true && typeof reached !== 'string' && !agreeValueFits(reached.column, target.value)) {
     out.push({ path: at(test, 'value'), message: `${JSON.stringify(target.value)} is not a value of "${reached.table}.${reached.column.ref}"` });
+  }
+  if (agree.length === true) {
+    // How many characters a text has, at most a number: the text is the row's, the most is a number.
+    if (test !== 'lte') out.push({ path: at(test), message: 'a length is compared with lte (at most so many characters)' });
+    if (typeof reached !== 'string' && reached.column.type !== 'text') out.push({ path: at('length'), message: `"${reached.table}.${reached.column.ref}" is not text, so it has no length` });
+    if (other !== undefined && !NUMBERS.includes(other.type)) out.push({ path: at(test), message: `"${other.ref}" is not a number, so it is no most characters` });
+    if ('value' in target && (typeof target.value !== 'number' || !Number.isInteger(target.value) || target.value < 0)) out.push({ path: at(test, 'value'), message: 'the most characters is a whole number' });
+    return out;
   }
   if (typeof reached !== 'string') {
     if (test !== 'eq' && !NUMBERS.includes(reached.column.type)) {
@@ -2026,6 +2337,7 @@ function treeIssues(
           }
         }
         out.push(...boundIssues(index, ctx, name, child.writable, here('writable')));
+        if (child.uploads !== undefined) out.push(...uploadIssues(index, name, child.uploads, child.writable, here('uploads')));
         (child.agrees ?? []).forEach((agree, a) => out.push(...agreeIssues(index, name, parent, agree, (...rest) => here('agrees', a, ...rest))));
         (child.counts ?? []).forEach((counts, c) => out.push(...countsIssues(index, name, parent, counts, (...rest) => here('counts', c, ...rest))));
         if (child.children !== undefined) {
@@ -2172,7 +2484,7 @@ function personIssues(
           if (column === undefined) out.push({ path: here('fill', target), message: `"${id.table}" has no column "${target}"` });
           else if (column.type !== 'text' || column.role === 'pk' || target === claimed) {
             out.push({ path: here('fill', target), message: `"${id.table}.${target}" is not a text column a new person is filled with` });
-          } else if (peopleDecided.has(target) || column.rules?.secret === true || shareCodeColumns(entries, id.table).includes(target)) {
+          } else if (peopleDecided.has(target) || column.rules?.secret === true || shareCodeColumns(entries, id.table, index).includes(target)) {
             out.push({ path: here('fill', target), message: `"${id.table}.${target}" is Adminium's or a secret, so a create never fills it` });
           } else if (column.unique === true) {
             // A clash would refuse only the create that makes a person: a way to ask whether one exists.
@@ -2324,7 +2636,9 @@ function personIssues(
     // A read for the holder of a session alone (no claim of its own): the settings a signed-in guest may see.
     if (entry.level !== undefined && entry.claim === undefined && entry.claimedBy === undefined && entry.visibleWith === undefined) {
       if (entry.methods.length !== 1 || entry.methods[0] !== 'GET') out.push({ path: at('methods'), message: 'a read for a signed-in guest alone only reads' });
-      if (!identities.has(key)) out.push({ path: at('level'), message: `the "${key}" key signs nobody in, so no session could read this` });
+      // An add-on's entry on an app's key is read with a session the app's own sign-in opened (a guest who found their order).
+      const appSignsIn = ctx.ridesAppKeys === true && key === CUSTOMER_KEY;
+      if (!identities.has(key) && !appSignsIn) out.push({ path: at('level'), message: `the "${key}" key signs nobody in, so no session could read this` });
       if (entry.select === undefined) out.push({ path: at('select'), message: 'a read for a signed-in guest lists what it shows; without select it would show every column' });
       const signIn = identities.get(key)?.entry.claim;
       const verifiedOnly = signIn !== undefined && (claimKind(signIn) === 'link' || ('own' in signIn && signIn.own === true));
