@@ -5790,14 +5790,14 @@
             "type": "text",
             "maxLength": 16,
             "label": {
-              "en-US": "Order number",
-              "de-DE": "Bestellnummer",
-              "fr-FR": "Numéro de commande",
-              "da-DK": "Bestillingsnummer",
-              "cs-CZ": "Číslo objednávky",
-              "ar-EG": "رقم الطلب",
-              "zh-CN": "订单编号",
-              "zh-TW": "訂單編號"
+              "en-US": "No.",
+              "de-DE": "Nr.",
+              "fr-FR": "N°",
+              "da-DK": "Nr.",
+              "cs-CZ": "Č.",
+              "ar-EG": "رقم",
+              "zh-CN": "编号",
+              "zh-TW": "編號"
             },
             "nullable": true,
             "rules": {
