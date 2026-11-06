@@ -2,8 +2,10 @@
  * The works' shell (comp `I - Marlow Press` 1015-1361, the add-ons' items
  * from `J - Marlow Press Add-ons` 2790-2793): the sidebar with the works'
  * screens, the header with search, the theme and the person signed in, the
- * screen, the footer with the works' own address; the nav drawer on a narrow
- * screen; the overlays and the toasts.
+ * screen; the nav drawer on a narrow screen; the overlays and the toasts. The
+ * comp's footer (1342-1345: the works' address, phone and e-mail, as the shop
+ * shows them) is left out: those are the shop's public details, which no
+ * staff screen needs.
  *
  * A screen shows only to a person whose roles reach it: the price list to
  * every role (the owner alone edits it), Shipments while a delivery company is on, the
@@ -14,7 +16,6 @@ import { FileQuestion, LayoutGrid, LayoutTemplate, Layers, List, LogOut, Menu, M
 
 import { useData, useEnv } from "./env.tsx";
 import { onBoard, orderOf, refOf } from "./facts.ts";
-import { useFmt } from "./format.ts";
 import { navOf, WORKS_NAV, type WorksNavEntry } from "./nav.ts";
 import { mayErase, mayManageAddOns, maySetUpDesigns } from "./roles.ts";
 import { go, useWorks, type View } from "./store.ts";
@@ -123,7 +124,6 @@ export function WorksApp() {
 
 function Shell() {
   const t = useT();
-  const fmt = useFmt();
   const data = useData();
   const { door, signInHref } = useEnv();
   const view = useWorks((s) => s.view);
@@ -135,8 +135,6 @@ function Shell() {
   const reach = screensFor(who, facts.carrier !== null);
   const settings = data.settings;
   const works = text(settings?.["works_name"]) ?? "";
-  const phone = text(settings?.["phone"]);
-  const email = text(settings?.["email"]);
   const dark = theme === "dark" || (theme === null && typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches === true);
   const first = who.name.split(/\s+/).filter(Boolean)[0] ?? who.name;
   const initials = who.name
@@ -184,18 +182,6 @@ function Shell() {
         <main className="wk-main" id="wk-main">
           <Screen view={view} reach={reach} />
         </main>
-        <footer className="wk-footer">
-          <span>{t("works.footer", { year: fmt.year(door.now()), works, address: text(settings?.["address"]) ?? "" })}</span>
-          <span className="wk-footer-links">
-            {phone !== null && (
-              <a className="wk-mono" href={`tel:${phone.replace(/\s/g, "")}`}>
-                {phone}
-              </a>
-            )}
-            {email !== null && <a href={`mailto:${email}`}>{email}</a>}
-            {text(settings?.["hours"]) !== null && <span className="wk-footer-hours">{text(settings?.["hours"])}</span>}
-          </span>
-        </footer>
       </div>
       {navOpen && <Drawer works={works} view={view} reach={reach} />}
       <Overlays />

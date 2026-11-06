@@ -206,6 +206,9 @@ function Imposition({ job }: { job: Row }) {
 function Artwork({ job }: { job: Row }) {
   const t = useT();
   const data = useData();
+  const { door } = useEnv();
+  // A design's files sit under Actions for a role that opens its panel; the counter, which has none, is told who makes them.
+  const designLine = mayOpenPanel(door.who(), "customiser-line") ? "works.art.design" : "works.art.designElsewhere";
   const files = artworkOf(data, job);
   const family = familyOf(data, job);
   const product = productOf(data, job);
@@ -213,7 +216,7 @@ function Artwork({ job }: { job: Row }) {
     <div className="wk-panel">
       <h2 className="wk-panel-head wk-panel-head--plain">{t("works.art.title")}</h2>
       {files.length === 0 ? (
-        <div className="wk-muted">{t(job["design_id"] === null || job["design_id"] === undefined ? "works.art.none" : "works.art.design")}</div>
+        <div className="wk-muted">{t(job["design_id"] === null || job["design_id"] === undefined ? "works.art.none" : designLine)}</div>
       ) : (
         <ul className="wk-art-grid" role="list">
           {files.map((file) => {

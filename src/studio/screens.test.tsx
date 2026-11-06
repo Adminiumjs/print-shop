@@ -295,11 +295,13 @@ describe("the shell", () => {
     expect(screensFor(new FakeDoor({ roles: ["press"] }).who(), true)).toEqual(["today", "jobs", "materials", "prices", "shipments"]);
   });
 
-  it("says who is signed in, the works' own address and its week", async () => {
+  it("says who is signed in and the works' week, and never the shop's public footer", async () => {
     await mount(new FakeDoor());
     expect(document.querySelector(".wk-user")?.textContent).toBe("RMRosa · owner");
     expect(document.querySelector(".wk-sidebar-foot")?.textContent).toBe("Mon–Fri · Sheet press, Wide roll printer");
-    expect(document.querySelector(".wk-footer")?.textContent).toContain("© 2026 Marlow Press · 3 Market Square, Marlow SL7 1AA");
+    // The shop's public footer (its address, phone and e-mail) is the shop's: no staff screen shows it.
+    expect(document.querySelector("footer")).toBeNull();
+    expect(document.body.textContent).not.toContain("3 Market Square");
   });
 
   it("signs every role out from the header, to Adminium's sign-in", async () => {
@@ -361,6 +363,14 @@ describe("the shell", () => {
     expect([...document.querySelectorAll("button")].some((b) => b.textContent === "Make the proof and the print file")).toBe(false);
     expect(text()).not.toContain("send-a-proof sheet attaches the proof it makes");
     expect([...document.querySelectorAll("a")].some((a) => (a.getAttribute("href") ?? "").startsWith("/add-ons/customiser/"))).toBe(false);
+    // Its artwork is said for what the counter sees: no files under Actions, so who makes them.
+    expect(text()).toContain("Made in the customiser — prepress makes its proof and print files.");
+    expect(text()).not.toContain("under Actions");
+  });
+
+  it("points a role that opens the design's panel to its files under Actions", async () => {
+    await mount(new FakeDoor({ roles: ["prepress"] }), "ticket", { jobId: 8 });
+    expect(text()).toContain("Made in the customiser — its files are below, under Actions.");
   });
 
   it("offers the Customiser's set-up and a customer's data on the privacy page to the owner alone", async () => {
