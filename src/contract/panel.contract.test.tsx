@@ -348,6 +348,34 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
         await panels.remove("customiser", "version_files", files[0]!.id);
       });
 
+      /*
+       * CUSTOMISER-PANEL-LAYOUT, a gap in the Customiser: Harbour, like any
+       * ready-made design with two layouts (logo left, logo top), keeps each
+       * part once a layout, and the job panel lists every part of the ready
+       * design (`panels/line.tsx`, `named`) rather than those of the layout
+       * the design uses, so each reads twice. Passes once the panel keeps
+       * the parts of the design's own layout: then drop `.fails`.
+       */
+      it.fails("CUSTOMISER-PANEL-LAYOUT: lists each part of the design once on the job's panel", async () => {
+        const drawn = await drawnFor("owner", designedJob(await doors["owner"]!.load()));
+        expect(drawn.split("Job title").length - 1).toBe(1);
+      }, 60_000);
+
+      /*
+       * CUSTOMISER-STARTER-FONT-FILES, a gap in the Customiser: the install
+       * adds the open-licence starter fonts as rows with no file, while the
+       * panel makes proofs and print files from the same fonts carried in
+       * the package, so the set-up page says they have no files and offers
+       * "Add the starter fonts" for fonts already in use. Passes once the
+       * starter rows hold their files (or the set-up page reads the
+       * package's): then drop `.fails`.
+       */
+      it.fails("CUSTOMISER-STARTER-FONT-FILES: holds a file on every starter font the install added", async () => {
+        const starters = ok(await admin.get<{ data: Row[] }>(`/api/v1/data/${connectionId}/customiser_fonts?limit=200`)).data.filter((f) => f["starter"] === true || f["starter"] === 1);
+        expect(starters.length).toBeGreaterThan(0);
+        expect(starters.filter((f) => fileIdOf(f["file"]) === null).map((f) => f["family"])).toEqual([]);
+      });
+
       // ── the Customiser's set-up page (the owner's "Customising set-up"), as the owner ──
 
       it("reads, as the owner, every table of the Customiser's set-up page the add-on lets an app's role read", async () => {
