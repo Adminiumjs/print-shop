@@ -307,6 +307,9 @@ describe.skipIf(why !== null)(`a customer orders on a built Adminium${why === nu
         const ordered = ok(await staff.get<{ data: Row }>(`/api/v1/data/${connectionId}/${encodeURIComponent(names["orders"] ?? "printing_orders")}/${String(order.id)}`)).data;
         expect(ordered["customer_id"]).not.toBeNull();
         expect([String(stored["order_id"]), String(stored["customer_id"])]).toEqual([String(order.id), String(ordered["customer_id"])]);
+        // Its jobs carry the order's MP- number, which the Jobs list shows.
+        const jobs = ok(await staff.get<{ data: Row }>(`/api/v1/data/${connectionId}/${encodeURIComponent(names["jobs"] ?? "printing_jobs")}/${String(placed.jobs[0]!.id)}`)).data;
+        expect(jobs["order_number"]).toBe("MP-4127");
       });
 
       it("answers a retry with the order already made", async () => {

@@ -126,8 +126,8 @@ const SPECS: PageSpec[] = [
     icon: "clipboard-list",
     order: 2,
     table: "jobs",
-    // The list opens on what the floor works from: the order, the product and its quantity, where it is, its proof, the day it is due.
-    config: listed(["order_id", "product_name", "qty", "stage", "proof_state", "ready_by"], form(
+    // The list opens on what the floor works from: the order's number and its customer, the product and its quantity, where it is, its proof, the day it is due.
+    config: listed(["order_number", "order_id", "product_name", "qty", "stage", "proof_state", "ready_by"], form(
       [title("product_name"), ref("order_id"), f("stage", { control: "segmented" }), f("ready_by", { control: "date" })],
       CONFIG_FIELDS,
       ...PRICE_SECTIONS,

@@ -1029,6 +1029,8 @@ export const TABLES: Table[] = [
     columns: [
       id,
       fk("order_id", "orders", "Order", { index: true }),
+      // Its order's MP- number, never typed: what the Jobs list names a job's order by (the link reads the customer's name).
+      text("order_number", 16, "Order number", { ...opt, rules: always("order_id", "number") }),
       int("position", "Position", opt),
       ...configuration(true),
       // A design in the Customiser, found by its code: the customer's browser sends the code, Adminium fills the link.

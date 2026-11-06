@@ -200,6 +200,7 @@ export const WORDS: Record<string, Translation> = {
   "Option rule": { "de-DE": "Optionsregel", "fr-FR": "Règle d’option", "da-DK": "Tilvalgsregel", "cs-CZ": "Pravidlo možnosti", "ar-EG": "قاعدة الخيار", "zh-CN": "选项规则", "zh-TW": "選項規則" },
   "Option rules": { "de-DE": "Optionsregeln", "fr-FR": "Règles d’options", "da-DK": "Tilvalgsregler", "cs-CZ": "Pravidla možností", "ar-EG": "قواعد الخيارات", "zh-CN": "选项规则", "zh-TW": "選項規則" },
   "Options": { "de-DE": "Optionen", "fr-FR": "Options", "da-DK": "Tilvalg", "cs-CZ": "Možnosti", "ar-EG": "الخيارات", "zh-CN": "选项", "zh-TW": "選項" },
+  "Order number": { "de-DE": "Bestellnummer", "fr-FR": "Numéro de commande", "da-DK": "Bestillingsnummer", "cs-CZ": "Číslo objednávky", "ar-EG": "رقم الطلب", "zh-CN": "订单编号", "zh-TW": "訂單編號" },
   "Order": { "de-DE": "Bestellung", "fr-FR": "Commande", "da-DK": "Bestilling", "cs-CZ": "Objednávka", "ar-EG": "الطلب", "zh-CN": "订单", "zh-TW": "訂單" },
   "Order number prefix": { "de-DE": "Präfix der Bestellnummer", "fr-FR": "Préfixe du numéro de commande", "da-DK": "Præfiks for bestillingsnummer", "cs-CZ": "Předpona čísla objednávky", "ar-EG": "بادئة رقم الطلب", "zh-CN": "订单号前缀", "zh-TW": "訂單編號前綴" },
   "Order received": { "de-DE": "Bestellung eingegangen", "fr-FR": "Commande reçue", "da-DK": "Bestilling modtaget", "cs-CZ": "Objednávka přijata", "ar-EG": "استُلم الطلب", "zh-CN": "已收到订单", "zh-TW": "已收到訂單" },

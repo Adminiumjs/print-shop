@@ -239,8 +239,13 @@ describe.skipIf(why !== null)(`the works against a built Adminium${why === null 
       };
 
       // The manifest names the columns the list opens on, rather than Adminium's ranking (money first: the rate card's charges).
-      it("opens the Jobs list on what the floor needs: the order, the product, its quantity, its stage, its proof, its day", async () => {
-        expect(await jobsListColumns()).toEqual(["order_id", "product_name", "qty", "stage", "proof_state", "ready_by"]);
+      it("opens the Jobs list on what the floor needs: the order's number and customer, the product, its quantity, its stage, its proof, its day", async () => {
+        expect(await jobsListColumns()).toEqual(["order_number", "order_id", "product_name", "qty", "stage", "proof_state", "ready_by"]);
+        // Each of the sample's jobs carries its order's MP- number (an order placed online: the order contract).
+        const numbers = new Map((await rows("orders")).map((o) => [String(o.id), o["number"]]));
+        const jobs = await rows("jobs");
+        expect(jobs.length).toBeGreaterThan(10);
+        for (const job of jobs) expect(job["order_number"], String(job.id)).toBe(numbers.get(String(job["order_id"])));
       });
 
       // Last: the sessions it ends are the ones the tests above use.

@@ -5786,6 +5786,29 @@
             "index": true
           },
           {
+            "ref": "order_number",
+            "type": "text",
+            "maxLength": 16,
+            "label": {
+              "en-US": "Order number",
+              "de-DE": "Bestellnummer",
+              "fr-FR": "Numéro de commande",
+              "da-DK": "Bestillingsnummer",
+              "cs-CZ": "Číslo objednávky",
+              "ar-EG": "رقم الطلب",
+              "zh-CN": "订单编号",
+              "zh-TW": "訂單編號"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "order_id",
+                "from": "number",
+                "mode": "always"
+              }
+            }
+          },
+          {
             "ref": "position",
             "type": "int",
             "label": {
@@ -17628,6 +17651,7 @@
           ]
         },
         "columns": [
+          "order_number",
           "order_id",
           "product_name",
           "qty",
