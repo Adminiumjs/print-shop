@@ -10651,6 +10651,52 @@
             "index": true
           },
           {
+            "ref": "order_id",
+            "type": "fk",
+            "references": "orders",
+            "label": {
+              "en-US": "Order",
+              "de-DE": "Bestellung",
+              "fr-FR": "Commande",
+              "da-DK": "Bestilling",
+              "cs-CZ": "Objednávka",
+              "ar-EG": "الطلب",
+              "zh-CN": "订单",
+              "zh-TW": "訂單"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "job_id",
+                "from": "order_id",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "customer_id",
+            "type": "fk",
+            "references": "customers",
+            "label": {
+              "en-US": "Customer",
+              "de-DE": "Kunde",
+              "fr-FR": "Client",
+              "da-DK": "Kunde",
+              "cs-CZ": "Zákazník",
+              "ar-EG": "الزبون",
+              "zh-CN": "顾客",
+              "zh-TW": "顧客"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "order_id",
+                "from": "customer_id",
+                "mode": "always"
+              }
+            }
+          },
+          {
             "ref": "name",
             "type": "text",
             "maxLength": 160,
@@ -10886,6 +10932,29 @@
               "copy": {
                 "via": "job_id",
                 "from": "order_id",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "customer_id",
+            "type": "fk",
+            "references": "customers",
+            "label": {
+              "en-US": "Customer",
+              "de-DE": "Kunde",
+              "fr-FR": "Client",
+              "da-DK": "Kunde",
+              "cs-CZ": "Zákazník",
+              "ar-EG": "الزبون",
+              "zh-CN": "顾客",
+              "zh-TW": "顧客"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "order_id",
+                "from": "customer_id",
                 "mode": "always"
               }
             }
@@ -21789,6 +21858,24 @@
           "table": "sample_requests",
           "column": "postcode",
           "holds": "details"
+        },
+        {
+          "table": "artwork",
+          "column": "file",
+          "holds": "details",
+          "via": "customer_id"
+        },
+        {
+          "table": "proofs",
+          "column": "file",
+          "holds": "details",
+          "via": "customer_id"
+        },
+        {
+          "table": "proofs",
+          "column": "change_note",
+          "holds": "details",
+          "via": "customer_id"
         },
         {
           "addOn": "customiser",

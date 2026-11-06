@@ -302,6 +302,11 @@ describe.skipIf(why !== null)(`a customer orders on a built Adminium${why === nu
         expect([kept["name"], kept["side"], kept["accepted"] === true || kept["accepted"] === 1]).toEqual(["harbour-cards.pdf", "both", true]);
         const checks = typeof kept["checks"] === "string" ? JSON.parse(kept["checks"]) : kept["checks"];
         expect(checks.rows.find((r: { check: string }) => r.check === "colour")).toMatchObject({ level: "warn" });
+        // …and theirs to Adminium: it names the order's customer, so erasing them takes the file.
+        const stored = ok(await staff.get<{ data: Row }>(`/api/v1/data/${connectionId}/${encodeURIComponent(names["artwork"] ?? "printing_artwork")}/${String(kept.id)}`)).data;
+        const ordered = ok(await staff.get<{ data: Row }>(`/api/v1/data/${connectionId}/${encodeURIComponent(names["orders"] ?? "printing_orders")}/${String(order.id)}`)).data;
+        expect(ordered["customer_id"]).not.toBeNull();
+        expect([String(stored["order_id"]), String(stored["customer_id"])]).toEqual([String(order.id), String(ordered["customer_id"])]);
       });
 
       it("answers a retry with the order already made", async () => {

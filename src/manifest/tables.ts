@@ -1115,6 +1115,9 @@ export const TABLES: Table[] = [
     columns: [
       id,
       fk("job_id", "jobs", "Job", { index: true }),
+      // Whose it is, never typed: the job's order, and that order's customer, so erasing them takes the file.
+      fk("order_id", "orders", "Order", { ...opt, rules: always("job_id", "order_id") }),
+      fk("customer_id", "customers", "Customer", { ...opt, rules: always("order_id", "customer_id") }),
       text("name", 160, "File name"),
       text("file", 64, "File", {
         ...opt,
@@ -1146,6 +1149,8 @@ export const TABLES: Table[] = [
       fk("job_id", "jobs", "Job", { index: true }),
       // The job's order, never typed: a proof cannot name one order and another's job.
       fk("order_id", "orders", "Order", { ...opt, rules: always("job_id", "order_id") }),
+      // The order's customer, never typed: the PDF sent them shows their design, so erasing them takes it.
+      fk("customer_id", "customers", "Customer", { ...opt, rules: always("order_id", "customer_id") }),
       int("version", "Proof", { ...opt, rules: { sequence: { gapless: true, scope: "job_id", sample: true } } }),
       // By e-mail, or printed and posted: the order's choice, or the works' own at its cost.
       choice("kind", "Sent", { email: "By e-mail", post: "Printed, by post" }, { default: "email" }),

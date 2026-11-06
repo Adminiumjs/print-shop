@@ -19,7 +19,10 @@
  *     canvas, which this suite has not);
  *   - the product's panel is served to the owner, and refused to the press;
  *   - the owner keeps Holiday calendars' closed days (its settings grant),
- *     and finds a customer to erase; prepress does not.
+ *     and finds a customer to erase; prepress does not;
+ *   - last, the owner erases that customer: the proof PDF sent them and the
+ *     artwork they sent go with their design's pictures, proof and print
+ *     files, each counted in the preview first.
  *
  * The role holds the customer's words in clear, saves the proof on the
  * design's version (the Customiser's `appGrants`) and takes old files away.
@@ -41,6 +44,7 @@ import { act } from "react";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { PanelRefused } from "../add-ons/connected.ts";
+import { sendProof } from "../studio/actions.ts";
 import { AdminiumWorks } from "../studio/adminiumWorks.ts";
 import type { PanelDoor, WorksData } from "../studio/door.ts";
 import { PanelScopeProvider } from "../studio/panels/host.tsx";
@@ -343,6 +347,73 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
         expect(files.length).toBe(1);
         await panels.remove("customiser", "version_files", files[0]!.id);
       });
+
+      // ── last, since it empties Harbour Bakery: the shop owner erases a customer whose design was proofed ──
+
+      /** Every row of a table, as the operator reads them. */
+      const everyRow = async (table: string): Promise<Row[]> => {
+        const out: Row[] = [];
+        for (let offset = 0; ; offset += 200) {
+          const page = ok(await admin.get<{ data: Row[] }>(`/api/v1/data/${connectionId}/${encodeURIComponent(table)}?limit=200&offset=${String(offset)}`)).data;
+          out.push(...page);
+          if (page.length < 200) return out;
+        }
+      };
+      /** Every file kept about the customer at an address: their artwork and the proofs sent them, and their designs' pictures, proofs and print files. */
+      const filesOf = async (address: string): Promise<{ proofs: Row[]; artwork: Row[]; files: Set<string> }> => {
+        const orders = new Set((await everyRow("printing_orders")).filter((o) => o["email"] === address).map((o) => String(o.id)));
+        const jobs = (await everyRow("printing_jobs")).filter((j) => orders.has(String(j["order_id"])));
+        const jobIds = new Set(jobs.map((j) => String(j.id)));
+        const designs = new Set(jobs.map((j) => j["design_id"]).filter((d) => d !== null && d !== undefined).map(String));
+        const proofs = (await everyRow("printing_proofs")).filter((p) => jobIds.has(String(p["job_id"])));
+        const artwork = (await everyRow("printing_artwork")).filter((a) => jobIds.has(String(a["job_id"])));
+        const versions = (await everyRow("customiser_design_versions")).filter((v) => designs.has(String(v["design_id"])));
+        const versionIds = new Set(versions.map((v) => String(v.id)));
+        const versionFiles = (await everyRow("customiser_version_files")).filter((f) => versionIds.has(String(f["version_id"])));
+        const pictures = (await everyRow("customiser_designs")).filter((d) => designs.has(String(d.id))).flatMap((d) => [d["logo_file"], d["photo_file"]]);
+        const held = [...proofs.map((p) => p["file"]), ...artwork.map((a) => a["file"]), ...pictures, ...versions.map((v) => v["proof_file"]), ...versionFiles.map((f) => f["file"])];
+        return { proofs, artwork, files: new Set(held.map(fileIdOf).filter((id): id is string => id !== null)) };
+      };
+
+      it("erases a customer as the owner: the proof PDF e-mailed to them and the artwork they sent go with their design's files, each counted first", async () => {
+        const address = "hello@harbourbakery.example";
+        const owner = doors["owner"]!;
+        const data = await owner.load();
+        const job = designedJob(data);
+        // The PDF proof the panel makes on the design's version, then sent to the customer as the job's proof: the works' copy of it.
+        const version = (await panelsOf("owner").list("customiser", "design_versions", { where: { column: "design_id", op: "eq", value: job["design_id"] }, order: "version.desc", limit: 1, offset: 0 }))[0]!;
+        const made = fileIdOf((await panelsOf("owner").upload("customiser", "design_versions", "proof_file", version.id, pdfFile(), `${String(job["design_id"])}-v${String(version["version"])}-proof.pdf`)).row["proof_file"]);
+        expect(made).toMatch(/^file_/);
+        const sent = await sendProof(owner, data, job, { file: { copyOf: made! }, kind: "email", note: null }, owner.who());
+        const proofFile = fileIdOf(sent["file"])!;
+        expect(proofFile).toMatch(/^file_/);
+        expect(proofFile).not.toBe(made);
+        // The artwork they sent with an order of theirs, as the checkout stores it: a row of the job with its file.
+        const upload = await admin.send<{ ref: string }>("POST", `/api/v1/files?${new URLSearchParams({ filename: "harbour-logo.pdf", connectionId, table: "printing_artwork", column: "file" }).toString()}`, Buffer.from("%PDF-1.4\n%%EOF\n"), { "content-type": "application/pdf" });
+        expect(upload.status, JSON.stringify(upload.body).slice(0, 400)).toBe(201);
+        ok(await admin.post(`/api/v1/data/${connectionId}/printing_artwork`, { values: { job_id: job.id, name: "harbour-logo.pdf", file: upload.body.ref } }), 201);
+
+        const before = await filesOf(address);
+        expect(before.files).toContain(proofFile);
+        expect(before.files).toContain(upload.body.ref);
+        for (const id of [proofFile, upload.body.ref]) expect((await admin.get(`/api/v1/files/${id}/content`)).status, id).toBe(200);
+
+        // The preview counts every one of those files.
+        const preview = await callers["owner"]!.post<{ data: { goes: { kind: string; count: number }[] } }>("/api/v1/privacy/erase/preview", { address }, await tokenOf("owner"));
+        expect(preview.status, JSON.stringify(preview.body).slice(0, 400)).toBe(200);
+        expect(preview.body.data.goes.find((g) => g.kind === "files")?.count).toBe(before.files.size);
+
+        const erased = await callers["owner"]!.post<{ data: { counts: Record<string, number>; filesFailed: number } }>("/api/v1/privacy/erase", { address, confirm: address }, await tokenOf("owner"));
+        expect(erased.status, JSON.stringify(erased.body).slice(0, 400)).toBe(200);
+        expect([erased.body.data.counts["files"], erased.body.data.filesFailed]).toEqual([before.files.size, 0]);
+        for (const id of before.files) expect((await admin.get(`/api/v1/files/${id}/content`)).status, id).toBe(404);
+        // The proofs and the artwork rows stay, as the works' record of the job; their files are gone.
+        const after = await filesOf(address);
+        expect(after.proofs.map((p) => p.id)).toEqual(before.proofs.map((p) => p.id));
+        expect(after.artwork.map((a) => a.id)).toEqual(before.artwork.map((a) => a.id));
+        expect([...after.proofs, ...after.artwork].map((r) => r["file"] ?? null).filter((f) => f !== null && f !== "")).toEqual([]);
+        expect(after.proofs.map((p) => p["change_note"] ?? null).filter((n) => n !== null && n !== "")).toEqual([]);
+      }, 120_000);
     });
   });
 });
