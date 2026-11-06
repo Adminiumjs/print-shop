@@ -290,6 +290,15 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
         expect(Number(order["quote_total"])).toBeCloseTo((Number(order["goods_total"]) + 32.8) * 1.2, 1);
       }, 240_000);
 
+      it("lists in the proof ready only the job the proof is of, not the order's other jobs", async () => {
+        const two = await place([cards(300), flyers(500)], "collect");
+        const job = (await jobsOf(two.order)).find((j) => Number(j["qty"]) === 300)!;
+        await sendProof(job);
+        const ready = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-ready", to: SHOPPER.email, row: message("proof-ready", "order_id", two.order["id"]), body: new RegExp(`/order#${two.link!.token}`) });
+        expect(ready.mail.text).toContain("300 × Business cards");
+        expect(ready.mail.text).not.toContain("Flyers");
+      }, 240_000);
+
       it("leaves no e-mail failed: every one names only what Adminium fills", async () => {
         const failed = (await rows("messages")).filter((m) => m["status"] === "failed").map((m) => [m["kind"], m["error"]]);
         expect(failed).toEqual([]);

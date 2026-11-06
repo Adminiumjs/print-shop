@@ -319,7 +319,8 @@ function body(kind: Kind, w: EmailWords): Block[] {
     case "proof-ready":
       return [
         ...head,
-        jobs(false),
+        // The jobs a proof waits on, never the order's other jobs (a second job may have no proof yet).
+        proofs("sent"),
         button("open", own.button!, ORDER_URL),
         button("approve", w.approve, ORDER_URL),
         button("change", w.askChange, ORDER_URL),
