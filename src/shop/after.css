@@ -523,6 +523,11 @@
   background: var(--warn-soft);
   color: var(--warn);
 }
+.ma-done--plain {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--fg);
+}
 .ma-done-title {
   font-size: 14px;
   font-weight: 800;

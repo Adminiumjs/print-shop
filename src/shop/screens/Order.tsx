@@ -243,6 +243,17 @@ function ProofAnswerCards({ job }: { job: JobView }) {
   const latest = job.latest;
   if (latest === null) return null;
   if (job.waiting !== null) return <ProofCard job={job} proof={job.waiting} />;
+  // Its file deleted with the customer's data: said plainly, with nothing to open or answer.
+  if (job.gone !== null)
+    return (
+      <div role="status" className="ma-done ma-done--plain">
+        <FileText size={20} aria-hidden="true" />
+        <div>
+          <div className="ma-done-title">{t("after.proof.goneTitle")}</div>
+          <div className="ma-muted">{t("after.proof.goneBody")}</div>
+        </div>
+      </div>
+    );
   if (latest.state === "approved" && answered[latest.id] === "approved")
     return (
       <div role="status" className="ma-done ma-done--pos">
@@ -443,7 +454,9 @@ function ArtworkCard({ job, several }: { job: JobView; several: boolean }) {
         {design ? t("after.art.design") : t("after.art.title")}
         {several && <span className="ma-muted ma-card-sub"> · {job.name}</span>}
       </h2>
-      {design ? (
+      {design && job.forgotten ? (
+        <p className="ma-muted">{t("after.art.designGone")}</p>
+      ) : design ? (
         <p className="ma-muted">
           {t("after.art.designBody")}{" "}
           <button type="button" className="mp-link" onClick={() => goView("savedDesign")}>
@@ -453,7 +466,14 @@ function ArtworkCard({ job, several }: { job: JobView; several: boolean }) {
       ) : (
         <ul className="ma-verdicts">
           {job.files.flatMap((file) =>
-            (file.rows.length === 0 ? [{ level: "info" as const, text: t("after.art.kept") }] : file.rows.slice(0, 2)).map((row, i) => {
+            !file.kept
+              ? [
+                  <li key={`${file.id}-gone`} className="ma-verdict ma-verdict--info">
+                    <CircleCheckBig size={16} aria-hidden="true" />
+                    <span>{t("after.art.gone")}</span>
+                  </li>,
+                ]
+              : (file.rows.length === 0 ? [{ level: "info" as const, text: t("after.art.kept") }] : file.rows.slice(0, 2)).map((row, i) => {
               const Icon = LEVEL_ICON[row.level];
               return (
                 <li key={`${file.id}-${String(i)}`} className={`ma-verdict ma-verdict--${row.level}`}>

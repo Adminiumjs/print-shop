@@ -370,6 +370,35 @@ describe.each(["en-US", "ar-EG"] as const)("the pages after an order in %s", (lo
     await sweep(`${locale} · an order by its link, a change asked, a delivery quote`);
   });
 
+  // Erased: the order stays (the law keeps it), its proof's PDF, the artwork's file and name are gone.
+  it("an order whose customer was erased: the proof and the file said as no longer kept, nothing to open or approve", async () => {
+    const proof = port.afterPort.rows.proofs[1]!;
+    const art = port.afterPort.rows.artwork[0]!;
+    proof["file"] = null;
+    Object.assign(art, { file: null, name: "", checks: null });
+    await mount(locale, "/order#LINKCODE0000000A");
+    expect(document.querySelector(".ma-open-proof")).toBeNull();
+    expect(document.querySelector(".ma-approve")).toBeNull();
+    if (english) {
+      expect(text()).toContain("This proof is no longer kept");
+      expect(text()).not.toContain("A proof is waiting for you");
+      expect(text()).toContain("A file you sent is no longer kept.");
+      expect(text()).not.toContain("RGB colours, we convert to CMYK");
+    }
+    await sweep(`${locale} · an erased customer's order by its link`);
+  });
+
+  it("an erased customer's design: never said to be kept with the order", async () => {
+    port.afterPort.rows.proofs[1]!["file"] = null;
+    port.afterPort.rows.jobs.find((j) => j["id"] === 131)!["design_code"] = "DSGN-7Q2K-X4PA";
+    port.afterPort.rows.artwork.length = 0;
+    await mount(locale, "/order#LINKCODE0000000A");
+    if (english) {
+      expect(text()).toContain("Made in the customiser. Its words and pictures are no longer kept.");
+      expect(text()).not.toContain("every word and picture is kept with the order");
+    }
+  });
+
   it("Your proofs, Order it again and Saved quotes, signed in", async () => {
     await mount(locale);
     await go("proofs");

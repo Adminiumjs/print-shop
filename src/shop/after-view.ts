@@ -28,6 +28,8 @@ export interface ProofView {
   changeNote: string | null;
   sentAt: string | null;
   answeredAt: string | null;
+  /** Its PDF is still kept: a proof whose file was deleted with the customer's data has none to open. */
+  kept: boolean;
 }
 
 export interface FileView {
@@ -36,6 +38,8 @@ export interface FileView {
   /** What its checks said, as the customer was shown them. */
   rows: { level: "pos" | "warn" | "danger" | "info"; text: string }[];
   accepted: boolean;
+  /** The file is still kept (not deleted with the customer's data). */
+  kept: boolean;
 }
 
 export interface JobView {
@@ -53,6 +57,10 @@ export interface JobView {
   /** The latest proof, and the one waiting on the customer when it is. */
   latest: ProofView | null;
   waiting: ProofView | null;
+  /** The latest proof was sent, but its file is no longer kept: nothing to open or answer. */
+  gone: ProofView | null;
+  /** A proof's or a file's contents were deleted with the customer's data. */
+  forgotten: boolean;
   proofs: ProofView[];
   files: FileView[];
   readyBy: string | null;
@@ -74,6 +82,7 @@ function proofView(p: Row): ProofView {
     changeNote: text(p["change_note"]),
     sentAt: text(p["sent_at"]),
     answeredAt: text(p["answered_at"]),
+    kept: text(p["file"]) !== null,
   };
 }
 
@@ -138,6 +147,9 @@ export function jobView(catalogue: Catalogue, order: Row, job: Row, proofs: read
     text(job["ready_at"]),
   ];
   const product = catalogue.products.find((p) => same(p.id, job["product_id"]));
+  const files = artwork
+    .filter((a) => same(a["job_id"], job["id"]))
+    .map((a) => ({ id: String(a["id"]), name: String(a["name"] ?? ""), rows: checksOf(a["checks"]), accepted: a["accepted"] === true || a["accepted"] === 1 || a["accepted"] === "1", kept: text(a["file"]) !== null }));
   return {
     id: String(job["id"]),
     orderId: String(order["id"]),
@@ -150,11 +162,11 @@ export function jobView(catalogue: Catalogue, order: Row, job: Row, proofs: read
     stage: String(job["stage"] ?? "prepress"),
     stages: STAGE_KEYS.map((key, i) => ({ key, done: i < at, current: i === at, at: i <= at ? stamps[i]! : null })),
     latest,
-    waiting: latest?.state === "sent" ? latest : null,
+    waiting: latest?.state === "sent" && latest.kept ? latest : null,
+    gone: latest?.state === "sent" && !latest.kept ? latest : null,
+    forgotten: own.some((p) => !p.kept) || files.some((f) => !f.kept),
     proofs: own,
-    files: artwork
-      .filter((a) => same(a["job_id"], job["id"]))
-      .map((a) => ({ id: String(a["id"]), name: String(a["name"] ?? ""), rows: checksOf(a["checks"]), accepted: a["accepted"] === true || a["accepted"] === 1 || a["accepted"] === "1" })),
+    files,
     readyBy: text(job["ready_by"]),
     designCode: text(job["design_code"]),
     cancelled: job["stage"] === "cancelled",

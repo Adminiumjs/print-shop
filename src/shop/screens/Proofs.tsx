@@ -63,7 +63,7 @@ export function ProofsScreen() {
         <ul className="ma-list">
           {jobs.map((job) => {
             const latest = job.latest!;
-            const status = STATUS[latest.state === "superseded" ? "sent" : latest.state];
+            const status = job.gone !== null ? { key: "after.proofs.gone" as MessageKey, tone: "info" } : STATUS[latest.state === "superseded" ? "sent" : latest.state];
             const history = job.proofs.flatMap((p) => [
               ...(p.sentAt === null ? [] : [{ key: `${p.id}-s`, label: t("after.proofs.hist.sent"), at: p.sentAt, tone: "info" }]),
               ...(p.answeredAt !== null && p.state === "change_asked" ? [{ key: `${p.id}-c`, label: t("after.proofs.hist.change"), at: p.answeredAt, tone: "warn" }] : []),
@@ -100,6 +100,7 @@ export function ProofsScreen() {
                   </p>
                 )}
                 {job.waiting !== null && <ProofCard job={job} proof={job.waiting} compact />}
+                {job.gone !== null && <p className="ma-muted">{t("after.proof.goneBody")}</p>}
               </li>
             );
           })}

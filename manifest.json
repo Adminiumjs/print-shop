@@ -21918,6 +21918,18 @@
           "via": "customer_id"
         },
         {
+          "table": "artwork",
+          "column": "name",
+          "holds": "details",
+          "via": "customer_id"
+        },
+        {
+          "table": "artwork",
+          "column": "checks",
+          "holds": "details",
+          "via": "customer_id"
+        },
+        {
           "table": "proofs",
           "column": "file",
           "holds": "details",

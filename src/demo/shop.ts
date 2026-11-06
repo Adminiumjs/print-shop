@@ -27,6 +27,8 @@ export const DEMO_CODES = ["482913", "730561", "195738", "864205"] as const;
 
 /** A one-page PDF, as a proof the works exported: what a sample proof's file opens as in the demo. */
 const PROOF_PDF = "%PDF-1.4\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 258 173] >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF\n";
+/** What a sample proof's file reads as on the customer's pages: the PDF above, handed out by `proofFile`. */
+const SAMPLE_PROOF = "demo-sample-proof.pdf";
 
 function refusal(code: string, status: number, more: Partial<Refused> = {}): ShopError {
   return new ShopError({ code, status, column: null, child: null, index: null, reason: null, changed: null, raw: { code, params: {} }, ...more }, code);
@@ -274,7 +276,8 @@ export class DemoAfter implements AfterPort {
       jobs,
       features: this.world.all("job_features").filter((f) => jobIds.has(String(f["job_id"]))),
       artwork: this.world.all("artwork").filter((a) => jobIds.has(String(a["job_id"]))),
-      proofs: this.world.all("proofs").filter((p) => ids.has(String(p["order_id"]))),
+      // A sample proof was sent with a PDF a sample cannot carry: `proofFile` hands out the demo's own, so it reads as kept.
+      proofs: this.world.all("proofs").filter((p) => ids.has(String(p["order_id"]))).map((p) => (typeof p["file"] === "string" && p["file"] !== "" ? p : { ...p, file: SAMPLE_PROOF })),
     });
   }
 

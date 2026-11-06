@@ -15,7 +15,8 @@
  * person reaches it. An order and its jobs are the works' record of a sale,
  * which the law keeps, so an erasure leaves those as they are. The artwork a
  * customer sent and the proof PDFs the works sent them show their design, so
- * those files go with them (and the change they asked for, in their words);
+ * those files go with them (with the artwork's file name and the checks
+ * shown on it, and the change they asked for, in their words);
  * the artwork and proof rows stay, emptied, as the job's record.
  */
 import { shop } from "../i18n/strings/shop.ts";
@@ -82,6 +83,9 @@ export const PEOPLE = [
       { table: "sample_requests", column: "postcode", holds: "details" },
       // The artwork they sent and the proofs the works sent them: the files go, the rows stay as the job's record.
       { table: "artwork", column: "file", holds: "details", via: "customer_id" },
+      // …and what names it or says what was in it: the file's own name, and the checks shown on it.
+      { table: "artwork", column: "name", holds: "details", via: "customer_id" },
+      { table: "artwork", column: "checks", holds: "details", via: "customer_id" },
       { table: "proofs", column: "file", holds: "details", via: "customer_id" },
       { table: "proofs", column: "change_note", holds: "details", via: "customer_id" },
       // The designs their jobs name: the address its link went to, and what they put on it.

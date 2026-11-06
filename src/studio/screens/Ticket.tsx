@@ -221,6 +221,13 @@ function Artwork({ job }: { job: Row }) {
         <ul className="wk-art-grid" role="list">
           {files.map((file) => {
             const src = fileSrc(file["file"]);
+            // Deleted with the customer's data: the row stays as the job's record, its name and checks gone with the file.
+            if (src === null && (text(file["name"]) ?? "") === "")
+              return (
+                <li key={String(file.id)} className="wk-art">
+                  <div className="wk-muted">{t("works.art.gone")}</div>
+                </li>
+              );
             const name = text(file["name"]) ?? "";
             const checks = checksOf(file).slice(0, 2);
             return (

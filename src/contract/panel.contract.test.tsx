@@ -426,7 +426,7 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
         return { proofs, artwork, files: new Set(held.map(fileIdOf).filter((id): id is string => id !== null)) };
       };
 
-      it("erases a customer as the owner: the proof PDF e-mailed to them and the artwork they sent go with their design's files, each counted first", async () => {
+      it("erases a customer as the owner: the proof PDF e-mailed to them and the artwork they sent (its name and checks too) go with their design's files, each counted first", async () => {
         const address = "hello@harbourbakery.example";
         const owner = doors["owner"]!;
         const data = await owner.load();
@@ -442,7 +442,7 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
         // The artwork they sent with an order of theirs, as the checkout stores it: a row of the job with its file.
         const upload = await admin.send<{ ref: string }>("POST", `/api/v1/files?${new URLSearchParams({ filename: "harbour-logo.pdf", connectionId, table: "printing_artwork", column: "file" }).toString()}`, Buffer.from("%PDF-1.4\n%%EOF\n"), { "content-type": "application/pdf" });
         expect(upload.status, JSON.stringify(upload.body).slice(0, 400)).toBe(201);
-        ok(await admin.post(`/api/v1/data/${connectionId}/printing_artwork`, { values: { job_id: job.id, name: "harbour-logo.pdf", file: upload.body.ref } }), 201);
+        ok(await admin.post(`/api/v1/data/${connectionId}/printing_artwork`, { values: { job_id: job.id, name: "harbour-logo.pdf", file: upload.body.ref, checks: { language: "en-US", rows: [{ check: "size", level: "warn", text: "harbour-logo.pdf is 72 dpi" }] } } }), 201);
 
         const before = await filesOf(address);
         expect(before.files).toContain(proofFile);
@@ -464,6 +464,11 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
         expect(after.artwork.map((a) => a.id)).toEqual(before.artwork.map((a) => a.id));
         expect([...after.proofs, ...after.artwork].map((r) => r["file"] ?? null).filter((f) => f !== null && f !== "")).toEqual([]);
         expect(after.proofs.map((p) => p["change_note"] ?? null).filter((n) => n !== null && n !== "")).toEqual([]);
+        // The artwork's own name and the checks shown on it go too: a file's name may name its sender.
+        expect(before.artwork.map((a) => a["name"])).toContain("harbour-logo.pdf");
+        expect(after.artwork.map((a) => a["name"] ?? "").filter((n) => n !== "")).toEqual([]);
+        const checks = (value: unknown) => (typeof value === "string" ? (JSON.parse(value) as unknown) : value);
+        expect(after.artwork.map((a) => checks(a["checks"]) ?? null).filter((c) => c !== null && JSON.stringify(c) !== "{}" && JSON.stringify(c) !== "[]")).toEqual([]);
       }, 120_000);
     });
   });

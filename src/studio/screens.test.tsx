@@ -368,6 +368,14 @@ describe("the shell", () => {
     expect(text()).not.toContain("under Actions");
   });
 
+  it("says an artwork file deleted with the customer's data is gone, with neither its name nor its checks", async () => {
+    const door = new FakeDoor({ roles: ["prepress"] });
+    const job = door.data.jobs.find((j) => j["design_id"] === null || j["design_id"] === undefined)!;
+    door.data.artwork.push({ id: 990, job_id: job.id, name: "", file: null, checks: null, accepted: false });
+    await mount(door, "ticket", { jobId: job.id });
+    expect(text()).toContain("A file the customer sent — deleted with their data.");
+  });
+
   it("points a role that opens the design's panel to its files under Actions", async () => {
     await mount(new FakeDoor({ roles: ["prepress"] }), "ticket", { jobId: 8 });
     expect(text()).toContain("Made in the customiser — its files are below, under Actions.");
