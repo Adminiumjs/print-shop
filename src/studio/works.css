@@ -1266,6 +1266,11 @@ a.wk-art-name {
   padding-block-end: 12px;
   border-block-end: 1px solid var(--border);
 }
+/* Nothing under it (the counter's card before a job is ready): no rule closing it off. */
+.wk-design:last-child {
+  padding-block-end: 0;
+  border-block-end: 0;
+}
 .wk-design-line,
 .wk-design-note {
   font-size: 11.5px;
