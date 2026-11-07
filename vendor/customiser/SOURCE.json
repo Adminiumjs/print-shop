@@ -4,8 +4,8 @@
   "version": "1.0.22",
   "commit": "3c28851",
   "files": {
-    "index.js": "b69f49c31cb62f00d200dcb67bddd6db16d8165d109cf2e9b581cc633ad968d9",
-    "stage3d.js": "ebde9e821bdcf039148e1885a80ec09d29caca490897cb5cce3ed7ab472f55de",
+    "index.js": "5ed14bf57fb5fc3f22eac5373d361444de93642569593b26e6b2c568501900fe",
+    "stage3d.js": "851b345f69af442aedde4c3f1685f0419571d1ac75887eddca3c3747648981ca",
     "editor.css": "67cf89c95b18bb6b817eb9e180eb9857021cedc01c2cc25c10e38277d7437c76"
   }
 }
