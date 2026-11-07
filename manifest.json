@@ -19503,7 +19503,52 @@
             "read",
             "create",
             "update"
-          ]
+          ],
+          "limit": {
+            "creatable": [
+              "app",
+              "name",
+              "kind",
+              "width_mm",
+              "height_mm",
+              "depth_mm",
+              "corner_mm",
+              "bleed_mm",
+              "safe_mm",
+              "sides",
+              "back_feature_id",
+              "material",
+              "thickness_mm",
+              "outline_file",
+              "model_file",
+              "print_file",
+              "faces",
+              "offered",
+              "state",
+              "position"
+            ],
+            "writable": [
+              "name",
+              "kind",
+              "width_mm",
+              "height_mm",
+              "depth_mm",
+              "corner_mm",
+              "bleed_mm",
+              "safe_mm",
+              "sides",
+              "back_feature_id",
+              "material",
+              "thickness_mm",
+              "outline_file",
+              "model_file",
+              "print_file",
+              "faces",
+              "offered",
+              "state",
+              "position"
+            ]
+          }
         },
         {
           "addOn": "customiser",
@@ -19513,7 +19558,28 @@
             "create",
             "update",
             "delete"
-          ]
+          ],
+          "limit": {
+            "creatable": [
+              "app",
+              "base_id",
+              "name",
+              "tags",
+              "layouts",
+              "state",
+              "preview_file",
+              "position"
+            ],
+            "writable": [
+              "base_id",
+              "name",
+              "tags",
+              "layouts",
+              "state",
+              "preview_file",
+              "position"
+            ]
+          }
         },
         {
           "addOn": "customiser",
@@ -19523,7 +19589,50 @@
             "create",
             "update",
             "delete"
-          ]
+          ],
+          "limit": {
+            "creatable": [
+              "app",
+              "ready_design_id",
+              "code",
+              "name",
+              "kind",
+              "locked",
+              "required",
+              "side",
+              "layout",
+              "area_id",
+              "piece_id",
+              "x_mm",
+              "y_mm",
+              "w_mm",
+              "h_mm",
+              "rules",
+              "value",
+              "feature_id",
+              "position"
+            ],
+            "writable": [
+              "ready_design_id",
+              "code",
+              "name",
+              "kind",
+              "locked",
+              "required",
+              "side",
+              "layout",
+              "area_id",
+              "piece_id",
+              "x_mm",
+              "y_mm",
+              "w_mm",
+              "h_mm",
+              "rules",
+              "value",
+              "feature_id",
+              "position"
+            ]
+          }
         },
         {
           "addOn": "customiser",
@@ -19533,7 +19642,46 @@
             "create",
             "update",
             "delete"
-          ]
+          ],
+          "limit": {
+            "creatable": [
+              "app",
+              "base_id",
+              "code",
+              "name",
+              "side",
+              "piece_id",
+              "face",
+              "shape",
+              "x_mm",
+              "y_mm",
+              "w_mm",
+              "h_mm",
+              "takes",
+              "required",
+              "rules",
+              "feature_id",
+              "position"
+            ],
+            "writable": [
+              "base_id",
+              "code",
+              "name",
+              "side",
+              "piece_id",
+              "face",
+              "shape",
+              "x_mm",
+              "y_mm",
+              "w_mm",
+              "h_mm",
+              "takes",
+              "required",
+              "rules",
+              "feature_id",
+              "position"
+            ]
+          }
         },
         {
           "addOn": "customiser",
@@ -19543,7 +19691,32 @@
             "create",
             "update",
             "delete"
-          ]
+          ],
+          "limit": {
+            "creatable": [
+              "app",
+              "base_id",
+              "code",
+              "name",
+              "width_mm",
+              "height_mm",
+              "layers",
+              "left_out",
+              "file",
+              "position"
+            ],
+            "writable": [
+              "base_id",
+              "code",
+              "name",
+              "width_mm",
+              "height_mm",
+              "layers",
+              "left_out",
+              "file",
+              "position"
+            ]
+          }
         },
         {
           "addOn": "customiser",
@@ -19553,7 +19726,24 @@
             "create",
             "update",
             "delete"
-          ]
+          ],
+          "limit": {
+            "creatable": [
+              "app",
+              "ready_design_id",
+              "kind",
+              "code",
+              "name",
+              "position"
+            ],
+            "writable": [
+              "ready_design_id",
+              "kind",
+              "code",
+              "name",
+              "position"
+            ]
+          }
         },
         {
           "addOn": "customiser",
@@ -19563,7 +19753,26 @@
             "create",
             "update",
             "delete"
-          ]
+          ],
+          "limit": {
+            "creatable": [
+              "app",
+              "palette_id",
+              "code",
+              "role",
+              "name",
+              "hex",
+              "position"
+            ],
+            "writable": [
+              "palette_id",
+              "code",
+              "role",
+              "name",
+              "hex",
+              "position"
+            ]
+          }
         },
         {
           "addOn": "customiser",
@@ -19573,7 +19782,32 @@
             "create",
             "update",
             "delete"
-          ]
+          ],
+          "limit": {
+            "creatable": [
+              "app",
+              "family",
+              "name",
+              "style",
+              "weights",
+              "licence",
+              "starter",
+              "smallest_mm",
+              "file",
+              "active"
+            ],
+            "writable": [
+              "family",
+              "name",
+              "style",
+              "weights",
+              "licence",
+              "starter",
+              "smallest_mm",
+              "file",
+              "active"
+            ]
+          }
         },
         {
           "addOn": "customiser",
@@ -19583,7 +19817,20 @@
             "create",
             "update",
             "delete"
-          ]
+          ],
+          "limit": {
+            "creatable": [
+              "app",
+              "code",
+              "name",
+              "active"
+            ],
+            "writable": [
+              "code",
+              "name",
+              "active"
+            ]
+          }
         },
         {
           "addOn": "customiser",

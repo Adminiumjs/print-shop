@@ -82,13 +82,25 @@ const CUSTOMISER_PANEL = [
 ];
 
 /**
- * The Customiser's tables its set-up page (the ready-made designs and their
- * parts, the bases' areas and pieces, fonts, palettes and their colours,
- * priced features) adds to, changes and takes from. A base it adds and
- * changes but never takes away: the most the add-on lets an app's role hold.
+ * The Customiser's tables its set-up page (the bases and their areas and
+ * pieces, the ready-made designs and their parts, fonts, palettes and their
+ * colours, priced features) adds to, changes and takes from, and the columns
+ * it gives and changes on each: every column of the row, the app it belongs
+ * to given on a new row and never changed. The same lists as the add-on's
+ * `appGrants`, so the install keeps nothing back. A base it adds and changes
+ * but never takes away.
  */
-const SETUP_WRITES = ["base_areas", "base_pieces", "ready_designs", "ready_parts", "fonts", "palettes", "palette_colours", "features"];
-const SETUP_KEEPS = ["bases"];
+const SETUP_COLUMNS: Record<string, string[]> = {
+  bases: ["name", "kind", "width_mm", "height_mm", "depth_mm", "corner_mm", "bleed_mm", "safe_mm", "sides", "back_feature_id", "material", "thickness_mm", "outline_file", "model_file", "print_file", "faces", "offered", "state", "position"],
+  base_pieces: ["base_id", "code", "name", "width_mm", "height_mm", "layers", "left_out", "file", "position"],
+  base_areas: ["base_id", "code", "name", "side", "piece_id", "face", "shape", "x_mm", "y_mm", "w_mm", "h_mm", "takes", "required", "rules", "feature_id", "position"],
+  ready_designs: ["base_id", "name", "tags", "layouts", "state", "preview_file", "position"],
+  ready_parts: ["ready_design_id", "code", "name", "kind", "locked", "required", "side", "layout", "area_id", "piece_id", "x_mm", "y_mm", "w_mm", "h_mm", "rules", "value", "feature_id", "position"],
+  fonts: ["family", "name", "style", "weights", "licence", "starter", "smallest_mm", "file", "active"],
+  palettes: ["ready_design_id", "kind", "code", "name", "position"],
+  palette_colours: ["palette_id", "code", "role", "name", "hex", "position"],
+  features: ["code", "name", "active"],
+};
 
 /**
  * The owner's: the panel's, and everything the Customiser's set-up page reads
@@ -98,9 +110,12 @@ const SETUP_KEEPS = ["bases"];
  * Thirteen of the Customiser's tables, within the 24 add-on tables a role holds.
  */
 const CUSTOMISER_SETUP = [
-  ...CUSTOMISER_PANEL.map((entry) =>
-    SETUP_WRITES.includes(entry.table) ? { ...entry, actions: ["read", "create", "update", "delete"] } : SETUP_KEEPS.includes(entry.table) ? { ...entry, actions: ["read", "create", "update"] } : entry,
-  ),
+  ...CUSTOMISER_PANEL.map((entry) => {
+    const columns = SETUP_COLUMNS[entry.table];
+    if (columns === undefined) return entry;
+    const actions = entry.table === "bases" ? ["read", "create", "update"] : ["read", "create", "update", "delete"];
+    return { ...entry, actions, limit: { creatable: ["app", ...columns], writable: columns } };
+  }),
   { addOn: CUSTOMISER, table: "settings", actions: ["read"] },
 ];
 

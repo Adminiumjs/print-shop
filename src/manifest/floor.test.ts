@@ -76,6 +76,15 @@ describe("the manifest at the floor it ships with", () => {
     // The set-up page asks whether a customer's design came from a ready-made design before it removes one.
     expect(held["designs"]).toContain("read");
     expect(Object.keys(held).length).toBe(13);
+    // Each write names the columns the add-on's `appGrants` give an app's role, so the install keeps nothing back: every column of the row, its app given once.
+    type Limited = Grant & { limit?: { creatable: string[]; writable: string[] } };
+    const limits = Object.fromEntries((tables as Limited[]).filter((g) => g.addOn === "customiser").map((g) => [g.table, g.limit]));
+    for (const table of ["bases", "base_areas", "base_pieces", "ready_designs", "ready_parts", "fonts", "palettes", "palette_colours", "features"]) {
+      expect(limits[table]?.creatable[0], table).toBe("app");
+      expect(limits[table]?.creatable.slice(1), table).toEqual(limits[table]?.writable);
+      expect(limits[table]?.writable, table).not.toContain("app");
+    }
+    expect(limits["features"]).toEqual({ creatable: ["app", "code", "name", "active"], writable: ["code", "name", "active"] });
     expect(tables.length).toBeLessThanOrEqual(24);
     expect(roleOf(shipped, "owner").permissions).toContain("page:@customiser:view");
   });
