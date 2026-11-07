@@ -455,7 +455,8 @@ const emailBlockSchema = z
   .refine((block) => block.otherwise === undefined || block.showWhen !== undefined, { message: '"otherwise" is what a block says when its "showWhen" value is missing: it needs a "showWhen"', path: ['otherwise'] })
   .refine((block) => block.otherwise === undefined || OTHERWISE_BLOCKS.includes(block.block), { message: 'only a text or a heading block can say other words ("otherwise")', path: ['otherwise'] });
 
-const emailContentSchema = z
+/** One language of a mail: its subject, blocks and footer. */
+export const emailContentSchema = z
   .object({
     subject: z.string().min(1).max(200),
     preheader: z.string().min(1).max(200).optional(),
@@ -477,6 +478,34 @@ const templateVariableSchema = z
     /^(?:appName|addOn\.[a-z][a-z0-9-]*\.[A-Za-z][A-Za-z0-9_]*|[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)*)$/,
     'a variable such as patient.name or appName',
   );
+
+/** The marks a mail's brand may show: one of the twelve the renderer ships, or the workspace's logo (the template store's `emailMarkSchema`). */
+export const EMAIL_BRAND_MARKS = ['hexagon', 'circle', 'square', 'triangle', 'gem', 'zap', 'flame', 'leaf', 'star', 'heart', 'command', 'box', 'logo'] as const;
+
+/** A mail's own brand, as the template store keeps it. Its sender is checked against the configured senders when it sends. */
+export const emailTemplateBrandSchema = z
+  .object({
+    name: z.string().max(80),
+    mark: z.enum(EMAIL_BRAND_MARKS),
+    accent: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'a six-digit hex colour'),
+    fromName: z.string().max(120),
+    fromEmail: z.string().max(320),
+  })
+  .strict();
+
+/** The most files one mail carries. */
+export const EMAIL_ATTACHMENTS_MAX = 20;
+
+/** A file of the app's package a mail carries: a relative path, never out of the package. */
+export const emailTemplateAttachmentSchema = z
+  .object({
+    file: z
+      .string()
+      .min(1)
+      .max(200)
+      .regex(/^(?!\/)(?!.*(?:^|\/)\.\.?(?:\/|$))[A-Za-z0-9._/-]+$/, 'a file of the package, by its relative path'),
+  })
+  .strict();
 
 export const emailTemplateSchema = z
   .object({
@@ -503,6 +532,14 @@ export const emailTemplateSchema = z
       })
       .strict()
       .optional(),
+    /** A `template` an outbox or a rule sends (the default), or a `campaign` the owner sends to an audience. */
+    kind: z.enum(['template', 'campaign']).optional(),
+    /** What the mail is for: `transactional` (the default), `lifecycle` or `marketing`. */
+    category: z.enum(['transactional', 'lifecycle', 'marketing']).optional(),
+    /** The mail's own name, mark, colour and sender, in place of the workspace's. */
+    brand: emailTemplateBrandSchema.optional(),
+    /** Files of the package the mail carries, each by its path in the package (`emails/terms.pdf`). */
+    attachments: z.array(emailTemplateAttachmentSchema).min(1).max(EMAIL_ATTACHMENTS_MAX).optional(),
     /** The variables it reads, for the editor's list. */
     vars: z.array(templateVariableSchema).max(60).optional(),
     /** The template in each language it ships, US English always among them. */
@@ -640,7 +677,9 @@ export function outboxIssues(
       }
     };
     for (const rule of (m as { automations?: { graph?: unknown }[] }).automations ?? []) collect(rule.graph);
-    const unsent = [...templates].filter((key) => !byRules.has(key));
+    // A campaign is sent by its owner, to an audience: nothing in the app sends it.
+    const campaigns = new Set((m.emailTemplates ?? []).filter((template) => template.kind === 'campaign').map((template) => template.key));
+    const unsent = [...templates].filter((key) => !byRules.has(key) && !campaigns.has(key));
     if (unsent.length > 0) out.push({ path: ['emailTemplates'], message: `templates are sent through an outbox or by a rule's step, and nothing sends ${unsent.map((key) => `"${key}"`).join(', ')}: this app declares no outbox` });
     return out;
   }

@@ -3,7 +3,7 @@
   "manifestVersion": 1,
   "key": "printing",
   "name": "Print Shop",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": {
     "id": "adminium",
     "name": "Adminium",
@@ -18,7 +18,7 @@
     "commerce"
   ],
   "compatibility": {
-    "minAdminiumVersion": "0.3.48",
+    "minAdminiumVersion": "0.3.49",
     "engines": [
       "sqlite",
       "postgres",
@@ -47,7 +47,8 @@
       "placement": "external",
       "routes": {
         "works": "/"
-      }
+      },
+      "instances": true
     },
     {
       "side": "customer",
@@ -81,7 +82,8 @@
         "findUs": "/find-us",
         "customiserDesign": "/design",
         "link": "/c"
-      }
+      },
+      "instances": true
     }
   ],
   "settings": [

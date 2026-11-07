@@ -58,7 +58,7 @@ import { z } from 'zod';
 import { NUMERIC_TYPES, type ColumnShape, type ReferenceIssue } from './refs.ts';
 
 /** A snake_case column of the same row. */
-const columnName = z.string().regex(/^[a-z][a-z0-9_]*$/, 'a column of the same row');
+const columnName = z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/, 'a column of the same row');
 
 export type FormulaExpr =
   | number
