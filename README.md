@@ -68,8 +68,9 @@ the dashboard), the jobs, materials and
 stock, the price list (the rate card edited in place, the closures, and the
 public holidays to add as one), DHL's dispatch page and shipments, and the
 add-ons; a sign-out in the header. Roles: **owner** (everything, the
-Customiser's set-up, Holiday calendars' closed days, and finding and erasing a
-customer's data on the dashboard's privacy page), **prepress** (the artwork, the
+Customiser's set-up page on the owner's own role, its starter fonts added on the
+way in, Holiday calendars' closed days, and finding and erasing a customer's
+data on the dashboard's privacy page), **prepress** (the artwork, the
 proofs and the Customiser's panel, an approved job onto the press), **press**
 (the press, the finishing, spoilage, the Customiser's panel) and **counter**
 (handing over, a delivery quote, the sample packs).

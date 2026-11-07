@@ -18,6 +18,8 @@
  *     `useWrite` and `useUpload` make (the drawing itself needs a browser's
  *     canvas, which this suite has not);
  *   - the product's panel is served to the owner, and refused to the press;
+ *   - the owner opens the Customiser's set-up page on their own role: every
+ *     read it makes answered, a change saved, the starter fonts' files added;
  *   - the owner keeps Holiday calendars' closed days (its settings grant),
  *     and finds a customer to erase; prepress does not;
  *   - last, the owner erases that customer: the proof PDF sent them and the
@@ -348,56 +350,57 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
         await panels.remove("customiser", "version_files", files[0]!.id);
       });
 
-      /*
-       * CUSTOMISER-PANEL-LAYOUT, a gap in the Customiser: Harbour, like any
-       * ready-made design with two layouts (logo left, logo top), keeps each
-       * part once a layout, and the job panel lists every part of the ready
-       * design (`panels/line.tsx`, `named`) rather than those of the layout
-       * the design uses, so each reads twice. Passes once the panel keeps
-       * the parts of the design's own layout: then drop `.fails`.
-       */
-      it.fails("CUSTOMISER-PANEL-LAYOUT: lists each part of the design once on the job's panel", async () => {
+      // Harbour keeps each part once a layout (logo left, logo top): the panel lists the parts of the layout the design uses (add-ons 1.0.21).
+      it("lists each part of the design once on the job's panel", async () => {
         const drawn = await drawnFor("owner", designedJob(await doors["owner"]!.load()));
         expect(drawn.split("Job title").length - 1).toBe(1);
       }, 60_000);
 
-      /*
-       * CUSTOMISER-STARTER-FONT-FILES, a gap in the Customiser: the install
-       * adds the open-licence starter fonts as rows with no file, while the
-       * panel makes proofs and print files from the same fonts carried in
-       * the package, so the set-up page says they have no files and offers
-       * "Add the starter fonts" for fonts already in use. Passes once the
-       * starter rows hold their files (or the set-up page reads the
-       * package's): then drop `.fails`.
-       */
-      it.fails("CUSTOMISER-STARTER-FONT-FILES: holds a file on every starter font the install added", async () => {
-        const starters = ok(await admin.get<{ data: Row[] }>(`/api/v1/data/${connectionId}/customiser_fonts?limit=200`)).data.filter((f) => f["starter"] === true || f["starter"] === 1);
-        expect(starters.length).toBeGreaterThan(0);
-        expect(starters.filter((f) => fileIdOf(f["file"]) === null).map((f) => f["family"])).toEqual([]);
-      });
-
       // ── the Customiser's set-up page (the owner's "Customising set-up"), as the owner ──
 
-      it("reads, as the owner, every table of the Customiser's set-up page the add-on lets an app's role read", async () => {
-        for (const table of ["bases", "base_areas", "base_pieces", "ready_designs", "ready_parts", "fonts", "palettes", "palette_colours", "features"]) {
-          expect((await callers["owner"]!.get(`/api/v1/data/${connectionId}/customiser_${table}?limit=1`)).status, table).toBe(200);
-        }
+      /** Every table the Customiser's set-up page reads (its README, "The set-up page"). */
+      const SETUP_TABLES = ["settings", "designs", "bases", "base_areas", "base_pieces", "ready_designs", "ready_parts", "fonts", "palettes", "palette_colours", "features"];
+
+      /*
+       * The owner opens the set-up page on their own role, no Customiser role
+       * beside it: the page's code and its kit are served, every table it
+       * reads answers, and a change on it is saved.
+       */
+      it("opens the Customiser's set-up page as the owner: the page served, every read it makes answered, a priced feature's change saved", async () => {
+        const owner = callers["owner"]!;
+        expect((await owner.get("/api/v1/add-ons/customiser/pages/customiser/bundle")).status).toBe(200);
+        expect((await owner.get("/api/v1/add-ons/customiser/kit")).status).toBe(200);
+        for (const table of SETUP_TABLES) expect((await owner.get(`/api/v1/data/${connectionId}/customiser_${table}?limit=1`)).status, table).toBe(200);
+        const feature = ok(await owner.get<{ data: Row[] }>(`/api/v1/data/${connectionId}/customiser_features?limit=1`)).data[0]!;
+        const saved = await owner.patch(`/api/v1/data/${connectionId}/customiser_features/${String(feature.id)}`, { values: { name: feature["name"] } }, await tokenOf("owner"));
+        expect(saved.status, JSON.stringify(saved.body).slice(0, 400)).toBe(200);
+        // A finish added to a palette and taken away again, as the set-up page's finishes step does.
+        const colour = ok(await owner.get<{ data: Row[] }>(`/api/v1/data/${connectionId}/customiser_palette_colours?limit=1`)).data[0]!;
+        const added = await owner.post<{ data: Row }>(`/api/v1/data/${connectionId}/customiser_palette_colours`, { values: { app: colour["app"], palette_id: colour["palette_id"], code: "contract-blue", name: "Contract blue", hex: "#1f4e9c" } }, await tokenOf("owner"));
+        expect(added.status, JSON.stringify(added.body).slice(0, 400)).toBe(201);
+        expect([200, 204]).toContain((await owner.send("DELETE", `/api/v1/data/${connectionId}/customiser_palette_colours/${String(added.body.data.id)}`, undefined, await tokenOf("owner"))).status);
       });
 
       /*
-       * CUSTOMISER-SETUP-GRANTS, a gap in the Customiser: its `appGrants`
-       * give an app's role nothing of `settings` and only read of the
-       * catalogue the set-up page edits, so the owner's set-up page stops at
-       * its settings (403). The app asks for both; the add-on cuts them.
-       * Passes once the Customiser lets an app's role read `settings` and
-       * change those tables: then drop `.fails`.
+       * The install adds the open-licence starter fonts as rows with no file;
+       * the set-up page, opened by someone who may change the fonts, uploads
+       * each one's file from beside its code into its row (add-ons 1.0.21).
+       * The owner may: their read of the page's files and their upload into
+       * each row, as the page makes them.
        */
-      it.fails("CUSTOMISER-SETUP-GRANTS: opens the Customiser's set-up page as the owner: its settings read, a priced feature's change saved", async () => {
-        expect((await callers["owner"]!.get(`/api/v1/data/${connectionId}/customiser_settings?limit=1`)).status).toBe(200);
-        const feature = ok(await admin.get<{ data: Row[] }>(`/api/v1/data/${connectionId}/customiser_features?limit=1`)).data[0]!;
-        const saved = await callers["owner"]!.patch(`/api/v1/data/${connectionId}/customiser_features/${String(feature.id)}`, { values: { name: feature["name"] } }, await tokenOf("owner"));
-        expect(saved.status, JSON.stringify(saved.body).slice(0, 400)).toBe(200);
-      });
+      it("adds a file to every starter font the install added, as the owner's set-up page does on the way in", async () => {
+        const starters = ok(await admin.get<{ data: Row[] }>(`/api/v1/data/${connectionId}/customiser_fonts?limit=200`)).data.filter((f) => f["starter"] === true || f["starter"] === 1);
+        expect(starters.length).toBeGreaterThan(0);
+        for (const font of starters.filter((f) => fileIdOf(f["file"]) === null)) {
+          const name = `${String(font["family"]).replace(/\s+/g, "")}.woff2`;
+          const answer = await callers["owner"]!.fetchAs()(`/api/v1/add-ons/customiser/pages/customiser/files/fonts/${name}`);
+          expect(answer.status, name).toBe(200);
+          const bytes = new NodeBlob([new Uint8Array(await answer.arrayBuffer())], { type: "font/woff2" }) as unknown as Blob;
+          await panelsOf("owner").upload("customiser", "fonts", "file", font.id, bytes, name);
+        }
+        const after = ok(await admin.get<{ data: Row[] }>(`/api/v1/data/${connectionId}/customiser_fonts?limit=200`)).data.filter((f) => f["starter"] === true || f["starter"] === 1);
+        expect(after.filter((f) => fileIdOf(f["file"]) === null).map((f) => f["family"])).toEqual([]);
+      }, 120_000);
 
       // ── last, since it empties Harbour Bakery: the shop owner erases a customer whose design was proofed ──
 

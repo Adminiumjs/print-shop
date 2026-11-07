@@ -64,12 +64,19 @@ describe("the manifest at the floor it ships with", () => {
     expect(roleOf(shipped, "counter").permissions).not.toContain("page:@customiser:view");
   });
 
-  // The Customiser keeps these back from an app's role today (its `appGrants`): asked, so the owner holds them once it lets them.
-  it("asks for the owner everything the Customiser's set-up page reads and writes, its settings among them", () => {
+  // The Customiser's `appGrants` (add-ons 1.0.21) let an app's role hold all of this: the owner sets the shop up on their own role.
+  it("gives the owner everything the Customiser's set-up page reads and writes, and no more than the add-on lets an app's role hold", () => {
     type Grant = { addOn?: string; table: string; actions: string[] };
-    const held = Object.fromEntries((roleOf(shipped, "owner").tables as Grant[]).filter((g) => g.addOn === "customiser").map((g) => [g.table, g.actions]));
-    for (const table of ["bases", "base_areas", "base_pieces", "fonts", "palettes", "palette_colours", "features"]) expect(held[table], table).toEqual(["read", "create", "update", "delete"]);
-    for (const table of ["ready_designs", "ready_parts", "settings"]) expect(held[table], table).toEqual(["read"]);
+    const tables = roleOf(shipped, "owner").tables as Grant[];
+    const held = Object.fromEntries(tables.filter((g) => g.addOn === "customiser").map((g) => [g.table, g.actions]));
+    for (const table of ["base_areas", "base_pieces", "ready_designs", "ready_parts", "fonts", "palettes", "palette_colours", "features"]) expect(held[table], table).toEqual(["read", "create", "update", "delete"]);
+    // A base is added and changed on the set-up page, never taken away by an app's role.
+    expect(held["bases"]).toEqual(["read", "create", "update"]);
+    expect(held["settings"]).toEqual(["read"]);
+    // The set-up page asks whether a customer's design came from a ready-made design before it removes one.
+    expect(held["designs"]).toContain("read");
+    expect(Object.keys(held).length).toBe(13);
+    expect(tables.length).toBeLessThanOrEqual(24);
     expect(roleOf(shipped, "owner").permissions).toContain("page:@customiser:view");
   });
 

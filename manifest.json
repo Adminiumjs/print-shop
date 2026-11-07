@@ -19502,22 +19502,27 @@
           "actions": [
             "read",
             "create",
-            "update",
-            "delete"
+            "update"
           ]
         },
         {
           "addOn": "customiser",
           "table": "ready_designs",
           "actions": [
-            "read"
+            "read",
+            "create",
+            "update",
+            "delete"
           ]
         },
         {
           "addOn": "customiser",
           "table": "ready_parts",
           "actions": [
-            "read"
+            "read",
+            "create",
+            "update",
+            "delete"
           ]
         },
         {

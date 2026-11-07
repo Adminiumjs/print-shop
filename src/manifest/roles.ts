@@ -81,18 +81,26 @@ const CUSTOMISER_PANEL = [
   { addOn: CUSTOMISER, table: "features", actions: ["read"] },
 ];
 
-/** The Customiser's tables its set-up page (bases, their areas and pieces, fonts, finishes, priced features) adds to, changes and takes from. */
-const SETUP_WRITES = ["bases", "base_areas", "base_pieces", "fonts", "palettes", "palette_colours", "features"];
+/**
+ * The Customiser's tables its set-up page (the ready-made designs and their
+ * parts, the bases' areas and pieces, fonts, palettes and their colours,
+ * priced features) adds to, changes and takes from. A base it adds and
+ * changes but never takes away: the most the add-on lets an app's role hold.
+ */
+const SETUP_WRITES = ["base_areas", "base_pieces", "ready_designs", "ready_parts", "fonts", "palettes", "palette_colours", "features"];
+const SETUP_KEEPS = ["bases"];
 
 /**
  * The owner's: the panel's, and everything the Customiser's set-up page reads
- * and writes, its settings among them. The Customiser holds an app's role to
- * reading those tables and keeps its settings back (its `appGrants`), so it
- * cuts this ask, and the install check says what it kept back; the owner's
- * set-up page opens once the add-on lets an app's role that far.
+ * and writes, its settings among them. From add-ons 1.0.21 the Customiser
+ * lets an app's role hold all of it (its `appGrants`), so the owner opens
+ * and saves the set-up page on their own role, no Customiser role beside it.
+ * Thirteen of the Customiser's tables, within the 24 add-on tables a role holds.
  */
 const CUSTOMISER_SETUP = [
-  ...CUSTOMISER_PANEL.map((entry) => (SETUP_WRITES.includes(entry.table) ? { ...entry, actions: ["read", "create", "update", "delete"] } : entry)),
+  ...CUSTOMISER_PANEL.map((entry) =>
+    SETUP_WRITES.includes(entry.table) ? { ...entry, actions: ["read", "create", "update", "delete"] } : SETUP_KEEPS.includes(entry.table) ? { ...entry, actions: ["read", "create", "update"] } : entry,
+  ),
   { addOn: CUSTOMISER, table: "settings", actions: ["read"] },
 ];
 
