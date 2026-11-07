@@ -322,6 +322,8 @@ export const INSTALL_FLOOR_WORD_NAMES = [
   'publicAccess.pagination',
   'publicAccess.rateLimit',
   'publicAccess.response',
+  // A new row that moves the earlier rows sharing its link on (a proof sent again).
+  'states.supersedes',
 ] as const;
 export type ManifestWordName = (typeof INSTALL_FLOOR_WORD_NAMES)[number];
 
@@ -598,6 +600,8 @@ export const WORD_FLOORS: Readonly<Partial<Record<ManifestWordName, string>>> = 
   'publicAccess.pagination': '0.3.49',
   'publicAccess.rateLimit': '0.3.49',
   'publicAccess.response': '0.3.49',
+  // A new row moves the earlier rows sharing its link: a release before refuses the key.
+  'states.supersedes': '0.3.50',
 };
 
 /** The kinds of file a column takes from the release that cleans SVG and reads models and fonts whole (`ASSET_FILE_KINDS`). */
@@ -777,6 +781,7 @@ export function installFloorWords(document: unknown): ManifestWord[] {
       for (const [child, rule] of Object.entries(isDoc(table['states']['children']) ? table['states']['children'] : {})) {
         if (isDoc(rule) && rule['moveOnCreate'] !== undefined) out.push({ word: 'states.moveOnCreate', path: `${at}.states.children.${child}.moveOnCreate` });
       }
+      if (table['states']['supersedes'] !== undefined) out.push({ word: 'states.supersedes', path: `${at}.states.supersedes` });
     }
     list(table['columns']).forEach((column, c) => {
       const rules = isDoc(column) && isDoc(column['rules']) ? column['rules'] : null;
