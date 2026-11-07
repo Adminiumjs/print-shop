@@ -6638,7 +6638,7 @@
           "kind": "email",
           "design_version_id": null,
           "note": "Proof by email.",
-          "state": "change_asked",
+          "state": "superseded",
           "change_note": "Make the date line bigger.",
           "sent_at": {
             "@day": -5,

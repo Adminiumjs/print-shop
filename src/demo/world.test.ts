@@ -169,7 +169,11 @@ describe("the demo's Adminium", () => {
       const job = demo.world.all("jobs").find((j) => String(j["order_id"]) === String(order.id))!;
       return { job, states: demo.world.all("proofs").filter((p) => String(p["job_id"]) === String(job.id)).sort((a, b) => Number(a["version"]) - Number(b["version"])).map((p) => [p["version"], p["state"]]) };
     };
-    expect(proofsOf("MP-4114").states).toEqual([[1, "change_asked"], [2, "sent"]]);
+    expect(proofsOf("MP-4114").states).toEqual([[1, "superseded"], [2, "sent"]]);
+    // The customer asks a change on the second: then a third sends it again too.
+    const second = demo.world.all("proofs").find((p) => String(p["job_id"]) === String(proofsOf("MP-4114").job.id) && p["version"] === 2)!;
+    demo.world.write(() => demo.world.update("proofs", second.id, { state: "change_asked", change_note: "Darker blue." }));
+    expect(proofsOf("MP-4114").states).toEqual([[1, "superseded"], [2, "change_asked"]]);
     const other = proofsOf("MP-4121").states;
     await demo.works.sendProof({ job: proofsOf("MP-4114").job, kind: "email", file: { blob: new Blob(["%PDF-1.4"], { type: "application/pdf" }), filename: "proof.pdf" }, designVersionId: null, note: null });
     expect(proofsOf("MP-4114").states).toEqual([[1, "superseded"], [2, "superseded"], [3, "sent"]]);

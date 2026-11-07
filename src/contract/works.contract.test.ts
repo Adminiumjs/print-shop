@@ -219,13 +219,16 @@ describe.skipIf(why !== null)(`the works against a built Adminium${why === null 
 
       it("sends a job's earlier proofs again when a proof is made in the dashboard, a waiting one and one with a change asked alike, and no other job's", async () => {
         const api = `/api/v1/data/${connectionId}/${encodeURIComponent(tables["proofs"] ?? "printing_proofs")}`;
-        // Bramble Yoga's posters (MP-4114): a change asked on the first proof, the second waiting.
+        // Bramble Yoga's posters (MP-4114): the first proof sent again by the second, which waits.
         expect(await proofsOfJob("MP-4114")).toEqual([
-          [1, "change_asked"],
+          [1, "superseded"],
           [2, "sent"],
         ]);
         const otherBefore = await proofsOfJob("MP-4123");
         const { job: posters } = await job(doors["owner"]!, "MP-4114");
+        // The customer asks a change on the second (as the order's own link sends it).
+        const second = (await rows("proofs")).find((p) => String(p["job_id"]) === String(posters.id) && Number(p["version"]) === 2)!;
+        ok(await owner.patch(`${api}/${String(second.id)}`, { values: { state: "change_asked", change_note: "Darker blue." }, from: "sent" }));
         ok(await owner.post(api, { values: { job_id: posters.id, kind: "email", note: "Date line made bigger." } }), 201);
         expect(await proofsOfJob("MP-4114")).toEqual([
           [1, "superseded"],

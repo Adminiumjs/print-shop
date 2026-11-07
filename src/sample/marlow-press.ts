@@ -212,6 +212,8 @@ interface Proof {
   sent: string;
   note: string | null;
   answer?: { state: "approved" | "change_asked"; on: string; note?: string };
+  /** Sent again since: a later proof of the job answers this one, as Adminium moves it when that proof is made (`states.supersedes`). */
+  superseded?: true;
 }
 interface Job {
   ref: number;
@@ -269,7 +271,7 @@ export const JOBS: Job[] = [
   { ref: 4117, customer: "Wold Cricket Club", cfg: { productId: "rollups", materialId: "pvc510", custom: { w: 850, h: 2000 }, sides: "single", bannerFin: "plain", qty: 1, delivery: "tube" }, stage: "prepress", ordered: "2026-07-31", due: "2026-08-06", proofs: [] },
   { ref: 4116, customer: "Harbour Bakery", cfg: { productId: "stickers", materialId: "silk170", sizeId: "a6", sides: "single", lam: "lam-one", look: "gloss", qty: 250, packaging: "bundled", delivery: "light" }, stage: "finishing", ordered: "2026-07-31", due: "2026-08-07", proofs: [sent("2026-07-31", null, approvedOn("2026-08-03"))] },
   { ref: 4115, customer: "Fenwick & Sons", cfg: { productId: "business-cards", materialId: "uncoated300", sizeId: "bcard", sides: "single", qty: 100, packaging: "bundled", delivery: "collect" }, stage: "ready", ordered: "2026-07-31", due: "2026-08-04", proofs: [sent("2026-07-31", null, approvedOn("2026-07-31"))] },
-  // In prepress with its second proof waiting: nothing is printed before a yes. A change asked moves its ready-by a day.
+  // In prepress with its second proof waiting: nothing is printed before a yes. The first, a change asked on it, was sent again by the second.
   {
     ref: 4114,
     customer: "Bramble Yoga",
@@ -278,7 +280,7 @@ export const JOBS: Job[] = [
     ordered: "2026-07-31",
     due: "2026-08-11",
     proofs: [
-      { version: 1, sent: "2026-07-31", note: "Proof by email.", answer: { state: "change_asked", on: "2026-08-03", note: "Make the date line bigger." } },
+      { version: 1, sent: "2026-07-31", note: "Proof by email.", answer: { state: "change_asked", on: "2026-08-03", note: "Make the date line bigger." }, superseded: true },
       { version: 2, sent: "2026-08-04", note: "Second proof." },
     ],
   },
@@ -539,7 +541,7 @@ export function customiserSection(): SampleBundle {
         kind: "email",
         design_version_id: j.design === undefined ? null : { "@ref": `version:${j.design.replace("design:", "")}-${String(pr.version)}` },
         note: pr.note,
-        state: pr.answer?.state ?? "sent",
+        state: pr.superseded === true ? "superseded" : (pr.answer?.state ?? "sent"),
         change_note: pr.answer?.note ?? null,
         sent_at: wall(pr.sent, PROOF_SENT_AT),
         answered_at: pr.answer === undefined ? null : wall(pr.answer.on, ANSWERED_AT),

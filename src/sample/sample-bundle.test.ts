@@ -153,7 +153,8 @@ describe("every row is one the works could have made", () => {
       expect(latest?.["state"], String(job["@label"])).toBe("approved");
     }
     const mp4114 = proofs.filter((p) => refOf(p["job_id"]) === "job:MP-4114").map((p) => [p["version"], p["state"]]);
-    expect(mp4114).toEqual([[1, "change_asked"], [2, "sent"]]);
+    // The first, a change asked on it, was sent again by the second: no job holds two proofs still out.
+    expect(mp4114).toEqual([[1, "superseded"], [2, "sent"]]);
   });
 
   it("prints Harbour Bakery's MP-4112 from its Customiser design, paying for the back it uses", () => {
