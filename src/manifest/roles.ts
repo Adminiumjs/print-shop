@@ -167,7 +167,8 @@ export const ROLES = [
       "app:@:staff",
       ...[...RATE_CARD, ...ORDER_READS].flatMap((table) => grant(table, "read")),
       ...grant("jobs", "update"),
-      ...grant("proofs", "create", "update"),
+      // A proof sent again is a new one: Adminium sends the job's earlier one again in the same write (`states.supersedes`), so prepress changes no proof.
+      ...grant("proofs", "create"),
       view("printing-orders"),
       view("printing-jobs"),
       view("printing-proofs"),
@@ -178,12 +179,8 @@ export const ROLES = [
     limits: {
       // The artwork looked over, and an approved job onto the press.
       jobs: { writable: ["artwork_checked", "stage", "works_note"], writableValues: { stage: ["printing"] }, writableFrom: { stage: ["prepress"] } },
-      // A proof: the job, its file, how it is sent, the note and the design version it shows; or sent again.
-      proofs: {
-        creatable: ["job_id", "kind", "file", "design_version_id", "note"],
-        writable: ["state"],
-        writableValues: { state: ["superseded"] },
-      },
+      // A proof: the job, its file, how it is sent, the note and the design version it shows.
+      proofs: { creatable: ["job_id", "kind", "file", "design_version_id", "note"] },
     },
     tables: [...CUSTOMISER_PANEL, ...STOCK_READS],
   },

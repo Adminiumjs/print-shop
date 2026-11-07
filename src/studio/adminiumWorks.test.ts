@@ -120,16 +120,14 @@ describe("the writes, as Adminium reads them", () => {
     ]);
   });
 
-  it("records spoilage as a row, supersedes a proof, sends a delivery quote and saves a rate", async () => {
+  it("records spoilage as a row, sends a delivery quote and saves a rate", async () => {
     const { t, sent } = transport();
     const door = new AdminiumWorks(t, CONFIG);
     await door.spoil({ job: JOB, sheets: 12, note: null });
-    await door.supersede({ id: 2, state: "sent" });
     await door.updateOrder({ id: 4127 }, { delivery_quote: 32.8, delivery_quote_state: "sent" });
     await door.saveRate("settings", { id: 1 }, { setup: 19 });
     expect(sent).toEqual([
       { method: "POST", path: "/api/v1/data/conn-1/printing_spoils", body: { values: { job_id: 1, qty: 12 } } },
-      { method: "PATCH", path: "/api/v1/data/conn-1/printing_proofs/2", body: { values: { state: "superseded" }, from: "sent" } },
       { method: "PATCH", path: "/api/v1/data/conn-1/printing_orders/4127", body: { values: { delivery_quote: 32.8, delivery_quote_state: "sent" } } },
       { method: "PATCH", path: "/api/v1/data/conn-1/printing_settings/1", body: { values: { setup: 19 } } },
     ]);

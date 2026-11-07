@@ -33,9 +33,6 @@ export const jobsOf = (data: WorksData, order: Row): Row[] => data.jobs.filter((
 /** A job's proofs, first sent first. */
 export const proofsOf = (data: WorksData, job: Row): Row[] => data.proofs.filter((p) => same(p["job_id"], job.id)).sort((a, b) => (num(a["version"]) ?? 0) - (num(b["version"]) ?? 0));
 
-/** The proof still waiting on the customer, or the change they asked for: what a new proof answers. */
-export const openProofOf = (data: WorksData, job: Row): Row | undefined => proofsOf(data, job).filter((p) => p["state"] === "sent" || p["state"] === "change_asked").at(-1);
-
 export const artworkOf = (data: WorksData, job: Row): Row[] => data.artwork.filter((a) => same(a["job_id"], job.id));
 export const spoilsOf = (data: WorksData, job: Row): Row[] => data.spoils.filter((s) => same(s["job_id"], job.id));
 

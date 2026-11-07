@@ -122,16 +122,13 @@ export class FakeDoor implements WorksDoor {
     return this.update(this.data.orders, order.id, values);
   }
 
-  async supersede(proof: Row): Promise<Row> {
-    this.record("supersede", { id: proof.id, from: proof["state"] });
-    return this.update(this.data.proofs, proof.id, { state: "superseded" });
-  }
-
   async sendProof(input: { job: Row; kind: "email" | "post"; file: ProofFile; designVersionId: Id | null; note: string | null }): Promise<Row> {
     const file = "copyOf" in input.file ? { copyOf: input.file.copyOf } : { filename: input.file.filename, type: input.file.blob.type };
     this.record("sendProof", { jobId: input.job.id, kind: input.kind, file, designVersionId: input.designVersionId, note: input.note });
     this.nextId += 1;
     const version = this.data.proofs.filter((p) => same(p["job_id"], input.job.id)).length + 1;
+    // Adminium sends the job's earlier proof still out again in the same write (`states.supersedes`).
+    for (const p of this.data.proofs) if (same(p["job_id"], input.job.id) && (p["state"] === "sent" || p["state"] === "change_asked")) p["state"] = "superseded";
     const row: Row = { id: this.nextId, order_id: input.job["order_id"], job_id: input.job.id, version, kind: input.kind, file: "/api/v1/files/file_01J8Z6Q3M4N5P6R7S8T9V0W1ZZ/content", note: input.note, state: "sent", sent_at: new Date(WEDNESDAY).toISOString() };
     this.data.proofs.push(row);
     this.update(this.data.jobs, input.job.id, { proof_state: "sent", proof_ok: 0 });

@@ -212,9 +212,7 @@ export interface WorksDoor {
   moveOrder(order: Row, to: string, values?: Record<string, unknown>): Promise<Row>;
   /** An order's own columns that are not its state (a delivery quote sent). */
   updateOrder(order: Row, values: Record<string, unknown>): Promise<Row>;
-  /** A proof the works sent before, answered by the one it sends now. */
-  supersede(proof: Row): Promise<Row>;
-  /** A proof of a job: its PDF stored first, then the row that sends it (Adminium numbers it and e-mails it). */
+  /** A proof of a job: its PDF stored first, then the row that sends it (Adminium numbers it, sends the job's earlier one still out again, and e-mails it). */
   sendProof(input: { job: Row; kind: "email" | "post"; file: ProofFile; designVersionId: Id | null; note: string | null }): Promise<Row>;
   /** Sheets spoiled on a job's run: a row of their own, which Inventory is told of when it keeps the stock. */
   spoil(input: { job: Row; sheets: number; note: string | null }): Promise<Row>;

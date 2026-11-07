@@ -168,14 +168,15 @@ describe("the board", () => {
 });
 
 describe("the ticket's writes", () => {
-  it("sends a proof with its PDF: the open one superseded first, the artwork marked looked over", async () => {
+  it("sends a proof with its PDF in one write, and moves no earlier proof itself", async () => {
     const door = new FakeDoor();
     await mount(door, "ticket", { jobId: 3, overlay: { kind: "proof", jobId: 3 } });
     await choose(document.querySelector<HTMLInputElement>('input[type="file"]')!, new File([new Uint8Array([0x25, 0x50, 0x44, 0x46])], "proof-mp-4121.pdf", { type: "application/pdf" }));
     expect(text()).toContain("proof-mp-4121.pdf");
     await type(document.querySelector("textarea"), "Cut line moved in.");
     await click(button("Send"));
-    expect(door.of("supersede")).toEqual([{ id: 2, from: "sent" }]);
+    // Adminium sends the earlier proof again in the new proof's own write (`states.supersedes`): the screen writes the new proof and nothing else.
+    expect(door.calls.map((c) => c.method).filter((m) => m !== "load")).toEqual(["sendProof"]);
     expect(door.of("sendProof")).toEqual([{ jobId: 3, kind: "email", file: { filename: "proof-mp-4121.pdf", type: "application/pdf" }, designVersionId: null, note: "Cut line moved in." }]);
     expect(toasts()).toEqual(["Proof sent — we've e-mailed Kestrel Joinery."]);
     expect(useWorks.getState().overlay).toBeNull();

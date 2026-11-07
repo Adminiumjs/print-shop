@@ -73,6 +73,15 @@ describe("the manifest at the floor it ships with", () => {
     expect(roleOf(shipped, "owner").permissions).toContain("page:@customiser:view");
   });
 
+  // From 0.3.50: a new proof sends the job's earlier one still out again in its own write, whoever makes it.
+  it("sends a job's earlier proof still out again when a new one is made, and lets prepress change no proof", () => {
+    const proofs = ((shipped["requiredSchema"] as { tables: { ref: string; states?: Json }[] }).tables.find((t) => t.ref === "proofs")!).states!;
+    expect(proofs["supersedes"]).toEqual({ by: "job_id", from: ["sent", "change_asked"], to: "superseded" });
+    expect(roleOf(shipped, "prepress").permissions).toContain("table:@proofs:create");
+    expect(roleOf(shipped, "prepress").permissions).not.toContain("table:@proofs:update");
+    expect(validateManifest({ ...shipped, compatibility: { ...(shipped["compatibility"] as Json), minAdminiumVersion: "0.3.49" } }).ok).toBe(false);
+  });
+
   it("lets the owner, and no floor role, find and erase a customer's data", () => {
     expect(roleOf(shipped, "owner").permissions).toContain("privacy:@:people");
     for (const key of ["prepress", "press", "counter"]) expect(roleOf(shipped, key).permissions.filter((p) => p.startsWith("privacy:")), key).toEqual([]);

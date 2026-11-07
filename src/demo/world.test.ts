@@ -161,6 +161,21 @@ describe("the demo's Adminium", () => {
     expect((await demo.works.moveOrder(demo.world.get("orders", order.id)!, "ready"))["status"]).toBe("ready");
   });
 
+  // As Adminium's `states.supersedes` on the proofs: a new proof sends the job's earlier ones still out again, in the same write.
+  it("sends a job's earlier proofs again when a new one is made, a waiting one and one with a change asked alike, and no other job's", async () => {
+    const demo = makeDemo();
+    const proofsOf = (number: string) => {
+      const order = demo.world.all("orders").find((o) => o["number"] === number)!;
+      const job = demo.world.all("jobs").find((j) => String(j["order_id"]) === String(order.id))!;
+      return { job, states: demo.world.all("proofs").filter((p) => String(p["job_id"]) === String(job.id)).sort((a, b) => Number(a["version"]) - Number(b["version"])).map((p) => [p["version"], p["state"]]) };
+    };
+    expect(proofsOf("MP-4114").states).toEqual([[1, "change_asked"], [2, "sent"]]);
+    const other = proofsOf("MP-4121").states;
+    await demo.works.sendProof({ job: proofsOf("MP-4114").job, kind: "email", file: { blob: new Blob(["%PDF-1.4"], { type: "application/pdf" }), filename: "proof.pdf" }, designVersionId: null, note: null });
+    expect(proofsOf("MP-4114").states).toEqual([[1, "superseded"], [2, "superseded"], [3, "sent"]]);
+    expect(proofsOf("MP-4121").states).toEqual(other);
+  });
+
   it("refuses a second sample pack to an address that has had one", async () => {
     const demo = makeDemo();
     const silk = demo.world.all("materials").find((m) => m["code"] === "silk350")!;

@@ -8,7 +8,7 @@
  */
 import type { Person, ProofFile, WorksData, WorksDoor } from "./door.ts";
 import { HeldByProof } from "./env.tsx";
-import { jobsOf, lockOf, openProofOf, orderOf, refOf, versionOf } from "./facts.ts";
+import { jobsOf, lockOf, orderOf, refOf, versionOf } from "./facts.ts";
 import { same, text, type Row } from "./wire.ts";
 
 /** The way forward along the floor, one declared move at a time. */
@@ -111,16 +111,16 @@ export async function dispatchOrder(door: WorksDoor, data: WorksData, order: Row
 }
 
 /**
- * A proof of a job sent: the one still open before it (waiting, or the
- * change it answers) superseded first, then the new one with its PDF and,
- * for a job made in the Customiser, the version it shows. A first proof also
- * says the artwork was looked over.
+ * A proof of a job sent: the new one with its PDF and, for a job made in the
+ * Customiser, the version it shows. Adminium sends the one still out before
+ * it (waiting, or the change it answers) again in the same write
+ * (`states.supersedes` on the proofs), as it does for a proof made in the
+ * dashboard, so the screens move no earlier proof themselves. A first proof
+ * also says the artwork was looked over.
  */
 export async function sendProof(door: WorksDoor, data: WorksData, job: Row, input: { file: ProofFile; kind: "email" | "post"; note: string | null }, who: Person): Promise<Row> {
   const order = orderOf(data, job);
   if (order === undefined) throw new Error("This job has no order.");
-  const open = openProofOf(data, job);
-  if (open !== undefined) await door.supersede(open);
   const version = job["design_id"] === null || job["design_id"] === undefined ? undefined : versionOf(data, job);
   const sent = await door.sendProof({ job, kind: input.kind, file: input.file, designVersionId: version?.id ?? null, note: input.note });
   if (job["artwork_checked"] !== true && who.can("jobs", "update")) await door.updateJob(job, { artwork_checked: true });

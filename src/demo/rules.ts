@@ -37,7 +37,12 @@ interface Column {
 interface Table {
   ref: string;
   columns: Column[];
-  states?: { column: string; initial: string; moves: Record<string, (string | { to: string; requires?: { where: FormulaCondition[] | { column: string; eq: unknown }[] }; roles?: string[] })[]> };
+  states?: {
+    column: string;
+    initial: string;
+    moves: Record<string, (string | { to: string; requires?: { where: FormulaCondition[] | { column: string; eq: unknown }[] }; roles?: string[] })[]>;
+    supersedes?: { by: string; from: string[]; to: string };
+  };
 }
 
 const TABLES = requiredSchema.tables as unknown as Table[];
@@ -309,4 +314,20 @@ export function mayMove(ref: string, row: Row, to: string, roles: readonly strin
   if (move.roles !== undefined && !move.roles.some((r) => roles.includes(r))) return false;
   const where = (move.requires?.where ?? []) as { column: string; eq: unknown }[];
   return where.every((w) => same(row[w.column], w.eq));
+}
+
+/**
+ * A new row's earlier rows that share its link and still wait in one of the
+ * `from` states, moved on in the same write (`states.supersedes`): a proof
+ * sent again sends the job's earlier one still out again, whoever sends it.
+ * The new row itself never moves, and one with the link empty moves nothing.
+ */
+export function supersede(ref: string, row: Row, tables: Tables): void {
+  const states = TABLE_OF.get(ref)?.states;
+  const rule = states?.supersedes;
+  if (states === undefined || rule === undefined || blank(row[rule.by])) return;
+  for (const other of tables[ref] ?? []) {
+    if (other === row || !same(other[rule.by], row[rule.by])) continue;
+    if (rule.from.includes(String(other[states.column] ?? states.initial))) other[states.column] = rule.to;
+  }
 }

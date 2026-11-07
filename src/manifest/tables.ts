@@ -1146,6 +1146,8 @@ export const TABLES: Table[] = [
         sent: ["approved", "change_asked", "superseded"],
         change_asked: ["superseded"],
       },
+      // A proof sent again: the job's earlier proof still out (waiting, or with a change asked) is sent again, in the same write, whoever makes it.
+      supersedes: { by: "job_id", from: ["sent", "change_asked"], to: "superseded" },
     },
     columns: [
       id,

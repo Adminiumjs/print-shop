@@ -14,7 +14,7 @@
  * DEMO BUILD ONLY — nothing in a real build imports it.
  */
 import { dayIn, momentOf } from "../studio/time.ts";
-import { deriveAll, newRow, nextWorkingDay, closuresIn, stamp, type Moment, type Tables } from "./rules.ts";
+import { deriveAll, newRow, nextWorkingDay, closuresIn, stamp, supersede, type Moment, type Tables } from "./rules.ts";
 import { DEMO_START, DEMO_ZONE, sampleTables, type Row } from "./sample.ts";
 
 /** Tables the sample adds no rows to, which the screens still read or write. */
@@ -135,12 +135,13 @@ export class DemoWorld {
     return out;
   }
 
-  /** A new row with the defaults, running number and link code Adminium gives it. Inside `write`. */
+  /** A new row with the defaults, running number and link code Adminium gives it, its earlier rows moved on as its states say. Inside `write`. */
   insert(table: string, values: Record<string, unknown>): Row {
     const id = (this.nextIds[table] ??= 1);
     this.nextIds[table] = id + 1;
     const row = { ...newRow(table, values, this.tables, (n) => this.code("", n)), id } as Row;
     this.all(table).push(row);
+    supersede(table, row, this.tables);
     return row;
   }
 

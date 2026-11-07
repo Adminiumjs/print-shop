@@ -414,10 +414,6 @@ export class AdminiumWorks implements WorksDoor {
     return this.run(() => this.change("orders", order.id, values));
   }
 
-  supersede(proof: Row): Promise<Row> {
-    return this.run(() => this.change("proofs", proof.id, { state: "superseded" }, String(proof["state"])));
-  }
-
   /** What the files route answers for the proofs' `file` column: the value the row stores. */
   private async storeFile(file: ProofFile): Promise<string> {
     const conn = await this.conn();

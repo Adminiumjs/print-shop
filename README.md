@@ -62,7 +62,9 @@ the two o'clock cut-off — and the works prints Monday to Friday.
 job goes to press only once its proof is approved), the job ticket (the
 imposition, the artwork and its checks, the Customiser's panel on a designed job
 where its proof and print files are made, the proofs sent and answered,
-spoilage, printed, ready, collected or dispatched), the jobs, materials and
+spoilage, printed, ready, collected or dispatched; a proof sent again sends the
+job's earlier one still out again, whether it is sent from the ticket or made in
+the dashboard), the jobs, materials and
 stock, the price list (the rate card edited in place, the closures, and the
 public holidays to add as one), DHL's dispatch page and shipments, and the
 add-ons; a sign-out in the header. Roles: **owner** (everything, the

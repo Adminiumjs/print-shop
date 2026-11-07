@@ -131,10 +131,6 @@ export class DemoWorks implements WorksDoor {
     return this.change("orders", order.id, values);
   }
 
-  async supersede(proof: Row): Promise<Row> {
-    return this.move("proofs", "state", proof, "superseded", {});
-  }
-
   async sendProof(input: { job: Row; kind: "email" | "post"; file: ProofFile; designVersionId: Id | null; note: string | null }): Promise<Row> {
     const w = this.world;
     let file: string;

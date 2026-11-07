@@ -10914,6 +10914,14 @@
             "change_asked": [
               "superseded"
             ]
+          },
+          "supersedes": {
+            "by": "job_id",
+            "from": [
+              "sent",
+              "change_asked"
+            ],
+            "to": "superseded"
           }
         },
         "columns": [
@@ -19635,7 +19643,6 @@
         "table:@spoils:read",
         "table:@jobs:update",
         "table:@proofs:create",
-        "table:@proofs:update",
         "page:@printing-orders:view",
         "page:@printing-jobs:view",
         "page:@printing-proofs:view",
@@ -19668,15 +19675,7 @@
             "file",
             "design_version_id",
             "note"
-          ],
-          "writable": [
-            "state"
-          ],
-          "writableValues": {
-            "state": [
-              "superseded"
-            ]
-          }
+          ]
         }
       },
       "tables": [

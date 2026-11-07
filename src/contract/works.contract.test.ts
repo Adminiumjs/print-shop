@@ -11,6 +11,8 @@
  *   - prepress sends a proof with its PDF; the job may not go to press yet;
  *   - the proof comes back approved; Adminium dates the ready-by from it;
  *   - prepress puts the job on the press;
+ *   - a proof sent again, from the screens or the dashboard: Adminium sends
+ *     the job's earlier proofs still out again in the same write;
  *   - the press records spoilage (a row, added up on the job) and marks the
  *     job ready, and its order with it (the "ready to collect" e-mail);
  *   - the counter hands it over: the job and the order collected;
@@ -183,6 +185,54 @@ describe.skipIf(why !== null)(`the works against a built Adminium${why === null 
         // Prepress goes no further than the press.
         const further = await prepress.moveJob(onPress, "finishing").catch((e: unknown) => e);
         expect(isApiError(further) && [403, 409, 422].includes(further.status)).toBe(true);
+      });
+
+      /*
+       * A proof sent again: Adminium moves the job's earlier proof still out
+       * (waiting, or with a change asked) to "Sent again" in the new proof's
+       * own write (`states.supersedes`), whoever makes it. The screens move no
+       * earlier proof themselves, and the dashboard's or the data API's new
+       * proof does the same.
+       */
+      const proofsOfJob = async (number: string): Promise<[unknown, unknown][]> => {
+        const { job: found } = await job(doors["owner"]!, number);
+        return (await rows("proofs"))
+          .filter((p) => String(p["job_id"]) === String(found.id))
+          .sort((a, b) => Number(a["version"]) - Number(b["version"]))
+          .map((p) => [p["version"], p["state"]]);
+      };
+
+      it("sends a proof again from the screens: the job's earlier one goes to Sent again in the same write", async () => {
+        const prepress = doors["prepress"]!;
+        // Kestrel Joinery's stickers (MP-4121): their first proof still waits on the customer.
+        expect(await proofsOfJob("MP-4121")).toEqual([[1, "sent"]]);
+        const { data, job: stickers } = await job(prepress, "MP-4121");
+        const pdf = new Blob([new TextEncoder().encode("%PDF-1.4\n%%EOF\n")], { type: "application/pdf" });
+        await sendProof(prepress, data, stickers, { file: { blob: pdf, filename: "proof-mp-4121-v2.pdf" }, kind: "email", note: "Cut line moved in." }, prepress.who());
+        expect(await proofsOfJob("MP-4121")).toEqual([
+          [1, "superseded"],
+          [2, "sent"],
+        ]);
+        // Prepress changes no proof itself: sending again is a new one.
+        expect(prepress.who().can("proofs", "update")).toBe(false);
+      });
+
+      it("sends a job's earlier proofs again when a proof is made in the dashboard, a waiting one and one with a change asked alike, and no other job's", async () => {
+        const api = `/api/v1/data/${connectionId}/${encodeURIComponent(tables["proofs"] ?? "printing_proofs")}`;
+        // Bramble Yoga's posters (MP-4114): a change asked on the first proof, the second waiting.
+        expect(await proofsOfJob("MP-4114")).toEqual([
+          [1, "change_asked"],
+          [2, "sent"],
+        ]);
+        const otherBefore = await proofsOfJob("MP-4123");
+        const { job: posters } = await job(doors["owner"]!, "MP-4114");
+        ok(await owner.post(api, { values: { job_id: posters.id, kind: "email", note: "Date line made bigger." } }), 201);
+        expect(await proofsOfJob("MP-4114")).toEqual([
+          [1, "superseded"],
+          [2, "superseded"],
+          [3, "sent"],
+        ]);
+        expect(await proofsOfJob("MP-4123")).toEqual(otherBefore);
       });
 
       it("records spoilage on the press as a row of its own, added up on the job", async () => {
