@@ -24,7 +24,8 @@
  *     and finds a customer to erase; prepress does not;
  *   - last, the owner erases that customer: the proof PDF sent them and the
  *     artwork they sent go with their design's pictures, proof and print
- *     files, each counted in the preview first.
+ *     files, and the proofs made again over (in the bin), each counted in
+ *     the preview first.
  *
  * The role holds the customer's words in clear, saves the proof on the
  * design's version (the Customiser's `appGrants`) and takes old files away.
@@ -134,6 +135,8 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
       let admin: Caller;
       let connectionId = "";
       const doors: Record<string, AdminiumWorks> = {};
+      /** The proofs the panel made on Harbour's version, each one made again over by the next: their files kept in the bin, still the customer's. */
+      const remade: string[] = [];
       const callers: Record<string, Caller> = {};
 
       /** A door booted as the staff build boots it, on a person's own session; a panel's code imported as the browser imports it. */
@@ -339,6 +342,7 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
           const version = (await panels.list("customiser", "design_versions", { where: { column: "design_id", op: "eq", value: job["design_id"] }, order: "version.desc", limit: 51, offset: 0 }))[0]!;
           const proof = await panels.upload("customiser", "design_versions", "proof_file", version.id, pngFile(), `${String(job["design_id"])}-v${String(version["version"])}-proof-${who}.png`);
           expect(fileIdOf(proof.row["proof_file"])).toMatch(/^file_[0-9A-Z]{26}$/);
+          remade.push(fileIdOf(proof.row["proof_file"])!);
         }, 60_000);
       }
 
@@ -452,15 +456,20 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
         expect(before.files).toContain(upload.body.ref);
         for (const id of [proofFile, upload.body.ref]) expect((await admin.get(`/api/v1/files/${id}/content`)).status, id).toBe(200);
 
-        // The preview counts every one of those files.
+        // The proofs made on the version before this one are in the bin, no longer on any row: the customer's still, so they go too (Adminium 0.3.50).
+        expect(remade.length).toBe(3);
+        for (const id of remade) expect(before.files.has(id), id).toBe(false);
+        const every = new Set([...before.files, ...remade]);
+
+        // The preview counts every one of those files, and the erase takes the same.
         const preview = await callers["owner"]!.post<{ data: { goes: { kind: string; count: number }[] } }>("/api/v1/privacy/erase/preview", { address }, await tokenOf("owner"));
         expect(preview.status, JSON.stringify(preview.body).slice(0, 400)).toBe(200);
-        expect(preview.body.data.goes.find((g) => g.kind === "files")?.count).toBe(before.files.size);
+        expect(preview.body.data.goes.find((g) => g.kind === "files")?.count).toBe(every.size);
 
         const erased = await callers["owner"]!.post<{ data: { counts: Record<string, number>; filesFailed: number } }>("/api/v1/privacy/erase", { address, confirm: address }, await tokenOf("owner"));
         expect(erased.status, JSON.stringify(erased.body).slice(0, 400)).toBe(200);
-        expect([erased.body.data.counts["files"], erased.body.data.filesFailed]).toEqual([before.files.size, 0]);
-        for (const id of before.files) expect((await admin.get(`/api/v1/files/${id}/content`)).status, id).toBe(404);
+        expect([erased.body.data.counts["files"], erased.body.data.filesFailed]).toEqual([every.size, 0]);
+        for (const id of every) expect((await admin.get(`/api/v1/files/${id}/content`)).status, id).toBe(404);
         // The proofs and the artwork rows stay, as the works' record of the job; their files are gone.
         const after = await filesOf(address);
         expect(after.proofs.map((p) => p.id)).toEqual(before.proofs.map((p) => p.id));
