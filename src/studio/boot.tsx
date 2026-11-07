@@ -79,6 +79,7 @@ export async function bootWorks(mount: HTMLElement): Promise<void> {
   const transport = createSessionTransport({
     tableOfRef: cfg.tables,
     connectionId: cfg.connectionId ?? undefined,
+    installId: cfg.installId,
     staff: { csrfToken: cfg.csrfToken, timezone: cfg.timezone, timezoneSource: cfg.timezoneSource, serverTimezone: cfg.serverTimezone, currency: cfg.currency },
     refreshToken: async () => (await loadStaffConfig())?.csrfToken ?? null,
   });
@@ -113,6 +114,7 @@ export async function bootWorks(mount: HTMLElement): Promise<void> {
   );
   await reload(door);
   // DHL's dispatch flow, from the add-on Adminium has for this app: a broken add-on leaves its slot empty, never the works.
-  const loaded = await loadConnectedAddOns({ appKey: APP_KEY, origin: window.location.origin });
+  // Only this install's: the config's add-ons are those attached to it, switched on and installed.
+  const loaded = await loadConnectedAddOns({ appKey: APP_KEY, origin: window.location.origin, installId: cfg.installId, allowed: new Set(Object.keys(cfg.addOns)) });
   useWorks.setState({ registry: createRegistry(loaded.addOns) });
 }

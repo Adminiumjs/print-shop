@@ -17,6 +17,7 @@ import type { Row } from "./wire.ts";
 
 const CONFIG: StaffConfig = {
   connectionId: "conn-1",
+  installId: null,
   appName: "Marlow Press",
   tables: { jobs: "printing_jobs", orders: "printing_orders", proofs: "printing_proofs", spoils: "printing_spoils", settings: "printing_settings" },
   settings: { working_days: "mon,tue,wed,thu,fri", cutoff: "14:00" },
@@ -95,6 +96,20 @@ describe("the writes, as Adminium reads them", () => {
     ]);
   });
 
+  it("says which install it is when it sends a proof's bytes round the transport", async () => {
+    const { t } = transport();
+    const calls: { url: string; init: RequestInit }[] = [];
+    const fetchImpl = (async (url: RequestInfo | URL, init?: RequestInit) => {
+      calls.push({ url: String(url), init: init ?? {} });
+      return new Response(JSON.stringify({ ref: "/api/v1/files/file_01J8Z6Q3M4N5P6R7S8T9V0W1ZZ/content" }), { status: 201 });
+    }) as typeof fetch;
+    const door = new AdminiumWorks(t, { ...CONFIG, installId: "inst-2" }, { fetchImpl });
+    await door.sendProof({ job: { id: 2 }, kind: "post", file: { blob: new Blob(["%PDF-1.4"], { type: "application/pdf" }), filename: "p.pdf" }, designVersionId: null, note: "" });
+    const headers = calls[0]!.init.headers as Record<string, string>;
+    expect(headers["x-adminium-install"]).toBe("inst-2");
+    expect(headers["x-adminium-csrf"]).toBe("tok");
+  });
+
   it("copies the Customiser's proof of a design, and names the version it shows", async () => {
     const { t, sent } = transport();
     const door = new AdminiumWorks(t, CONFIG);
@@ -124,6 +139,18 @@ describe("the writes, as Adminium reads them", () => {
     const { t, sent } = transport();
     await new AdminiumWorks(t, CONFIG).setAddOn("inventory", false);
     expect(sent).toEqual([{ method: "PATCH", path: "/api/v1/add-ons/inventory", body: { attachedTo: "printing", enabled: false } }]);
+  });
+
+  it("lists an add-on installed on two databases once, with this install's switch", async () => {
+    const copy = (connectionId: string, hostInstall: string, enabled: boolean) => ({ key: "inventory", name: "Inventory", version: "1.0.19", connectionId, attachments: [{ attachedTo: "printing", enabled, hostInstall }], bundles: [] });
+    const reply = { addOns: [copy("conn-1", "inst-1", true), copy("conn-2", "inst-2", false)] };
+    const first = await new AdminiumWorks(transport({ "/api/v1/add-ons": reply }).t, { ...CONFIG, installId: "inst-1" }).addOns();
+    expect(first.map((a) => [a.key, a.attached, a.enabled])).toEqual([["inventory", true, true]]);
+    const second = await new AdminiumWorks(transport({ "/api/v1/add-ons": reply }).t, { ...CONFIG, connectionId: "conn-2", installId: "inst-2" }).addOns();
+    expect(second.map((a) => [a.key, a.attached, a.enabled])).toEqual([["inventory", true, false]]);
+    // A third database's install of the app, where it is not attached: listed once, not attached.
+    const third = await new AdminiumWorks(transport({ "/api/v1/add-ons": reply }).t, { ...CONFIG, connectionId: "conn-3", installId: "inst-3" }).addOns();
+    expect(third.map((a) => [a.key, a.attached, a.enabled])).toEqual([["inventory", false, false]]);
   });
 });
 

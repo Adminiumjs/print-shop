@@ -29,6 +29,7 @@
  */
 
 import { HOSTED, SURFACE_SIDE } from "../../surface.ts";
+import { INSTALL_HEADER } from "./sessionSource.ts";
 
 /**
  * Where to ask for the config document: the app's own mount, instance included.
@@ -86,6 +87,14 @@ export function configBase(bakedBase: string, pathname: string): string {
  */
 export interface StaffConfig {
   connectionId: string | null;
+  /**
+   * This install of the app. One app may be installed once per database, and
+   * each install's sides are served their own config naming it; every call to
+   * Adminium says it back (`X-Adminium-Install`) so the server acts on this
+   * install. Null from an Adminium older than installs per database (0.3.49):
+   * then nothing is sent and the key alone names the app.
+   */
+  installId: string | null;
   appName: string | null;
   tables: Record<string, string>;
   settings: Record<string, unknown>;
@@ -201,6 +210,7 @@ export async function loadStaffConfig(opts: StaffConfigOptions = {}): Promise<St
     const user = record(d.user);
     return {
       connectionId: text(d.connectionId),
+      installId: text(d.installId),
       appName: text(d.appName),
       tables: Object.fromEntries(
         Object.entries(record(d.tables)).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
@@ -265,4 +275,24 @@ export async function resolveStaffConnectionId(
     // in `json()`. Indistinguishable from unbound, and treated as such.
     return null;
   }
+}
+
+/**
+ * A sender that says which install of the app each call is from, for the calls
+ * that go round the session transport (a file's bytes, a panel's code, the
+ * add-ons list); the transport says it itself. Adminium reads it on every
+ * route, add-on routes included ("this database's install of that add-on"),
+ * so two installs of one add-on on two databases never answer 409. With no
+ * id (an Adminium older than installs per database) the sender is unchanged.
+ */
+export function withInstall(send: typeof fetch, installId: string | null | undefined): typeof fetch {
+  if (typeof installId !== "string" || installId === "") return send;
+  return (input, init) => send(input, { ...init, headers: { ...headerRecord(init?.headers), [INSTALL_HEADER]: installId } });
+}
+
+/** Headers as a plain record, whichever of the three shapes they came in. */
+function headerRecord(headers: HeadersInit | undefined): Record<string, string> {
+  if (headers === undefined) return {};
+  if (headers instanceof Headers || Array.isArray(headers)) return Object.fromEntries(new Headers(headers).entries());
+  return { ...headers };
 }

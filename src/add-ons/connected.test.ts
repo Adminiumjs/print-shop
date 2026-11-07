@@ -79,15 +79,21 @@ interface StubOptions {
   listedRaw?: unknown;
   module?: unknown;
   importThrows?: Error;
+  /** This install of the app, as its staff config names it. */
+  installId?: string | null;
+  /** The add-ons the staff config lists for this install. */
+  allowed?: ReadonlySet<string>;
 }
 
 function stub(options: StubOptions = {}) {
   const requested: string[] = [];
   const imported: string[] = [];
+  const headers: Record<string, string>[] = [];
 
-  const request = vi.fn(async (input: RequestInfo | URL) => {
+  const request = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     requested.push(url);
+    headers.push({ ...(init?.headers as Record<string, string> | undefined) });
     if (url.endsWith('/api/v1/add-ons')) {
       const status = options.listStatus ?? 200;
       return {
@@ -116,8 +122,16 @@ function stub(options: StubOptions = {}) {
   return {
     requested,
     imported,
+    headers,
     load: async () =>
-      loadConnectedAddOns({ appKey: 'printing', origin: ORIGIN, request, importBundle }),
+      loadConnectedAddOns({
+        appKey: 'printing',
+        origin: ORIGIN,
+        request,
+        importBundle,
+        ...(options.installId === undefined ? {} : { installId: options.installId }),
+        ...(options.allowed === undefined ? {} : { allowed: options.allowed }),
+      }),
   };
 }
 
@@ -201,6 +215,85 @@ describe('loading what this host hosts', () => {
     const { addOns, problems } = await stub({ listed: [dto({ bundles: [] })] }).load();
     expect(addOns).toEqual([]);
     expect(problems).toEqual([]);
+  });
+});
+
+describe('one add-on installed on two databases', () => {
+  /*
+   * The app is installed on db-1 (install `inst-1`) and db-2 (`inst-2`), and
+   * so is the add-on: the list names its key twice, one row per database.
+   * Each row's attachment says which install of the app it joins. On db-2 it
+   * is switched off.
+   */
+  const BUNDLE = dto().bundles[0]!;
+  const onDb1 = dto({
+    attachments: [{ attachedTo: 'printing', enabled: true, hostInstall: 'inst-1' }],
+    bundles: [{ ...BUNDLE, url: '/api/v1/add-ons/holiday-calendars/bundle/dist/client.js?copy=1' }],
+  });
+  const offOnDb2 = dto({
+    attachments: [{ attachedTo: 'printing', enabled: false, hostInstall: 'inst-2' }],
+    bundles: [{ ...BUNDLE, url: '/api/v1/add-ons/holiday-calendars/bundle/dist/client.js?copy=2' }],
+  });
+  const onDb2 = dto({ ...offOnDb2, attachments: [{ attachedTo: 'printing', enabled: true, hostInstall: 'inst-2' }] });
+
+  it('loads it on the install where it is on, from that install\'s row', async () => {
+    const s = stub({ listed: [offOnDb2, onDb1], installId: 'inst-1', allowed: new Set(['holiday-calendars']) });
+    const { addOns, problems } = await s.load();
+    expect(problems).toEqual([]);
+    expect(addOns.map((a) => a.key)).toEqual(['holiday-calendars']);
+    expect(s.imported).toEqual([`${ORIGIN}/api/v1/add-ons/holiday-calendars/bundle/dist/client.js?copy=1`]);
+  });
+
+  it('does not load it on the install where it is off, though the other database has it on', async () => {
+    const s = stub({ listed: [onDb1, offOnDb2], installId: 'inst-2', allowed: new Set() });
+    expect((await s.load()).addOns).toEqual([]);
+    // Not even with no config list to go by: the attachment says whose it is.
+    const bare = stub({ listed: [onDb1, offOnDb2], installId: 'inst-2' });
+    expect((await bare.load()).addOns).toEqual([]);
+    expect(bare.requested.filter((u) => u.includes('/bundle/'))).toEqual([]);
+  });
+
+  it('registers one key once when both databases have it on', async () => {
+    const s = stub({ listed: [onDb1, onDb2], installId: 'inst-2', allowed: new Set(['holiday-calendars']) });
+    const { addOns } = await s.load();
+    expect(addOns.map((a) => a.key)).toEqual(['holiday-calendars']);
+    expect(s.imported).toEqual([`${ORIGIN}/api/v1/add-ons/holiday-calendars/bundle/dist/client.js?copy=2`]);
+  });
+
+  it('passes over a copy whose files are not on the server, or one the config does not list (still installing)', async () => {
+    expect((await stub({ listed: [{ ...onDb1, missing: true }], installId: 'inst-1' }).load()).addOns).toEqual([]);
+    expect((await stub({ listed: [onDb1], installId: 'inst-1', allowed: new Set() }).load()).addOns).toEqual([]);
+  });
+
+  it('goes by the config\'s list when the reply does not say which install (an older reply)', async () => {
+    const plain = (a: ConnectedAddOnDto, enabled: boolean): ConnectedAddOnDto => ({ ...a, attachments: [{ attachedTo: 'printing', enabled }] });
+    // db-2's side: its config lists nothing, so the copy on db-1 is not its own.
+    const two = stub({ listed: [plain(onDb1, true), plain(offOnDb2, false)], installId: 'inst-2', allowed: new Set() });
+    expect((await two.load()).addOns).toEqual([]);
+    // db-1's side: listed, and the row switched on is the one it loads, once.
+    const one = stub({ listed: [plain(offOnDb2, false), plain(onDb1, true)], installId: 'inst-1', allowed: new Set(['holiday-calendars']) });
+    expect((await one.load()).addOns.map((a) => a.key)).toEqual(['holiday-calendars']);
+    expect(one.imported).toEqual([`${ORIGIN}/api/v1/add-ons/holiday-calendars/bundle/dist/client.js?copy=1`]);
+  });
+
+  it('says which install it is on the list call and the bundle call', async () => {
+    const s = stub({ listed: [onDb1], installId: 'inst-1', allowed: new Set(['holiday-calendars']) });
+    await s.load();
+    expect(s.headers).toHaveLength(2);
+    for (const h of s.headers) expect(h['x-adminium-install']).toBe('inst-1');
+    // And nothing when the config names no install.
+    const old = stub();
+    await old.load();
+    for (const h of old.headers) expect('x-adminium-install' in h).toBe(false);
+  });
+
+  it('refuses a reply whose attachment names its install in a shape it does not read', async () => {
+    const { addOns, problems } = await stub({
+      listedRaw: [{ ...onDb1, attachments: [{ attachedTo: 'printing', enabled: true, hostInstall: 7 }] }],
+      installId: 'inst-1',
+    }).load();
+    expect(addOns).toEqual([]);
+    expect(problems.map((p) => p.code)).toEqual(['MALFORMED']);
   });
 });
 

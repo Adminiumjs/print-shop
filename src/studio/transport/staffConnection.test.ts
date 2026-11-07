@@ -7,7 +7,8 @@
  */
 import { describe, expect, it, vi } from "vitest";
 
-import { configBase, loadStaffConfig, resolveStaffConnectionId } from "./staffConnection.ts";
+import { createSessionTransport, INSTALL_HEADER } from "./sessionSource.ts";
+import { configBase, loadStaffConfig, resolveStaffConnectionId, withInstall } from "./staffConnection.ts";
 
 const ok = (doc: unknown) =>
   vi.fn(async () =>
@@ -92,6 +93,7 @@ describe("loadStaffConfig", () => {
   it("reads everything a till boots from, and keeps nothing it does not understand", async () => {
     const fetchImpl = ok({
       connectionId: "con_42",
+      installId: "inst_7",
       appName: null,
       tables: { tickets: "pos_tickets", odd: 7 },
       settings: { business_type: "retail" },
@@ -109,6 +111,7 @@ describe("loadStaffConfig", () => {
     });
     expect(await loadStaffConfig({ hostedStaff: true, base: "/apps/pos/staff/", fetchImpl })).toEqual({
       connectionId: "con_42",
+      installId: "inst_7",
       appName: null,
       tables: { tickets: "pos_tickets" },
       settings: { business_type: "retail" },
@@ -130,6 +133,8 @@ describe("loadStaffConfig", () => {
     const fetchImpl = ok({ connectionId: "con_42", tables: {} });
     const config = await loadStaffConfig({ hostedStaff: true, base: "/apps/pos/staff/", fetchImpl });
     expect(config?.access).toBeNull();
+    // An Adminium older than installs per database names none: nothing is sent.
+    expect(config?.installId).toBeNull();
     expect(config?.publicKeys).toEqual({});
     // No add-on said attached: a feature that needs one stays off.
     expect(config?.addOns).toEqual({});
@@ -141,5 +146,55 @@ describe("loadStaffConfig", () => {
     const fetchImpl = ok({});
     expect(await loadStaffConfig({ hostedStaff: false, fetchImpl })).toBeNull();
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});
+
+describe("one app installed on two databases", () => {
+  /** Adminium as two installs answer it: the bare one on db-1, `kiln` on db-2, each with its own add-ons. */
+  const served: Record<string, unknown> = {
+    "/apps/printing/staff/surface-config.json": { connectionId: "db-1", installId: "inst-1", csrfToken: "tok-1", addOns: { "holiday-calendars": { version: "1.0.0", settings: {} } } },
+    "/apps/printing/kiln/staff/surface-config.json": { connectionId: "db-2", installId: "inst-2", csrfToken: "tok-2", addOns: {} },
+  };
+  const adminium = (calls: { url: string; headers: Record<string, string> }[]) =>
+    (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      calls.push({ url, headers: { ...(init?.headers as Record<string, string> | undefined) } });
+      const doc = served[url] ?? { data: [] };
+      return new Response(JSON.stringify(doc), { status: 200, headers: { "content-type": "application/json" } });
+    }) as typeof fetch;
+
+  it("reads the second install's own config, and every call it makes says that install", async () => {
+    const calls: { url: string; headers: Record<string, string> }[] = [];
+    const base = configBase("/apps/printing/staff/", "/apps/printing/kiln/staff/orders");
+    expect(base).toBe("/apps/printing/kiln/staff/");
+    const cfg = (await loadStaffConfig({ hostedStaff: true, base, fetchImpl: adminium(calls) }))!;
+    expect(cfg.installId).toBe("inst-2");
+    expect(cfg.connectionId).toBe("db-2");
+    // Its add-ons are its own: the first install's are not listed here.
+    expect(cfg.addOns).toEqual({});
+
+    calls.length = 0;
+    const t = createSessionTransport({ tableOfRef: {}, connectionId: cfg.connectionId ?? undefined, installId: cfg.installId, staff: { csrfToken: cfg.csrfToken }, fetchImpl: adminium(calls) });
+    await t.get("/api/v1/data/db-2/printing_orders");
+    await t.mutate("/api/v1/add-ons/holiday-calendars", "PATCH", { attachedTo: "printing", enabled: false });
+    // And round the transport: a file's bytes, a panel's code.
+    await withInstall(adminium(calls), cfg.installId)("/api/v1/files?filename=a.pdf", { method: "POST", headers: new Headers({ "x-adminium-csrf": "tok-2" }) });
+    expect(calls).toHaveLength(3);
+    for (const call of calls) expect(call.headers[INSTALL_HEADER]).toBe("inst-2");
+    expect(calls[2]!.headers["x-adminium-csrf"]).toBe("tok-2");
+  });
+
+  it("the first install's config names the first install", async () => {
+    const cfg = (await loadStaffConfig({ hostedStaff: true, base: configBase("/apps/printing/staff/", "/apps/printing/staff/"), fetchImpl: adminium([]) }))!;
+    expect(cfg.installId).toBe("inst-1");
+    expect(Object.keys(cfg.addOns)).toEqual(["holiday-calendars"]);
+  });
+
+  it("sends nothing extra when the config names no install", async () => {
+    const calls: { url: string; headers: Record<string, string> }[] = [];
+    const send = adminium(calls);
+    for (const id of [null, undefined, ""]) expect(withInstall(send, id)).toBe(send);
+    await withInstall(send, null)("/api/v1/files", { headers: { accept: "application/json" } });
+    expect(INSTALL_HEADER in calls[0]!.headers).toBe(false);
   });
 });

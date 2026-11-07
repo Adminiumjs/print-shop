@@ -20,7 +20,7 @@
  * screens expect it, an ISO instant and a boolean.
  */
 import { deviceNow } from "./clock.ts";
-import type { StaffConfig } from "./transport/staffConnection.ts";
+import { withInstall, type StaffConfig } from "./transport/staffConnection.ts";
 import { SessionPortError, type SessionTransport } from "./transport/sessionSource.ts";
 import { momentOf } from "./time.ts";
 import type { Action, ActivityEntry, AddOnTable, CatalogEntry, InstalledAddOn, PanelDoor, PanelList, PanelOpen, PanelUploaded, Person, ProofFile, Table, WorksData, WorksDoor, WorksFacts } from "./door.ts";
@@ -108,7 +108,8 @@ export class AdminiumWorks implements WorksDoor {
     this.t = transport;
     this.cfg = config;
     this.skew = options.skew ?? 0;
-    this.fetchImpl = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
+    // Round the transport too (a file's bytes, a panel's code), every call says which install it is from.
+    this.fetchImpl = withInstall(options.fetchImpl ?? globalThis.fetch.bind(globalThis), config.installId);
     this.options = options;
   }
 
@@ -481,8 +482,27 @@ export class AdminiumWorks implements WorksDoor {
   addOns(): Promise<InstalledAddOn[]> {
     return this.run(async () => {
       const got = await this.t.get<{ addOns: Record<string, unknown>[] }>("/api/v1/add-ons");
-      return got.addOns.map((a) => {
-        const attachment = (Array.isArray(a["attachments"]) ? (a["attachments"] as Record<string, unknown>[]) : []).find((one) => one["attachedTo"] === APP_KEY);
+      /*
+       * One row per key, this install's. An add-on installed on two databases
+       * is two rows with one key, each attachment naming the install of the
+       * app it joins (`hostInstall`, from 0.3.49): this app's is the one on
+       * this install. Its switch is this install's (the PATCH says which). A
+       * row for a database this install is not on stands in only for a key
+       * with no copy here.
+       */
+      const installId = this.cfg.installId;
+      const attachmentOf = (a: Record<string, unknown>) =>
+        (Array.isArray(a["attachments"]) ? (a["attachments"] as Record<string, unknown>[]) : []).find(
+          (one) => one["attachedTo"] === APP_KEY && (installId === null || typeof one["hostInstall"] !== "string" || one["hostInstall"] === installId),
+        );
+      const rank = (a: Record<string, unknown>) => (attachmentOf(a) !== undefined ? 0 : a["connectionId"] === this.cfg.connectionId ? 1 : 2);
+      const byKey = new Map<string, Record<string, unknown>>();
+      for (const a of got.addOns) {
+        const held = byKey.get(String(a["key"]));
+        if (held === undefined || rank(a) < rank(held)) byKey.set(String(a["key"]), a);
+      }
+      return [...byKey.values()].map((a) => {
+        const attachment = attachmentOf(a);
         const kind = a["connectKind"];
         const bundles = Array.isArray(a["bundles"]) ? (a["bundles"] as Record<string, unknown>[]) : [];
         return {
