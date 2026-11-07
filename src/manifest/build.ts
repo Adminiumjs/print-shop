@@ -34,9 +34,12 @@ export const VERSION = "0.2.1";
  * is the first to install the Customiser 1.0.19 it bundles, whose
  * `appGrants` let the works' roles save a proof on a design's version.
  * 0.3.49 installs the app once per database (`frontends[].instances`) and
- * tells each install's screens which install they are.
+ * tells each install's screens which install they are. 0.3.50 sends a job's
+ * earlier proof again when a new one is made, whoever makes it
+ * (`states.supersedes`), and 0.3.51 is the first to bundle the Customiser
+ * 1.0.22, whose set-up page the owner's role opens and saves.
  */
-export const MIN_ADMINIUM = "0.3.49";
+export const MIN_ADMINIUM = "0.3.51";
 
 /**
  * The release that reads two more things this app says: a role's grant of

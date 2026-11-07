@@ -21,8 +21,8 @@ the two o'clock cut-off — and the works prints Monday to Friday.
 
 ## What it needs
 
-- Adminium **0.3.48** or later, on SQLite, Postgres or MySQL.
-- The **Customiser** add-on (1.0.19 or later): it is where a customer fills in a
+- Adminium **0.3.51** or later, on SQLite, Postgres or MySQL.
+- The **Customiser** add-on (1.0.22 or later): it is where a customer fills in a
   ready-made design or starts from blank, and the job names the design they
   made. Adminium installs it with the app.
 - Nothing else. Four add-ons are offered at install, and the app is whole without

@@ -171,7 +171,7 @@ export class DemoWorks implements WorksDoor {
     return keys.map((key) => ({
       key,
       name: INSTALLED[key] ?? key,
-      version: "1.0.19",
+      version: "1.0.22",
       connectKind: "none",
       connected: true,
       missing: false,

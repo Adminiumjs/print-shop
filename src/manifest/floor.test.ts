@@ -23,8 +23,8 @@ const OLDER = "0.3.43";
 describe("the manifest at the floor it ships with", () => {
   const shipped = buildManifest();
 
-  it("ships at 0.3.49, which reads the panels' grants, the copies into the versions, a role's personal columns and deletes, the owner's erase, installs the Customiser that lets a role save a proof, and installs the app once per database", () => {
-    expect(MIN_ADMINIUM).toBe("0.3.49");
+  it("ships at 0.3.51, which reads the panels' grants, the copies into the versions, a role's personal columns and deletes, the owner's erase, installs the app once per database, sends a proof's earlier one again, and installs the Customiser whose set-up the owner opens", () => {
+    expect(MIN_ADMINIUM).toBe("0.3.51");
     expect(shipped["compatibility"]).toMatchObject({ minAdminiumVersion: MIN_ADMINIUM });
     const result = validateManifest(shipped);
     expect(result.ok ? [] : result.issues).toEqual([]);
@@ -97,7 +97,7 @@ describe("the manifest at the floor it ships with", () => {
     expect(closures.find((c) => c["ref"] === "holiday_id")).toMatchObject({ type: "int", nullable: true, rules: { addOnLink: { addOn: "holiday-calendars", table: "holidays" } } });
     expect(roleOf(shipped, "owner").tables).toContainEqual({ addOn: "holiday-calendars", table: "holidays", actions: ["read"] });
     const suggests = (shipped["addOns"] as { suggests: { key: string; range: string }[] }).suggests;
-    expect(suggests.find((s) => s.key === "holiday-calendars")?.range).toBe("^1.0.19");
+    expect(suggests.find((s) => s.key === "holiday-calendars")?.range).toBe("^1.0.22");
   });
 
   it("is refused by the validator at an older floor, so its words cannot ship on a release that cannot read them", () => {
