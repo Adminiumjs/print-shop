@@ -1,7 +1,7 @@
 /**
  * A WORKS ON 0.2.2 TAKES THE NEXT RELEASE, AND ITS PROOFS STAY TRUE.
  *
- * The released 0.2.2 manifest (`git show v0.2.2:manifest.json`) installed
+ * The released 0.2.2 manifest (kept in `released/`, held to its tag) installed
  * with the Customiser on a BUILT Adminium, on SQLite, Postgres and MySQL; its
  * sample added and a customer's order proofed from the works' screens, with
  * its PDF. Then this checkout's manifest, packed as the next release, staged
@@ -17,7 +17,7 @@
  * `CONTRACT_PORT_BASE` (4980), three an engine.
  */
 import { execFileSync } from "node:child_process";
-import { rmSync, writeFileSync } from "node:fs";
+import { readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -40,7 +40,30 @@ const ADMIN = { email: process.env["E2E_ADMIN_EMAIL"] ?? "e2e@adminium.local", p
 const WEDNESDAY = Date.parse("2026-08-05T09:20:00Z");
 const REPO = fileURLToPath(new URL("../..", import.meta.url));
 const FROM = "0.2.2";
-const FROM_MANIFEST = why === null ? execFileSync("git", ["-C", REPO, "show", `v${FROM}:manifest.json`], { encoding: "utf8" }) : "{}";
+/**
+ * The released 0.2.2's own manifest, kept beside this test
+ * (`released/printing-0.2.2.manifest.json`): read the same in a shallow CI
+ * checkout with no tags, and held to the release's tag where there is one.
+ */
+const FROM_FILE = join(REPO, "src", "contract", "released", `printing-${FROM}.manifest.json`);
+const FROM_MANIFEST = readFileSync(FROM_FILE, "utf8");
+/** The tag's manifest, or null in a checkout with no tags (CI's). */
+const TAGGED = (() => {
+  try {
+    return execFileSync("git", ["-C", REPO, "show", `v${FROM}:manifest.json`], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+  } catch {
+    return null;
+  }
+})();
+
+describe(`the released ${FROM} manifest kept beside the upgrade contract`, () => {
+  it.skipIf(TAGGED === null)(`is the one tagged v${FROM}${TAGGED === null ? " — skipped: this checkout has no tags" : ""}`, () => {
+    expect(FROM_MANIFEST).toBe(TAGGED);
+  });
+  it(`says it is ${FROM}`, () => {
+    expect((JSON.parse(FROM_MANIFEST) as { version: string }).version).toBe(FROM);
+  });
+});
 /** This checkout's manifest, as the release after 0.2.2 (the release stamps its number). */
 const TO_MANIFEST = (() => {
   const manifest = JSON.parse(MANIFEST_TEXT) as { version: string };
