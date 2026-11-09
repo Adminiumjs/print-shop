@@ -205,6 +205,7 @@ export const WORDS: Record<string, Translation> = {
   "Order number prefix": { "de-DE": "Präfix der Bestellnummer", "fr-FR": "Préfixe du numéro de commande", "da-DK": "Præfiks for bestillingsnummer", "cs-CZ": "Předpona čísla objednávky", "ar-EG": "بادئة رقم الطلب", "zh-CN": "订单号前缀", "zh-TW": "訂單編號前綴" },
   "Order received": { "de-DE": "Bestellung eingegangen", "fr-FR": "Commande reçue", "da-DK": "Bestilling modtaget", "cs-CZ": "Objednávka přijata", "ar-EG": "استُلم الطلب", "zh-CN": "已收到订单", "zh-TW": "已收到訂單" },
   "Orders": { "de-DE": "Bestellungen", "fr-FR": "Commandes", "da-DK": "Bestillinger", "cs-CZ": "Objednávky", "ar-EG": "الطلبات", "zh-CN": "订单", "zh-TW": "訂單" },
+  "PDF added": { "de-DE": "PDF hinzugefügt", "fr-FR": "PDF ajouté", "da-DK": "PDF tilføjet", "cs-CZ": "PDF přidáno", "ar-EG": "أُضيف ملف PDF", "zh-CN": "PDF 添加于", "zh-TW": "PDF 新增於" },
   "Packaging": { "de-DE": "Verpackung", "fr-FR": "Conditionnement", "da-DK": "Emballage", "cs-CZ": "Balení", "ar-EG": "التغليف", "zh-CN": "包装", "zh-TW": "包裝" },
   "Packaging charged by": { "de-DE": "Verpackung berechnet nach", "fr-FR": "Calcul du conditionnement", "da-DK": "Emballage afregnes pr.", "cs-CZ": "Balení se účtuje za", "ar-EG": "طريقة احتساب التغليف", "zh-CN": "包装计价方式", "zh-TW": "包裝計價方式" },
   "Packaging price": { "de-DE": "Verpackungspreis", "fr-FR": "Prix du conditionnement", "da-DK": "Pris for emballage", "cs-CZ": "Cena balení", "ar-EG": "سعر التغليف", "zh-CN": "包装价格", "zh-TW": "包裝價格" },

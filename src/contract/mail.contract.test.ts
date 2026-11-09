@@ -40,7 +40,7 @@ import { type Catalogue, type Row } from "../shop/port.ts";
 import { orderBody, useShop, type BasketLine } from "../shop/store.ts";
 import { addOnBundle, appBundle, boot, Caller, ENGINES, missing, missingAddOn, ok, PORTS_PER_ENGINE, until, type Engine, type Server } from "./harness.ts";
 import { MANIFEST_TEXT } from "./release.ts";
-import { delivered, sinkMail, type Mail } from "./mail.ts";
+import { delivered, sinkMail, subjectOf, type Mail } from "./mail.ts";
 
 const why = missing() ?? missingAddOn("customiser");
 if (why !== null && process.env["ADMINIUM_REQUIRE_CONTRACT"] === "1") throw new Error(`the mail contract must run here, and cannot: ${why}`);
@@ -243,6 +243,48 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
         expect(mail.text).toContain("Make the phone number bigger.");
         expect(mail.text).toContain(`Sent to the works about ${String(order.order["number"])}`);
         expect(mail.text).toContain(`${server.base}/apps/printing/staff/`);
+      }, 240_000);
+
+      // The outbox sends a kind once per row its link names: each proof, and each change asked, is a row of its own.
+      it("sends a fresh proof ready for the next proof after a change asked, and the works a copy of each change", async () => {
+        const order = await place([cards(750)], "collect");
+        const [job] = await jobsOf(order.order);
+        const subject = subjectOf(MANIFEST, "proof-ready");
+        const readyMails = async () => (await sinkMail(server.sink)).filter((m) => m.to.includes(SHOPPER.email) && subject.test(m.subject) && m.text.includes("750 × Business cards")).length;
+        const first = await sendProof(job!);
+        await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-ready", to: SHOPPER.email, row: message("proof-ready", "proof_id", first["id"]), body: new RegExp(`/order#${order.link!.token}`) });
+        expect(await readyMails()).toBe(1);
+        const door = browser().after();
+        expect(await door.openShared(order.link!.token)).toBe("opened");
+        await door.answerProof("link", first["id"] as number, { state: "change_asked", change_note: "Make the logo smaller." });
+        await delivered({ sink: server.sink, manifest: MANIFEST, kind: "change-asked", to: WORKS, row: message("change-asked", "proof_id", first["id"]) });
+
+        const second = await sendProof(job!);
+        const again = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-ready", to: SHOPPER.email, row: message("proof-ready", "proof_id", second["id"]), body: new RegExp(`/order#${order.link!.token}`) });
+        expect(String(again.row["order_id"])).toBe(String(order.order["id"]));
+        await until(async () => ((await readyMails()) === 2 ? true : undefined), "the second proof ready in the sink");
+        // The second change asked reaches the works too.
+        expect(await door.openShared(order.link!.token)).toBe("opened");
+        await door.answerProof("link", second["id"] as number, { state: "change_asked", change_note: "Now the phone line, please." });
+        await delivered({ sink: server.sink, manifest: MANIFEST, kind: "change-asked", to: WORKS, row: message("change-asked", "proof_id", second["id"]) });
+        const copies = async () => (await sinkMail(server.sink)).filter((m) => m.to.includes(WORKS) && m.text.includes(`Change asked on ${String(order.order["number"])}`));
+        await until(async () => ((await copies()).some((m) => m.text.includes("Now the phone line, please.")) ? true : undefined), "the works' copy of the second change");
+        expect(await copies()).toHaveLength(2);
+      }, 360_000);
+
+      it("never e-mails a proof added with no PDF, and e-mails it once it is given one", async () => {
+        const order = await place([cards(600)], "collect");
+        const [job] = await jobsOf(order.order);
+        const bare = ok(await staff.post<{ data: Row }>(`/api/v1/data/${connectionId}/${table("proofs")}`, { values: { job_id: job!["id"], kind: "email" } }), 201).data;
+        expect(bare["file_added_at"] ?? null).toBeNull();
+        // A later write the outbox hears (the works' note on the job) is in before the check: nothing was queued for the bare proof.
+        await patch("jobs", job!["id"], { works_note: "Proof PDF to follow." });
+        await new Promise((resolve) => setTimeout(resolve, 3_000));
+        expect(await message("proof-ready", "proof_id", bare["id"])()).toBeUndefined();
+        const stored = ok(await staff.send<{ ref: string }>("POST", `/api/v1/files?${new URLSearchParams({ filename: "proof.pdf", connectionId, table: tables()["proofs"] ?? "printing_proofs", column: "file" }).toString()}`, PDF, { "content-type": "application/pdf" }), 201);
+        const filed = await patch("proofs", bare["id"], { file: stored.ref });
+        expect((filed as { data?: Row }).data?.["file_added_at"] ?? (await rows("proofs")).find((p) => String(p["id"]) === String(bare["id"]))!["file_added_at"]).not.toBeNull();
+        await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-ready", to: SHOPPER.email, row: message("proof-ready", "proof_id", bare["id"]), body: new RegExp(`/order#${order.link!.token}`) });
       }, 240_000);
 
       it("sends the works its copy of a new order whose artwork warning was accepted", async () => {

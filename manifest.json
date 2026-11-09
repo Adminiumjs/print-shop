@@ -11084,6 +11084,53 @@
             }
           },
           {
+            "ref": "file_added_at",
+            "type": "timestamptz",
+            "label": {
+              "en-US": "PDF added",
+              "de-DE": "PDF hinzugefügt",
+              "fr-FR": "PDF ajouté",
+              "da-DK": "PDF tilføjet",
+              "cs-CZ": "PDF přidáno",
+              "ar-EG": "أُضيف ملف PDF",
+              "zh-CN": "PDF 添加于",
+              "zh-TW": "PDF 新增於"
+            },
+            "nullable": true,
+            "rules": {
+              "stamp": {
+                "set": "now",
+                "on": {
+                  "column": "file",
+                  "filled": true
+                }
+              }
+            }
+          },
+          {
+            "ref": "language",
+            "type": "text",
+            "maxLength": 16,
+            "nullable": true,
+            "label": {
+              "en-US": "Language",
+              "de-DE": "Sprache",
+              "fr-FR": "Langue",
+              "da-DK": "Sprog",
+              "cs-CZ": "Jazyk",
+              "ar-EG": "اللغة",
+              "zh-CN": "语言",
+              "zh-TW": "語言"
+            },
+            "rules": {
+              "copy": {
+                "via": "order_id",
+                "from": "language",
+                "mode": "always"
+              }
+            }
+          },
+          {
             "ref": "design_version_id",
             "type": "int",
             "nullable": true,
@@ -20624,6 +20671,7 @@
         "version",
         "kind",
         "file",
+        "file_added_at",
         "design_version_id",
         "note",
         "state",
@@ -21749,6 +21797,7 @@
         "version",
         "kind",
         "file",
+        "file_added_at",
         "design_version_id",
         "note",
         "state",
@@ -21965,10 +22014,28 @@
       },
       {
         "kind": "proof-ready",
-        "link": "order_id",
+        "link": "proof_id",
         "onCreate": {
           "table": "proofs",
-          "via": "order_id"
+          "where": {
+            "column": "file",
+            "isNull": false
+          }
+        }
+      },
+      {
+        "kind": "proof-ready",
+        "link": "proof_id",
+        "onChange": {
+          "table": "proofs",
+          "columns": [
+            "file"
+          ],
+          "changed": true,
+          "where": {
+            "column": "file",
+            "isNull": false
+          }
         }
       },
       {
@@ -22040,10 +22107,9 @@
       },
       {
         "kind": "change-asked",
-        "link": "order_id",
+        "link": "proof_id",
         "onChange": {
           "table": "proofs",
-          "via": "order_id",
           "column": "state",
           "to": "change_asked"
         },

@@ -90,14 +90,19 @@ export const OUTBOX = {
   classes: Object.fromEntries(KINDS.filter((kind) => !TO_WORKS.has(kind)).map((kind) => [kind, "service"])),
   producers: [
     { kind: "order-received", link: "order_id", onCreate: { table: "orders" } },
-    { kind: "proof-ready", link: "order_id", onCreate: { table: "proofs", via: "order_id" } },
+    // About the proof itself, so each proof of an order is its own e-mail (a fresh one after a change asked too); the
+    // order and its customer are found through it. Only a proof with its PDF: one added on the dashboard with none has
+    // nothing to open, and is e-mailed once it is given its PDF.
+    { kind: "proof-ready", link: "proof_id", onCreate: { table: "proofs", where: { column: "file", isNull: false } } },
+    { kind: "proof-ready", link: "proof_id", onChange: { table: "proofs", columns: ["file"], changed: true, where: { column: "file", isNull: false } } },
     { kind: "proof-approved", link: "order_id", onChange: { table: "proofs", via: "order_id", column: "state", to: "approved" } },
     { kind: "order-ready", link: "order_id", onChange: { table: "orders", column: "status", to: "ready", where: { column: "delivery_method", eq: "collect" } } },
     { kind: "order-dispatched", link: "order_id", onChange: { table: "orders", column: "status", to: "dispatched" } },
     { kind: "quote-saved", link: "quote_id", onCreate: { table: "saved_quotes" }, recipient: { column: "email", name: "name", language: "language" } },
     { kind: "sample-pack-sent", link: "sample_id", onChange: { table: "sample_requests", column: "status", to: "posted" }, recipient: { column: "email", name: "name", language: "language" } },
     { kind: "delivery-quote", link: "order_id", onChange: { table: "orders", column: "delivery_quote_state", to: "sent" } },
-    { kind: "change-asked", link: "order_id", onChange: { table: "proofs", via: "order_id", column: "state", to: "change_asked" }, recipient: works },
+    // Each change asked, about its own proof: a second change on the next proof is told the works too.
+    { kind: "change-asked", link: "proof_id", onChange: { table: "proofs", column: "state", to: "change_asked" }, recipient: works },
     { kind: "warnings-accepted", link: "order_id", onCreate: { table: "orders", where: { column: "has_warnings", eq: 1 } }, recipient: works },
   ],
 };

@@ -139,7 +139,7 @@ export const JOB_SELECT = [
 ];
 export const FEATURE_SELECT = ["id", "job_id", "option_id", "feature", "feature_id", "name", "price"];
 export const ARTWORK_SELECT = ["id", "job_id", "name", "file", "side", "checks", "accepted", "uploaded_at"];
-export const PROOF_SELECT = ["id", "order_id", "job_id", "version", "kind", "file", "design_version_id", "note", "state", "change_note", "sent_at", "answered_at"];
+export const PROOF_SELECT = ["id", "order_id", "job_id", "version", "kind", "file", "file_added_at", "design_version_id", "note", "state", "change_note", "sent_at", "answered_at"];
 
 export const QUOTE_SELECT = [
   "id",

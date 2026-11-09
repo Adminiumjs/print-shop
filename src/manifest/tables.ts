@@ -1160,6 +1160,11 @@ export const TABLES: Table[] = [
       // By e-mail, or printed and posted: the order's choice, or the works' own at its cost.
       choice("kind", "Sent", { email: "By e-mail", post: "Printed, by post" }, { default: "email" }),
       text("file", 64, "Proof PDF", { ...opt, rules: { file: { accept: ["pdf"], maxBytes: 104857600 } } }),
+      // When it was given its PDF: a proof added on the dashboard with none never had one, which the customer's page tells
+      // from a PDF erased with their data, and which is never e-mailed (`outbox.ts`).
+      at("file_added_at", "PDF added", { ...opt, rules: stamp("now", { column: "file", filled: true }) }),
+      // The language its order was placed in: its e-mail is written in it.
+      { ...language("language"), rules: always("order_id", "language") },
       // The Customiser's version of the design this proof shows, when the job has one.
       link("design_version_id", "design_versions", "Design version"),
       text("note", 280, "Note to the customer", opt),

@@ -4,7 +4,8 @@
  * `{{…}}` the outbox fills, or invent one it does not, nor stay in English.
  *
  * And every variable a template reads is one Adminium fills for that e-mail:
- * the link the kind's producer sets, the works' settings by their own columns
+ * the link the kind's producer sets and the links filled from that row, the
+ * works' settings by their own columns
  * (never `practice.name`, which the settings row has no column for), and
  * never a personal column of a linked row (an order's name or address),
  * which Adminium leaves out of every message, so the e-mail could never go.
@@ -57,12 +58,23 @@ describe.each(LOCALES.filter((t) => t !== "en-US"))("the e-mails in %s", (tag) =
   });
 });
 
-/** The link each kind's producer sets: the only row its template may read. */
-const LINK_OF: Record<Kind, string> = Object.fromEntries(
-  OUTBOX.producers.map((p) => [p.kind, Object.entries(OUTBOX.links).find(([, column]) => column === p.link)![0]]),
-) as Record<Kind, string>;
 const columnsOf = (ref: string) => new Map(TABLES.find((t) => t.ref === ref)!.columns.map((c) => [c.ref, c]));
-const LINKED_TABLE: Record<string, string> = { order: "orders", quote: "saved_quotes", sample: "sample_requests" };
+const LINKED_TABLE: Record<string, string> = { order: "orders", quote: "saved_quotes", sample: "sample_requests", proof: "proofs" };
+const linkNamed = (column: string) => Object.entries(OUTBOX.links).find(([, c]) => c === column)![0];
+/**
+ * The rows a kind's template may read: the row its producer links, and the
+ * rows Adminium fills the outbox's other links with from it (a proof's order,
+ * by the proof's own `order_id`). Every producer of a kind links the same.
+ */
+const LINKS_OF: Record<Kind, Set<string>> = Object.fromEntries(
+  KINDS.map((kind) => {
+    const own = [...new Set(OUTBOX.producers.filter((p) => p.kind === kind).map((p) => linkNamed(p.link)))];
+    if (own.length !== 1) throw new Error(`${kind} is linked ${String(own.length)} ways`);
+    const row = columnsOf(LINKED_TABLE[own[0]!]!);
+    const filled = Object.entries(OUTBOX.links).filter(([name, column]) => name !== own[0] && LINKED_TABLE[name] !== undefined && row.get(column)?.type === "fk").map(([name]) => name);
+    return [kind, new Set([own[0]!, ...filled])];
+  }),
+) as Record<Kind, Set<string>>;
 /** A linked row's columns about the person: Adminium never puts them in a message. */
 const PERSONAL = new Set(["name", "email", "address_line1", "address_line2", "town", "postcode", "client_key"]);
 const SETTINGS = columnsOf("settings");
@@ -71,7 +83,7 @@ const GLOBALS = new Set(["appName", "manage_url", "booking_url", "staff_url", "r
 
 describe("what the e-mails read", () => {
   it.each(KINDS)("%s reads only what Adminium fills for it", (kind) => {
-    const link = LINK_OF[kind];
+    const links = LINKS_OF[kind];
     const wrong: string[] = [];
     for (const tag of LOCALES) {
       for (const { name, backup } of variablesOf(templateOf(kind, tag))) {
@@ -82,8 +94,8 @@ describe("what the e-mails read", () => {
           continue;
         }
         const table = LINKED_TABLE[head!];
-        if (head !== link || table === undefined) {
-          wrong.push(`${tag} ${name}: the e-mail is about its ${link}`);
+        if (!links.has(head!) || table === undefined) {
+          wrong.push(`${tag} ${name}: the e-mail is about its ${[...links].join(" and ")}`);
           continue;
         }
         const own = columnsOf(table);
@@ -124,7 +136,7 @@ describe("what the e-mails read", () => {
     for (const kind of KINDS) {
       for (const block of templateOf(kind, "en-US").blocks.filter((b) => b.block === "email.rows")) {
         const from = block.data["from"] as { link: string; table: string; via: string };
-        expect(from.link, kind).toBe(LINK_OF[kind]);
+        expect([...LINKS_OF[kind]], kind).toContain(from.link);
         expect(columnsOf(from.table).get(from.via)?.type, kind).toBe("fk");
       }
     }
