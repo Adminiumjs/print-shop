@@ -6,6 +6,7 @@
   "files": {
     "index.js": "5ed14bf57fb5fc3f22eac5373d361444de93642569593b26e6b2c568501900fe",
     "stage3d.js": "851b345f69af442aedde4c3f1685f0419571d1ac75887eddca3c3747648981ca",
-    "editor.css": "67cf89c95b18bb6b817eb9e180eb9857021cedc01c2cc25c10e38277d7437c76"
+    "editor.css": "67cf89c95b18bb6b817eb9e180eb9857021cedc01c2cc25c10e38277d7437c76",
+    "app-grants.json": "4d36f0dfa2dc2314d7386d50b72f972e5eb69f68e3b1bdc911a9185c3755757a"
   }
 }

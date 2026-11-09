@@ -1,0 +1,351 @@
+{
+  "settings": {
+    "actions": [
+      "read"
+    ]
+  },
+  "bases": {
+    "actions": [
+      "read",
+      "create",
+      "update"
+    ],
+    "creatable": [
+      "app",
+      "name",
+      "kind",
+      "width_mm",
+      "height_mm",
+      "depth_mm",
+      "corner_mm",
+      "bleed_mm",
+      "safe_mm",
+      "sides",
+      "back_feature_id",
+      "material",
+      "thickness_mm",
+      "outline_file",
+      "model_file",
+      "print_file",
+      "faces",
+      "offered",
+      "state",
+      "position"
+    ],
+    "writable": [
+      "name",
+      "kind",
+      "width_mm",
+      "height_mm",
+      "depth_mm",
+      "corner_mm",
+      "bleed_mm",
+      "safe_mm",
+      "sides",
+      "back_feature_id",
+      "material",
+      "thickness_mm",
+      "outline_file",
+      "model_file",
+      "print_file",
+      "faces",
+      "offered",
+      "state",
+      "position"
+    ]
+  },
+  "base_pieces": {
+    "actions": [
+      "read",
+      "create",
+      "update",
+      "delete"
+    ],
+    "creatable": [
+      "app",
+      "base_id",
+      "code",
+      "name",
+      "width_mm",
+      "height_mm",
+      "layers",
+      "left_out",
+      "file",
+      "position"
+    ],
+    "writable": [
+      "base_id",
+      "code",
+      "name",
+      "width_mm",
+      "height_mm",
+      "layers",
+      "left_out",
+      "file",
+      "position"
+    ]
+  },
+  "base_areas": {
+    "actions": [
+      "read",
+      "create",
+      "update",
+      "delete"
+    ],
+    "creatable": [
+      "app",
+      "base_id",
+      "code",
+      "name",
+      "side",
+      "piece_id",
+      "face",
+      "shape",
+      "x_mm",
+      "y_mm",
+      "w_mm",
+      "h_mm",
+      "takes",
+      "required",
+      "rules",
+      "feature_id",
+      "position"
+    ],
+    "writable": [
+      "base_id",
+      "code",
+      "name",
+      "side",
+      "piece_id",
+      "face",
+      "shape",
+      "x_mm",
+      "y_mm",
+      "w_mm",
+      "h_mm",
+      "takes",
+      "required",
+      "rules",
+      "feature_id",
+      "position"
+    ]
+  },
+  "ready_designs": {
+    "actions": [
+      "read",
+      "create",
+      "update",
+      "delete"
+    ],
+    "creatable": [
+      "app",
+      "base_id",
+      "name",
+      "tags",
+      "layouts",
+      "state",
+      "preview_file",
+      "position"
+    ],
+    "writable": [
+      "base_id",
+      "name",
+      "tags",
+      "layouts",
+      "state",
+      "preview_file",
+      "position"
+    ]
+  },
+  "ready_parts": {
+    "actions": [
+      "read",
+      "create",
+      "update",
+      "delete"
+    ],
+    "creatable": [
+      "app",
+      "ready_design_id",
+      "code",
+      "name",
+      "kind",
+      "locked",
+      "required",
+      "side",
+      "layout",
+      "area_id",
+      "piece_id",
+      "x_mm",
+      "y_mm",
+      "w_mm",
+      "h_mm",
+      "rules",
+      "value",
+      "feature_id",
+      "position"
+    ],
+    "writable": [
+      "ready_design_id",
+      "code",
+      "name",
+      "kind",
+      "locked",
+      "required",
+      "side",
+      "layout",
+      "area_id",
+      "piece_id",
+      "x_mm",
+      "y_mm",
+      "w_mm",
+      "h_mm",
+      "rules",
+      "value",
+      "feature_id",
+      "position"
+    ]
+  },
+  "fonts": {
+    "actions": [
+      "read",
+      "create",
+      "update",
+      "delete"
+    ],
+    "creatable": [
+      "app",
+      "family",
+      "name",
+      "style",
+      "weights",
+      "licence",
+      "starter",
+      "smallest_mm",
+      "file",
+      "active"
+    ],
+    "writable": [
+      "family",
+      "name",
+      "style",
+      "weights",
+      "licence",
+      "starter",
+      "smallest_mm",
+      "file",
+      "active"
+    ]
+  },
+  "palettes": {
+    "actions": [
+      "read",
+      "create",
+      "update",
+      "delete"
+    ],
+    "creatable": [
+      "app",
+      "ready_design_id",
+      "kind",
+      "code",
+      "name",
+      "position"
+    ],
+    "writable": [
+      "ready_design_id",
+      "kind",
+      "code",
+      "name",
+      "position"
+    ]
+  },
+  "palette_colours": {
+    "actions": [
+      "read",
+      "create",
+      "update",
+      "delete"
+    ],
+    "creatable": [
+      "app",
+      "palette_id",
+      "code",
+      "role",
+      "name",
+      "hex",
+      "position"
+    ],
+    "writable": [
+      "palette_id",
+      "code",
+      "role",
+      "name",
+      "hex",
+      "position"
+    ]
+  },
+  "features": {
+    "actions": [
+      "read",
+      "create",
+      "update",
+      "delete"
+    ],
+    "creatable": [
+      "app",
+      "code",
+      "name",
+      "active"
+    ],
+    "writable": [
+      "code",
+      "name",
+      "active"
+    ]
+  },
+  "designs": {
+    "actions": [
+      "read",
+      "read_pii"
+    ]
+  },
+  "design_versions": {
+    "actions": [
+      "read",
+      "read_pii",
+      "create",
+      "update"
+    ],
+    "creatable": [
+      "app",
+      "design_id",
+      "version",
+      "values"
+    ],
+    "writable": [
+      "proof_file"
+    ]
+  },
+  "version_files": {
+    "actions": [
+      "read",
+      "create",
+      "update",
+      "delete"
+    ],
+    "creatable": [
+      "app",
+      "version_id",
+      "kind",
+      "name",
+      "about",
+      "layers",
+      "left_out",
+      "position"
+    ],
+    "writable": [
+      "file"
+    ]
+  }
+}

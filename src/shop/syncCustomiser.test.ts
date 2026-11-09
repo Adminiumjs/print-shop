@@ -6,7 +6,7 @@
  */
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
@@ -47,8 +47,25 @@ function tarball(files: Record<string, string>): Buffer {
   return gzipSync(Buffer.concat(blocks));
 }
 
+/** The add-on's manifest, as far as the sync reads it: what an app's role may hold of each table. */
+const MANIFEST = JSON.stringify({
+  key: "customiser",
+  requiredSchema: {
+    tables: [
+      { ref: "settings", appGrants: { actions: ["read"] } },
+      { ref: "features", appGrants: { actions: ["read", "create", "update", "delete"], creatable: ["app", "code", "name"], writable: ["code", "name"] } },
+      { ref: "postings" },
+    ],
+  },
+});
+const GRANTS = {
+  settings: { actions: ["read"] },
+  features: { actions: ["read", "create", "update", "delete"], creatable: ["app", "code", "name"], writable: ["code", "name"] },
+};
+
 const RELEASE = {
   "package.json": JSON.stringify({ name: "@adminiumjs/add-on-customiser", version: "1.0.16" }),
+  "manifest.json": MANIFEST,
   "dist/browser/index.js": "export const CustomiserEditor = () => null;\n",
   "dist/browser/stage3d.js": "export const stage = 1;\n",
   "dist/browser/editor.css": ".cz { color: red; }\n",
@@ -83,6 +100,8 @@ describe("taking the Customiser's editor into the shop", () => {
     expect(readFileSync(join(out, "index.js"), "utf8")).toBe(RELEASE["dist/browser/index.js"]);
     expect(readFileSync(join(out, "stage3d.js"), "utf8")).toBe(RELEASE["dist/browser/stage3d.js"]);
     expect(readFileSync(join(out, "editor.css"), "utf8")).toBe(RELEASE["dist/browser/editor.css"]);
+    // What an app's role may hold of each table, from the release's own manifest.
+    expect(JSON.parse(readFileSync(join(out, "app-grants.json"), "utf8"))).toEqual(GRANTS);
     const source = JSON.parse(readFileSync(join(out, "SOURCE.json"), "utf8")) as Record<string, unknown>;
     expect(source).toMatchObject({ from: "release", package: "@adminiumjs/add-on-customiser", version: "1.0.16", integrity });
     expect(run("--tarball", tgz, "--ledger", ledger, "--out", out, "--check").ok).toBe(true);
@@ -111,15 +130,31 @@ describe("taking the Customiser's editor into the shop", () => {
   });
 
   it("takes a built checkout's files, naming its version and never a path on this machine", () => {
-    const dist = temp();
+    const pkg = temp();
+    const dist = join(pkg, "dist", "browser");
+    mkdirSync(dist, { recursive: true });
     for (const name of ["index.js", "stage3d.js", "editor.css"]) writeFileSync(join(dist, name), `/* ${name} */\n`);
+    writeFileSync(join(pkg, "manifest.json"), MANIFEST);
     const out = temp();
     expect(run(dist, "--out", out).ok).toBe(true);
     const source = readFileSync(join(out, "SOURCE.json"), "utf8");
     expect(source).not.toContain(dist);
     expect(JSON.parse(source)).toMatchObject({ from: "checkout", package: "@adminiumjs/add-on-customiser" });
+    expect(JSON.parse(readFileSync(join(out, "app-grants.json"), "utf8"))).toEqual(GRANTS);
     writeFileSync(join(out, "editor.css"), "/* changed */\n");
     expect(run(dist, "--out", out, "--check").ok).toBe(false);
+  });
+
+  it("refuses an add-on whose manifest is missing, and holds the vendored grants to the source on a check", () => {
+    const bare = standIn(Object.fromEntries(Object.entries(RELEASE).filter(([path]) => path !== "manifest.json")));
+    const refused = run("--tarball", bare.tgz, "--ledger", bare.ledger, "--out", temp());
+    expect(refused.ok).toBe(false);
+    expect(refused.out).toMatch(/manifest\.json/);
+    const { tgz, ledger } = standIn();
+    const out = temp();
+    expect(run("--tarball", tgz, "--ledger", ledger, "--out", out).ok).toBe(true);
+    writeFileSync(join(out, "app-grants.json"), "{}\n");
+    expect(run("--tarball", tgz, "--ledger", ledger, "--out", out, "--check").out).toMatch(/app-grants\.json/);
   });
 
   it("holds the vendored files to the hashes their SOURCE.json records", () => {

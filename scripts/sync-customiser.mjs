@@ -21,6 +21,11 @@
  *       version. A tarball the ledger does not name, or whose bytes differ,
  *       is refused and nothing is written.
  *
+ * With them comes `app-grants.json`: what the add-on lets an app's role hold
+ * of each of its tables (`appGrants` in its `manifest.json`), which the
+ * owner's set-up columns are held to (`src/manifest/floor.test.ts`), so a
+ * column the add-on adds or takes away fails a test the day it is vendored.
+ *
  * Either way `vendor/customiser/SOURCE.json` says where the files came from
  * and each file's hash. `--check` writes nothing and fails when the vendored
  * files are not the ones the source would give. `--out <dir>` writes
@@ -38,6 +43,8 @@ const repo = join(here, '..');
 
 /** The files the shop vendors, by their name in `dist/browser/`. */
 export const FILES = ['index.js', 'stage3d.js', 'editor.css'];
+/** What an app's role may hold of each table, taken from the add-on's `manifest.json`. */
+export const GRANTS = 'app-grants.json';
 /** The package the files come from, as npm names it. */
 export const PACKAGE = '@adminiumjs/add-on-customiser';
 
@@ -84,6 +91,20 @@ export function untar(gzipped) {
   return out;
 }
 
+/** `{ <table>: appGrants }` of the add-on's manifest, as the vendored file holds it. */
+function grantsOf(manifestText, where) {
+  let manifest;
+  try {
+    manifest = JSON.parse(manifestText);
+  } catch {
+    fail(`${where} is not JSON`);
+  }
+  const tables = manifest?.requiredSchema?.tables ?? [];
+  const grants = Object.fromEntries(tables.filter((table) => table.appGrants !== undefined).map((table) => [table.ref, table.appGrants]));
+  if (Object.keys(grants).length === 0) fail(`${where} gives no app's role anything (no appGrants)`);
+  return Buffer.from(`${JSON.stringify(grants, null, 2)}\n`);
+}
+
 /** The files and where they came from: a built checkout's folder. */
 function fromDir(dir) {
   const root = resolve(dir);
@@ -93,6 +114,9 @@ function fromDir(dir) {
     if (!existsSync(path)) fail(`${path} is missing: build the add-on first (npm run build -w packages/customiser)`);
     files.set(name, readFileSync(path));
   }
+  const manifestFile = join(root, '..', '..', 'manifest.json');
+  if (!existsSync(manifestFile)) fail(`${manifestFile} is missing: the add-on's manifest is beside its dist/`);
+  files.set(GRANTS, grantsOf(readFileSync(manifestFile, 'utf8'), 'the add-on\'s manifest.json'));
   // Which build: the package's version and the checkout's commit, never a path on this machine.
   const pkgFile = join(root, '..', '..', 'package.json');
   const version = existsSync(pkgFile) ? JSON.parse(readFileSync(pkgFile, 'utf8')).version : null;
@@ -126,6 +150,9 @@ function fromTarball(file, ledgerFile, wanted) {
     if (body === undefined) fail(`${file} has no dist/browser/${name}`);
     files.set(name, body);
   }
+  const manifestText = members.get('package/manifest.json');
+  if (manifestText === undefined) fail(`${file} has no manifest.json`);
+  files.set(GRANTS, grantsOf(manifestText.toString('utf8'), `${file}'s manifest.json`));
   return { files, source: { from: 'release', package: PACKAGE, version: pkg.version, integrity } };
 }
 
@@ -143,7 +170,7 @@ function main(args) {
   const hashes = Object.fromEntries([...taken.files].map(([name, body]) => [name, sha256(body)]));
   const sourceText = `${JSON.stringify({ ...taken.source, files: hashes }, null, 2)}\n`;
   if (check) {
-    const stale = FILES.filter((name) => !existsSync(join(out, name)) || sha256(readFileSync(join(out, name))) !== hashes[name]);
+    const stale = [...FILES, GRANTS].filter((name) => !existsSync(join(out, name)) || sha256(readFileSync(join(out, name))) !== hashes[name]);
     if (stale.length > 0) fail(`out of date in ${out}: ${stale.join(', ')}. Run the sync again.`);
     console.info(`[sync-customiser] ${out} is current`);
     return;
@@ -151,7 +178,7 @@ function main(args) {
   mkdirSync(out, { recursive: true });
   for (const [name, body] of taken.files) writeFileSync(join(out, name), body);
   writeFileSync(join(out, 'SOURCE.json'), sourceText);
-  console.info(`[sync-customiser] wrote ${FILES.length} files to ${out}`);
+  console.info(`[sync-customiser] wrote ${taken.files.size} files to ${out}`);
 }
 
 if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main(process.argv.slice(2));
