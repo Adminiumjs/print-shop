@@ -3,8 +3,9 @@
 ## 0.2.3 (10 November 2026)
 
 Needs Adminium **0.3.52** and asks for the add-ons at **1.0.23**. Updating from
-0.2.2, Adminium lists what prepress and the press now read of the Customiser
-(its settings) and updates once the operator allows it (`roleTables`).
+0.2.2, Adminium lists what the roles now hold more of the Customiser (the
+owner changes its settings, prepress and the press read them) and updates once
+the operator allows it (`roleTables`).
 
 - **Every proof is e-mailed, not only an order's first.** A proof sent after a
   change asked, or sent again, now e-mails the customer its "proof ready" too,

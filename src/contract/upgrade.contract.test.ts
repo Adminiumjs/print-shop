@@ -5,8 +5,8 @@
  * with the Customiser on a BUILT Adminium, on SQLite, Postgres and MySQL; its
  * sample added and a customer's order proofed from the works' screens, with
  * its PDF. Then this checkout's manifest, packed as the next release, staged
- * and the app updated in place, the operator allowing what it asks (prepress
- * and the press now read the Customiser's settings). The update adds the proofs' two stamps
+ * and the app updated in place, the operator allowing what it asks (the
+ * owner now changes the Customiser's settings, prepress and the press read them). The update adds the proofs' two stamps
  * (`file_added_at`, `recorded_at`) empty on the proof already there, as it
  * adds every new column. Last the customer is erased: their proof's PDF goes,
  * and their order's page says the proof is no longer kept, never that it is
@@ -163,11 +163,13 @@ describe.skipIf(why !== null)(`a works on ${FROM} updated, its proofs as they we
         const app = await install(TO_MANIFEST);
         const plan = ok(await staff.post<{ plan: { checksum: string; installable: boolean; problems: unknown[] } }>("/api/v1/apps/plan", { key: app.key, version: app.version, connectionId })).plan;
         expect([plan.installable, plan.problems]).toEqual([true, []]);
-        // Prepress and the press now read the Customiser's settings (a proof's one-colour line): the operator allows it.
+        // The owner now changes the Customiser's settings (its Shop settings), and prepress and the press read them (a
+        // proof's one-colour line): the operator allows it.
         const asked = await staff.post<{ error: { details: { reason: string; roleTables: { role: string; table: string; wider: { actions: string[] } }[] } } }>("/api/v1/apps/printing/update", { planChecksum: plan.checksum, publicAccess: true });
         expect(asked.status, JSON.stringify(asked.body).slice(0, 600)).toBe(422);
         expect(asked.body.error.details.reason).toBe("ROLE_TABLES_WIDER");
         expect(asked.body.error.details.roleTables.map((w) => [w.role, w.table, w.wider.actions])).toEqual([
+          ["owner", "settings", ["update"]],
           ["prepress", "settings", ["read"]],
           ["press", "settings", ["read"]],
         ]);
