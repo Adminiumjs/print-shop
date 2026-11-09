@@ -377,6 +377,32 @@ describe("the shell", () => {
     expect(text()).toContain("A file the customer sent — deleted with their data.");
   });
 
+  it("keeps the customer's change in the proof history once the next proof replaced the proof they answered", async () => {
+    const door = new FakeDoor({ roles: ["prepress"] });
+    const first = door.data.proofs.find((p) => p.id === 3)!;
+    first["state"] = "superseded";
+    const second = door.data.proofs.find((p) => p.id === 4)!;
+    second["state"] = "sent";
+    await mount(door, "ticket", { jobId: 5 });
+    const history = [...document.querySelectorAll(".wk-history-row")].map((row) => row.textContent ?? "");
+    expect(history[0]).toContain("Proof 1 sent, since replaced");
+    expect(history[1]).toContain("Change asked");
+    expect(history[1]).toContain("Make the logo bigger.");
+    expect(history[2]).toContain("Proof 2 sent");
+    expect(history[2]).not.toContain("replaced");
+    expect(history).toHaveLength(3);
+  });
+
+  it("says a proof sent again before any answer was replaced, with no change under it", async () => {
+    const door = new FakeDoor({ roles: ["prepress"] });
+    const first = door.data.proofs.find((p) => p.id === 3)!;
+    Object.assign(first, { state: "superseded", change_note: null, answered_at: null });
+    await mount(door, "ticket", { jobId: 5 });
+    const history = [...document.querySelectorAll(".wk-history-row")].map((row) => row.textContent ?? "");
+    expect(history[0]).toContain("Proof 1 sent, since replaced");
+    expect(history.some((row) => row.includes("Change asked"))).toBe(false);
+  });
+
   it("points a role that opens the design's panel to its files under Actions", async () => {
     await mount(new FakeDoor({ roles: ["prepress"] }), "ticket", { jobId: 8 });
     expect(text()).toContain("Made in the customiser — its files are below, under Actions.");

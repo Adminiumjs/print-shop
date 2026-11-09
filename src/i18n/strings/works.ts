@@ -140,6 +140,8 @@ export const works = {
     "works.proof.title": "Proof history",
     "works.proof.none": "No proof sent yet.",
     "works.proof.sent": "Proof {n} sent",
+
+    "works.proof.replaced": "Proof {n} sent, since replaced",
     "works.proof.sentNote": "{how} — {note}",
     "works.proof.byEmail": "by e-mail",
     "works.proof.byPost": "printed, by post",
@@ -560,6 +562,8 @@ export const works = {
     "works.proof.title": "Proof-Verlauf",
     "works.proof.none": "Noch kein Proof gesendet.",
     "works.proof.sent": "Proof {n} gesendet",
+
+    "works.proof.replaced": "Proof {n} gesendet, inzwischen ersetzt",
     "works.proof.sentNote": "{how} — {note}",
     "works.proof.byEmail": "per E-Mail",
     "works.proof.byPost": "gedruckt, per Post",
@@ -980,6 +984,8 @@ export const works = {
     "works.proof.title": "Historique des épreuves",
     "works.proof.none": "Aucune épreuve envoyée.",
     "works.proof.sent": "Épreuve {n} envoyée",
+
+    "works.proof.replaced": "Épreuve {n} envoyée, remplacée depuis",
     "works.proof.sentNote": "{how} — {note}",
     "works.proof.byEmail": "par e-mail",
     "works.proof.byPost": "imprimée, par la poste",
@@ -1400,6 +1406,8 @@ export const works = {
     "works.proof.title": "Historie nátisků",
     "works.proof.none": "Zatím nebyl odeslán žádný nátisk.",
     "works.proof.sent": "Nátisk {n} odeslán",
+
+    "works.proof.replaced": "Nátisk {n} odeslán, později nahrazen",
     "works.proof.sentNote": "{how} — {note}",
     "works.proof.byEmail": "e-mailem",
     "works.proof.byPost": "vytištěný, poštou",
@@ -1820,6 +1828,8 @@ export const works = {
     "works.proof.title": "Korrekturhistorik",
     "works.proof.none": "Ingen korrektur sendt endnu.",
     "works.proof.sent": "Korrektur {n} sendt",
+
+    "works.proof.replaced": "Korrektur {n} sendt, siden erstattet",
     "works.proof.sentNote": "{how} — {note}",
     "works.proof.byEmail": "på e-mail",
     "works.proof.byPost": "trykt, med posten",
@@ -2240,6 +2250,8 @@ export const works = {
     "works.proof.title": "校样记录",
     "works.proof.none": "还没有发送校样。",
     "works.proof.sent": "已发送第 {n} 份校样",
+
+    "works.proof.replaced": "已发送第 {n} 份校样，后已被替换",
     "works.proof.sentNote": "{how}——{note}",
     "works.proof.byEmail": "通过电子邮件",
     "works.proof.byPost": "打印后邮寄",
@@ -2660,6 +2672,8 @@ export const works = {
     "works.proof.title": "打樣紀錄",
     "works.proof.none": "還沒有傳送打樣。",
     "works.proof.sent": "已傳送第 {n} 份打樣",
+
+    "works.proof.replaced": "已傳送第 {n} 份打樣，後已被替換",
     "works.proof.sentNote": "{how}——{note}",
     "works.proof.byEmail": "透過電子郵件",
     "works.proof.byPost": "列印後郵寄",
@@ -3080,6 +3094,8 @@ export const works = {
     "works.proof.title": "سجل البروفات",
     "works.proof.none": "لم تُرسل بروفة بعد.",
     "works.proof.sent": "أُرسلت البروفة {n}",
+
+    "works.proof.replaced": "أُرسلت البروفة {n}، ثم استُبدلت",
     "works.proof.sentNote": "{how} — {note}",
     "works.proof.byEmail": "بالبريد الإلكتروني",
     "works.proof.byPost": "مطبوعة، بالبريد",
