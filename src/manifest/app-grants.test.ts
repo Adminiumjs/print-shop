@@ -15,6 +15,22 @@ import { ROLES, SETUP_COLUMNS } from "./roles.ts";
 
 type Grants = { actions: string[]; creatable?: string[]; writable?: string[]; readable?: string[] };
 const VENDORED = JSON.parse(readFileSync(new URL("../../vendor/customiser/app-grants.json", import.meta.url), "utf8")) as Record<string, Grants>;
+const VENDORED_VERSION = (JSON.parse(readFileSync(new URL("../../vendor/customiser/SOURCE.json", import.meta.url), "utf8")) as { version: string }).version;
+const atLeast = (version: string, floor: string) => {
+  const [a, b] = [version, floor].map((v) => v.split(".").map(Number));
+  for (let i = 0; i < 3; i += 1) if (a![i] !== b![i]) return a![i]! > b![i]!;
+  return true;
+};
+
+/**
+ * Holds the manifest asks for ahead of the vendored release: the owner's
+ * change of the settings (the set-up page's Shop settings) is in the
+ * Customiser's `appGrants` from 1.0.23. Until 1.0.23 is vendored the install
+ * cuts it and says so; once it is, nothing is excused and the test below
+ * holds it like every other.
+ */
+const AHEAD: { role: string; table: string; action: string; from: string }[] = [{ role: "owner", table: "settings", action: "update", from: "1.0.23" }];
+const excused = (role: string, table: string, action: string) => AHEAD.some((a) => a.role === role && a.table === table && a.action === action && !atLeast(VENDORED_VERSION, a.from));
 type Held = { addOn?: string; table: string; actions: string[]; limit?: { creatable?: string[]; writable?: string[] } };
 const heldBy = (key: string): Held[] => ((ROLES.find((r) => r.key === key)!.tables ?? []) as Held[]).filter((g) => g.addOn === "customiser");
 
@@ -31,9 +47,18 @@ describe("the Customiser's tables, as the vendored add-on lets an app's role hol
     for (const grant of heldBy(key)) {
       const allowed = VENDORED[grant.table];
       expect(allowed, `${key}: ${grant.table} is given to no app's role`).toBeDefined();
-      for (const action of grant.actions) expect(allowed!.actions, `${key}: ${grant.table} ${action}`).toContain(action);
+      for (const action of grant.actions) if (!excused(key, grant.table, action)) expect(allowed!.actions, `${key}: ${grant.table} ${action}`).toContain(action);
       for (const column of grant.limit?.creatable ?? []) expect(allowed!.creatable ?? [], `${key}: ${grant.table} creates ${column}`).toContain(column);
-      for (const column of grant.limit?.writable ?? []) expect(allowed!.writable ?? [], `${key}: ${grant.table} changes ${column}`).toContain(column);
+      if (!excused(key, grant.table, "update")) for (const column of grant.limit?.writable ?? []) expect(allowed!.writable ?? [], `${key}: ${grant.table} changes ${column}`).toContain(column);
+    }
+  });
+
+  it("excuses only what a release after the vendored one gives, and nothing once it is vendored", () => {
+    for (const ahead of AHEAD) {
+      const role = ROLES.find((r) => r.key === ahead.role)!;
+      expect(heldBy(role.key).find((g) => g.table === ahead.table)?.actions, `${ahead.role} asks for ${ahead.table} ${ahead.action}`).toContain(ahead.action);
+      if (atLeast(VENDORED_VERSION, ahead.from)) expect(VENDORED[ahead.table]!.actions, `${ahead.table} ${ahead.action} in ${VENDORED_VERSION}`).toContain(ahead.action);
+      else expect(VENDORED[ahead.table]!.actions, `${ahead.table} ${ahead.action} is not yet in ${VENDORED_VERSION}`).not.toContain(ahead.action);
     }
   });
 });

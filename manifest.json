@@ -19601,6 +19601,15 @@
               ]
             },
             "rows": {
+              "read": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
               "update": {
                 "reach": "all",
                 "while": {
@@ -19648,6 +19657,15 @@
               ]
             },
             "rows": {
+              "read": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
               "update": {
                 "reach": "all",
                 "while": {
@@ -19726,6 +19744,15 @@
               ]
             },
             "rows": {
+              "read": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
               "update": {
                 "reach": "all",
                 "while": {
@@ -19800,6 +19827,15 @@
               ]
             },
             "rows": {
+              "read": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
               "update": {
                 "reach": "all",
                 "while": {
@@ -19860,6 +19896,15 @@
               ]
             },
             "rows": {
+              "read": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
               "update": {
                 "reach": "all",
                 "while": {
@@ -19912,6 +19957,15 @@
               ]
             },
             "rows": {
+              "read": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
               "update": {
                 "reach": "all",
                 "while": {
@@ -19966,6 +20020,15 @@
               ]
             },
             "rows": {
+              "read": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
               "update": {
                 "reach": "all",
                 "while": {
@@ -20024,6 +20087,57 @@
               "app": [
                 "printing"
               ]
+            },
+            "rows": {
+              "read": [
+                {
+                  "reach": "all",
+                  "while": {
+                    "column": "app",
+                    "in": [
+                      "printing"
+                    ]
+                  }
+                },
+                {
+                  "reach": "all",
+                  "while": {
+                    "column": "starter",
+                    "in": [
+                      true
+                    ]
+                  }
+                }
+              ],
+              "update": [
+                {
+                  "reach": "all",
+                  "while": {
+                    "column": "app",
+                    "in": [
+                      "printing"
+                    ]
+                  }
+                },
+                {
+                  "reach": "all",
+                  "while": {
+                    "column": "starter",
+                    "in": [
+                      true
+                    ]
+                  }
+                }
+              ],
+              "delete": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              }
             }
           }
         },
@@ -20054,6 +20168,15 @@
               ]
             },
             "rows": {
+              "read": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
               "update": {
                 "reach": "all",
                 "while": {
@@ -20079,8 +20202,19 @@
           "addOn": "customiser",
           "table": "settings",
           "actions": [
-            "read"
-          ]
+            "read",
+            "update"
+          ],
+          "limit": {
+            "writable": [
+              "length_unit",
+              "default_bleed_mm",
+              "default_safe_mm",
+              "one_colour_threshold",
+              "smallest_line_mm",
+              "min_dpi"
+            ]
+          }
         },
         {
           "addOn": "inventory",
@@ -20292,6 +20426,13 @@
           ]
         },
         {
+          "addOn": "customiser",
+          "table": "settings",
+          "actions": [
+            "read"
+          ]
+        },
+        {
           "addOn": "inventory",
           "table": "links",
           "actions": [
@@ -20494,6 +20635,13 @@
         {
           "addOn": "customiser",
           "table": "features",
+          "actions": [
+            "read"
+          ]
+        },
+        {
+          "addOn": "customiser",
+          "table": "settings",
           "actions": [
             "read"
           ]

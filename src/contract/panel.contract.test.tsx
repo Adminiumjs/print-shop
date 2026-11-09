@@ -55,7 +55,7 @@ import { createSessionTransport } from "../studio/transport/sessionSource.ts";
 import { loadStaffConfig } from "../studio/transport/staffConnection.ts";
 import type { Row } from "../studio/wire.ts";
 import { addOnBundle, appBundle, boot, Caller, ENGINES, missing, missingAddOn, ok, PORTS_PER_ENGINE, until, type Engine, type Server } from "./harness.ts";
-import { MANIFEST_TEXT } from "./release.ts";
+import { engineAtLeast, MANIFEST_TEXT } from "./release.ts";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -232,6 +232,20 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
         expect((refused as PanelRefused).status).toBe(403);
       });
 
+      /*
+       * The counter books a delivery company's collection, so its screens ask
+       * Adminium which add-ons the print shop has. Adminium tells a
+       * screens-only role so from 0.3.52; before, it refuses the read (403)
+       * and the counter's screens go on without a delivery company. Expected
+       * to fail on an Adminium before 0.3.52, and to pass from it.
+       */
+      (engineAtLeast("0.3.52") ? it : it.fails)("tells the counter which add-ons the print shop has (waits for Adminium 0.3.52)", async () => {
+        const listed = await callers["counter"]!.get<{ addOns: { key: string; attachments?: { attachedTo: string }[] }[] }>("/api/v1/add-ons");
+        expect(listed.status, JSON.stringify(listed.body).slice(0, 300)).toBe(200);
+        const customiser = listed.body.addOns.find((a) => a.key === "customiser");
+        expect(customiser?.attachments?.some((one) => one.attachedTo === "printing")).toBe(true);
+      });
+
       it("serves the product's panel to the owner, and refuses it to the press", async () => {
         const data = await doors["owner"]!.load();
         const product = data.products.find((p) => p["base_id"] !== null && p["base_id"] !== undefined)!;
@@ -388,32 +402,54 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
       /*
        * With the Maker Shop on the same install, both shops' set-up rows sit in
        * the Customiser's one set of tables, each tagged with its shop (`app`).
-       * The print shop's owner changes, removes and adds only the print shop's:
-       * a base and a priced feature of the maker's, as an operator adds them,
-       * are refused them, and so is a new row tagged as the maker's.
+       * The print shop's owner reads, changes, removes and adds only the print
+       * shop's: to them a base, a priced feature and a font of the maker's, as
+       * an operator adds them, are not there (404), and a new row tagged as the
+       * maker's is refused (403). The starter fonts are nobody's: the owner
+       * reads and changes them (the set-up gives them their files), and never
+       * removes one.
        */
-      it("refuses the owner another shop's set-up rows: changing, removing, or adding one as that shop's", async () => {
+      it("hides another shop's set-up rows from the owner, refuses adding one as that shop's, and keeps the starter fonts usable but not removable", async () => {
         const owner = callers["owner"]!;
         const at = (table: string, id?: unknown) => `/api/v1/data/${connectionId}/customiser_${table}${id === undefined ? "" : `/${String(id)}`}`;
+        const said = (r: { status: number; body: unknown }) => `${String(r.status)} ${JSON.stringify(r.body).slice(0, 300)}`;
         const base = ok(await admin.post<{ data: Row }>(at("bases"), { values: { app: "maker", name: "Maker's coaster", kind: "piece", width_mm: 95, height_mm: 95 } }), 201).data;
         const feature = ok(await admin.post<{ data: Row }>(at("features"), { values: { app: "maker", code: "maker-gift-box", name: "Gift box" } }), 201).data;
-        const refused = (status: number) => [403, 404].includes(status);
-        const renamed = await owner.patch(at("bases", base.id), { values: { name: "Taken over" } }, await tokenOf("owner"));
-        expect(refused(renamed.status), `base: ${String(renamed.status)} ${JSON.stringify(renamed.body).slice(0, 300)}`).toBe(true);
-        const changed = await owner.patch(at("features", feature.id), { values: { name: "Taken over" } }, await tokenOf("owner"));
-        expect(refused(changed.status), `feature: ${String(changed.status)} ${JSON.stringify(changed.body).slice(0, 300)}`).toBe(true);
-        const removed = await owner.send("DELETE", at("features", feature.id), undefined, await tokenOf("owner"));
-        expect(refused(removed.status), `feature removed: ${String(removed.status)}`).toBe(true);
+        const font = ok(await admin.post<{ data: Row }>(at("fonts"), { values: { app: "maker", family: "Maker Serif", name: "Maker Serif", licence: "The maker's own", starter: false } }), 201).data;
+        for (const [table, row] of [["bases", base], ["features", feature], ["fonts", font]] as const) {
+          const read = await owner.get(at(table, row.id));
+          expect(read.status, `${table} read: ${said(read)}`).toBe(404);
+          const listed = ok(await owner.get<{ data: Row[] }>(`${at(table)}?limit=200`)).data;
+          expect(listed.some((r) => String(r.id) === String(row.id)), `${table} listed`).toBe(false);
+          const changed = await owner.patch(at(table, row.id), { values: { name: "Taken over" } }, await tokenOf("owner"));
+          expect(changed.status, `${table} changed: ${said(changed)}`).toBe(404);
+        }
+        for (const [table, row] of [["features", feature], ["fonts", font]] as const) {
+          const removed = await owner.send("DELETE", at(table, row.id), undefined, await tokenOf("owner"));
+          expect(removed.status, `${table} removed: ${said(removed)}`).toBe(404);
+        }
         const tagged = await owner.post(at("features"), { values: { app: "maker", code: "print-sneaks-in", name: "Sneaks in" } }, await tokenOf("owner"));
-        expect([403, 422], `a row tagged the maker's: ${String(tagged.status)} ${JSON.stringify(tagged.body).slice(0, 300)}`).toContain(tagged.status);
-        // Both stay the maker's, as the operator added them.
+        expect(tagged.status, `a row tagged the maker's: ${said(tagged)}`).toBe(403);
+        // All three stay the maker's, as the operator added them.
         expect(ok(await admin.get<{ data: Row }>(at("bases", base.id))).data["name"]).toBe("Maker's coaster");
         expect(ok(await admin.get<{ data: Row }>(at("features", feature.id))).data["name"]).toBe("Gift box");
-        // The print shop's own rows stay the owner's: a feature added as the print shop's, changed and removed.
+        expect(ok(await admin.get<{ data: Row }>(at("fonts", font.id))).data["name"]).toBe("Maker Serif");
+        // The print shop's own rows stay the owner's: a feature added as the print shop's, read, changed and removed.
         const own = await owner.post<{ data: Row }>(at("features"), { values: { app: "printing", code: "print-own-box", name: "Box" } }, await tokenOf("owner"));
-        expect(own.status, JSON.stringify(own.body).slice(0, 300)).toBe(201);
+        expect(own.status, said(own)).toBe(201);
+        expect((await owner.get(at("features", own.body.data.id))).status).toBe(200);
         expect((await owner.patch(at("features", own.body.data.id), { values: { name: "Gift box" } }, await tokenOf("owner"))).status).toBe(200);
         expect([200, 204]).toContain((await owner.send("DELETE", at("features", own.body.data.id), undefined, await tokenOf("owner"))).status);
+        // A starter font: read and changed by the owner, never removed.
+        const starter = ok(await admin.get<{ data: Row[] }>(`${at("fonts")}?limit=200`)).data.find((f) => (f["starter"] === true || f["starter"] === 1) && (f["app"] === null || f["app"] === undefined))!;
+        expect(starter, "a starter font").toBeDefined();
+        expect((await owner.get(at("fonts", starter.id))).status).toBe(200);
+        const renamed = await owner.patch(at("fonts", starter.id), { values: { name: `${String(starter["name"])} (ours)` } }, await tokenOf("owner"));
+        expect(renamed.status, said(renamed)).toBe(200);
+        expect((await owner.patch(at("fonts", starter.id), { values: { name: starter["name"] } }, await tokenOf("owner"))).status).toBe(200);
+        const dropped = await owner.send("DELETE", at("fonts", starter.id), undefined, await tokenOf("owner"));
+        expect(dropped.status, `starter removed: ${said(dropped)}`).toBe(404);
+        expect(ok(await admin.get<{ data: Row }>(at("fonts", starter.id))).data["name"]).toBe(starter["name"]);
       });
 
       /*

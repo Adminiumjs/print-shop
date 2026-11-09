@@ -79,6 +79,8 @@ const CUSTOMISER_PANEL = [
   { addOn: CUSTOMISER, table: "palette_colours", actions: ["read"] },
   { addOn: CUSTOMISER, table: "fonts", actions: ["read"] },
   { addOn: CUSTOMISER, table: "features", actions: ["read"] },
+  // The shop's settings: the one-colour line a proof is drawn to, the bleed and the least resolution.
+  { addOn: CUSTOMISER, table: "settings", actions: ["read"] },
 ];
 
 /**
@@ -105,20 +107,30 @@ export const SETUP_COLUMNS: Record<string, string[]> = {
 /** The app a row of the Customiser's set-up belongs to, in its `app` column. */
 export const SETUP_APP = "printing";
 
+/** The print shop's own rows of a set-up table, by their `app`, now. */
+const OWN_ROWS = { reach: "all", while: { column: "app", in: [SETUP_APP] } };
+/** The starter fonts: the install's, no shop's (`app` empty, which a value limit cannot name), found by `starter`. */
+const STARTER_ROWS = { reach: "all", while: { column: "starter", in: [true] } };
+
 /**
- * Which of the set-up's rows the owner reaches, with the Maker Shop on the same
- * install: a row they add is the print shop's own, and they change and remove
- * only the print shop's own rows, never another shop's. They read every row
- * (the panels draw from them). The starter fonts belong to no shop (`app`
- * empty) and each shop's owner gives them their files, while a row limit
- * reaches rows by a value and never an empty one: so the fonts are held to no
- * rows, only a new one tagged as the print shop's.
+ * Which of the set-up's rows the owner reaches, with the Maker Shop on the
+ * same install, as the Customiser's `ownSetUp` writes it (add-ons 1.0.23): a
+ * row they add is the print shop's own, and they read, change and remove only
+ * the print shop's own rows, never another shop's (to them it is not there).
+ * The starter fonts are read and changed too, so the set-up still gives them
+ * their files, and never removed.
  */
 export function setUpRows(table: string, actions: readonly string[]): Record<string, unknown> {
-  const own = { reach: "all", while: { column: "app", in: [SETUP_APP] } };
-  const rows = Object.fromEntries(["update", "delete"].filter((action) => actions.includes(action)).map((action) => [action, own]));
-  return { creatableValues: { app: [SETUP_APP] }, ...(table === "fonts" ? {} : { rows }) };
+  const mine = table === "fonts" ? [OWN_ROWS, STARTER_ROWS] : OWN_ROWS;
+  return { creatableValues: { app: [SETUP_APP] }, rows: { read: mine, update: mine, ...(actions.includes("delete") ? { delete: OWN_ROWS } : {}) } };
 }
+
+/**
+ * The Customiser's settings the owner changes on the set-up page's Shop
+ * settings (add-ons 1.0.23): the unit, the bleed and safe area, the
+ * one-colour line, the thinnest line and the least resolution.
+ */
+export const SETTINGS_COLUMNS = ["length_unit", "default_bleed_mm", "default_safe_mm", "one_colour_threshold", "smallest_line_mm", "min_dpi"];
 
 /**
  * The owner's: the panel's, and everything the Customiser's set-up page reads
@@ -128,13 +140,14 @@ export function setUpRows(table: string, actions: readonly string[]): Record<str
  * Thirteen of the Customiser's tables, within the 24 add-on tables a role holds.
  */
 const CUSTOMISER_SETUP = [
-  ...CUSTOMISER_PANEL.map((entry) => {
+  // The panel's own read of the settings gives way to the owner's read and change of them, below.
+  ...CUSTOMISER_PANEL.filter((entry) => entry.table !== "settings").map((entry) => {
     const columns = SETUP_COLUMNS[entry.table];
     if (columns === undefined) return entry;
     const actions = entry.table === "bases" ? ["read", "create", "update"] : ["read", "create", "update", "delete"];
     return { ...entry, actions, limit: { creatable: ["app", ...columns], writable: columns, ...setUpRows(entry.table, actions) } };
   }),
-  { addOn: CUSTOMISER, table: "settings", actions: ["read"] },
+  { addOn: CUSTOMISER, table: "settings", actions: ["read", "update"], limit: { writable: SETTINGS_COLUMNS } },
 ];
 
 /** The rules by which Adminium decides a column: nobody writes one, whatever their role. */

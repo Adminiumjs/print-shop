@@ -72,7 +72,8 @@ describe("the manifest at the floor it ships with", () => {
     for (const table of ["base_areas", "base_pieces", "ready_designs", "ready_parts", "fonts", "palettes", "palette_colours", "features"]) expect(held[table], table).toEqual(["read", "create", "update", "delete"]);
     // A base is added and changed on the set-up page, never taken away by an app's role.
     expect(held["bases"]).toEqual(["read", "create", "update"]);
-    expect(held["settings"]).toEqual(["read"]);
+    // The set-up page's Shop settings (add-ons 1.0.23): read, and changed column by column.
+    expect(held["settings"]).toEqual(["read", "update"]);
     // The set-up page asks whether a customer's design came from a ready-made design before it removes one.
     expect(held["designs"]).toContain("read");
     expect(Object.keys(held).length).toBe(13);
@@ -85,13 +86,13 @@ describe("the manifest at the floor it ships with", () => {
       expect(limits[table]?.writable, table).not.toContain("app");
     }
     const own = { reach: "all", while: { column: "app", in: ["printing"] } };
-    expect(limits["features"]).toEqual({ creatable: ["app", "code", "name", "active"], writable: ["code", "name", "active"], creatableValues: { app: ["printing"] }, rows: { update: own, delete: own } });
+    expect(limits["features"]).toEqual({ creatable: ["app", "code", "name", "active"], writable: ["code", "name", "active"], creatableValues: { app: ["printing"] }, rows: { read: own, update: own, delete: own } });
     expect(tables.length).toBeLessThanOrEqual(24);
     expect(roleOf(shipped, "owner").permissions).toContain("page:@customiser:view");
   });
 
   // With the Maker Shop on the same install, its owner and this one share the Customiser's set-up tables.
-  it("lets the owner add, change and remove only the print shop's own set-up rows, never another shop's", () => {
+  it("lets the owner read, add, change and remove only the print shop's own set-up rows, never another shop's", () => {
     type Limit = { creatableValues?: Record<string, unknown[]>; rows?: Record<string, unknown> };
     const tables = roleOf(shipped, "owner").tables as { addOn?: string; table: string; actions: string[]; limit?: Limit }[];
     const limits = Object.fromEntries(tables.filter((g) => g.addOn === "customiser").map((g) => [g.table, { actions: g.actions, limit: g.limit }]));
@@ -99,12 +100,25 @@ describe("the manifest at the floor it ships with", () => {
     for (const table of ["bases", "base_areas", "base_pieces", "ready_designs", "ready_parts", "fonts", "palettes", "palette_colours", "features"]) {
       const { actions, limit } = limits[table]!;
       expect(limit?.creatableValues, table).toEqual({ app: ["printing"] });
-      // The starter fonts belong to no shop, and every shop's owner gives them their files: no row limit can name an empty app.
-      if (table === "fonts") expect(limit?.rows, table).toBeUndefined();
-      else expect(limit?.rows, table).toEqual(Object.fromEntries(["update", "delete"].filter((a) => actions.includes(a)).map((a) => [a, own])));
+      // The starter fonts belong to no shop (an empty app, which no value limit names): read and changed by `starter`, never removed.
+      const mine = table === "fonts" ? [own, { reach: "all", while: { column: "starter", in: [true] } }] : own;
+      expect(limit?.rows, table).toEqual({ read: mine, update: mine, ...(actions.includes("delete") ? { delete: own } : {}) });
     }
     // Nothing but the set-up is held so: the panel's reads and writes reach every row, as the roles that work a job do.
+    expect(limits["bases"]!.actions).not.toContain("delete");
     for (const table of ["designs", "design_versions", "version_files", "settings"]) expect(limits[table]?.limit?.rows, table).toBeUndefined();
+    expect(limits["settings"]).toEqual({ actions: ["read", "update"], limit: { writable: ["length_unit", "default_bleed_mm", "default_safe_mm", "one_colour_threshold", "smallest_line_mm", "min_dpi"] } });
+  });
+
+  // The panel draws a one-colour picture to the shop's own line, as the shopper saw it: every role that opens it reads the settings.
+  it("lets every role that makes a design's proof read the Customiser's settings", () => {
+    const makers = Object.keys(ROLE_PANELS).filter((k) => ROLE_PANELS[k]!.includes("customiser-line"));
+    expect(makers.sort()).toEqual(["owner", "prepress", "press"]);
+    for (const key of makers) {
+      const settings = (roleOf(shipped, key).tables ?? []).find((g) => g.addOn === "customiser" && g.table === "settings");
+      expect(settings?.actions, key).toContain("read");
+    }
+    expect((roleOf(shipped, "counter").tables ?? []).find((g) => g.addOn === "customiser" && g.table === "settings")).toBeUndefined();
   });
 
   // From 0.3.50: a new proof sends the job's earlier one still out again in its own write, whoever makes it.
