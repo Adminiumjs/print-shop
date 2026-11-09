@@ -28,6 +28,8 @@
   "Book a collection" and DHL's shipments reach the counter too.
 - **Prepress and the press read the Customiser's settings**, so a proof they
   make draws a one-colour picture to the shop's own line, as the shopper saw it.
+  An update from 0.2.2 asks the operator to allow it (Adminium lists the two
+  roles' new read of the settings before it updates).
 - **The owner changes the Customiser's shop settings** (the unit, bleed and
   safe area, the one-colour line, the thinnest line and the least resolution)
   on the set-up page's Shop settings (add-ons 1.0.23).

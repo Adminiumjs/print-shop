@@ -348,7 +348,7 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
         expect(await door.openShared(two.link!.token)).toBe("opened");
         const first = await sendProof(jobs.find((j) => Number(j["qty"]) === 400)!);
         await door.answerProof("link", first["id"] as number, { state: "approved" });
-        const one = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-approved", to: SHOPPER.email, row: message("proof-approved", "proof_id", first["id"]) });
+        const one = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-approved", to: SHOPPER.email, known: { "order.number": String(two.order["number"]) }, row: message("proof-approved", "proof_id", first["id"]) });
         expect(one.mail.text).toContain("400 × Business cards");
         expect(one.mail.text).not.toContain("Flyers");
         const second = await sendProof(jobs.find((j) => Number(j["qty"]) === 800)!);
