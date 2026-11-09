@@ -21,8 +21,8 @@
  *
  * Nothing could have caught it. Three regular expressions in three repositories
  * have no place where two of them are in front of the same reader, which is the
- * same reason `host.ts` was mirrored, the same reason `egress.ts` is one file,
- * and the same reason `host-behaviours.ts` exists. So this is one file, copied
+ * same reason `host.ts` was mirrored and the same reason `egress.ts` is one
+ * file. So this is one file, copied
  * byte for byte into all three repos, and `host-mirror.test.ts` fails on any
  * difference — a repair made in one is a repair made in all three or a red run.
  *
