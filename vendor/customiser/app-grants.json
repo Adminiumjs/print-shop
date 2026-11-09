@@ -1,7 +1,15 @@
 {
   "settings": {
     "actions": [
-      "read"
+      "read",
+      "update"
+    ],
+    "writable": [
+      "default_bleed_mm",
+      "default_safe_mm",
+      "one_colour_threshold",
+      "smallest_line_mm",
+      "min_dpi"
     ]
   },
   "bases": {
@@ -231,7 +239,6 @@
       "style",
       "weights",
       "licence",
-      "starter",
       "smallest_mm",
       "file",
       "active"
