@@ -328,7 +328,8 @@ function body(kind: Kind, w: EmailWords): Block[] {
         ownLink(w, ORDER_URL),
       ];
     case "proof-approved":
-      return [...head, facts("ready", [[w.readyBy, "{{order.ready_by}}"]]), jobs(false), ...follow(own.button!)];
+      // The jobs approved so far, never one still waiting on its proof.
+      return [...head, facts("ready", [[w.readyBy, "{{order.ready_by}}"]]), proofs("approved"), ...follow(own.button!)];
     case "order-ready":
       return [...head, jobs(false), facts("where", [[w.where, "{{practice.address}}"], [w.open, "{{practice.hours}}"]]), ...paras, ...follow(own.button!)];
     case "order-dispatched":

@@ -95,7 +95,8 @@ export const OUTBOX = {
     // nothing to open, and is e-mailed once it is given its PDF.
     { kind: "proof-ready", link: "proof_id", onCreate: { table: "proofs", where: { column: "file", isNull: false } } },
     { kind: "proof-ready", link: "proof_id", onChange: { table: "proofs", columns: ["file"], changed: true, where: { column: "file", isNull: false } } },
-    { kind: "proof-approved", link: "order_id", onChange: { table: "proofs", via: "order_id", column: "state", to: "approved" } },
+    // Each proof approved, about its own proof: an order's second job approved is told the customer too.
+    { kind: "proof-approved", link: "proof_id", onChange: { table: "proofs", column: "state", to: "approved" } },
     { kind: "order-ready", link: "order_id", onChange: { table: "orders", column: "status", to: "ready", where: { column: "delivery_method", eq: "collect" } } },
     { kind: "order-dispatched", link: "order_id", onChange: { table: "orders", column: "status", to: "dispatched" } },
     { kind: "quote-saved", link: "quote_id", onCreate: { table: "saved_quotes" }, recipient: { column: "email", name: "name", language: "language" } },

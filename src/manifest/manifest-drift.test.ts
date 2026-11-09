@@ -389,12 +389,13 @@ describe("the e-mails", () => {
   });
 
   // The outbox sends a kind once for each row its link names: linked to the order, a second proof of it was never sent.
-  it("e-mails every proof of an order, and each change asked, about the proof itself", () => {
+  it("e-mails every proof of an order, each change asked and each approval, about the proof itself", () => {
     const producers = (manifest.outbox as unknown as { producers: Record<string, unknown>[] }).producers;
     const of = (kind: string) => producers.filter((p) => p["kind"] === kind);
     expect(of("proof-ready").map((p) => p["link"])).toEqual(["proof_id", "proof_id"]);
     expect(of("change-asked").map((p) => p["link"])).toEqual(["proof_id"]);
-    for (const p of [...of("proof-ready"), ...of("change-asked")]) expect(JSON.stringify(p), String(p["kind"])).not.toContain('"via"');
+    expect(of("proof-approved").map((p) => p["link"])).toEqual(["proof_id"]);
+    for (const p of [...of("proof-ready"), ...of("change-asked"), ...of("proof-approved")]) expect(JSON.stringify(p), String(p["kind"])).not.toContain('"via"');
   });
 
   it("never e-mails a proof that has no PDF to open: only once it is given one", () => {

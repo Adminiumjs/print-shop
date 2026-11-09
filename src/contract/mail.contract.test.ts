@@ -341,6 +341,24 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
         expect(ready.mail.text).not.toContain("Flyers");
       }, 240_000);
 
+      it("sends a proof approved for each job of an order, listing the jobs approved so far", async () => {
+        const two = await place([cards(400), flyers(800)], "collect");
+        const jobs = await jobsOf(two.order);
+        const door = browser().after();
+        expect(await door.openShared(two.link!.token)).toBe("opened");
+        const first = await sendProof(jobs.find((j) => Number(j["qty"]) === 400)!);
+        await door.answerProof("link", first["id"] as number, { state: "approved" });
+        const one = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-approved", to: SHOPPER.email, row: message("proof-approved", "proof_id", first["id"]) });
+        expect(one.mail.text).toContain("400 × Business cards");
+        expect(one.mail.text).not.toContain("Flyers");
+        const second = await sendProof(jobs.find((j) => Number(j["qty"]) === 800)!);
+        expect(await door.openShared(two.link!.token)).toBe("opened");
+        await door.answerProof("link", second["id"] as number, { state: "approved" });
+        await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-approved", to: SHOPPER.email, row: message("proof-approved", "proof_id", second["id"]) });
+        const approvals = async () => (await sinkMail(server.sink)).filter((m) => m.to.includes(SHOPPER.email) && m.subject.includes(String(two.order["number"])) && m.subject.includes("printing") && m.text.includes("800 × Flyers") && m.text.includes("400 × Business cards"));
+        await until(async () => ((await approvals()).length === 1 ? true : undefined), "the second job's approval in the sink");
+      }, 240_000);
+
       it("leaves no e-mail failed: every one names only what Adminium fills", async () => {
         const failed = (await rows("messages")).filter((m) => m["status"] === "failed").map((m) => [m["kind"], m["error"]]);
         expect(failed).toEqual([]);
