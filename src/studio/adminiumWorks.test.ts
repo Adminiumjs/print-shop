@@ -192,4 +192,54 @@ describe("the reads", () => {
     expect(door.who().can("jobs", "read")).toBe(true);
     expect(door.who().can("jobs", "update")).toBe(false);
   });
+
+  describe("asks Adminium only for what the person's role reads", () => {
+    const config = (role: string): StaffConfig => ({
+      ...CONFIG,
+      access: { tables: { jobs: ["read"] }, roles: [{ slug: `printing-${role}`, name: role }] },
+      addOns: { ...CONFIG.addOns, "holiday-calendars": { version: "1.0.19", settings: {}, tables: { holidays: "holiday_calendars_holidays" } } },
+    });
+    const reads = {
+      "/api/v1/data/conn-1/printing_jobs": { data: [{ id: 8, stage: "prepress", design_id: 70 }] },
+      "/api/v1/data/conn-1/customiser_designs": { data: [{ id: 70, code: "HB-CARD" }] },
+      "/api/v1/data/conn-1/customiser_design_versions": { data: [{ id: 700, design_id: 70, version: 1 }] },
+    };
+    const asked = (sent: Sent[]) => sent.filter((s) => s.method === "GET").map((s) => s.path.split("?")[0]!);
+
+    it.each(["prepress", "press", "counter"])("%s: never Adminium's list of add-ons, nor the public holidays", async (role) => {
+      const { t, sent } = transport(reads);
+      const door = new AdminiumWorks(t, config(role));
+      await door.load();
+      expect(asked(sent)).not.toContain("/api/v1/add-ons");
+      expect(asked(sent)).not.toContain("/api/v1/data/conn-1/holiday_calendars_holidays");
+      expect(asked(sent)).toContain("/api/v1/data/conn-1/customiser_designs");
+      expect(door.facts().carrier).toBeNull();
+    });
+
+    it("the counter: whether a job names a design, never its versions or their files", async () => {
+      const { t, sent } = transport(reads);
+      const data = await new AdminiumWorks(t, config("counter")).load();
+      expect(asked(sent)).not.toContain("/api/v1/data/conn-1/customiser_design_versions");
+      expect(asked(sent)).not.toContain("/api/v1/data/conn-1/customiser_version_files");
+      expect(data.designs).toHaveLength(1);
+      expect(data.versions).toEqual([]);
+    });
+
+    it("prepress and the press: the design's versions and their files, for the panel", async () => {
+      for (const role of ["prepress", "press"]) {
+        const { t, sent } = transport(reads);
+        await new AdminiumWorks(t, config(role)).load();
+        expect(asked(sent), role).toContain("/api/v1/data/conn-1/customiser_design_versions");
+        expect(asked(sent), role).toContain("/api/v1/data/conn-1/customiser_version_files");
+      }
+    });
+
+    it("the owner: the list of add-ons and the public holidays too", async () => {
+      const { t, sent } = transport({ ...reads, "/api/v1/add-ons": { addOns: [] } });
+      await new AdminiumWorks(t, config("owner")).load();
+      expect(asked(sent)).toContain("/api/v1/add-ons");
+      expect(asked(sent)).toContain("/api/v1/data/conn-1/holiday_calendars_holidays");
+      expect(asked(sent)).toContain("/api/v1/data/conn-1/customiser_design_versions");
+    });
+  });
 });

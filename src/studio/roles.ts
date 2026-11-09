@@ -67,3 +67,32 @@ export const maySetUpDesigns = (who: Person): boolean => isOwner(who) || who.rol
 
 /** Whether this person finds and erases a customer's data on the dashboard's privacy page: the owner, whose role holds it. */
 export const mayErase = (who: Person): boolean => isOwner(who) || who.roles.length === 0;
+
+/** The add-ons' tables the works' screens read, as `<add-on>:<table>`. */
+export const SCREEN_ADD_ON_READS = [
+  "customiser:designs",
+  "customiser:design_versions",
+  "customiser:version_files",
+  "inventory:links",
+  "inventory:stock_points",
+  "shipping-dhl:shipments",
+  "holiday-calendars:holidays",
+] as const;
+export type ScreenAddOnRead = (typeof SCREEN_ADD_ON_READS)[number];
+
+/**
+ * Which of them each role reads: its grants on the add-ons' tables
+ * (`roles[].tables` in the manifest; `roles.test.ts` holds this to it). The
+ * screens never ask for a read the role is not given, which Adminium would
+ * refuse: the counter reads whether a job names a design but none of its
+ * versions, and only the owner reads Holiday calendars' public holidays.
+ */
+export const ADD_ON_READS: Readonly<Record<string, readonly ScreenAddOnRead[]>> = {
+  owner: [...SCREEN_ADD_ON_READS],
+  prepress: ["customiser:designs", "customiser:design_versions", "customiser:version_files", "inventory:links", "inventory:stock_points"],
+  press: ["customiser:designs", "customiser:design_versions", "customiser:version_files", "inventory:links", "inventory:stock_points"],
+  counter: ["customiser:designs", "inventory:links", "inventory:stock_points", "shipping-dhl:shipments"],
+};
+
+/** Whether this person's role reads an add-on's table (somebody with none of the app's roles, an administrator, reads every one). */
+export const mayReadAddOn = (who: Person, table: ScreenAddOnRead): boolean => who.roles.length === 0 || who.roles.some((role) => ADD_ON_READS[role]?.includes(table) === true);

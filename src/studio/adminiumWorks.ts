@@ -27,6 +27,7 @@ import type { Action, ActivityEntry, AddOnTable, CatalogEntry, InstalledAddOn, P
 import { ApiError, text, type Id, type Row } from "./wire.ts";
 import { loadPanelModule } from "../add-ons/connected.ts";
 import { PANEL_HOST } from "./panels/host.tsx";
+import { mayManageAddOns, mayReadAddOn } from "./roles.ts";
 
 export const APP_KEY = "printing";
 const PAGE = 200;
@@ -330,30 +331,33 @@ export class AdminiumWorks implements WorksDoor {
         this.list("spoils", "job_id.asc,id.asc"),
       ]);
       const on = new Set(Object.keys(this.cfg.addOns));
+      // Only what this person's role reads of the add-ons' tables: a read it is not given is never asked for.
+      const who = this.who();
+      const reads = (table: Parameters<typeof mayReadAddOn>[1]) => mayReadAddOn(who, table);
       // The designs the jobs name, and their versions and made files: the Customiser's rows, read as its readers may.
       const designIds = [...new Set(jobs!.map((j) => j["design_id"]).filter((v) => v !== null && v !== undefined))];
       const [designs, versions] =
         designIds.length === 0
           ? [[], []]
           : await Promise.all([
-              this.listAddOn("customiser:designs", { where: { column: "id", op: "in", value: designIds } }),
-              this.listAddOn("customiser:design_versions", { where: { column: "design_id", op: "in", value: designIds }, order: "version.desc" }),
+              reads("customiser:designs") ? this.listAddOn("customiser:designs", { where: { column: "id", op: "in", value: designIds } }) : [],
+              reads("customiser:design_versions") ? this.listAddOn("customiser:design_versions", { where: { column: "design_id", op: "in", value: designIds }, order: "version.desc" }) : [],
             ]);
-      const files = versions.length === 0 ? [] : await this.listAddOn("customiser:version_files", { where: { column: "version_id", op: "in", value: versions.map((v) => v.id) }, order: "position.asc" });
+      const files = versions.length === 0 || !reads("customiser:version_files") ? [] : await this.listAddOn("customiser:version_files", { where: { column: "version_id", op: "in", value: versions.map((v) => v.id) }, order: "position.asc" });
       // What Inventory keeps of the materials, when it keeps the stock: each material's item, and that item's stock.
       let links: Row[] = [];
       let stock: Row[] = [];
-      if (on.has("inventory") && materials!.length > 0) {
+      if (on.has("inventory") && materials!.length > 0 && reads("inventory:links") && reads("inventory:stock_points")) {
         links = await this.listAddOn("inventory:links", { where: { column: "source_table", op: "eq", value: this.real("materials") } });
         const items = [...new Set(links.map((l) => l["item_id"]).filter((v) => v !== null && v !== undefined))];
         if (items.length > 0) stock = await this.listAddOn("inventory:stock_points", { where: { column: "item_id", op: "in", value: items }, order: "id.asc" });
       }
-      // The delivery company attached and on, and what it booked.
-      this.carrier = await this.findCarrier(on);
+      // The delivery company attached and on, and what it booked: asked only by whoever reads Adminium's list of add-ons.
+      this.carrier = mayManageAddOns(who) ? await this.findCarrier(on) : null;
       const shipments = this.carrier === null ? [] : await this.listAddOn(`${this.carrier.key}:shipments`, { order: "created_at.desc" });
       // The public holidays of England and Wales, to add one as a closure: Holiday calendars on, and read by whoever may (the owner).
       const set = { and: [{ column: "country", op: "eq", value: HOLIDAY_SET.country }, { column: "region", op: "eq", value: HOLIDAY_SET.region }] };
-      const holidays = on.has(HOLIDAYS) ? await this.listAddOn(`${HOLIDAYS}:holidays`, { where: set, order: "day.asc" }) : [];
+      const holidays = on.has(HOLIDAYS) && reads("holiday-calendars:holidays") ? await this.listAddOn(`${HOLIDAYS}:holidays`, { where: set, order: "day.asc" }) : [];
       return {
         settings: settings![0] ?? null,
         products: products!,

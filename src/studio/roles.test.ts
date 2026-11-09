@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 
 import { ROLES } from "../manifest/roles.ts";
 import { TABLES } from "../manifest/tables.ts";
-import { JOB_MOVES, OWNER_ONLY, ROLE_MOVES } from "./roles.ts";
+import { ADD_ON_READS, JOB_MOVES, OWNER_ONLY, ROLE_MOVES, SCREEN_ADD_ON_READS } from "./roles.ts";
 
 type Move = string | { to: string; roles?: string[] };
 
@@ -34,6 +34,16 @@ describe("the floor's moves, as the manifest has them", () => {
       const from = new Set(Object.keys(moves));
       expect([...to].sort(), role).toEqual([...(limit.writableValues?.stage ?? [])].sort());
       expect([...from].sort(), role).toEqual([...(limit.writableFrom?.stage ?? [])].sort());
+    }
+  });
+});
+
+describe("the add-ons' tables the screens read, as the manifest grants them", () => {
+  it("are asked by each role only where its grants on the add-ons' tables read them", () => {
+    for (const role of ROLES) {
+      const grants = (role.tables ?? []) as { addOn: string; table: string; actions: string[] }[];
+      const held = SCREEN_ADD_ON_READS.filter((ref) => grants.some((g) => `${g.addOn}:${g.table}` === ref && g.actions.includes("read")));
+      expect([...(ADD_ON_READS[role.key] ?? [])].sort(), role.key).toEqual([...held].sort());
     }
   });
 });
