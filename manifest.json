@@ -19516,7 +19516,20 @@
           "actions": [
             "read",
             "read_pii"
-          ]
+          ],
+          "limit": {
+            "rows": {
+              "read": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              }
+            }
+          }
         },
         {
           "addOn": "customiser",
@@ -19534,9 +19547,34 @@
               "version",
               "values"
             ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            },
             "writable": [
               "proof_file"
-            ]
+            ],
+            "rows": {
+              "read": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
+              "update": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              }
+            }
           }
         },
         {
@@ -19559,9 +19597,43 @@
               "left_out",
               "position"
             ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            },
             "writable": [
               "file"
-            ]
+            ],
+            "rows": {
+              "read": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
+              "update": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
+              "delete": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              }
+            }
           }
         },
         {
@@ -19595,6 +19667,11 @@
               "state",
               "position"
             ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            },
             "writable": [
               "name",
               "kind",
@@ -19616,11 +19693,6 @@
               "state",
               "position"
             ],
-            "creatableValues": {
-              "app": [
-                "printing"
-              ]
-            },
             "rows": {
               "read": {
                 "reach": "all",
@@ -19663,6 +19735,11 @@
               "preview_file",
               "position"
             ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            },
             "writable": [
               "base_id",
               "name",
@@ -19672,11 +19749,6 @@
               "preview_file",
               "position"
             ],
-            "creatableValues": {
-              "app": [
-                "printing"
-              ]
-            },
             "rows": {
               "read": {
                 "reach": "all",
@@ -19739,6 +19811,11 @@
               "feature_id",
               "position"
             ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            },
             "writable": [
               "ready_design_id",
               "code",
@@ -19759,11 +19836,6 @@
               "feature_id",
               "position"
             ],
-            "creatableValues": {
-              "app": [
-                "printing"
-              ]
-            },
             "rows": {
               "read": {
                 "reach": "all",
@@ -19824,6 +19896,11 @@
               "feature_id",
               "position"
             ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            },
             "writable": [
               "base_id",
               "code",
@@ -19842,11 +19919,6 @@
               "feature_id",
               "position"
             ],
-            "creatableValues": {
-              "app": [
-                "printing"
-              ]
-            },
             "rows": {
               "read": {
                 "reach": "all",
@@ -19900,6 +19972,11 @@
               "file",
               "position"
             ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            },
             "writable": [
               "base_id",
               "code",
@@ -19911,11 +19988,6 @@
               "file",
               "position"
             ],
-            "creatableValues": {
-              "app": [
-                "printing"
-              ]
-            },
             "rows": {
               "read": {
                 "reach": "all",
@@ -19965,6 +20037,11 @@
               "name",
               "position"
             ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            },
             "writable": [
               "ready_design_id",
               "kind",
@@ -19972,11 +20049,6 @@
               "name",
               "position"
             ],
-            "creatableValues": {
-              "app": [
-                "printing"
-              ]
-            },
             "rows": {
               "read": {
                 "reach": "all",
@@ -20027,6 +20099,11 @@
               "hex",
               "position"
             ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            },
             "writable": [
               "palette_id",
               "code",
@@ -20035,11 +20112,6 @@
               "hex",
               "position"
             ],
-            "creatableValues": {
-              "app": [
-                "printing"
-              ]
-            },
             "rows": {
               "read": {
                 "reach": "all",
@@ -20093,22 +20165,24 @@
               "file",
               "active"
             ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ],
+              "starter": [
+                false
+              ]
+            },
             "writable": [
               "family",
               "name",
               "style",
               "weights",
               "licence",
-              "starter",
               "smallest_mm",
               "file",
               "active"
             ],
-            "creatableValues": {
-              "app": [
-                "printing"
-              ]
-            },
             "rows": {
               "read": [
                 {
@@ -20178,16 +20252,16 @@
               "name",
               "active"
             ],
-            "writable": [
-              "code",
-              "name",
-              "active"
-            ],
             "creatableValues": {
               "app": [
                 "printing"
               ]
             },
+            "writable": [
+              "code",
+              "name",
+              "active"
+            ],
             "rows": {
               "read": {
                 "reach": "all",
@@ -20228,7 +20302,6 @@
           ],
           "limit": {
             "writable": [
-              "length_unit",
               "default_bleed_mm",
               "default_safe_mm",
               "one_colour_threshold",
@@ -20335,7 +20408,20 @@
           "actions": [
             "read",
             "read_pii"
-          ]
+          ],
+          "limit": {
+            "rows": {
+              "read": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              }
+            }
+          }
         },
         {
           "addOn": "customiser",
@@ -20353,9 +20439,34 @@
               "version",
               "values"
             ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            },
             "writable": [
               "proof_file"
-            ]
+            ],
+            "rows": {
+              "read": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
+              "update": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              }
+            }
           }
         },
         {
@@ -20378,9 +20489,43 @@
               "left_out",
               "position"
             ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            },
             "writable": [
               "file"
-            ]
+            ],
+            "rows": {
+              "read": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
+              "update": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
+              "delete": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              }
+            }
           }
         },
         {
@@ -20549,7 +20694,20 @@
           "actions": [
             "read",
             "read_pii"
-          ]
+          ],
+          "limit": {
+            "rows": {
+              "read": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              }
+            }
+          }
         },
         {
           "addOn": "customiser",
@@ -20567,9 +20725,34 @@
               "version",
               "values"
             ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            },
             "writable": [
               "proof_file"
-            ]
+            ],
+            "rows": {
+              "read": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
+              "update": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              }
+            }
           }
         },
         {
@@ -20592,9 +20775,43 @@
               "left_out",
               "position"
             ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            },
             "writable": [
               "file"
-            ]
+            ],
+            "rows": {
+              "read": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
+              "update": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
+              "delete": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              }
+            }
           }
         },
         {
@@ -20771,7 +20988,20 @@
           "table": "designs",
           "actions": [
             "read"
-          ]
+          ],
+          "limit": {
+            "rows": {
+              "read": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              }
+            }
+          }
         },
         {
           "addOn": "inventory",

@@ -82,9 +82,12 @@ describe("the manifest at the floor it ships with", () => {
     const limits = Object.fromEntries((tables as Limited[]).filter((g) => g.addOn === "customiser").map((g) => [g.table, g.limit]));
     for (const table of ["bases", "base_areas", "base_pieces", "ready_designs", "ready_parts", "fonts", "palettes", "palette_colours", "features"]) {
       expect(limits[table]?.creatable[0], table).toBe("app");
-      expect(limits[table]?.creatable.slice(1), table).toEqual(limits[table]?.writable);
+      // Whether a font is a starter is given on a new font and never changed.
+      expect(limits[table]?.creatable.slice(1).filter((c) => !(table === "fonts" && c === "starter")), table).toEqual(limits[table]?.writable);
       expect(limits[table]?.writable, table).not.toContain("app");
     }
+    expect(limits["fonts"]?.creatable).toContain("starter");
+    expect(limits["fonts"]?.writable).not.toContain("starter");
     const own = { reach: "all", while: { column: "app", in: ["printing"] } };
     expect(limits["features"]).toEqual({ creatable: ["app", "code", "name", "active"], writable: ["code", "name", "active"], creatableValues: { app: ["printing"] }, rows: { read: own, update: own, delete: own } });
     expect(tables.length).toBeLessThanOrEqual(24);
@@ -99,15 +102,30 @@ describe("the manifest at the floor it ships with", () => {
     const own = { reach: "all", while: { column: "app", in: ["printing"] } };
     for (const table of ["bases", "base_areas", "base_pieces", "ready_designs", "ready_parts", "fonts", "palettes", "palette_colours", "features"]) {
       const { actions, limit } = limits[table]!;
-      expect(limit?.creatableValues, table).toEqual({ app: ["printing"] });
+      // A new font is never one of the install's starters.
+      expect(limit?.creatableValues, table).toEqual(table === "fonts" ? { app: ["printing"], starter: [false] } : { app: ["printing"] });
       // The starter fonts belong to no shop (an empty app, which no value limit names): read and changed by `starter`, never removed.
       const mine = table === "fonts" ? [own, { reach: "all", while: { column: "starter", in: [true] } }] : own;
       expect(limit?.rows, table).toEqual({ read: mine, update: mine, ...(actions.includes("delete") ? { delete: own } : {}) });
     }
-    // Nothing but the set-up is held so: the panel's reads and writes reach every row, as the roles that work a job do.
     expect(limits["bases"]!.actions).not.toContain("delete");
-    for (const table of ["designs", "design_versions", "version_files", "settings"]) expect(limits[table]?.limit?.rows, table).toBeUndefined();
-    expect(limits["settings"]).toEqual({ actions: ["read", "update"], limit: { writable: ["length_unit", "default_bleed_mm", "default_safe_mm", "one_colour_threshold", "smallest_line_mm", "min_dpi"] } });
+    // The install's one row of settings: read, and changed column by column (never the unit, the shopper's own).
+    expect(limits["settings"]).toEqual({ actions: ["read", "update"], limit: { writable: ["default_bleed_mm", "default_safe_mm", "one_colour_threshold", "smallest_line_mm", "min_dpi"] } });
+  });
+
+  // A customer's design, its versions and their files are the print shop's customers' alone, for every role that reaches them.
+  it("keeps every role to the print shop's own customers' designs, versions and files, and tags a version it adds", () => {
+    type Grant = { addOn?: string; table: string; actions: string[]; limit?: { creatableValues?: Record<string, unknown[]>; rows?: Record<string, unknown> } };
+    const own = { reach: "all", while: { column: "app", in: ["printing"] } };
+    for (const key of ["owner", "prepress", "press"]) {
+      const held = Object.fromEntries(((roleOf(shipped, key).tables ?? []) as Grant[]).filter((g) => g.addOn === "customiser").map((g) => [g.table, g]));
+      expect([held["designs"]?.actions, held["designs"]?.limit?.rows], key).toEqual([["read", "read_pii"], { read: own }]);
+      expect([held["design_versions"]?.limit?.creatableValues, held["design_versions"]?.limit?.rows], key).toEqual([{ app: ["printing"] }, { read: own, update: own }]);
+      expect([held["version_files"]?.limit?.creatableValues, held["version_files"]?.limit?.rows], key).toEqual([{ app: ["printing"] }, { read: own, update: own, delete: own }]);
+      if (key !== "owner") for (const table of ["bases", "ready_designs", "ready_parts", "base_areas", "base_pieces", "palettes", "palette_colours", "fonts", "features", "settings"]) expect([table, held[table]?.actions, held[table]?.limit], key).toEqual([table, ["read"], undefined]);
+    }
+    const counter = ((roleOf(shipped, "counter").tables ?? []) as Grant[]).filter((g) => g.addOn === "customiser");
+    expect(counter).toEqual([{ addOn: "customiser", table: "designs", actions: ["read"], limit: { rows: { read: own } } }]);
   });
 
   // The panel draws a one-colour picture to the shop's own line, as the shopper saw it: every role that opens it reads the settings.

@@ -47,38 +47,44 @@ const view = (page: string) => `page:@${page}:view`;
 /** Seeing a table's personal columns. */
 const pii = (table: string) => `table:@${table}:read_pii`;
 
+/** The app a Customiser row belongs to, in its `app` column: a design, a version and its files, a row of the set-up. */
+export const SETUP_APP = "printing";
+
+/** The print shop's own rows of a Customiser table, by their `app`, now. */
+const OWN_ROWS = { reach: "all", while: { column: "app", in: [SETUP_APP] } };
+/** The starter fonts: the install's, no shop's (`app` empty, which a value limit cannot name), found by `starter`. */
+const STARTER_ROWS = { reach: "all", while: { column: "starter", in: [true] } };
+
+/** The set-up's tables, as the panel draws a design from them. */
+const SET_UP_TABLES = ["bases", "ready_designs", "ready_parts", "base_areas", "base_pieces", "palettes", "palette_colours", "fonts", "features"];
+
 /**
  * What the Customiser's panel on a job reads to draw the design as it will be
  * printed (its ready-made design and parts, the base's areas and pieces, the
- * palettes, colours and fonts), and what it writes when the proof and the
- * print files are made: a version of the design where none was ordered yet,
- * the proof file on it, and the files of the version. The panel makes them in
- * the browser and saves them as the person signed in.
+ * palettes, colours and fonts, the settings' one-colour line), and what it
+ * writes when the proof and the print files are made: a version of the design
+ * where none was ordered yet, the proof file on it, and the files of the
+ * version. The panel makes them in the browser and saves them as the person
+ * signed in. With the Maker Shop on the same install, only the print shop's
+ * customers' designs and versions are there to them (`ownPanel` in the
+ * Customiser), and a version they add is the print shop's.
  */
 const CUSTOMISER_PANEL = [
-  { addOn: CUSTOMISER, table: "designs", actions: ["read", "read_pii"] },
+  { addOn: CUSTOMISER, table: "designs", actions: ["read", "read_pii"], limit: { rows: { read: OWN_ROWS } } },
   {
     addOn: CUSTOMISER,
     table: "design_versions",
     actions: ["read", "read_pii", "create", "update"],
     // The proof is the version's one column the panel writes: the rest the order's posting copied, and stays as copied.
-    limit: { creatable: ["app", "design_id", "version", "values"], writable: ["proof_file"] },
+    limit: { creatable: ["app", "design_id", "version", "values"], creatableValues: { app: [SETUP_APP] }, writable: ["proof_file"], rows: { read: OWN_ROWS, update: OWN_ROWS } },
   },
   {
     addOn: CUSTOMISER,
     table: "version_files",
     actions: ["read", "create", "update", "delete"],
-    limit: { creatable: ["app", "version_id", "kind", "name", "about", "layers", "left_out", "position"], writable: ["file"] },
+    limit: { creatable: ["app", "version_id", "kind", "name", "about", "layers", "left_out", "position"], creatableValues: { app: [SETUP_APP] }, writable: ["file"], rows: { read: OWN_ROWS, update: OWN_ROWS, delete: OWN_ROWS } },
   },
-  { addOn: CUSTOMISER, table: "bases", actions: ["read"] },
-  { addOn: CUSTOMISER, table: "ready_designs", actions: ["read"] },
-  { addOn: CUSTOMISER, table: "ready_parts", actions: ["read"] },
-  { addOn: CUSTOMISER, table: "base_areas", actions: ["read"] },
-  { addOn: CUSTOMISER, table: "base_pieces", actions: ["read"] },
-  { addOn: CUSTOMISER, table: "palettes", actions: ["read"] },
-  { addOn: CUSTOMISER, table: "palette_colours", actions: ["read"] },
-  { addOn: CUSTOMISER, table: "fonts", actions: ["read"] },
-  { addOn: CUSTOMISER, table: "features", actions: ["read"] },
+  ...SET_UP_TABLES.map((table) => ({ addOn: CUSTOMISER, table, actions: ["read"] })),
   // The shop's settings: the one-colour line a proof is drawn to, the bleed and the least resolution.
   { addOn: CUSTOMISER, table: "settings", actions: ["read"] },
 ];
@@ -86,11 +92,10 @@ const CUSTOMISER_PANEL = [
 /**
  * The Customiser's tables its set-up page (the bases and their areas and
  * pieces, the ready-made designs and their parts, fonts, palettes and their
- * colours, priced features) adds to, changes and takes from, and the columns
- * it gives and changes on each: every column of the row, the app it belongs
- * to given on a new row and never changed. The same lists as the add-on's
- * `appGrants`, so the install keeps nothing back. A base it adds and changes
- * but never takes away.
+ * colours, priced features) adds to, and the columns a new row is given:
+ * every column of the row, the app it belongs to beside them. The same lists
+ * as the add-on's `appGrants`, so the install keeps nothing back. A row
+ * changed keeps its app, and a font whether it is a starter (`NOT_CHANGED`).
  */
 export const SETUP_COLUMNS: Record<string, string[]> = {
   bases: ["name", "kind", "width_mm", "height_mm", "depth_mm", "corner_mm", "bleed_mm", "safe_mm", "sides", "back_feature_id", "material", "thickness_mm", "outline_file", "model_file", "print_file", "faces", "offered", "state", "position"],
@@ -103,50 +108,53 @@ export const SETUP_COLUMNS: Record<string, string[]> = {
   palette_colours: ["palette_id", "code", "role", "name", "hex", "position"],
   features: ["code", "name", "active"],
 };
-
-/** The app a row of the Customiser's set-up belongs to, in its `app` column. */
-export const SETUP_APP = "printing";
-
-/** The print shop's own rows of a set-up table, by their `app`, now. */
-const OWN_ROWS = { reach: "all", while: { column: "app", in: [SETUP_APP] } };
-/** The starter fonts: the install's, no shop's (`app` empty, which a value limit cannot name), found by `starter`. */
-const STARTER_ROWS = { reach: "all", while: { column: "starter", in: [true] } };
+/** Columns a new row is given and a change never moves: whether a font is one of the install's starters. */
+export const NOT_CHANGED: Record<string, string[]> = { fonts: ["starter"] };
+/** The columns the owner changes on a set-up table. */
+export const setUpWritable = (table: string): string[] => SETUP_COLUMNS[table]!.filter((column) => !(NOT_CHANGED[table] ?? []).includes(column));
 
 /**
- * Which of the set-up's rows the owner reaches, with the Maker Shop on the
- * same install, as the Customiser's `ownSetUp` writes it (add-ons 1.0.23): a
- * row they add is the print shop's own, and they read, change and remove only
- * the print shop's own rows, never another shop's (to them it is not there).
- * The starter fonts are read and changed too, so the set-up still gives them
- * their files, and never removed.
+ * The owner's hold on one set-up table, as the Customiser's `ownSetUp`
+ * writes it (add-ons 1.0.23): a row they add is the print shop's own, and
+ * never a starter font; they read, change and remove only the print shop's
+ * own rows, never another shop's (to them it is not there). The starter
+ * fonts are read and changed too, so the set-up still gives them their
+ * files, and never removed. A base is never removed.
  */
-export function setUpRows(table: string, actions: readonly string[]): Record<string, unknown> {
+export function setUpGrant(table: string): Record<string, unknown> {
+  const actions = table === "bases" ? ["read", "create", "update"] : ["read", "create", "update", "delete"];
   const mine = table === "fonts" ? [OWN_ROWS, STARTER_ROWS] : OWN_ROWS;
-  return { creatableValues: { app: [SETUP_APP] }, rows: { read: mine, update: mine, ...(actions.includes("delete") ? { delete: OWN_ROWS } : {}) } };
+  return {
+    addOn: CUSTOMISER,
+    table,
+    actions,
+    limit: {
+      creatable: ["app", ...SETUP_COLUMNS[table]!],
+      creatableValues: table === "fonts" ? { app: [SETUP_APP], starter: [false] } : { app: [SETUP_APP] },
+      writable: setUpWritable(table),
+      rows: { read: mine, update: mine, ...(actions.includes("delete") ? { delete: OWN_ROWS } : {}) },
+    },
+  };
 }
 
 /**
  * The Customiser's settings the owner changes on the set-up page's Shop
- * settings (add-ons 1.0.23): the unit, the bleed and safe area, the
- * one-colour line, the thinnest line and the least resolution.
+ * settings (add-ons 1.0.23): the bleed and safe area, the one-colour line,
+ * the thinnest line and the least resolution.
  */
-export const SETTINGS_COLUMNS = ["length_unit", "default_bleed_mm", "default_safe_mm", "one_colour_threshold", "smallest_line_mm", "min_dpi"];
+export const SETTINGS_COLUMNS = ["default_bleed_mm", "default_safe_mm", "one_colour_threshold", "smallest_line_mm", "min_dpi"];
 
 /**
- * The owner's: the panel's, and everything the Customiser's set-up page reads
- * and writes, its settings among them. From add-ons 1.0.21 the Customiser
- * lets an app's role hold all of it (its `appGrants`), so the owner opens
- * and saves the set-up page on their own role, no Customiser role beside it.
- * Thirteen of the Customiser's tables, within the 24 add-on tables a role holds.
+ * The owner's: the panel's (they make a job's proof and print files too), and
+ * everything the Customiser's set-up page reads and writes, its settings
+ * among them. From add-ons 1.0.21 the Customiser lets an app's role hold all
+ * of it (its `appGrants`), so the owner opens and saves the set-up page on
+ * their own role, no Customiser role beside it. Thirteen of the Customiser's
+ * tables, within the 24 add-on tables a role holds.
  */
 const CUSTOMISER_SETUP = [
-  // The panel's own read of the settings gives way to the owner's read and change of them, below.
-  ...CUSTOMISER_PANEL.filter((entry) => entry.table !== "settings").map((entry) => {
-    const columns = SETUP_COLUMNS[entry.table];
-    if (columns === undefined) return entry;
-    const actions = entry.table === "bases" ? ["read", "create", "update"] : ["read", "create", "update", "delete"];
-    return { ...entry, actions, limit: { creatable: ["app", ...columns], writable: columns, ...setUpRows(entry.table, actions) } };
-  }),
+  ...CUSTOMISER_PANEL.filter((entry) => !SET_UP_TABLES.includes(entry.table) && entry.table !== "settings"),
+  ...SET_UP_TABLES.map(setUpGrant),
   { addOn: CUSTOMISER, table: "settings", actions: ["read", "update"], limit: { writable: SETTINGS_COLUMNS } },
 ];
 
@@ -286,7 +294,8 @@ export const ROLES = [
       jobs: { writable: ["stage"], writableValues: { stage: ["collected", "dispatched"] }, writableFrom: { stage: ["ready"] } },
       sample_requests: { writable: ["status"], writableValues: { status: ["posted"] } },
     },
-    tables: [{ addOn: CUSTOMISER, table: "designs", actions: ["read"] }, ...STOCK_READS, ...SHIPMENT_READS],
+    // Whether a job names a design, of the print shop's customers alone.
+    tables: [{ addOn: CUSTOMISER, table: "designs", actions: ["read"], limit: { rows: { read: OWN_ROWS } } }, ...STOCK_READS, ...SHIPMENT_READS],
   },
 ];
 

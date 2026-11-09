@@ -457,6 +457,54 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
         expect(ok(await admin.get<{ data: Row }>(at("fonts", starter.id))).data["name"]).toBe(starter["name"]);
       });
 
+      // A new font is the print shop's own and never a starter; whether a font is a starter is never changed.
+      it("refuses the owner a new starter font, and a change of whether a font is a starter", async () => {
+        const owner = callers["owner"]!;
+        const at = (id?: unknown) => `/api/v1/data/${connectionId}/customiser_fonts${id === undefined ? "" : `/${String(id)}`}`;
+        const said = (r: { status: number; body: unknown }) => `${String(r.status)} ${JSON.stringify(r.body).slice(0, 300)}`;
+        const starterNew = await owner.post(at(), { values: { app: "printing", family: "Sneaky Sans", name: "Sneaky Sans", licence: "Ours", starter: true } }, await tokenOf("owner"));
+        expect(starterNew.status, `a new starter: ${said(starterNew)}`).toBe(403);
+        const own = await owner.post<{ data: Row }>(at(), { values: { app: "printing", family: "Marlow Serif", name: "Marlow Serif", licence: "Ours", starter: false } }, await tokenOf("owner"));
+        expect(own.status, said(own)).toBe(201);
+        const flipped = await owner.patch(at(own.body.data.id), { values: { starter: true } }, await tokenOf("owner"));
+        expect(flipped.status, `own font made a starter: ${said(flipped)}`).toBe(403);
+        const starter = ok(await admin.get<{ data: Row[] }>(`${at()}?limit=200`)).data.find((f) => f["starter"] === true || f["starter"] === 1)!;
+        const unstarred = await owner.patch(at(starter.id), { values: { starter: false } }, await tokenOf("owner"));
+        expect(unstarred.status, `a starter made the shop's: ${said(unstarred)}`).toBe(403);
+        const kept = ok(await admin.get<{ data: Row }>(at(starter.id))).data;
+        expect(kept["starter"] === true || kept["starter"] === 1).toBe(true);
+        expect([200, 204]).toContain((await owner.send("DELETE", at(own.body.data.id), undefined, await tokenOf("owner"))).status);
+      });
+
+      /*
+       * A customer of the Maker Shop's design, its version and the version's
+       * files sit in the same tables as the print shop's: to prepress they are
+       * not there (404), and a version prepress adds is the print shop's alone.
+       */
+      it("hides another shop's customers' designs, versions and files from prepress, and refuses a version tagged as that shop's", async () => {
+        const prepress = callers["prepress"]!;
+        const at = (table: string, id?: unknown) => `/api/v1/data/${connectionId}/customiser_${table}${id === undefined ? "" : `/${String(id)}`}`;
+        const said = (r: { status: number; body: unknown }) => `${String(r.status)} ${JSON.stringify(r.body).slice(0, 300)}`;
+        const design = ok(await admin.post<{ data: Row }>(at("designs"), { values: { app: "maker" } }), 201).data;
+        const version = ok(await admin.post<{ data: Row }>(at("design_versions"), { values: { app: "maker", design_id: design.id, version: 1 } }), 201).data;
+        const file = ok(await admin.post<{ data: Row }>(at("version_files"), { values: { app: "maker", version_id: version.id, kind: "print", name: "Maker's coaster" } }), 201).data;
+        for (const [table, row] of [["designs", design], ["design_versions", version], ["version_files", file]] as const) {
+          const read = await prepress.get(at(table, row.id));
+          expect(read.status, `${table} read: ${said(read)}`).toBe(404);
+          const listed = ok(await prepress.get<{ data: Row[] }>(`${at(table)}?limit=200`)).data;
+          expect(listed.some((r) => String(r.id) === String(row.id)), `${table} listed`).toBe(false);
+        }
+        const proofed = await prepress.patch(at("design_versions", version.id), { values: { proof_file: null } }, await tokenOf("prepress"));
+        expect(proofed.status, `version changed: ${said(proofed)}`).toBe(404);
+        const removed = await prepress.send("DELETE", at("version_files", file.id), undefined, await tokenOf("prepress"));
+        expect(removed.status, `file removed: ${said(removed)}`).toBe(404);
+        const tagged = await prepress.post(at("design_versions"), { values: { app: "maker", design_id: design.id, version: 2 } }, await tokenOf("prepress"));
+        expect(tagged.status, `a version tagged the maker's: ${said(tagged)}`).toBe(403);
+        // The print shop's own customer's design is still theirs.
+        const job = designedJob(await doors["prepress"]!.load());
+        expect((await prepress.get(at("designs", job["design_id"]))).status).toBe(200);
+      });
+
       /*
        * The install adds the open-licence starter fonts as rows with no file;
        * the set-up page, opened by someone who may change the fonts, uploads
