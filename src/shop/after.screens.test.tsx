@@ -399,6 +399,22 @@ describe.each(["en-US", "ar-EG"] as const)("the pages after an order in %s", (lo
     }
   });
 
+  // A proof added on the dashboard with no PDF: nothing was erased, so nothing is said to be gone, and there is nothing to open yet.
+  it("a proof added with no PDF: never said to be no longer kept, nor the design", async () => {
+    const proof = port.afterPort.rows.proofs[1]!;
+    proof["file"] = null;
+    proof["file_added_at"] = null;
+    port.afterPort.rows.jobs.find((j) => j["id"] === 131)!["design_code"] = "DSGN-7Q2K-X4PA";
+    port.afterPort.rows.artwork.length = 0;
+    await mount(locale, "/order#LINKCODE0000000A");
+    expect(document.querySelector(".ma-open-proof")).toBeNull();
+    if (english) {
+      expect(text()).not.toContain("This proof is no longer kept");
+      expect(text()).not.toContain("no longer kept");
+      expect(text()).toContain("Made in the customiser");
+    }
+  });
+
   it("Your proofs, Order it again and Saved quotes, signed in", async () => {
     await mount(locale);
     await go("proofs");

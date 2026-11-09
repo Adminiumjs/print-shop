@@ -30,6 +30,12 @@ export interface ProofView {
   answeredAt: string | null;
   /** Its PDF is still kept: a proof whose file was deleted with the customer's data has none to open. */
   kept: boolean;
+  /**
+   * It was given a PDF once (`file_added_at`). A proof added on the dashboard
+   * with none never had one: nothing was taken from the customer, and nothing
+   * was sent them to open.
+   */
+  filed: boolean;
 }
 
 export interface FileView {
@@ -57,9 +63,9 @@ export interface JobView {
   /** The latest proof, and the one waiting on the customer when it is. */
   latest: ProofView | null;
   waiting: ProofView | null;
-  /** The latest proof was sent, but its file is no longer kept: nothing to open or answer. */
+  /** The latest proof was sent, but its file was deleted with the customer's data: nothing to open or answer. */
   gone: ProofView | null;
-  /** A proof's or a file's contents were deleted with the customer's data. */
+  /** A proof's or a file's contents were deleted with the customer's data (never a proof that had no PDF to delete). */
   forgotten: boolean;
   proofs: ProofView[];
   files: FileView[];
@@ -83,6 +89,7 @@ function proofView(p: Row): ProofView {
     sentAt: text(p["sent_at"]),
     answeredAt: text(p["answered_at"]),
     kept: text(p["file"]) !== null,
+    filed: text(p["file"]) !== null || text(p["file_added_at"]) !== null,
   };
 }
 
@@ -163,8 +170,8 @@ export function jobView(catalogue: Catalogue, order: Row, job: Row, proofs: read
     stages: STAGE_KEYS.map((key, i) => ({ key, done: i < at, current: i === at, at: i <= at ? stamps[i]! : null })),
     latest,
     waiting: latest?.state === "sent" && latest.kept ? latest : null,
-    gone: latest?.state === "sent" && !latest.kept ? latest : null,
-    forgotten: own.some((p) => !p.kept) || files.some((f) => !f.kept),
+    gone: latest?.state === "sent" && !latest.kept && latest.filed ? latest : null,
+    forgotten: own.some((p) => p.filed && !p.kept) || files.some((f) => !f.kept),
     proofs: own,
     files,
     readyBy: text(job["ready_by"]),
