@@ -246,13 +246,15 @@ export function workingDaysOn(at: Moment, days: number, closures: readonly Closu
   return d;
 }
 
-type On = "create" | { column: string; values: unknown[] } | { columns: string[] };
+type On = "create" | { column: string; values: unknown[] } | { column: string; filled: true } | { columns: string[] };
 
 function fires(on: On | On[], before: Row | undefined, after: Row): boolean {
   const list = Array.isArray(on) ? on : [on];
   return list.some((o) => {
     if (o === "create") return before === undefined;
     if ("columns" in o) return before !== undefined && o.columns.some((c) => !same(before[c], after[c]) && !(blank(before[c]) && blank(after[c])));
+    // The moment a nullable column is first filled (a proof given its PDF).
+    if ("filled" in o) return !blank(after[o.column]) && (before === undefined || blank(before[o.column]));
     const changed = before === undefined || !same(before[o.column], after[o.column]);
     return changed && o.values.some((v) => same(after[o.column], v) || (v === true && after[o.column] === 1));
   });
