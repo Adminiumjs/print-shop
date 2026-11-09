@@ -30,15 +30,19 @@
   make draws a one-colour picture to the shop's own line, as the shopper saw it.
   An update from 0.2.2 asks the operator to allow it (Adminium lists the two
   roles' new read of the settings before it updates).
-- **The owner changes the Customiser's shop settings** (the unit, bleed and
-  safe area, the one-colour line, the thinnest line and the least resolution)
-  on the set-up page's Shop settings (add-ons 1.0.23).
+- **The owner changes the Customiser's shop settings** (the bleed and safe
+  area, the one-colour line, the thinnest line and the least resolution) on the
+  set-up page's Shop settings (add-ons 1.0.23).
 - **With the Maker Shop on the same install, the owner sees and changes only the
   print shop's own Customiser set-up.** A row the owner adds is the print
   shop's; another shop's bases, areas, pieces, ready-made designs and their
   parts, fonts, palettes, colours and priced features are not there to them.
   The starter fonts belong to no shop: the owner reads them and gives them their
-  files, and never removes one.
+  files, and never removes one; a font the owner adds is never a starter, and
+  no font changes whether it is one. Likewise the owner, prepress, the press
+  and the counter reach only the print shop's own customers' designs, and a
+  design's versions and print files only the print shop's; a version they add
+  is the print shop's.
 - The Customiser's `appGrants` are vendored with its editor
   (`vendor/customiser/app-grants.json`), and every role's hold on its tables is
   tested against them.

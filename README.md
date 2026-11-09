@@ -70,7 +70,7 @@ public holidays to add as one), DHL's dispatch page and shipments, and the
 add-ons; a sign-out in the header. Roles: **owner** (everything, the
 Customiser's set-up page on the owner's own role, its starter fonts added on the
 way in, and only the print shop's own set-up rows where the Maker Shop shares
-the install, Holiday calendars' closed days, and finding and erasing a customer's
+the install (every role reaches only the print shop's customers' designs), Holiday calendars' closed days, and finding and erasing a customer's
 data on the dashboard's privacy page), **prepress** (the artwork, the
 proofs and the Customiser's panel, an approved job onto the press), **press**
 (the press, the finishing, spoilage, the Customiser's panel) and **counter**
