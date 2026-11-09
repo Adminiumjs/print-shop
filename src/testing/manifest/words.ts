@@ -324,6 +324,11 @@ export const INSTALL_FLOOR_WORD_NAMES = [
   'publicAccess.response',
   // A new row that moves the earlier rows sharing its link on (a proof sent again).
   'states.supersedes',
+  // Words of a sample FILE, not of the manifest: an app's rows for an add-on that ship files of their own, and
+  // a sample that gives an SVG or a model to a column of product assets. `installFloorWords` cannot see them;
+  // the app check reads the sample files and holds the floor to them.
+  'sampleData.addOns.assets',
+  'sampleData.productAssets',
 ] as const;
 export type ManifestWordName = (typeof INSTALL_FLOOR_WORD_NAMES)[number];
 
@@ -602,6 +607,10 @@ export const WORD_FLOORS: Readonly<Partial<Record<ManifestWordName, string>>> = 
   'publicAccess.response': '0.3.49',
   // A new row moves the earlier rows sharing its link: a release before refuses the key.
   'states.supersedes': '0.3.50',
+  // A release before adds an add-on section with none of its files (its rows that name one are refused), and
+  // gives a sample's file to a picture column only.
+  'sampleData.addOns.assets': '0.3.51',
+  'sampleData.productAssets': '0.3.51',
 };
 
 /** The kinds of file a column takes from the release that cleans SVG and reads models and fonts whole (`ASSET_FILE_KINDS`). */
