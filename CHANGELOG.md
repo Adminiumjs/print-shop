@@ -7,10 +7,15 @@
   as the toast and the order's page promised. Each change a customer asks
   reaches the works' own address too, not only the first on an order. The
   e-mails are written in the language the order was placed in, as before.
+- **Each job's approval is e-mailed.** An order with two jobs tells the
+  customer "we're printing" for each, listing the jobs approved so far, not
+  only for the first.
 - **A proof with no PDF is never e-mailed.** A proof added on the dashboard
   without its PDF waits until it is given one, and is e-mailed then. The
   customer's order page no longer says such a proof, or the design, is "no
   longer kept": that is said only of a PDF erased with the customer's data.
+  Proofs made before this release all came with their PDF, and still read as
+  no longer kept once their customer is erased.
 - **The ticket's proof history keeps the customer's change** once the next
   proof has replaced the one they answered, and says a replaced proof was
   replaced ("Proof 1 sent, since replaced").
