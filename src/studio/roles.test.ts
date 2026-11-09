@@ -42,7 +42,9 @@ describe("the add-ons' tables the screens read, as the manifest grants them", ()
   it("are asked by each role only where its grants on the add-ons' tables read them", () => {
     for (const role of ROLES) {
       const grants = (role.tables ?? []) as { addOn: string; table: string; actions: string[] }[];
-      const held = SCREEN_ADD_ON_READS.filter((ref) => grants.some((g) => `${g.addOn}:${g.table}` === ref && g.actions.includes("read")));
+      // The delivery company the works grants a read of is DHL's add-on.
+      const named = (g: { addOn: string; table: string }) => (g.addOn === "shipping-dhl" ? `carrier:${g.table}` : `${g.addOn}:${g.table}`);
+      const held = SCREEN_ADD_ON_READS.filter((ref) => grants.some((g) => named(g) === ref && g.actions.includes("read")));
       expect([...(ADD_ON_READS[role.key] ?? [])].sort(), role.key).toEqual([...held].sort());
     }
   });

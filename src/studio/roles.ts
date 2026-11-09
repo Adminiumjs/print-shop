@@ -75,7 +75,8 @@ export const SCREEN_ADD_ON_READS = [
   "customiser:version_files",
   "inventory:links",
   "inventory:stock_points",
-  "shipping-dhl:shipments",
+  // What the delivery company attached booked: its shipments, whichever add-on it is.
+  "carrier:shipments",
   "holiday-calendars:holidays",
 ] as const;
 export type ScreenAddOnRead = (typeof SCREEN_ADD_ON_READS)[number];
@@ -91,7 +92,7 @@ export const ADD_ON_READS: Readonly<Record<string, readonly ScreenAddOnRead[]>> 
   owner: [...SCREEN_ADD_ON_READS],
   prepress: ["customiser:designs", "customiser:design_versions", "customiser:version_files", "inventory:links", "inventory:stock_points"],
   press: ["customiser:designs", "customiser:design_versions", "customiser:version_files", "inventory:links", "inventory:stock_points"],
-  counter: ["customiser:designs", "inventory:links", "inventory:stock_points", "shipping-dhl:shipments"],
+  counter: ["customiser:designs", "inventory:links", "inventory:stock_points", "carrier:shipments"],
 };
 
 /** Whether this person's role reads an add-on's table (somebody with none of the app's roles, an administrator, reads every one). */

@@ -131,7 +131,7 @@ describe("taking the Customiser's editor into the shop", () => {
 
   it("takes a built checkout's files, naming its version and never a path on this machine", () => {
     const pkg = temp();
-    const dist = join(pkg, "dist", "browser");
+    const dist = `${pkg}/dist/browser`;
     mkdirSync(dist, { recursive: true });
     for (const name of ["index.js", "stage3d.js", "editor.css"]) writeFileSync(join(dist, name), `/* ${name} */\n`);
     writeFileSync(join(pkg, "manifest.json"), MANIFEST);
