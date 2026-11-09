@@ -37,9 +37,12 @@ export const VERSION = "0.2.2";
  * tells each install's screens which install they are. 0.3.50 sends a job's
  * earlier proof again when a new one is made, whoever makes it
  * (`states.supersedes`), and 0.3.51 is the first to bundle the Customiser
- * 1.0.22, whose set-up page the owner's role opens and saves.
+ * 1.0.22, whose set-up page the owner's role opens and saves. 0.3.52 bundles
+ * the Customiser 1.0.23 (an app's owner changes its settings, each shop kept
+ * to its own rows) and tells a screens-only role which add-ons its app has,
+ * so the counter books the delivery company's collection.
  */
-export const MIN_ADMINIUM = "0.3.51";
+export const MIN_ADMINIUM = "0.3.52";
 
 /**
  * The release that reads two more things this app says: a role's grant of

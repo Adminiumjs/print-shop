@@ -9,13 +9,14 @@
  * as a print PDF.
  *
  * The ranges name the add-ons' release whose Customiser this app's owner sets
- * up from its own role (1.0.21), its 3D models seen from above (1.0.22).
+ * up from its own role (1.0.21), its 3D models seen from above (1.0.22), and
+ * each shop's owner keeps to their own set-up and settings (1.0.23).
  */
 import { l } from "./labels.ts";
 import { CUSTOMISER } from "./postings.ts";
 
-/** The add-ons' release whose Customiser lets the owner's role set the shop up, and shows its 3D models from above. */
-export const ADD_ONS_RANGE = "^1.0.22";
+/** The add-ons' release whose Customiser lets the owner's role change its settings and keeps each shop to its own rows. */
+export const ADD_ONS_RANGE = "^1.0.23";
 
 export const ADD_ONS = {
   requires: [{ key: CUSTOMISER, range: ADD_ONS_RANGE, reason: l("Customers fill in a ready-made design, or start from blank, with their own words and logo.") }],

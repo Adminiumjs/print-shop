@@ -18,7 +18,7 @@
     "commerce"
   ],
   "compatibility": {
-    "minAdminiumVersion": "0.3.51",
+    "minAdminiumVersion": "0.3.52",
     "engines": [
       "sqlite",
       "postgres",
@@ -118,7 +118,7 @@
     "requires": [
       {
         "key": "customiser",
-        "range": "^1.0.22",
+        "range": "^1.0.23",
         "reason": {
           "en-US": "Customers fill in a ready-made design, or start from blank, with their own words and logo.",
           "de-DE": "Die Kundschaft füllt einen fertigen Entwurf aus oder beginnt leer, mit eigenen Worten und eigenem Logo.",
@@ -134,7 +134,7 @@
     "suggests": [
       {
         "key": "shipping-dhl",
-        "range": "^1.0.22",
+        "range": "^1.0.23",
         "reason": {
           "en-US": "Book DHL for a delivery, print its label, and send the customer a tracking number.",
           "de-DE": "DHL für eine Lieferung buchen, das Etikett drucken und der Kundschaft eine Sendungsnummer schicken.",
@@ -148,7 +148,7 @@
       },
       {
         "key": "inventory",
-        "range": "^1.0.22",
+        "range": "^1.0.23",
         "reason": {
           "en-US": "Keep the sheet stocks and rolls in stock, with what each job takes and spoils.",
           "de-DE": "Bogenware und Rollen auf Lager halten, mit dem, was jeder Auftrag verbraucht und verdirbt.",
@@ -162,7 +162,7 @@
       },
       {
         "key": "invoices",
-        "range": "^1.0.22",
+        "range": "^1.0.23",
         "checked": true,
         "reason": {
           "en-US": "Send an invoice with each delivery, and print one at the counter.",
@@ -177,7 +177,7 @@
       },
       {
         "key": "holiday-calendars",
-        "range": "^1.0.22",
+        "range": "^1.0.23",
         "reason": {
           "en-US": "Close the works for public holidays in a tap.",
           "de-DE": "Die Druckerei an Feiertagen mit einem Tippen schließen.",
