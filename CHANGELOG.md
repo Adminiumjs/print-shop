@@ -1,6 +1,10 @@
 # Print Shop releases
 
-## 0.2.3 (not released yet)
+## 0.2.3 (10 November 2026)
+
+Needs Adminium **0.3.52** and asks for the add-ons at **1.0.23**. Updating from
+0.2.2, Adminium lists what prepress and the press now read of the Customiser
+(its settings) and updates once the operator allows it (`roleTables`).
 
 - **Every proof is e-mailed, not only an order's first.** A proof sent after a
   change asked, or sent again, now e-mails the customer its "proof ready" too,
@@ -28,8 +32,6 @@
   "Book a collection" and DHL's shipments reach the counter too.
 - **Prepress and the press read the Customiser's settings**, so a proof they
   make draws a one-colour picture to the shop's own line, as the shopper saw it.
-  An update from 0.2.2 asks the operator to allow it (Adminium lists the two
-  roles' new read of the settings before it updates).
 - **The owner changes the Customiser's shop settings** (the bleed and safe
   area, the one-colour line, the thinnest line and the least resolution) on the
   set-up page's Shop settings (add-ons 1.0.23).
@@ -43,7 +45,8 @@
   and the counter reach only the print shop's own customers' designs, and a
   design's versions and print files only the print shop's; a version they add
   is the print shop's.
-- The Customiser's `appGrants` are vendored with its editor
+- The shopper's editor is the Customiser 1.0.23's. The Customiser's `appGrants`
+  are vendored with it
   (`vendor/customiser/app-grants.json`), and every role's hold on its tables is
   tested against them.
 

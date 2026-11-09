@@ -46,10 +46,10 @@ describe("manifest.json is what src/manifest/ writes", () => {
     expect(readFileSync(FILE, "utf8") === manifestText()).toBe(true);
   });
 
-  it("is prefixed, keyed printing, at 0.2.2, and needs the engine that reads its rules", () => {
+  it("is prefixed, keyed printing, at 0.2.3, and needs the engine that reads its rules", () => {
     expect(manifest.requiredSchema.prefixed).toBe(true);
     expect(manifest["key"]).toBe("printing");
-    expect(manifest["version"]).toBe("0.2.2");
+    expect(manifest["version"]).toBe("0.2.3");
     expect((manifest["compatibility"] as Json)["minAdminiumVersion"]).toBe("0.3.52");
     // Both sides may be installed once per database.
     expect((manifest["frontends"] as Json[]).map((f) => [f["side"], f["instances"]])).toEqual([["staff", true], ["customer", true]]);
