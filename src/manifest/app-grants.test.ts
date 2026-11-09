@@ -6,7 +6,6 @@
  * lists and says what it kept back, so a set-up column the add-on adds or
  * takes away would leave the owner's set-up page refused with no test
  * failing: here it fails the day the new release is vendored.
-
  */
 import { readFileSync } from "node:fs";
 
