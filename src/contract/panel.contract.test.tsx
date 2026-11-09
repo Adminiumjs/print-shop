@@ -55,7 +55,7 @@ import { createSessionTransport } from "../studio/transport/sessionSource.ts";
 import { loadStaffConfig } from "../studio/transport/staffConnection.ts";
 import type { Row } from "../studio/wire.ts";
 import { addOnBundle, appBundle, boot, Caller, ENGINES, missing, missingAddOn, ok, PORTS_PER_ENGINE, until, type Engine, type Server } from "./harness.ts";
-import { engineAtLeast, MANIFEST_TEXT } from "./release.ts";
+import { ENGINE_VERSION, engineAtLeast, MANIFEST_TEXT } from "./release.ts";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -236,11 +236,16 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
        * The counter books a delivery company's collection, so its screens ask
        * Adminium which add-ons the print shop has. Adminium tells a
        * screens-only role so from 0.3.52; before, it refuses the read (403)
-       * and the counter's screens go on without a delivery company. Expected
-       * to fail on an Adminium before 0.3.52, and to pass from it.
+       * and the counter's screens go on without a delivery company.
        */
-      (engineAtLeast("0.3.52") ? it : it.fails)("tells the counter which add-ons the print shop has (waits for Adminium 0.3.52)", async () => {
+      it(`tells the counter which add-ons the print shop has (from Adminium 0.3.52; ${ENGINE_VERSION} ${engineAtLeast("0.3.52") ? "does" : "refuses it, 403"})`, async () => {
         const listed = await callers["counter"]!.get<{ addOns: { key: string; attachments?: { attachedTo: string }[] }[] }>("/api/v1/add-ons");
+        if (!engineAtLeast("0.3.52")) {
+          expect(listed.status, JSON.stringify(listed.body).slice(0, 300)).toBe(403);
+          expect((await doors["counter"]!.load()).jobs.length).toBeGreaterThan(0);
+          expect(doors["counter"]!.facts().carrier).toBeNull();
+          return;
+        }
         expect(listed.status, JSON.stringify(listed.body).slice(0, 300)).toBe(200);
         const customiser = listed.body.addOns.find((a) => a.key === "customiser");
         expect(customiser?.attachments?.some((one) => one.attachedTo === "printing")).toBe(true);
