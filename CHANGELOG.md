@@ -1,6 +1,33 @@
 # Print Shop releases
 
-## 0.2.2 (not released yet)
+## 0.2.3 (not released yet)
+
+- **Every proof is e-mailed, not only an order's first.** A proof sent after a
+  change asked, or sent again, now e-mails the customer its "proof ready" too,
+  as the toast and the order's page promised. Each change a customer asks
+  reaches the works' own address too, not only the first on an order. The
+  e-mails are written in the language the order was placed in, as before.
+- **A proof with no PDF is never e-mailed.** A proof added on the dashboard
+  without its PDF waits until it is given one, and is e-mailed then. The
+  customer's order page no longer says such a proof, or the design, is "no
+  longer kept": that is said only of a PDF erased with the customer's data.
+- **The ticket's proof history keeps the customer's change** once the next
+  proof has replaced the one they answered, and says a replaced proof was
+  replaced ("Proof 1 sent, since replaced").
+- **Prepress, the press and the counter no longer ask Adminium for what their
+  role does not read** (the list of add-ons, Holiday calendars' public holidays,
+  and for the counter a design's versions), so their screens make no refused
+  reads in the background.
+- **With the Maker Shop on the same install, the owner changes only the print
+  shop's own Customiser set-up.** A row the owner adds is the print shop's, and
+  they change and remove only the print shop's bases, areas, pieces, ready-made
+  designs and their parts, palettes, colours and priced features. The starter
+  fonts belong to no shop and stay theirs to give files to.
+- The Customiser's `appGrants` are vendored with its editor
+  (`vendor/customiser/app-grants.json`), and the owner's set-up columns are
+  tested against them.
+
+## 0.2.2 (8 November 2026)
 
 Needs Adminium **0.3.51** and asks for the add-ons at **1.0.22**.
 
