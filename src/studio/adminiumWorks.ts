@@ -27,7 +27,7 @@ import type { Action, ActivityEntry, AddOnTable, CatalogEntry, InstalledAddOn, P
 import { ApiError, text, type Id, type Row } from "./wire.ts";
 import { loadPanelModule } from "../add-ons/connected.ts";
 import { PANEL_HOST } from "./panels/host.tsx";
-import { mayManageAddOns, mayReadAddOn } from "./roles.ts";
+import { mayHandOver, mayReadAddOn } from "./roles.ts";
 
 export const APP_KEY = "printing";
 const PAGE = 200;
@@ -352,8 +352,9 @@ export class AdminiumWorks implements WorksDoor {
         const items = [...new Set(links.map((l) => l["item_id"]).filter((v) => v !== null && v !== undefined))];
         if (items.length > 0) stock = await this.listAddOn("inventory:stock_points", { where: { column: "item_id", op: "in", value: items }, order: "id.asc" });
       }
-      // The delivery company attached and on, and what it booked: asked only by whoever reads Adminium's list of add-ons.
-      this.carrier = mayManageAddOns(who) ? await this.findCarrier(on) : null;
+      // The delivery company attached and on, and what it booked: asked by whoever hands an order over (the counter's
+      // "Book a collection"), whose role Adminium tells which add-ons its app has (from 0.3.52); prepress and the press never.
+      this.carrier = mayHandOver(who) ? await this.findCarrier(on) : null;
       const shipments = this.carrier === null ? [] : await this.listAddOn(`${this.carrier.key}:shipments`, { order: "created_at.desc" });
       // The public holidays of England and Wales, to add one as a closure: Holiday calendars on, and read by whoever may (the owner).
       const set = { and: [{ column: "country", op: "eq", value: HOLIDAY_SET.country }, { column: "region", op: "eq", value: HOLIDAY_SET.region }] };

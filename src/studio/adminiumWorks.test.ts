@@ -206,7 +206,7 @@ describe("the reads", () => {
     };
     const asked = (sent: Sent[]) => sent.filter((s) => s.method === "GET").map((s) => s.path.split("?")[0]!);
 
-    it.each(["prepress", "press", "counter"])("%s: never Adminium's list of add-ons, nor the public holidays", async (role) => {
+    it.each(["prepress", "press"])("%s: never Adminium's list of add-ons, nor the public holidays", async (role) => {
       const { t, sent } = transport(reads);
       const door = new AdminiumWorks(t, config(role));
       await door.load();
@@ -216,8 +216,27 @@ describe("the reads", () => {
       expect(door.facts().carrier).toBeNull();
     });
 
+    // Adminium tells a screens-only role which add-ons its app has (0.3.52): the counter books DHL's collection.
+    it("the counter: the list of add-ons, to find the delivery company it books, and what it booked; never the public holidays", async () => {
+      const dhl = { key: "shipping-dhl", name: "DHL Shipping", provides: [{ contract: "shipping-carrier", version: 1 }] };
+      const { t, sent } = transport({ ...reads, "/api/v1/add-ons": { addOns: [dhl] }, "/api/v1/data/conn-1/shipments": { data: [{ id: 5, order_reference: "MP-4119" }] } });
+      const door = new AdminiumWorks(t, config("counter"));
+      const data = await door.load();
+      expect(asked(sent)).toContain("/api/v1/add-ons");
+      expect(door.facts().carrier).toEqual({ key: "shipping-dhl", name: "DHL Shipping" });
+      expect(data.shipments.map((s) => s["order_reference"])).toEqual(["MP-4119"]);
+      expect(asked(sent)).not.toContain("/api/v1/data/conn-1/holiday_calendars_holidays");
+    });
+
+    it("the counter on an Adminium that does not tell it (before 0.3.52): no delivery company, and the screens still load", async () => {
+      const { t } = transport({ ...reads, "/api/v1/add-ons": new SessionPortError("No.", 403, "FORBIDDEN") });
+      const door = new AdminiumWorks(t, config("counter"));
+      await door.load();
+      expect(door.facts().carrier).toBeNull();
+    });
+
     it("the counter: whether a job names a design, never its versions or their files", async () => {
-      const { t, sent } = transport(reads);
+      const { t, sent } = transport({ ...reads, "/api/v1/add-ons": { addOns: [] } });
       const data = await new AdminiumWorks(t, config("counter")).load();
       expect(asked(sent)).not.toContain("/api/v1/data/conn-1/customiser_design_versions");
       expect(asked(sent)).not.toContain("/api/v1/data/conn-1/customiser_version_files");

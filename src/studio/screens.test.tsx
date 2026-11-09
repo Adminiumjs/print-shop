@@ -159,6 +159,16 @@ describe("the board", () => {
     expect(useWorks.getState().orderId).toBe(4119);
   });
 
+  it("offers the counter Book a collection on a ready delivery while DHL is attached, and opens the dispatch page", async () => {
+    await mount(new FakeDoor({ roles: ["counter"], facts: { carrier: { key: "shipping-dhl", name: "DHL Shipping" } } }));
+    await click(button("Book a collection"));
+    expect(useWorks.getState().view).toBe("dispatch");
+    expect(text()).toContain("DHL Shipping");
+    unmount();
+    await mount(new FakeDoor({ roles: ["counter"] }));
+    expect(button("Book a collection")).toBeUndefined();
+  });
+
   it("opens a ticket from the search", async () => {
     await mount(new FakeDoor(), "today", { query: "kestrel" });
     await click(document.querySelector(".wk-search-row"));
