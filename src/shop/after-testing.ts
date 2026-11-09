@@ -96,9 +96,9 @@ export function sampleAfterRows(): FakeRows {
       { id: 7, job_id: 131, name: "harbour-front.pdf", file: "file_01ARTWORK7", side: "front", accepted: true, checks: { language: "en-US", rows: [{ check: "size", level: "pos", text: "85 × 55 mm with 3 mm bleed" }, { check: "colour", level: "warn", text: "RGB colours, we convert to CMYK" }] } },
     ],
     proofs: [
-      { id: 501, file: "file_01PROOF501", order_id: 13, job_id: 131, version: 1, kind: "email", state: "change_asked", note: null, change_note: "The phone number is wrong.", sent_at: "2026-08-03T14:00:00Z", file_added_at: "2026-08-03T14:00:00Z", answered_at: "2026-08-03T15:20:00Z" },
-      { id: 502, file: "file_01PROOF502", order_id: 13, job_id: 131, version: 2, kind: "email", state: "sent", note: null, change_note: null, sent_at: "2026-08-04T10:05:00Z", file_added_at: "2026-08-04T10:05:00Z", answered_at: null },
-      { id: 401, file: "file_01PROOF401", order_id: 2, job_id: 21, version: 1, kind: "email", state: "approved", note: null, change_note: null, sent_at: "2026-07-14T14:00:00Z", file_added_at: "2026-07-14T14:00:00Z", answered_at: "2026-07-14T18:00:00Z" },
+      { id: 501, file: "file_01PROOF501", order_id: 13, job_id: 131, version: 1, kind: "email", state: "change_asked", note: null, change_note: "The phone number is wrong.", sent_at: "2026-08-03T14:00:00Z", file_added_at: "2026-08-03T14:00:00Z", recorded_at: "2026-08-03T14:00:00Z", answered_at: "2026-08-03T15:20:00Z" },
+      { id: 502, file: "file_01PROOF502", order_id: 13, job_id: 131, version: 2, kind: "email", state: "sent", note: null, change_note: null, sent_at: "2026-08-04T10:05:00Z", file_added_at: "2026-08-04T10:05:00Z", recorded_at: "2026-08-04T10:05:00Z", answered_at: null },
+      { id: 401, file: "file_01PROOF401", order_id: 2, job_id: 21, version: 1, kind: "email", state: "approved", note: null, change_note: null, sent_at: "2026-07-14T14:00:00Z", file_added_at: "2026-07-14T14:00:00Z", recorded_at: "2026-07-14T14:00:00Z", answered_at: "2026-07-14T18:00:00Z" },
     ],
     quotes: [{ id: 41, number: "MQ-2041", label: null, email: CUSTOMER.email, delivery_method: "collect", total: "87.55", created_at: "2026-07-22T10:00:00Z" }],
     quoteLines: [{ id: 411, quote_id: 41, position: 1, ...CARDS, design_code: null }],

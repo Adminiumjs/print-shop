@@ -11108,6 +11108,27 @@
             }
           },
           {
+            "ref": "recorded_at",
+            "type": "timestamptz",
+            "label": {
+              "en-US": "Recorded",
+              "de-DE": "Erfasst",
+              "fr-FR": "Noté",
+              "da-DK": "Registreret",
+              "cs-CZ": "Zapsáno",
+              "ar-EG": "سُجّل",
+              "zh-CN": "记录时间",
+              "zh-TW": "記錄時間"
+            },
+            "nullable": true,
+            "rules": {
+              "stamp": {
+                "set": "now",
+                "on": "create"
+              }
+            }
+          },
+          {
             "ref": "language",
             "type": "text",
             "maxLength": 16,
@@ -21016,6 +21037,7 @@
         "kind",
         "file",
         "file_added_at",
+        "recorded_at",
         "design_version_id",
         "note",
         "state",
@@ -22142,6 +22164,7 @@
         "kind",
         "file",
         "file_added_at",
+        "recorded_at",
         "design_version_id",
         "note",
         "state",
@@ -22384,10 +22407,9 @@
       },
       {
         "kind": "proof-approved",
-        "link": "order_id",
+        "link": "proof_id",
         "onChange": {
           "table": "proofs",
-          "via": "order_id",
           "column": "state",
           "to": "approved"
         }
@@ -24596,30 +24618,24 @@
             },
             {
               "block": "email.rows",
-              "id": "jobs",
+              "id": "proofs",
               "data": {
                 "from": {
                   "link": "order",
-                  "table": "jobs",
+                  "table": "proofs",
                   "via": "order_id",
-                  "orderBy": "position",
+                  "orderBy": "version",
                   "where": {
-                    "column": "stage",
+                    "column": "state",
                     "in": [
-                      "prepress",
-                      "printing",
-                      "finishing",
-                      "ready",
-                      "collected",
-                      "dispatched"
+                      "approved"
                     ]
                   },
-                  "limit": 50
+                  "limit": 20
                 },
                 "row": {
-                  "title": "{{row.qty.number}} × {{row.product_name}}",
-                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
-                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}"
+                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "meta": "{{row.job.dims|}}"
                 }
               }
             },
@@ -24676,30 +24692,24 @@
             },
             {
               "block": "email.rows",
-              "id": "jobs",
+              "id": "proofs",
               "data": {
                 "from": {
                   "link": "order",
-                  "table": "jobs",
+                  "table": "proofs",
                   "via": "order_id",
-                  "orderBy": "position",
+                  "orderBy": "version",
                   "where": {
-                    "column": "stage",
+                    "column": "state",
                     "in": [
-                      "prepress",
-                      "printing",
-                      "finishing",
-                      "ready",
-                      "collected",
-                      "dispatched"
+                      "approved"
                     ]
                   },
-                  "limit": 50
+                  "limit": 20
                 },
                 "row": {
-                  "title": "{{row.qty.number}} × {{row.product_name}}",
-                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
-                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}"
+                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "meta": "{{row.job.dims|}}"
                 }
               }
             },
@@ -24756,30 +24766,24 @@
             },
             {
               "block": "email.rows",
-              "id": "jobs",
+              "id": "proofs",
               "data": {
                 "from": {
                   "link": "order",
-                  "table": "jobs",
+                  "table": "proofs",
                   "via": "order_id",
-                  "orderBy": "position",
+                  "orderBy": "version",
                   "where": {
-                    "column": "stage",
+                    "column": "state",
                     "in": [
-                      "prepress",
-                      "printing",
-                      "finishing",
-                      "ready",
-                      "collected",
-                      "dispatched"
+                      "approved"
                     ]
                   },
-                  "limit": 50
+                  "limit": 20
                 },
                 "row": {
-                  "title": "{{row.qty.number}} × {{row.product_name}}",
-                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
-                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}"
+                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "meta": "{{row.job.dims|}}"
                 }
               }
             },
@@ -24836,30 +24840,24 @@
             },
             {
               "block": "email.rows",
-              "id": "jobs",
+              "id": "proofs",
               "data": {
                 "from": {
                   "link": "order",
-                  "table": "jobs",
+                  "table": "proofs",
                   "via": "order_id",
-                  "orderBy": "position",
+                  "orderBy": "version",
                   "where": {
-                    "column": "stage",
+                    "column": "state",
                     "in": [
-                      "prepress",
-                      "printing",
-                      "finishing",
-                      "ready",
-                      "collected",
-                      "dispatched"
+                      "approved"
                     ]
                   },
-                  "limit": 50
+                  "limit": 20
                 },
                 "row": {
-                  "title": "{{row.qty.number}} × {{row.product_name}}",
-                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
-                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}"
+                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "meta": "{{row.job.dims|}}"
                 }
               }
             },
@@ -24916,30 +24914,24 @@
             },
             {
               "block": "email.rows",
-              "id": "jobs",
+              "id": "proofs",
               "data": {
                 "from": {
                   "link": "order",
-                  "table": "jobs",
+                  "table": "proofs",
                   "via": "order_id",
-                  "orderBy": "position",
+                  "orderBy": "version",
                   "where": {
-                    "column": "stage",
+                    "column": "state",
                     "in": [
-                      "prepress",
-                      "printing",
-                      "finishing",
-                      "ready",
-                      "collected",
-                      "dispatched"
+                      "approved"
                     ]
                   },
-                  "limit": 50
+                  "limit": 20
                 },
                 "row": {
-                  "title": "{{row.qty.number}} × {{row.product_name}}",
-                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
-                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}"
+                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "meta": "{{row.job.dims|}}"
                 }
               }
             },
@@ -24996,30 +24988,24 @@
             },
             {
               "block": "email.rows",
-              "id": "jobs",
+              "id": "proofs",
               "data": {
                 "from": {
                   "link": "order",
-                  "table": "jobs",
+                  "table": "proofs",
                   "via": "order_id",
-                  "orderBy": "position",
+                  "orderBy": "version",
                   "where": {
-                    "column": "stage",
+                    "column": "state",
                     "in": [
-                      "prepress",
-                      "printing",
-                      "finishing",
-                      "ready",
-                      "collected",
-                      "dispatched"
+                      "approved"
                     ]
                   },
-                  "limit": 50
+                  "limit": 20
                 },
                 "row": {
-                  "title": "{{row.qty.number}} × {{row.product_name}}",
-                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
-                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}"
+                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "meta": "{{row.job.dims|}}"
                 }
               }
             },
@@ -25076,30 +25062,24 @@
             },
             {
               "block": "email.rows",
-              "id": "jobs",
+              "id": "proofs",
               "data": {
                 "from": {
                   "link": "order",
-                  "table": "jobs",
+                  "table": "proofs",
                   "via": "order_id",
-                  "orderBy": "position",
+                  "orderBy": "version",
                   "where": {
-                    "column": "stage",
+                    "column": "state",
                     "in": [
-                      "prepress",
-                      "printing",
-                      "finishing",
-                      "ready",
-                      "collected",
-                      "dispatched"
+                      "approved"
                     ]
                   },
-                  "limit": 50
+                  "limit": 20
                 },
                 "row": {
-                  "title": "{{row.qty.number}} × {{row.product_name}}",
-                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
-                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}"
+                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "meta": "{{row.job.dims|}}"
                 }
               }
             },
@@ -25156,30 +25136,24 @@
             },
             {
               "block": "email.rows",
-              "id": "jobs",
+              "id": "proofs",
               "data": {
                 "from": {
                   "link": "order",
-                  "table": "jobs",
+                  "table": "proofs",
                   "via": "order_id",
-                  "orderBy": "position",
+                  "orderBy": "version",
                   "where": {
-                    "column": "stage",
+                    "column": "state",
                     "in": [
-                      "prepress",
-                      "printing",
-                      "finishing",
-                      "ready",
-                      "collected",
-                      "dispatched"
+                      "approved"
                     ]
                   },
-                  "limit": 50
+                  "limit": 20
                 },
                 "row": {
-                  "title": "{{row.qty.number}} × {{row.product_name}}",
-                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
-                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}"
+                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "meta": "{{row.job.dims|}}"
                 }
               }
             },

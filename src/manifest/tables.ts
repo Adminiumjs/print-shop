@@ -1163,6 +1163,9 @@ export const TABLES: Table[] = [
       // When it was given its PDF: a proof added on the dashboard with none never had one, which the customer's page tells
       // from a PDF erased with their data, and which is never e-mailed (`outbox.ts`).
       at("file_added_at", "PDF added", { ...opt, rules: stamp("now", { column: "file", filled: true }) }),
+      // Stamped on every proof made from 0.2.3. An update adds both columns empty on the proofs already there, which all
+      // came from the works' screens with their PDF: a proof with neither stamp had one (its PDF erased, when it is gone).
+      at("recorded_at", "Recorded", { ...opt, rules: stamp("now", onCreate) }),
       // The language its order was placed in: its e-mail is written in it.
       { ...language("language"), rules: always("order_id", "language") },
       // The Customiser's version of the design this proof shows, when the job has one.

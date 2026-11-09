@@ -33,7 +33,9 @@ export interface ProofView {
   /**
    * It was given a PDF once (`file_added_at`). A proof added on the dashboard
    * with none never had one: nothing was taken from the customer, and nothing
-   * was sent them to open.
+   * was sent them to open. A proof made before 0.2.3 holds neither stamp
+   * (`recorded_at` either): those all came from the works' screens with their
+   * PDF, so one with no PDF now had it erased.
    */
   filed: boolean;
 }
@@ -89,7 +91,7 @@ function proofView(p: Row): ProofView {
     sentAt: text(p["sent_at"]),
     answeredAt: text(p["answered_at"]),
     kept: text(p["file"]) !== null,
-    filed: text(p["file"]) !== null || text(p["file_added_at"]) !== null,
+    filed: text(p["file"]) !== null || text(p["file_added_at"]) !== null || text(p["recorded_at"]) === null,
   };
 }
 

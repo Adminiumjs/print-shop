@@ -415,6 +415,18 @@ describe.each(["en-US", "ar-EG"] as const)("the pages after an order in %s", (lo
     }
   });
 
+  // A proof made before 0.2.3 holds neither stamp: it came from the works' screens with its PDF, so with none now it was erased.
+  it("a proof made before 0.2.3 whose customer was erased: said as no longer kept, as before", async () => {
+    const proof = port.afterPort.rows.proofs[1]!;
+    Object.assign(proof, { file: null, file_added_at: null, recorded_at: null });
+    await mount(locale, "/order#LINKCODE0000000A");
+    expect(document.querySelector(".ma-open-proof")).toBeNull();
+    if (english) {
+      expect(text()).toContain("This proof is no longer kept");
+      expect(text()).not.toContain("A proof is waiting for you");
+    }
+  });
+
   it("Your proofs, Order it again and Saved quotes, signed in", async () => {
     await mount(locale);
     await go("proofs");
