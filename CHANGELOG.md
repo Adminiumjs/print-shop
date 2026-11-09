@@ -15,16 +15,25 @@
   proof has replaced the one they answered, and says a replaced proof was
   replaced ("Proof 1 sent, since replaced").
 - **Prepress, the press and the counter no longer ask Adminium for what their
-  role does not read** (the list of add-ons, Holiday calendars' public holidays,
-  and for the counter a design's versions), so their screens make no refused
-  reads in the background.
-- **With the Maker Shop on the same install, the owner changes only the print
-  shop's own Customiser set-up.** A row the owner adds is the print shop's, and
-  they change and remove only the print shop's bases, areas, pieces, ready-made
-  designs and their parts, palettes, colours and priced features. The starter
-  fonts belong to no shop and stay theirs to give files to.
+  role does not read** (Holiday calendars' public holidays, and for the counter
+  a design's versions), so their screens make no refused reads in the
+  background. Prepress and the press no longer ask for the list of add-ons.
+- **The counter books DHL's collection.** Its screens ask which add-ons the
+  print shop has, which Adminium tells a screens-only role from 0.3.52, so
+  "Book a collection" and DHL's shipments reach the counter too.
+- **Prepress and the press read the Customiser's settings**, so a proof they
+  make draws a one-colour picture to the shop's own line, as the shopper saw it.
+- **The owner changes the Customiser's shop settings** (the unit, bleed and
+  safe area, the one-colour line, the thinnest line and the least resolution)
+  on the set-up page's Shop settings (add-ons 1.0.23).
+- **With the Maker Shop on the same install, the owner sees and changes only the
+  print shop's own Customiser set-up.** A row the owner adds is the print
+  shop's; another shop's bases, areas, pieces, ready-made designs and their
+  parts, fonts, palettes, colours and priced features are not there to them.
+  The starter fonts belong to no shop: the owner reads them and gives them their
+  files, and never removes one.
 - The Customiser's `appGrants` are vendored with its editor
-  (`vendor/customiser/app-grants.json`), and the owner's set-up columns are
+  (`vendor/customiser/app-grants.json`), and every role's hold on its tables is
   tested against them.
 
 ## 0.2.2 (8 November 2026)
