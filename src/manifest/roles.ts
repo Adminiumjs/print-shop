@@ -90,7 +90,7 @@ const CUSTOMISER_PANEL = [
  * `appGrants`, so the install keeps nothing back. A base it adds and changes
  * but never takes away.
  */
-const SETUP_COLUMNS: Record<string, string[]> = {
+export const SETUP_COLUMNS: Record<string, string[]> = {
   bases: ["name", "kind", "width_mm", "height_mm", "depth_mm", "corner_mm", "bleed_mm", "safe_mm", "sides", "back_feature_id", "material", "thickness_mm", "outline_file", "model_file", "print_file", "faces", "offered", "state", "position"],
   base_pieces: ["base_id", "code", "name", "width_mm", "height_mm", "layers", "left_out", "file", "position"],
   base_areas: ["base_id", "code", "name", "side", "piece_id", "face", "shape", "x_mm", "y_mm", "w_mm", "h_mm", "takes", "required", "rules", "feature_id", "position"],
@@ -101,6 +101,24 @@ const SETUP_COLUMNS: Record<string, string[]> = {
   palette_colours: ["palette_id", "code", "role", "name", "hex", "position"],
   features: ["code", "name", "active"],
 };
+
+/** The app a row of the Customiser's set-up belongs to, in its `app` column. */
+export const SETUP_APP = "printing";
+
+/**
+ * Which of the set-up's rows the owner reaches, with the Maker Shop on the same
+ * install: a row they add is the print shop's own, and they change and remove
+ * only the print shop's own rows, never another shop's. They read every row
+ * (the panels draw from them). The starter fonts belong to no shop (`app`
+ * empty) and each shop's owner gives them their files, while a row limit
+ * reaches rows by a value and never an empty one: so the fonts are held to no
+ * rows, only a new one tagged as the print shop's.
+ */
+export function setUpRows(table: string, actions: readonly string[]): Record<string, unknown> {
+  const own = { reach: "all", while: { column: "app", in: [SETUP_APP] } };
+  const rows = Object.fromEntries(["update", "delete"].filter((action) => actions.includes(action)).map((action) => [action, own]));
+  return { creatableValues: { app: [SETUP_APP] }, ...(table === "fonts" ? {} : { rows }) };
+}
 
 /**
  * The owner's: the panel's, and everything the Customiser's set-up page reads
@@ -114,7 +132,7 @@ const CUSTOMISER_SETUP = [
     const columns = SETUP_COLUMNS[entry.table];
     if (columns === undefined) return entry;
     const actions = entry.table === "bases" ? ["read", "create", "update"] : ["read", "create", "update", "delete"];
-    return { ...entry, actions, limit: { creatable: ["app", ...columns], writable: columns } };
+    return { ...entry, actions, limit: { creatable: ["app", ...columns], writable: columns, ...setUpRows(entry.table, actions) } };
   }),
   { addOn: CUSTOMISER, table: "settings", actions: ["read"] },
 ];

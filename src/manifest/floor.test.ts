@@ -84,9 +84,27 @@ describe("the manifest at the floor it ships with", () => {
       expect(limits[table]?.creatable.slice(1), table).toEqual(limits[table]?.writable);
       expect(limits[table]?.writable, table).not.toContain("app");
     }
-    expect(limits["features"]).toEqual({ creatable: ["app", "code", "name", "active"], writable: ["code", "name", "active"] });
+    const own = { reach: "all", while: { column: "app", in: ["printing"] } };
+    expect(limits["features"]).toEqual({ creatable: ["app", "code", "name", "active"], writable: ["code", "name", "active"], creatableValues: { app: ["printing"] }, rows: { update: own, delete: own } });
     expect(tables.length).toBeLessThanOrEqual(24);
     expect(roleOf(shipped, "owner").permissions).toContain("page:@customiser:view");
+  });
+
+  // With the Maker Shop on the same install, its owner and this one share the Customiser's set-up tables.
+  it("lets the owner add, change and remove only the print shop's own set-up rows, never another shop's", () => {
+    type Limit = { creatableValues?: Record<string, unknown[]>; rows?: Record<string, unknown> };
+    const tables = roleOf(shipped, "owner").tables as { addOn?: string; table: string; actions: string[]; limit?: Limit }[];
+    const limits = Object.fromEntries(tables.filter((g) => g.addOn === "customiser").map((g) => [g.table, { actions: g.actions, limit: g.limit }]));
+    const own = { reach: "all", while: { column: "app", in: ["printing"] } };
+    for (const table of ["bases", "base_areas", "base_pieces", "ready_designs", "ready_parts", "fonts", "palettes", "palette_colours", "features"]) {
+      const { actions, limit } = limits[table]!;
+      expect(limit?.creatableValues, table).toEqual({ app: ["printing"] });
+      // The starter fonts belong to no shop, and every shop's owner gives them their files: no row limit can name an empty app.
+      if (table === "fonts") expect(limit?.rows, table).toBeUndefined();
+      else expect(limit?.rows, table).toEqual(Object.fromEntries(["update", "delete"].filter((a) => actions.includes(a)).map((a) => [a, own])));
+    }
+    // Nothing but the set-up is held so: the panel's reads and writes reach every row, as the roles that work a job do.
+    for (const table of ["designs", "design_versions", "version_files", "settings"]) expect(limits[table]?.limit?.rows, table).toBeUndefined();
   });
 
   // From 0.3.50: a new proof sends the job's earlier one still out again in its own write, whoever makes it.

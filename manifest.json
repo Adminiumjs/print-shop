@@ -19594,7 +19594,23 @@
               "offered",
               "state",
               "position"
-            ]
+            ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            },
+            "rows": {
+              "update": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              }
+            }
           }
         },
         {
@@ -19625,7 +19641,32 @@
               "state",
               "preview_file",
               "position"
-            ]
+            ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            },
+            "rows": {
+              "update": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
+              "delete": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              }
+            }
           }
         },
         {
@@ -19678,7 +19719,32 @@
               "value",
               "feature_id",
               "position"
-            ]
+            ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            },
+            "rows": {
+              "update": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
+              "delete": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              }
+            }
           }
         },
         {
@@ -19727,7 +19793,32 @@
               "rules",
               "feature_id",
               "position"
-            ]
+            ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            },
+            "rows": {
+              "update": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
+              "delete": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              }
+            }
           }
         },
         {
@@ -19762,7 +19853,32 @@
               "left_out",
               "file",
               "position"
-            ]
+            ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            },
+            "rows": {
+              "update": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
+              "delete": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              }
+            }
           }
         },
         {
@@ -19789,7 +19905,32 @@
               "code",
               "name",
               "position"
-            ]
+            ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            },
+            "rows": {
+              "update": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
+              "delete": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              }
+            }
           }
         },
         {
@@ -19818,7 +19959,32 @@
               "name",
               "hex",
               "position"
-            ]
+            ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            },
+            "rows": {
+              "update": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
+              "delete": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              }
+            }
           }
         },
         {
@@ -19853,7 +20019,12 @@
               "smallest_mm",
               "file",
               "active"
-            ]
+            ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            }
           }
         },
         {
@@ -19876,7 +20047,32 @@
               "code",
               "name",
               "active"
-            ]
+            ],
+            "creatableValues": {
+              "app": [
+                "printing"
+              ]
+            },
+            "rows": {
+              "update": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              },
+              "delete": {
+                "reach": "all",
+                "while": {
+                  "column": "app",
+                  "in": [
+                    "printing"
+                  ]
+                }
+              }
+            }
           }
         },
         {

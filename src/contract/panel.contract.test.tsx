@@ -386,6 +386,37 @@ describe.skipIf(why !== null)(`the Customiser's panels on the works' screens, ag
       });
 
       /*
+       * With the Maker Shop on the same install, both shops' set-up rows sit in
+       * the Customiser's one set of tables, each tagged with its shop (`app`).
+       * The print shop's owner changes, removes and adds only the print shop's:
+       * a base and a priced feature of the maker's, as an operator adds them,
+       * are refused them, and so is a new row tagged as the maker's.
+       */
+      it("refuses the owner another shop's set-up rows: changing, removing, or adding one as that shop's", async () => {
+        const owner = callers["owner"]!;
+        const at = (table: string, id?: unknown) => `/api/v1/data/${connectionId}/customiser_${table}${id === undefined ? "" : `/${String(id)}`}`;
+        const base = ok(await admin.post<{ data: Row }>(at("bases"), { values: { app: "maker", name: "Maker's coaster", kind: "piece", width_mm: 95, height_mm: 95 } }), 201).data;
+        const feature = ok(await admin.post<{ data: Row }>(at("features"), { values: { app: "maker", code: "maker-gift-box", name: "Gift box" } }), 201).data;
+        const refused = (status: number) => [403, 404].includes(status);
+        const renamed = await owner.patch(at("bases", base.id), { values: { name: "Taken over" } }, await tokenOf("owner"));
+        expect(refused(renamed.status), `base: ${String(renamed.status)} ${JSON.stringify(renamed.body).slice(0, 300)}`).toBe(true);
+        const changed = await owner.patch(at("features", feature.id), { values: { name: "Taken over" } }, await tokenOf("owner"));
+        expect(refused(changed.status), `feature: ${String(changed.status)} ${JSON.stringify(changed.body).slice(0, 300)}`).toBe(true);
+        const removed = await owner.send("DELETE", at("features", feature.id), undefined, await tokenOf("owner"));
+        expect(refused(removed.status), `feature removed: ${String(removed.status)}`).toBe(true);
+        const tagged = await owner.post(at("features"), { values: { app: "maker", code: "print-sneaks-in", name: "Sneaks in" } }, await tokenOf("owner"));
+        expect([403, 422], `a row tagged the maker's: ${String(tagged.status)} ${JSON.stringify(tagged.body).slice(0, 300)}`).toContain(tagged.status);
+        // Both stay the maker's, as the operator added them.
+        expect(ok(await admin.get<{ data: Row }>(at("bases", base.id))).data["name"]).toBe("Maker's coaster");
+        expect(ok(await admin.get<{ data: Row }>(at("features", feature.id))).data["name"]).toBe("Gift box");
+        // The print shop's own rows stay the owner's: a feature added as the print shop's, changed and removed.
+        const own = await owner.post<{ data: Row }>(at("features"), { values: { app: "printing", code: "print-own-box", name: "Box" } }, await tokenOf("owner"));
+        expect(own.status, JSON.stringify(own.body).slice(0, 300)).toBe(201);
+        expect((await owner.patch(at("features", own.body.data.id), { values: { name: "Gift box" } }, await tokenOf("owner"))).status).toBe(200);
+        expect([200, 204]).toContain((await owner.send("DELETE", at("features", own.body.data.id), undefined, await tokenOf("owner"))).status);
+      });
+
+      /*
        * The install adds the open-licence starter fonts as rows with no file;
        * the set-up page, opened by someone who may change the fonts, uploads
        * each one's file from beside its code into its row (add-ons 1.0.21).
