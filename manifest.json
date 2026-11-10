@@ -24266,7 +24266,8 @@
         "practice.address",
         "practice.email",
         "practice.hours",
-        "practice.phone"
+        "practice.phone",
+        "proof.title"
       ],
       "locales": {
         "en-US": {
@@ -24288,6 +24289,18 @@
               }
             },
             {
+              "block": "email.tax-breakdown",
+              "id": "proof",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Proof",
+                    "amount": "{{proof.title}}"
+                  }
+                ]
+              }
+            },
+            {
               "block": "email.rows",
               "id": "proofs",
               "data": {
@@ -24305,7 +24318,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}"
                 }
               }
@@ -24375,6 +24388,18 @@
               }
             },
             {
+              "block": "email.tax-breakdown",
+              "id": "proof",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Andruck",
+                    "amount": "{{proof.title}}"
+                  }
+                ]
+              }
+            },
+            {
               "block": "email.rows",
               "id": "proofs",
               "data": {
@@ -24392,7 +24417,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}"
                 }
               }
@@ -24462,6 +24487,18 @@
               }
             },
             {
+              "block": "email.tax-breakdown",
+              "id": "proof",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Épreuve",
+                    "amount": "{{proof.title}}"
+                  }
+                ]
+              }
+            },
+            {
               "block": "email.rows",
               "id": "proofs",
               "data": {
@@ -24479,7 +24516,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}"
                 }
               }
@@ -24549,6 +24586,18 @@
               }
             },
             {
+              "block": "email.tax-breakdown",
+              "id": "proof",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Korrektur",
+                    "amount": "{{proof.title}}"
+                  }
+                ]
+              }
+            },
+            {
               "block": "email.rows",
               "id": "proofs",
               "data": {
@@ -24566,7 +24615,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}"
                 }
               }
@@ -24636,6 +24685,18 @@
               }
             },
             {
+              "block": "email.tax-breakdown",
+              "id": "proof",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Náhled",
+                    "amount": "{{proof.title}}"
+                  }
+                ]
+              }
+            },
+            {
               "block": "email.rows",
               "id": "proofs",
               "data": {
@@ -24653,7 +24714,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}"
                 }
               }
@@ -24723,6 +24784,18 @@
               }
             },
             {
+              "block": "email.tax-breakdown",
+              "id": "proof",
+              "data": {
+                "lines": [
+                  {
+                    "label": "البروفة",
+                    "amount": "{{proof.title}}"
+                  }
+                ]
+              }
+            },
+            {
               "block": "email.rows",
               "id": "proofs",
               "data": {
@@ -24740,7 +24813,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}"
                 }
               }
@@ -24810,6 +24883,18 @@
               }
             },
             {
+              "block": "email.tax-breakdown",
+              "id": "proof",
+              "data": {
+                "lines": [
+                  {
+                    "label": "打样",
+                    "amount": "{{proof.title}}"
+                  }
+                ]
+              }
+            },
+            {
               "block": "email.rows",
               "id": "proofs",
               "data": {
@@ -24827,7 +24912,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}"
                 }
               }
@@ -24897,6 +24982,18 @@
               }
             },
             {
+              "block": "email.tax-breakdown",
+              "id": "proof",
+              "data": {
+                "lines": [
+                  {
+                    "label": "打樣",
+                    "amount": "{{proof.title}}"
+                  }
+                ]
+              }
+            },
+            {
               "block": "email.rows",
               "id": "proofs",
               "data": {
@@ -24914,7 +25011,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}"
                 }
               }
@@ -25039,7 +25136,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}"
                 }
               }
@@ -25113,7 +25210,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}"
                 }
               }
@@ -25187,7 +25284,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}"
                 }
               }
@@ -25261,7 +25358,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}"
                 }
               }
@@ -25335,7 +25432,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}"
                 }
               }
@@ -25409,7 +25506,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}"
                 }
               }
@@ -25483,7 +25580,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}"
                 }
               }
@@ -25557,7 +25654,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}"
                 }
               }
@@ -29641,6 +29738,7 @@
         "practice.email",
         "practice.hours",
         "practice.phone",
+        "proof.title",
         "staff_url"
       ],
       "locales": {
@@ -29663,6 +29761,18 @@
               }
             },
             {
+              "block": "email.tax-breakdown",
+              "id": "proof",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Proof",
+                    "amount": "{{proof.title}}"
+                  }
+                ]
+              }
+            },
+            {
               "block": "email.rows",
               "id": "proofs",
               "data": {
@@ -29680,7 +29790,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}",
                   "note": "“{{row.change_note|}}”"
                 }
@@ -29729,6 +29839,18 @@
               }
             },
             {
+              "block": "email.tax-breakdown",
+              "id": "proof",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Andruck",
+                    "amount": "{{proof.title}}"
+                  }
+                ]
+              }
+            },
+            {
               "block": "email.rows",
               "id": "proofs",
               "data": {
@@ -29746,7 +29868,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}",
                   "note": "“{{row.change_note|}}”"
                 }
@@ -29795,6 +29917,18 @@
               }
             },
             {
+              "block": "email.tax-breakdown",
+              "id": "proof",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Épreuve",
+                    "amount": "{{proof.title}}"
+                  }
+                ]
+              }
+            },
+            {
               "block": "email.rows",
               "id": "proofs",
               "data": {
@@ -29812,7 +29946,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}",
                   "note": "“{{row.change_note|}}”"
                 }
@@ -29861,6 +29995,18 @@
               }
             },
             {
+              "block": "email.tax-breakdown",
+              "id": "proof",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Korrektur",
+                    "amount": "{{proof.title}}"
+                  }
+                ]
+              }
+            },
+            {
               "block": "email.rows",
               "id": "proofs",
               "data": {
@@ -29878,7 +30024,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}",
                   "note": "“{{row.change_note|}}”"
                 }
@@ -29927,6 +30073,18 @@
               }
             },
             {
+              "block": "email.tax-breakdown",
+              "id": "proof",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Náhled",
+                    "amount": "{{proof.title}}"
+                  }
+                ]
+              }
+            },
+            {
               "block": "email.rows",
               "id": "proofs",
               "data": {
@@ -29944,7 +30102,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}",
                   "note": "“{{row.change_note|}}”"
                 }
@@ -29993,6 +30151,18 @@
               }
             },
             {
+              "block": "email.tax-breakdown",
+              "id": "proof",
+              "data": {
+                "lines": [
+                  {
+                    "label": "البروفة",
+                    "amount": "{{proof.title}}"
+                  }
+                ]
+              }
+            },
+            {
               "block": "email.rows",
               "id": "proofs",
               "data": {
@@ -30010,7 +30180,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}",
                   "note": "“{{row.change_note|}}”"
                 }
@@ -30059,6 +30229,18 @@
               }
             },
             {
+              "block": "email.tax-breakdown",
+              "id": "proof",
+              "data": {
+                "lines": [
+                  {
+                    "label": "打样",
+                    "amount": "{{proof.title}}"
+                  }
+                ]
+              }
+            },
+            {
               "block": "email.rows",
               "id": "proofs",
               "data": {
@@ -30076,7 +30258,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}",
                   "note": "“{{row.change_note|}}”"
                 }
@@ -30125,6 +30307,18 @@
               }
             },
             {
+              "block": "email.tax-breakdown",
+              "id": "proof",
+              "data": {
+                "lines": [
+                  {
+                    "label": "打樣",
+                    "amount": "{{proof.title}}"
+                  }
+                ]
+              }
+            },
+            {
               "block": "email.rows",
               "id": "proofs",
               "data": {
@@ -30142,7 +30336,7 @@
                   "limit": 20
                 },
                 "row": {
-                  "title": "{{row.job.qty}} × {{row.job.product_name}}",
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}",
                   "note": "“{{row.change_note|}}”"
                 }

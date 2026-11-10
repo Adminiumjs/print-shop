@@ -141,4 +141,18 @@ describe("what the e-mails read", () => {
       }
     }
   });
+
+  // An order of two jobs: the proof ready and the works' change asked each say which proof, and so which job, they are about.
+  it("names the proof a proof ready or a change asked is about, and each proof listed by its job", () => {
+    for (const kind of ["proof-ready", "change-asked"] as const) {
+      for (const tag of LOCALES) {
+        const named = templateOf(kind, tag).blocks.find((b) => b.id === "proof");
+        expect(named?.data["lines"], `${kind} ${tag}`).toEqual([{ label: emailWords()[tag].proof, amount: "{{proof.title}}" }]);
+      }
+    }
+    for (const kind of ["proof-ready", "change-asked", "proof-approved"] as const) {
+      const list = templateOf(kind, "en-US").blocks.find((b) => b.block === "email.rows")!;
+      expect((list.data["row"] as { title: string }).title, kind).toBe("{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}");
+    }
+  });
 });

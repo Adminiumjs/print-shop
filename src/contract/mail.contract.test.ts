@@ -469,6 +469,36 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
         expect((await staff.send("DELETE", `/api/v1/data/${connectionId}/${table("proofs")}/${String(first["id"])}?confirm=true`)).status).not.toBe(200);
       }, 240_000);
 
+      // Two lots of the same cards in one order: each proof ready, and the works' copy of a change, says which proof, and so
+      // which job, it is about, and lists each proof by its job's name.
+      it("names the proof and its job in the proof ready and the works' change asked, on an order of two jobs", async () => {
+        await at("2026-08-11T09:00:00Z");
+        const who = { ...SHOPPER, name: "Wren Hale", email: "wren@quayside-print.dev" };
+        const order = await place([cards(100), { ...cards(200), id: "j2" }], "collect", who);
+        const number = String(order.order["number"]);
+        const jobs = (await jobsOf(order.order)).sort((a, b) => Number(a["position"]) - Number(b["position"]));
+        expect(jobs.map((j) => [j["code"], Number(j["qty"])])).toEqual([
+          [`${number}/1`, 100],
+          [`${number}/2`, 200],
+        ]);
+        const first = await sendProof(jobs[0]!);
+        const one = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-ready", to: who.email, known: { "order.number": number }, row: message("proof-ready", "proof_id", first["id"]) });
+        expect(one.mail.text, one.mail.text).toContain(`Proof: ${number}/1 #1`);
+        expect(one.mail.text).toContain(`${number}/1 · 100 × Business cards`);
+        expect(one.mail.text).not.toContain(`${number}/2`);
+        const second = await sendProof(jobs[1]!);
+        const two = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-ready", to: who.email, known: { "order.number": number }, row: message("proof-ready", "proof_id", second["id"]), body: new RegExp(`Proof: ${number}/2 #1`) });
+        expect(two.mail.text, two.mail.text).toContain(`${number}/2 · 200 × Business cards`);
+        const door = browser().after();
+        expect(await door.openShared(order.link!.token)).toBe("opened");
+        await door.answerProof("link", first["id"] as number, { state: "change_asked", change_note: "A bigger logo on the first lot." });
+        const asked = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "change-asked", to: WORKS, known: { "order.number": number }, row: message("change-asked", "proof_id", first["id"]) });
+        expect(asked.mail.text, asked.mail.text).toContain(`Proof: ${number}/1 #1`);
+        expect(asked.mail.text).toContain(`${number}/1 · 100 × Business cards`);
+        expect(asked.mail.text).toContain("A bigger logo on the first lot.");
+        expect(asked.mail.text).not.toContain(`${number}/2`);
+      }, 240_000);
+
       it("leaves no e-mail failed: every one names only what Adminium fills", async () => {
         const failed = (await rows("messages")).filter((m) => m["status"] === "failed").map((m) => [m["kind"], m["error"]]);
         expect(failed).toEqual([]);

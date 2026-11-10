@@ -78,6 +78,8 @@ export type EmailWords = Record<Kind, Words> & {
   /** "Saved", "Posted": a day a quote was saved or a pack posted. */
   saved: string;
   posted: string;
+  /** "Proof", before a proof's name ("MP-4129/2 #1"). */
+  proof: string;
   /** Proof ready's other two buttons. */
   approve: string;
   askChange: string;
@@ -111,6 +113,7 @@ export const EMAIL_EN: EmailWords = {
   weight: "Weight",
   saved: "Saved",
   posted: "Posted",
+  proof: "Proof",
   approve: "Approve",
   askChange: "Ask for a change",
   openWorks: "Open the works",
@@ -260,15 +263,21 @@ const QUOTE_LINES: Block = {
   },
 };
 
+/** A proof as one line, by the job it is of: the job's name ("MP-4129/2", which of the order's jobs), how many of what. */
+const PROOF_ROW = { title: "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}", meta: "{{row.job.dims|}}" };
+
 /** The proofs of an order in one state, by the job each is of. */
 const proofs = (state: string, note?: string): Block => ({
   block: "email.rows",
   id: "proofs",
   data: {
     from: { link: "order", table: "proofs", via: "order_id", orderBy: "version", where: { column: "state", in: [state] }, limit: 20 },
-    row: { title: "{{row.job.qty}} × {{row.job.product_name}}", meta: "{{row.job.dims|}}", ...(note === undefined ? {} : { note }) },
+    row: { ...PROOF_ROW, ...(note === undefined ? {} : { note }) },
   },
 });
+
+/** The proof the e-mail is about, by its name: its order's number, its job's place and its own number ("MP-4129/2 #1"). */
+const thisProof = (w: EmailWords): Block => facts("proof", [[w.proof, "{{proof.title}}"]]);
 
 /**
  * An order's money: the goods, ONE delivery line for the whole order (or
@@ -319,7 +328,8 @@ function body(kind: Kind, w: EmailWords): Block[] {
     case "proof-ready":
       return [
         ...head,
-        // The jobs a proof waits on, never the order's other jobs (a second job may have no proof yet).
+        // Which proof, and so which job, this one is; then the order's proofs waiting, each by its job (a second job may have none yet).
+        thisProof(w),
         proofs("sent"),
         button("open", own.button!, ORDER_URL),
         button("approve", w.approve, ORDER_URL),
@@ -404,6 +414,8 @@ function body(kind: Kind, w: EmailWords): Block[] {
     case "change-asked":
       return [
         ...head,
+        // The proof the change is asked of; then the order's proofs with a change asked, each by its job, in the customer's words.
+        thisProof(w),
         proofs("change_asked", "“{{row.change_note|}}”"),
         facts("ready", [[w.readyMoves, "{{order.ready_by}}"]]),
         button("works", w.openWorks, "{{staff_url}}", { onlyWith: "staff_url" }),
