@@ -1053,7 +1053,7 @@ export const TABLES: Table[] = [
       // Its proofs: the latest one's answer, the changes asked, and the proofs the works posted.
       choice("proof_state", "Proof", PROOF_STATE_LABELS, { ...opt, rules: { rollup: { from: "proofs", via: "job_id", latest: { of: "state", by: "version" } } } }),
       // Every change asked of its proofs, those sent again since included: each keeps its day on the ready-by.
-      figure("changes", "int", "Changes asked", { rollup: { from: "proofs", via: "job_id", sum: "change_asked" } }),
+      figure("changes", "int", "Changes asked", { rollup: { from: "proofs", via: "job_id", sum: "asked_change" } }),
       figure("posted_proofs", "int", "Proofs by post", { rollup: { from: "proofs", via: "job_id", count: true, where: { column: "kind", eq: "post" } } }),
       figure("proof_ok", "int", "Ready for press", { formula: PROOF_OK }),
       figure("turnaround_days", "int", "Working days to ready", { formula: { add: [WORK_DAYS, PROOF_WAIT_DAYS] } }),
@@ -1196,7 +1196,8 @@ export const TABLES: Table[] = [
       text("sent_by", 80, "Sent by", { ...opt, rules: stamp("user-name", onCreate) }),
       at("answered_at", "Answered", { ...opt, rules: stamp("now", onState("state", "approved", "change_asked")) }),
       // 1 once the customer asked a change of it, whatever became of it since: what the job counts its change days from.
-      figure("change_asked", "int", "Change asked", { formula: CHANGE_ASKED }),
+      // Never named after a state ("change_asked"): Adminium 0.3.52 cannot add such a column on Postgres or MySQL.
+      figure("asked_change", "int", "Change asked", { formula: CHANGE_ASKED }),
     ],
   },
   {

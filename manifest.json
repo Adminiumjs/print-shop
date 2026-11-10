@@ -9797,7 +9797,7 @@
               "rollup": {
                 "from": "proofs",
                 "via": "job_id",
-                "sum": "change_asked"
+                "sum": "asked_change"
               }
             }
           },
@@ -11426,7 +11426,7 @@
             }
           },
           {
-            "ref": "change_asked",
+            "ref": "asked_change",
             "type": "int",
             "nullable": true,
             "label": {
