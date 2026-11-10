@@ -186,7 +186,11 @@ function OrderPage() {
           </div>
           {jobs.map((job) => (
             <div key={job.id} className="ma-job">
-              {jobs.length > 1 && <div className="ma-job-title">{t("after.order.jobTitle", { product: job.name, qty: job.qty })}</div>}
+              {jobs.length > 1 && (
+                <div className="ma-job-title">
+                  <span className="mp-mono">{job.code}</span> · {t("after.order.jobTitle", { product: job.name, qty: job.qty })}
+                </div>
+              )}
               {job.cancelled ? <p className="ma-muted">{t("after.order.jobCancelled")}</p> : <Strip job={job} />}
             </div>
           ))}
@@ -231,8 +235,9 @@ function Strip({ job }: { job: JobView }) {
   );
 }
 
-/** A proof file's name as the page names it before it is opened. */
-export const proofName = (job: JobView, proof: ProofView): string => `proof-${job.orderNumber.toLowerCase()}${proof.version > 1 ? `-v${String(proof.version)}` : ""}.pdf`;
+/** A proof file's name as the page names it before it is opened: by its job's name when the order has several ("proof-mp-4129-2.pdf"). */
+export const proofName = (job: JobView, proof: ProofView): string =>
+  `proof-${(job.several ? job.code : job.orderNumber).toLowerCase().replace(/\//g, "-")}${proof.version > 1 ? `-v${String(proof.version)}` : ""}.pdf`;
 
 /** The proof waiting, and what the customer answered this visit; a change asked stays said until the next proof. */
 function ProofAnswerCards({ job }: { job: JobView }) {
@@ -243,6 +248,8 @@ function ProofAnswerCards({ job }: { job: JobView }) {
   const latest = job.latest;
   if (latest === null) return null;
   if (job.waiting !== null) return <ProofCard job={job} proof={job.waiting} />;
+  // Which of the order's jobs an answer is about, when it has several.
+  const which = job.several && <div className="ma-muted">{t("after.proof.forJob", { code: job.code, product: job.name })}</div>;
   // Its file deleted with the customer's data: said plainly, with nothing to open or answer.
   if (job.gone !== null)
     return (
@@ -250,6 +257,7 @@ function ProofAnswerCards({ job }: { job: JobView }) {
         <FileText size={20} aria-hidden="true" />
         <div>
           <div className="ma-done-title">{t("after.proof.goneTitle")}</div>
+          {which}
           <div className="ma-muted">{t("after.proof.goneBody")}</div>
         </div>
       </div>
@@ -260,6 +268,7 @@ function ProofAnswerCards({ job }: { job: JobView }) {
         <CircleCheckBig size={20} aria-hidden="true" />
         <div>
           <div className="ma-done-title">{t("after.proof.approved")}</div>
+          {which}
           {job.readyBy !== null && <div className="ma-muted">{t("after.proof.approvedSub", { date: day.full(job.readyBy) })}</div>}
         </div>
       </div>
@@ -270,6 +279,7 @@ function ProofAnswerCards({ job }: { job: JobView }) {
         <MessageSquareText size={20} aria-hidden="true" />
         <div>
           <div className="ma-done-title">{t("after.proof.changed")}</div>
+          {which}
           <div className="ma-muted">{job.readyBy === null ? t("after.proof.changedNoDate", undefined, works?.changeDays ?? 1) : t("after.proof.changedSub", { date: day.full(job.readyBy) }, works?.changeDays ?? 1)}</div>
         </div>
       </div>
@@ -377,6 +387,7 @@ export function ProofCard({ job, proof, compact = false }: { job: JobView; proof
         <MailCheck size={18} aria-hidden="true" className="ma-accent" />
         <h2 className="ma-proof-title">{t("after.proof.waiting")}</h2>
       </div>
+      {job.several && <p className="ma-proof-job">{t("after.proof.forJob", { code: job.code, product: job.name })}</p>}
       <div className="ma-proof-grid">
         <div className={`ma-proof-art ${tintOf(job.family)}`} aria-hidden="true">
           <span className="ma-proof-page">

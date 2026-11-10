@@ -55,6 +55,10 @@ export interface JobView {
   id: string;
   orderId: string;
   orderNumber: string;
+  /** Its name in the order, "MP-4129/1" (the order's number where a job has none). */
+  code: string;
+  /** Its order has other jobs: the pages and the proof say which one this is. */
+  several: boolean;
   name: string;
   qty: number;
   /** "350gsm silk board · 85×55mm". */
@@ -142,7 +146,7 @@ export function specOf(catalogue: Catalogue, job: Row): string {
   return [material?.shortName ?? material?.name ?? option?.name ?? null, sizeText(catalogue, job)].filter((p): p is string => p !== null).join(" · ");
 }
 
-export function jobView(catalogue: Catalogue, order: Row, job: Row, proofs: readonly Row[], artwork: readonly Row[]): JobView {
+export function jobView(catalogue: Catalogue, order: Row, job: Row, proofs: readonly Row[], artwork: readonly Row[], jobsInOrder = 1): JobView {
   const own = proofs.filter((p) => same(p["job_id"], job["id"])).map(proofView).sort((a, b) => a.version - b.version);
   const latest = own.at(-1) ?? null;
   const at = reached(job, latest);
@@ -164,6 +168,8 @@ export function jobView(catalogue: Catalogue, order: Row, job: Row, proofs: read
     id: String(job["id"]),
     orderId: String(order["id"]),
     orderNumber: String(order["number"] ?? ""),
+    code: text(job["code"]) ?? String(order["number"] ?? ""),
+    several: jobsInOrder > 1,
     name: text(job["product_name"]) ?? product?.name ?? "",
     qty: Number(job["qty"] ?? 1),
     spec: specOf(catalogue, job),
@@ -187,7 +193,7 @@ export function jobView(catalogue: Catalogue, order: Row, job: Row, proofs: read
 export function jobViews(catalogue: Catalogue, read: OrderRead): JobView[] {
   return [...read.jobs]
     .sort((a, b) => Number(a["position"] ?? 0) - Number(b["position"] ?? 0) || Number(a["id"]) - Number(b["id"]))
-    .map((job) => jobView(catalogue, read.order, job, read.proofs, read.artwork));
+    .map((job) => jobView(catalogue, read.order, job, read.proofs, read.artwork, read.jobs.length));
 }
 
 /** How the order leaves the works, as the page says it. */

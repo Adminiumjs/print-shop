@@ -399,6 +399,31 @@ describe.each(["en-US", "ar-EG"] as const)("the pages after an order in %s", (lo
     }
   });
 
+  // Two jobs of one order, each with its proof: each proof and each answer says which job it is of.
+  it("an order with two jobs: each proof card names its job", async () => {
+    const rows = port.afterPort.rows;
+    const first = rows.jobs.find((j) => j["id"] === 131)!;
+    first["code"] = "MP-4113/1";
+    rows.jobs.push({ ...first, id: 132, position: 2, code: "MP-4113/2", qty: 250, product_name: "Business cards" });
+    rows.proofs.push({ ...rows.proofs[1]!, id: 503, job_id: 132, version: 1, file: "file_01PROOF503" });
+    await mount(locale, "/order#LINKCODE0000000A");
+    if (english) {
+      expect(text()).toContain("For MP-4113/1 · Business cards");
+      expect(text()).toContain("For MP-4113/2 · Business cards");
+      expect([...document.querySelectorAll(".ma-chip--bottom")].map((c) => c.textContent)).toEqual(["proof-mp-4113-1-v2.pdf", "proof-mp-4113-2.pdf"]);
+    }
+    expect(document.querySelectorAll(".ma-proof-job")).toHaveLength(2);
+    await sweep(`${locale} · an order with two jobs, a proof waiting on each`);
+    await press(".ma-ask");
+    await type(".ma-proof textarea", "Bigger logo.");
+    await press(".ma-ask");
+    if (english) {
+      expect(text()).toContain("We've got your change.");
+      expect(text()).toContain("For MP-4113/1 · Business cards");
+    }
+    await sweep(`${locale} · an order with two jobs, a change asked on the first`);
+  });
+
   // A proof added on the dashboard with no PDF: nothing was erased, so nothing is said to be gone, and there is nothing to open yet.
   it("a proof added with no PDF: never said to be no longer kept, nor the design", async () => {
     const proof = port.afterPort.rows.proofs[1]!;

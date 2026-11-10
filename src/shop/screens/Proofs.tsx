@@ -21,11 +21,12 @@ function proofJobs(): JobView[] {
   const out: JobView[] = [];
   if (signedIn() && s.mine.rows !== null) {
     for (const order of s.mine.orders) {
-      for (const job of s.mine.rows.jobs.filter((j) => String(j["order_id"]) === String(order["id"]))) out.push(jobView(catalogue, order, job, s.mine.rows.proofs, s.mine.rows.artwork));
+      const jobs = s.mine.rows.jobs.filter((j) => String(j["order_id"]) === String(order["id"]));
+      for (const job of jobs) out.push(jobView(catalogue, order, job, s.mine.rows.proofs, s.mine.rows.artwork, jobs.length));
     }
   } else if (s.opened?.via === "link" && s.opened.read !== null) {
     const read = s.opened.read;
-    for (const job of read.jobs) out.push(jobView(catalogue, read.order, job, read.proofs, read.artwork));
+    for (const job of read.jobs) out.push(jobView(catalogue, read.order, job, read.proofs, read.artwork, read.jobs.length));
   }
   return out.filter((j) => j.latest !== null && !j.cancelled);
 }
@@ -78,7 +79,7 @@ export function ProofsScreen() {
                   <div className="ma-grow">
                     <div className="ma-item-name">
                       <span className="ma-strong">{job.name}</span>
-                      <span className="mp-mono ma-ref">{job.orderNumber}</span>
+                      <span className="mp-mono ma-ref">{job.several ? job.code : job.orderNumber}</span>
                     </div>
                     <div className="ma-muted">{job.spec}</div>
                   </div>

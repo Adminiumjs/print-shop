@@ -368,6 +368,11 @@
   font-size: 15px;
   font-weight: 800;
 }
+.ma-proof-job {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
 .ma-proof-grid {
   display: grid;
   grid-template-columns: 170px 1fr;
