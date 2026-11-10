@@ -322,7 +322,10 @@ const PROOF_WAIT_DAYS = {
  * with a yes. Still 1 once the next proof sends it again, and once an erase
  * empties the words they asked in: the answer's time is kept.
  */
-const CHANGE_ASKED = { if: [{ or: [{ isNull: "answered_at" }, { eq: ["state", "approved"] }] }, 0, 1] };
+const CHANGE_ASKED = {
+  // Unanswered, it counts only while a change is asked of it (one brought in without its answer's time); answered, unless with a yes.
+  if: [{ isNull: "answered_at" }, { if: [{ eq: ["state", "change_asked"] }, 1, 0] }, { if: [{ eq: ["state", "approved"] }, 0, 1] }],
+};
 /** Whether a job is still on the works' floor. */
 const ON_FLOOR = { if: [{ or: [{ eq: ["stage", "prepress"] }, { eq: ["stage", "printing"] }, { eq: ["stage", "finishing"] }] }, 1, 0] };
 /** Whether a job may go to press: only once its latest proof is approved. */
@@ -1040,7 +1043,8 @@ export const TABLES: Table[] = [
       // Its order's MP- number, never typed: what the Jobs list names a job's order by (the link reads the customer's name).
       // "No.": a heading short enough for the list's narrow first column, beside the order's own "Order".
       text("order_number", 16, "No.", { ...opt, rules: always("order_id", "number") }),
-      int("position", "Position", opt),
+      // Its place in the order (1, 2, …): the shop sends it; a job added on the dashboard or brought in without one is given the next.
+      int("position", "Position", { ...opt, rules: { sequence: { gapless: true, scope: "order_id", sample: true } } }),
       ...configuration(true),
       // A design in the Customiser, found by its code: the customer's browser sends the code, Adminium fills the link.
       text("design_code", 40, "Design code", opt),
@@ -1172,8 +1176,8 @@ export const TABLES: Table[] = [
       int("version", "Proof", { ...opt, rules: { sequence: { gapless: true, scope: "job_id", sample: true } } }),
       // Its order's MP- number and its job's place in the order, never typed: with its own number, what a proof is called
       // wherever it is linked or opened ("MP-4129/1 #2", the second proof of the order's first job).
-      text("order_number", 16, "No.", { ...opt, rules: always("order_id", "number") }),
-      int("job_position", "Position", { ...opt, rules: always("job_id", "position") }),
+      text("order_number", 16, "No.", { ...opt, rules: { copy: { via: "order_id", from: "number", mode: "always", follow: true } } }),
+      int("job_position", "Position", { ...opt, rules: { copy: { via: "job_id", from: "position", mode: "always", follow: true } } }),
       text("title", 40, "Proof name", { ...opt, rules: { formula: { join: ["order_number", "/", "job_position", " #", "version"] } } }),
       // By e-mail, or printed and posted: the order's choice, or the works' own at its cost.
       choice("kind", "Sent", { email: "By e-mail", post: "Printed, by post" }, { default: "email" }),

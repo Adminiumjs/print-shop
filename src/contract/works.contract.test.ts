@@ -37,6 +37,7 @@ import { createSessionTransport } from "../studio/transport/sessionSource.ts";
 import { loadStaffConfig } from "../studio/transport/staffConnection.ts";
 import { isApiError, num, type Row } from "../studio/wire.ts";
 import { addOnBundle, appBundle, boot, Caller, ENGINES, missing, missingAddOn, ok, PORTS_PER_ENGINE, until, type Engine, type Server } from "./harness.ts";
+import { CONFIG_WRITABLE } from "../manifest/public.ts";
 import { MANIFEST_TEXT } from "./release.ts";
 
 const why = missing() ?? missingAddOn("customiser");
@@ -287,6 +288,25 @@ describe.skipIf(why !== null)(`the works against a built Adminium${why === null 
         // Named by its order's number and its own wherever it is linked: never by how it was sent.
         const stored = (await rows("proofs")).find((p) => String(p["id"]) === String(made.id))!;
         expect([stored["order_number"], stored["title"]]).toEqual(["MP-4123", "MP-4123/1 #2"]);
+      });
+
+      it("gives a job added on the dashboard the next place in its order, which names its proofs and stays", async () => {
+        const data = (ref: string) => `/api/v1/data/${connectionId}/${encodeURIComponent(tables[ref] ?? `printing_${ref}`)}`;
+        const order = (await rows("orders")).find((o) => o["number"] === "MP-4123")!;
+        const first = (await rows("jobs")).find((j) => String(j["order_id"]) === String(order.id))!;
+        // The same work again, added by the owner with no place given: Adminium gives it the next.
+        const values = Object.fromEntries(CONFIG_WRITABLE.filter((c) => c !== "position" && first[c] !== null && first[c] !== undefined).map((c) => [c, first[c]]));
+        const added = ok(await owner.post<{ data: Row }>(data("jobs"), { values: { ...values, order_id: order.id } }), 201).data;
+        const stored = (await rows("jobs")).find((j) => String(j.id) === String(added.id))!;
+        expect([Number(first["position"]), Number(stored["position"])]).toEqual([1, 2]);
+        const file = await storeProofPdf({ caller: owner, csrf: owner.session().csrfToken });
+        const proof = ok(await owner.post<{ data: Row }>(data("proofs"), { values: { job_id: added.id, kind: "email", file } }), 201).data;
+        const titleOf = async () => (await rows("proofs")).find((p) => String(p.id) === String(proof.id))!["title"];
+        expect(await titleOf()).toBe("MP-4123/2 #1");
+        // Its place is Adminium's once given: a later edit leaves it, so a proof's name never drifts from its job's.
+        ok(await owner.patch(`${data("jobs")}/${String(added.id)}`, { values: { position: 3 } }));
+        expect(Number((await rows("jobs")).find((j) => String(j.id) === String(added.id))!["position"])).toBe(2);
+        expect(await titleOf()).toBe("MP-4123/2 #1");
       });
 
       it("records spoilage on the press as a row of its own, added up on the job", async () => {

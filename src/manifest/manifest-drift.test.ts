@@ -19,6 +19,7 @@ import { untranslated } from "./labels.ts";
 import { VERSION_COPIES } from "./people.ts";
 import { DESIGN_POSTING } from "./postings.ts";
 import { CONFIG_SELECT, CONFIG_WRITABLE, JOB_SELECT, PUBLIC_REFS } from "./public.ts";
+import { evaluateFormula, type FormulaExpr } from "../testing/manifest/formula.ts";
 import { DECIDING_RULES } from "./roles.ts";
 import { BREAKDOWN, PRICED } from "./tables.ts";
 import UNTRANSLATED from "./untranslated-labels.json" with { type: "json" };
@@ -412,12 +413,30 @@ describe("the e-mails", () => {
   it("names a proof by its order, its job and its number, and picks its job by the order's number with the product under it", () => {
     expect(table("proofs")["keyField"]).toBe("title");
     expect(rules("proofs", "title")["formula"]).toEqual({ join: ["order_number", "/", "job_position", " #", "version"] });
+    // Kept in step: a job moved to another place in its order, or an order renumbered, names its proofs again.
     expect([rules("proofs", "order_number")["copy"], rules("proofs", "job_position")["copy"]]).toEqual([
-      { via: "order_id", from: "number", mode: "always" },
-      { via: "job_id", from: "position", mode: "always" },
+      { via: "order_id", from: "number", mode: "always", follow: true },
+      { via: "job_id", from: "position", mode: "always", follow: true },
     ]);
+    // A job always has a place in its order, so its proofs never read "MP-41292": the shop sends it, else the next is given.
+    expect(rules("jobs", "position")["sequence"]).toEqual({ gapless: true, scope: "order_id", sample: true });
     const page = (manifest["pages"] as { ref: string; config: { form: { sections: { fields: Json[] }[] } } }[]).find((p) => p.ref === "printing-proofs")!;
     expect(page.config.form.sections.flatMap((s) => s.fields).find((f) => f["column"] === "job_id")).toEqual({ column: "job_id", control: "reference", reference: { name: "order_number", detail: ["product_name"] } });
+  });
+
+  // A change asked counts while the proof is sent again and after an erase (its answer's time is kept), and when brought in without that time.
+  it("counts a proof's change once asked, whatever became of it since", () => {
+    const formula = rules("proofs", "asked_change")["formula"] as FormulaExpr;
+    const asked = (row: Json) => evaluateFormula(formula, row, 0);
+    expect([
+      asked({ state: "sent", answered_at: null }),
+      asked({ state: "change_asked", answered_at: "2026-08-05T10:00:00Z" }),
+      asked({ state: "superseded", answered_at: "2026-08-05T10:00:00Z" }),
+      asked({ state: "superseded", answered_at: null }),
+      asked({ state: "approved", answered_at: "2026-08-05T10:00:00Z" }),
+      asked({ state: "change_asked", answered_at: null }),
+    ].map(Number)).toEqual([0, 1, 1, 0, 0, 1]);
+    expect(rules("jobs", "changes")["rollup"]).toEqual({ from: "proofs", via: "job_id", sum: "asked_change" });
   });
 
   it("never e-mails a proof that has no PDF to open: only once it is given one", () => {

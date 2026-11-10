@@ -5823,7 +5823,14 @@
               "zh-CN": "排序",
               "zh-TW": "排序"
             },
-            "nullable": true
+            "nullable": true,
+            "rules": {
+              "sequence": {
+                "gapless": true,
+                "scope": "order_id",
+                "sample": true
+              }
+            }
           },
           {
             "ref": "product_id",
@@ -11039,7 +11046,8 @@
               "copy": {
                 "via": "order_id",
                 "from": "number",
-                "mode": "always"
+                "mode": "always",
+                "follow": true
               }
             }
           },
@@ -11061,7 +11069,8 @@
               "copy": {
                 "via": "job_id",
                 "from": "position",
-                "mode": "always"
+                "mode": "always",
+                "follow": true
               }
             }
           },
@@ -11443,20 +11452,32 @@
               "formula": {
                 "if": [
                   {
-                    "or": [
+                    "isNull": "answered_at"
+                  },
+                  {
+                    "if": [
                       {
-                        "isNull": "answered_at"
+                        "eq": [
+                          "state",
+                          "change_asked"
+                        ]
                       },
+                      1,
+                      0
+                    ]
+                  },
+                  {
+                    "if": [
                       {
                         "eq": [
                           "state",
                           "approved"
                         ]
-                      }
+                      },
+                      0,
+                      1
                     ]
-                  },
-                  0,
-                  1
+                  }
                 ]
               }
             }
