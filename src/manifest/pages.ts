@@ -144,7 +144,8 @@ const SPECS: PageSpec[] = [
     order: 3,
     table: "proofs",
     config: form(
-      [ref("order_id"), ref("job_id"), number("version"), f("state", { control: "segmented" })],
+      // A job is picked by its order's number, its product under it: an order's jobs and two orders of business cards told apart.
+      [ref("order_id"), { ...ref("job_id"), reference: { name: "order_number", detail: ["product_name"] } }, number("version"), f("state", { control: "segmented" })],
       // A proof is made with its PDF (`states.create`): the form asks for it.
       [f("kind", { control: "segmented" }), f("file", { required: true }), wide("note", "text"), wide("change_note", "text")],
       [when("sent_at"), f("sent_by"), when("answered_at")],

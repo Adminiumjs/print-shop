@@ -279,11 +279,14 @@ describe.skipIf(why !== null)(`the works against a built Adminium${why === null 
         // With its PDF, the owner's proof is made and sends the first again.
         const rosa = sessions["owner"]!;
         const file = await storeProofPdf(rosa);
-        ok(await rosa.caller.send("POST", api, { values: { job_id: banners.id, kind: "email", file, note: "Hems marked." } }, { "x-adminium-csrf": rosa.csrf }), 201);
+        const made = ok(await rosa.caller.send<{ data: Row }>("POST", api, { values: { job_id: banners.id, kind: "email", file, note: "Hems marked." } }, { "x-adminium-csrf": rosa.csrf }), 201).data;
         expect(await proofsOn()).toEqual([
           [1, "superseded"],
           [2, "sent"],
         ]);
+        // Named by its order's number and its own wherever it is linked: never by how it was sent.
+        const stored = (await rows("proofs")).find((p) => String(p["id"]) === String(made.id))!;
+        expect([stored["order_number"], stored["title"]]).toEqual(["MP-4123", "MP-4123/1 #2"]);
       });
 
       it("records spoilage on the press as a row of its own, added up on the job", async () => {

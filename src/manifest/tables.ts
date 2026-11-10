@@ -1147,7 +1147,7 @@ export const TABLES: Table[] = [
     ref: "proofs",
     label: l("Proof"),
     labelPlural: l("Proofs"),
-    keyField: "version",
+    keyField: "title",
     states: {
       column: "state",
       initial: "sent",
@@ -1170,6 +1170,11 @@ export const TABLES: Table[] = [
       // The order's customer, never typed: the PDF sent them shows their design, so erasing them takes it.
       fk("customer_id", "customers", "Customer", { ...opt, rules: always("order_id", "customer_id") }),
       int("version", "Proof", { ...opt, rules: { sequence: { gapless: true, scope: "job_id", sample: true } } }),
+      // Its order's MP- number and its job's place in the order, never typed: with its own number, what a proof is called
+      // wherever it is linked or opened ("MP-4129/1 #2", the second proof of the order's first job).
+      text("order_number", 16, "No.", { ...opt, rules: always("order_id", "number") }),
+      int("job_position", "Position", { ...opt, rules: always("job_id", "position") }),
+      text("title", 40, "Proof name", { ...opt, rules: { formula: { join: ["order_number", "/", "job_position", " #", "version"] } } }),
       // By e-mail, or printed and posted: the order's choice, or the works' own at its cost.
       choice("kind", "Sent", { email: "By e-mail", post: "Printed, by post" }, { default: "email" }),
       text("file", 64, "Proof PDF", { ...opt, rules: { file: { accept: ["pdf"], maxBytes: 104857600 } } }),

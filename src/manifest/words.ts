@@ -253,6 +253,7 @@ export const WORDS: Record<string, Translation> = {
   "Product name": { "de-DE": "Produktname", "fr-FR": "Nom du produit", "da-DK": "Produktnavn", "cs-CZ": "Název produktu", "ar-EG": "اسم المنتج", "zh-CN": "商品名称", "zh-TW": "商品名稱" },
   "Products": { "de-DE": "Produkte", "fr-FR": "Produits", "da-DK": "Produkter", "cs-CZ": "Produkty", "ar-EG": "المنتجات", "zh-CN": "商品", "zh-TW": "商品" },
   "Proof": { "de-DE": "Proof", "fr-FR": "Épreuve", "da-DK": "Korrektur", "cs-CZ": "Nátisk", "ar-EG": "البروفة", "zh-CN": "校样", "zh-TW": "打樣" },
+  "Proof name": { "de-DE": "Proof-Bezeichnung", "fr-FR": "Nom de l’épreuve", "da-DK": "Korrekturens navn", "cs-CZ": "Název nátisku", "ar-EG": "اسم البروفة", "zh-CN": "校样名称", "zh-TW": "打樣名稱" },
   "Proof PDF": { "de-DE": "Proof-PDF", "fr-FR": "PDF de l’épreuve", "da-DK": "Korrektur-PDF", "cs-CZ": "PDF nátisku", "ar-EG": "ملف PDF للبروفة", "zh-CN": "校样 PDF", "zh-TW": "打樣 PDF" },
   "Proof approved": { "de-DE": "Proof freigegeben", "fr-FR": "Épreuve validée", "da-DK": "Korrektur godkendt", "cs-CZ": "Nátisk schválen", "ar-EG": "اعتُمدت البروفة", "zh-CN": "校样已确认", "zh-TW": "打樣已確認" },
   "Proof post days": { "de-DE": "Posttage für den Proof", "fr-FR": "Jours d’envoi de l’épreuve", "da-DK": "Postdage for korrektur", "cs-CZ": "Dny na zaslání nátisku poštou", "ar-EG": "أيام بريد البروفة", "zh-CN": "校样邮寄天数", "zh-TW": "打樣郵寄天數" },

@@ -11,6 +11,9 @@
   goes out and after the proof is approved, so the job, the order's page and
   the approval e-mail keep the day the customer was told. Each further change
   adds one more; erasing the customer's data keeps them.
+- **Proofs are named by their order and number** ("MP-4129/1 #2", the second proof of the order's first job) wherever the
+  dashboard links or opens one, and the New Proof form's job picker shows each
+  job's order number with its product under it.
 
 ## 0.2.3 (10 November 2026)
 

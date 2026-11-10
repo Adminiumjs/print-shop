@@ -10897,7 +10897,7 @@
           "zh-CN": "校样",
           "zh-TW": "打樣"
         },
-        "keyField": "version",
+        "keyField": "title",
         "states": {
           "column": "state",
           "initial": "sent",
@@ -11017,6 +11017,78 @@
                 "gapless": true,
                 "scope": "job_id",
                 "sample": true
+              }
+            }
+          },
+          {
+            "ref": "order_number",
+            "type": "text",
+            "maxLength": 16,
+            "label": {
+              "en-US": "No.",
+              "de-DE": "Nr.",
+              "fr-FR": "N°",
+              "da-DK": "Nr.",
+              "cs-CZ": "Č.",
+              "ar-EG": "رقم",
+              "zh-CN": "编号",
+              "zh-TW": "編號"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "order_id",
+                "from": "number",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "job_position",
+            "type": "int",
+            "label": {
+              "en-US": "Position",
+              "de-DE": "Position",
+              "fr-FR": "Position",
+              "da-DK": "Placering",
+              "cs-CZ": "Pořadí",
+              "ar-EG": "الترتيب",
+              "zh-CN": "排序",
+              "zh-TW": "排序"
+            },
+            "nullable": true,
+            "rules": {
+              "copy": {
+                "via": "job_id",
+                "from": "position",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "title",
+            "type": "text",
+            "maxLength": 40,
+            "label": {
+              "en-US": "Proof name",
+              "de-DE": "Proof-Bezeichnung",
+              "fr-FR": "Nom de l’épreuve",
+              "da-DK": "Korrekturens navn",
+              "cs-CZ": "Název nátisku",
+              "ar-EG": "اسم البروفة",
+              "zh-CN": "校样名称",
+              "zh-TW": "打樣名稱"
+            },
+            "nullable": true,
+            "rules": {
+              "formula": {
+                "join": [
+                  "order_number",
+                  "/",
+                  "job_position",
+                  " #",
+                  "version"
+                ]
               }
             }
           },
@@ -17818,7 +17890,13 @@
                 },
                 {
                   "column": "job_id",
-                  "control": "reference"
+                  "control": "reference",
+                  "reference": {
+                    "name": "order_number",
+                    "detail": [
+                      "product_name"
+                    ]
+                  }
                 },
                 {
                   "column": "version",

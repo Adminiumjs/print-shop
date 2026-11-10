@@ -409,6 +409,17 @@ describe("the e-mails", () => {
     expect(role("prepress").limits!["proofs"]!["creatable"] as string[]).toContain("file");
   });
 
+  it("names a proof by its order, its job and its number, and picks its job by the order's number with the product under it", () => {
+    expect(table("proofs")["keyField"]).toBe("title");
+    expect(rules("proofs", "title")["formula"]).toEqual({ join: ["order_number", "/", "job_position", " #", "version"] });
+    expect([rules("proofs", "order_number")["copy"], rules("proofs", "job_position")["copy"]]).toEqual([
+      { via: "order_id", from: "number", mode: "always" },
+      { via: "job_id", from: "position", mode: "always" },
+    ]);
+    const page = (manifest["pages"] as { ref: string; config: { form: { sections: { fields: Json[] }[] } } }[]).find((p) => p.ref === "printing-proofs")!;
+    expect(page.config.form.sections.flatMap((s) => s.fields).find((f) => f["column"] === "job_id")).toEqual({ column: "job_id", control: "reference", reference: { name: "order_number", detail: ["product_name"] } });
+  });
+
   it("never e-mails a proof that has no PDF to open: only once it is given one", () => {
     const producers = (manifest.outbox as unknown as { producers: Record<string, unknown>[] }).producers;
     const ready = producers.filter((p) => p["kind"] === "proof-ready");
