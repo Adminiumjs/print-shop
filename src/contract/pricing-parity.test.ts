@@ -3,7 +3,7 @@
  * code did, but for differences each of which is named.
  *
  * Marlow Press and the Customiser it requires are installed on a BUILT
- * Adminium (`ADMINIUM_REPO`, the core at 0.3.52) on each engine, SQLite,
+ * Adminium (`ADMINIUM_REPO`, the core at 0.3.53) on each engine, SQLite,
  * Postgres and MySQL, with the sample added at the comps' pinned moment.
  * Then:
  *

@@ -40,9 +40,12 @@ export const VERSION = "0.2.3";
  * 1.0.22, whose set-up page the owner's role opens and saves. 0.3.52 bundles
  * the Customiser 1.0.23 (an app's owner changes its settings, each shop kept
  * to its own rows) and tells a screens-only role which add-ons its app has,
- * so the counter books the delivery company's collection.
+ * so the counter books the delivery company's collection. 0.3.53 bundles the
+ * Customiser 1.0.24, keeps a ready-by told to the customer from moving
+ * earlier (`stamp.notEarlier`) and offers only the chosen order's jobs in the
+ * proofs form's picker (`reference.scope`).
  */
-export const MIN_ADMINIUM = "0.3.52";
+export const MIN_ADMINIUM = "0.3.53";
 
 /**
  * The release that reads two more things this app says: a role's grant of
