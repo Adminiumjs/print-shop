@@ -8,7 +8,9 @@
  * and the app updated in place, the operator allowing what it asks (the
  * owner now changes the Customiser's settings, prepress and the press read them). The update adds the proofs' two stamps
  * (`file_added_at`, `recorded_at`) empty on the proof already there, as it
- * adds every new column. Last the customer is erased: their proof's PDF goes,
+ * adds every new column, and the sample's MP-4114, whose change asked of a
+ * proof sent again since now counts, keeps the ready-by it had (the update
+ * writes the count, never the stamp). Last the customer is erased: their proof's PDF goes,
  * and their order's page says the proof is no longer kept, never that it is
  * waiting. A proof made after the update, with its PDF, reads as waiting.
  *
@@ -126,6 +128,8 @@ describe.skipIf(why !== null)(`a works on ${FROM} updated, its proofs as they we
 
       let before: Awaited<ReturnType<typeof place>>;
       let oldProof: Row;
+      /** MP-4114's job as 0.2.2 left it: its change asked, of a proof sent again since, not counted. */
+      let posters: Row;
 
       beforeAll(async () => {
         server = await boot(engine as Engine, PORT_BASE + index * PORTS_PER_ENGINE, WEDNESDAY - 60_000, { database: `printing_upgrade_${engine}${process.env["CONTRACT_DB_SUFFIX"] ?? ""}` });
@@ -162,6 +166,9 @@ describe.skipIf(why !== null)(`a works on ${FROM} updated, its proofs as they we
         before = await place();
         const job = (await rows("jobs")).find((j) => String(j["order_id"]) === String(before.order["id"]))!;
         oldProof = await sendProof(job);
+        const mp4114 = (await rows("orders")).find((o) => o["number"] === "MP-4114")!;
+        posters = (await rows("jobs")).find((j) => String(j["order_id"]) === String(mp4114["id"]))!;
+        expect(Number(posters["changes"])).toBe(0);
       }, 600_000);
 
       afterAll(async () => {
@@ -191,9 +198,11 @@ describe.skipIf(why !== null)(`a works on ${FROM} updated, its proofs as they we
         // What the update works out for the rows already there: every proof named, and the sample's MP-4114 counting the
         // change asked of its first proof, sent again since (the count before it read only changes still waiting).
         expect((await rows("proofs")).filter((p) => !/^MP-\d+\/\d+ #\d+$/.test(String(p["title"] ?? "")))).toEqual([]);
-        const mp4114 = (await rows("orders")).find((o) => o["number"] === "MP-4114")!;
-        const posters = (await rows("jobs")).find((j) => String(j["order_id"]) === String(mp4114["id"]))!;
-        expect(Number(posters["changes"])).toBe(1);
+        // The update writes the count and the days it adds, never the stamp: MP-4114 keeps the ready-by it fell back to
+        // (its next change, or its approval, sets the day again).
+        const counted = (await rows("jobs")).find((j) => String(j["id"]) === String(posters["id"]))!;
+        expect([Number(counted["changes"]), String(counted["ready_by"]).slice(0, 10)]).toEqual([1, String(posters["ready_by"]).slice(0, 10)]);
+        expect(String(counted["ready_by"]).slice(0, 10)).toBe("2026-08-11");
         expect(kept["file"]).not.toBeNull();
         // Its customer's page still offers it: the PDF is there.
         const [job] = await page(before.link!.token);
