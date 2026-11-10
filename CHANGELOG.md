@@ -1,7 +1,13 @@
 # Print Shop releases
 
-## 0.2.4 (not released yet)
+## 0.2.4 (10 November 2026)
 
+Needs Adminium **0.3.53** and asks for the add-ons at **1.0.24**. The update
+gives the jobs already there their place in their order and names their proofs.
+
+- **Two customised jobs in one order.** With the Customiser 1.0.24, an order
+  that holds two jobs a customer designed is taken: each design's version is
+  labelled by its design, where two were refused as the same.
 - **A proof is made with its PDF.** A proof added on the dashboard without its
   PDF is refused, and the form asks for it: the proof it would have sent again
   stays the customer's to answer, and nothing is said to be sent before there
