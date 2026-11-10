@@ -126,8 +126,8 @@ const SPECS: PageSpec[] = [
     icon: "clipboard-list",
     order: 2,
     table: "jobs",
-    // The list opens on what the floor works from: the order's number and its customer, the product and its quantity, where it is, its proof, the day it is due.
-    config: listed(["order_number", "order_id", "product_name", "qty", "stage", "proof_state", "ready_by"], form(
+    // The list opens on what the floor works from: the job's name (its order's number and its place), its customer, the product and its quantity, where it is, its proof, the day it is due.
+    config: listed(["code", "order_id", "product_name", "qty", "stage", "proof_state", "ready_by"], form(
       [title("product_name"), ref("order_id"), f("stage", { control: "segmented" }), f("ready_by", { control: "date" })],
       CONFIG_FIELDS,
       ...PRICE_SECTIONS,
@@ -144,8 +144,8 @@ const SPECS: PageSpec[] = [
     order: 3,
     table: "proofs",
     config: form(
-      // A job is picked by its order's number, its product under it, among the chosen order's jobs only.
-      [ref("order_id"), { ...ref("job_id"), reference: { name: "order_number", detail: ["product_name"], scope: { field: "order_id", column: "order_id" } } }, number("version"), f("state", { control: "segmented" })],
+      // A job is picked by its name (its order's number and its place), its product under it, among the chosen order's jobs only.
+      [ref("order_id"), { ...ref("job_id"), reference: { name: "code", detail: ["product_name"], scope: { field: "order_id", column: "order_id" } } }, number("version"), f("state", { control: "segmented" })],
       // A proof is made with its PDF (`states.create`): the form asks for it.
       [f("kind", { control: "segmented" }), f("file", { required: true }), wide("note", "text"), wide("change_note", "text")],
       [when("sent_at"), f("sent_by"), when("answered_at")],

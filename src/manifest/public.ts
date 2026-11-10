@@ -118,6 +118,8 @@ export const JOB_SELECT = [
   "id",
   "order_id",
   "position",
+  // Its name ("MP-4129/1"): the customer's pages say which of an order's jobs a proof is of.
+  "code",
   ...CONFIG_SELECT,
   // What the design's priced features add, a line of the job's breakdown.
   ...JOB_BREAKDOWN,

@@ -412,7 +412,7 @@ describe("the e-mails", () => {
     expect(role("prepress").limits!["proofs"]!["creatable"] as string[]).toContain("file");
   });
 
-  it("names a proof by its order, its job and its number, and picks its job among the chosen order's by its number and product", () => {
+  it("names a proof by its order, its job and its number, and picks its job among the chosen order's by its name and product", () => {
     expect(table("proofs")["keyField"]).toBe("title");
     expect(rules("proofs", "title")["formula"]).toEqual({ join: ["order_number", "/", "job_position", " #", "version"] });
     // Kept in step: a job moved to another place in its order, or an order renumbered, names its proofs again.
@@ -426,8 +426,16 @@ describe("the e-mails", () => {
     expect(page.config.form.sections.flatMap((s) => s.fields).find((f) => f["column"] === "job_id")).toEqual({
       column: "job_id",
       control: "reference",
-      reference: { name: "order_number", detail: ["product_name"], scope: { field: "order_id", column: "order_id" } },
+      reference: { name: "code", detail: ["product_name"], scope: { field: "order_id", column: "order_id" } },
     });
+  });
+
+  // Two jobs of one order (two lots of business cards) are told apart wherever the dashboard links, picks or opens one.
+  it("names a job by its order's number and its place in the order", () => {
+    expect(table("jobs")["keyField"]).toBe("code");
+    expect(rules("jobs", "code")["formula"]).toEqual({ join: ["order_number", "/", "position"] });
+    expect(rules("jobs", "order_number")["copy"]).toMatchObject({ via: "order_id", from: "number" });
+    expect(evaluateFormula(rules("jobs", "code")["formula"] as FormulaExpr, { order_number: "MP-4127", position: 2 }, 0)).toBe("MP-4127/2");
   });
 
   // A change asked counts while the proof is sent again and after an erase (its answer's time is kept), and when brought in without that time.

@@ -308,6 +308,8 @@ describe.skipIf(why !== null)(`the works against a built Adminium${why === null 
         const added = ok(await owner.post<{ data: Row }>(data("jobs"), { values: { ...values, order_id: order.id } }), 201).data;
         const stored = (await rows("jobs")).find((j) => String(j.id) === String(added.id))!;
         expect([Number(first["position"]), Number(stored["position"])]).toEqual([1, 2]);
+        // Named apart from the order's first job wherever the dashboard links or picks it.
+        expect([first["code"], stored["code"]]).toEqual(["MP-4123/1", "MP-4123/2"]);
         const file = await storeProofPdf({ caller: owner, csrf: owner.session().csrfToken });
         const proof = ok(await owner.post<{ data: Row }>(data("proofs"), { values: { job_id: added.id, kind: "email", file } }), 201).data;
         const titleOf = async () => (await rows("proofs")).find((p) => String(p.id) === String(proof.id))!["title"];
@@ -385,13 +387,13 @@ describe.skipIf(why !== null)(`the works against a built Adminium${why === null 
       };
 
       // The manifest names the columns the list opens on, rather than Adminium's ranking (money first: the rate card's charges).
-      it("opens the Jobs list on what the floor needs: the order's number and customer, the product, its quantity, its stage, its proof, its day", async () => {
-        expect(await jobsListColumns()).toEqual(["order_number", "order_id", "product_name", "qty", "stage", "proof_state", "ready_by"]);
+      it("opens the Jobs list on what the floor needs: the job's name and customer, the product, its quantity, its stage, its proof, its day", async () => {
+        expect(await jobsListColumns()).toEqual(["code", "order_id", "product_name", "qty", "stage", "proof_state", "ready_by"]);
         // Each of the sample's jobs carries its order's MP- number (an order placed online: the order contract).
         const numbers = new Map((await rows("orders")).map((o) => [String(o.id), o["number"]]));
         const jobs = await rows("jobs");
         expect(jobs.length).toBeGreaterThan(10);
-        for (const job of jobs) expect(job["order_number"], String(job.id)).toBe(numbers.get(String(job["order_id"])));
+        for (const job of jobs) expect([job["order_number"], job["code"]], String(job.id)).toEqual([numbers.get(String(job["order_id"])), `${String(numbers.get(String(job["order_id"])))}/${String(job["position"])}`]);
       });
 
       // Last: the sessions it ends are the ones the tests above use.

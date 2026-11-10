@@ -1024,7 +1024,8 @@ export const TABLES: Table[] = [
     keep: KEPT_FOR_TAX,
     label: l("Job"),
     labelPlural: l("Jobs"),
-    keyField: "product_name",
+    // Named by its order and its place in it ("MP-4129/1"), so two jobs of one order never read the same.
+    keyField: "code",
     states: {
       column: "stage",
       initial: "prepress",
@@ -1046,6 +1047,9 @@ export const TABLES: Table[] = [
       text("order_number", 16, "No.", { ...opt, rules: always("order_id", "number") }),
       // Its place in the order (1, 2, …): the shop sends it; a job added on the dashboard or brought in without one is given the next.
       int("position", "Position", { ...opt, rules: { sequence: { gapless: true, scope: "order_id", sample: true } } }),
+      // Its order's MP- number and its place, never typed: what the dashboard names a job by wherever it is linked or
+      // picked ("MP-4129/1", the order's first job), as its proofs are named after it ("MP-4129/1 #2").
+      text("code", 24, "Job", { ...opt, rules: { formula: { join: ["order_number", "/", "position"] } } }),
       ...configuration(true),
       // A design in the Customiser, found by its code: the customer's browser sends the code, Adminium fills the link.
       text("design_code", 40, "Design code", opt),

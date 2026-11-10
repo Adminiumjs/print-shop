@@ -153,9 +153,9 @@ describe("the manifest at the floor it ships with", () => {
     for (const key of ["prepress", "press", "counter"]) expect(roleOf(shipped, key).permissions.filter((p) => p.startsWith("privacy:")), key).toEqual([]);
   });
 
-  it("opens the Jobs list on the order's number and customer, the product, its quantity, its stage, its proof and its day", () => {
+  it("opens the Jobs list on the job's name and customer, the product, its quantity, its stage, its proof and its day", () => {
     const jobs = (shipped["pages"] as { ref: string; config: Json }[]).find((p) => p.ref === "printing-jobs")!;
-    expect(jobs.config["columns"]).toEqual(["order_number", "order_id", "product_name", "qty", "stage", "proof_state", "ready_by"]);
+    expect(jobs.config["columns"]).toEqual(["code", "order_id", "product_name", "qty", "stage", "proof_state", "ready_by"]);
   });
 
   it("gives the owner Holiday calendars' settings, and no other role", () => {

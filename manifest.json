@@ -5681,7 +5681,7 @@
           "zh-CN": "订单任务",
           "zh-TW": "訂單工作"
         },
-        "keyField": "product_name",
+        "keyField": "code",
         "states": {
           "column": "stage",
           "initial": "prepress",
@@ -5829,6 +5829,31 @@
                 "gapless": true,
                 "scope": "order_id",
                 "sample": true
+              }
+            }
+          },
+          {
+            "ref": "code",
+            "type": "text",
+            "maxLength": 24,
+            "label": {
+              "en-US": "Job",
+              "de-DE": "Auftrag",
+              "fr-FR": "Travail",
+              "da-DK": "Opgave",
+              "cs-CZ": "Zakázka",
+              "ar-EG": "العمل",
+              "zh-CN": "任务",
+              "zh-TW": "工作"
+            },
+            "nullable": true,
+            "rules": {
+              "formula": {
+                "join": [
+                  "order_number",
+                  "/",
+                  "position"
+                ]
               }
             }
           },
@@ -17865,7 +17890,7 @@
           ]
         },
         "columns": [
-          "order_number",
+          "code",
           "order_id",
           "product_name",
           "qty",
@@ -17914,7 +17939,7 @@
                   "column": "job_id",
                   "control": "reference",
                   "reference": {
-                    "name": "order_number",
+                    "name": "code",
                     "detail": [
                       "product_name"
                     ],
@@ -21279,6 +21304,7 @@
         "id",
         "order_id",
         "position",
+        "code",
         "product_id",
         "product_name",
         "product_kind",
@@ -21955,6 +21981,7 @@
           "select": [
             "id",
             "position",
+            "code",
             "product_id",
             "product_name",
             "product_kind",
@@ -22403,6 +22430,7 @@
         "id",
         "order_id",
         "position",
+        "code",
         "product_id",
         "product_name",
         "product_kind",
