@@ -171,7 +171,7 @@ function filesUnder(root: string, into: string, files: Record<string, Buffer>): 
  * surfaces `npm run build:surface` made (`dist-surface/<key>/<side>`), as a
  * release packs them: what a browser test opens.
  */
-export function appBundle(options: { built?: boolean; manifest?: string; sample?: string } = {}): Bundle & { key: string; version: string } {
+export function appBundle(options: { built?: boolean; manifest?: string; sample?: string; seeds?: string } = {}): Bundle & { key: string; version: string } {
   const text = options.manifest ?? read(join(REPO, "manifest.json"));
   const manifest = JSON.parse(text) as { key: string; version: string; sampleData?: { file: string; addOns?: Record<string, { file: string }> } };
   const files: Record<string, Buffer> = {
@@ -184,11 +184,13 @@ export function appBundle(options: { built?: boolean; manifest?: string; sample?
     else if (!existsSync(join(built, "index.html"))) throw new Error(`no built ${side} surface in ${built} — run \`npm run build:surface\` first`);
     else filesUnder(built, `${side}/`, files);
   }
-  // Another app's manifest brings its own sample (`sample`); this repo's is read from its file.
-  if (manifest.sampleData !== undefined) files[manifest.sampleData.file] = options.sample !== undefined ? Buffer.from(options.sample) : readFileSync(join(REPO, manifest.sampleData.file));
+  // Another app's manifest brings its own sample (`sample`); this repo's is read from its file, or from the folder a
+  // release's own files are kept in (`seeds`: an older release installed as it shipped, each file by its name).
+  const seed = (file: string) => readFileSync(options.seeds === undefined ? join(REPO, file) : join(options.seeds, file.replace(/^seeds\//, "")));
+  if (manifest.sampleData !== undefined) files[manifest.sampleData.file] = options.sample !== undefined ? Buffer.from(options.sample) : seed(manifest.sampleData.file);
   // …and the rows it adds to an add-on's tables, one file for each add-on.
   // (this repo's own, also when its manifest is written for another floor; never another app's).
-  if (options.sample === undefined) for (const section of Object.values(manifest.sampleData?.addOns ?? {})) files[section.file] = readFileSync(join(REPO, section.file));
+  if (options.sample === undefined) for (const section of Object.values(manifest.sampleData?.addOns ?? {})) files[section.file] = seed(section.file);
   return { ...bundle(files), key: manifest.key, version: manifest.version };
 }
 

@@ -47,18 +47,27 @@ const FROM = "0.2.2";
  */
 const FROM_FILE = join(REPO, "src", "contract", "released", `printing-${FROM}.manifest.json`);
 const FROM_MANIFEST = readFileSync(FROM_FILE, "utf8");
-/** The tag's manifest, or null in a checkout with no tags (CI's). */
-const TAGGED = (() => {
+/** The sample files 0.2.2 shipped (kept beside it, the same through 0.2.4): it is installed with them, not this checkout's. */
+const FROM_SEEDS = join(REPO, "src", "contract", "released", "seeds-0.2.2");
+/** A file at the tag, or null in a checkout with no tags (CI's). */
+const tagged = (path: string): string | null => {
   try {
-    return execFileSync("git", ["-C", REPO, "show", `v${FROM}:manifest.json`], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+    return execFileSync("git", ["-C", REPO, "show", `v${FROM}:${path}`], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], maxBuffer: 64 * 1024 * 1024 });
   } catch {
     return null;
   }
-})();
+};
+const TAGGED = tagged("manifest.json");
 
 describe(`the released ${FROM} manifest kept beside the upgrade contract`, () => {
   it.skipIf(TAGGED === null)(`is the one tagged v${FROM}${TAGGED === null ? " — skipped: this checkout has no tags" : ""}`, () => {
     expect(FROM_MANIFEST).toBe(TAGGED);
+  });
+  it.skipIf(TAGGED === null)(`is installed with the sample files tagged v${FROM}${TAGGED === null ? " — skipped: this checkout has no tags" : ""}`, () => {
+    const files = JSON.parse(FROM_MANIFEST) as { sampleData: { file: string; addOns: Record<string, { file: string }> } };
+    for (const file of [files.sampleData.file, ...Object.values(files.sampleData.addOns).map((a) => a.file)]) {
+      expect(readFileSync(join(FROM_SEEDS, file.replace(/^seeds\//, "")), "utf8") === tagged(file), file).toBe(true);
+    }
   });
   it(`says it is ${FROM}`, () => {
     expect((JSON.parse(FROM_MANIFEST) as { version: string }).version).toBe(FROM);
@@ -88,8 +97,8 @@ describe.skipIf(why !== null)(`a works on ${FROM} updated, its proofs as they we
       };
       const browser = () => new AdminiumShop({ baseUrl: server.base, publishableKey: served.publishableKey, ...(served.tables === undefined ? {} : { tables: served.tables }), ...(served.publicKeys === undefined ? {} : { publicKeys: served.publicKeys }), ...(served.settings === undefined ? {} : { settings: served.settings }) }, { fetch: originFetch });
       const rows = async (ref: string): Promise<Row[]> => ok(await staff.get<{ data: Row[] }>(`/api/v1/data/${connectionId}/${table(ref)}?limit=200`)).data;
-      const install = async (manifest: string) => {
-        const app = appBundle({ manifest });
+      const install = async (manifest: string, seeds?: string) => {
+        const app = appBundle({ manifest, ...(seeds === undefined ? {} : { seeds }) });
         const staged = await staff.post(`/api/v1/apps/upload?expectedSha512=${encodeURIComponent(app.integrity)}`, app.buffer);
         if (![200, 201].includes(staged.status)) throw new Error(`upload: ${JSON.stringify(staged.body).slice(0, 600)}`);
         return app;
@@ -133,7 +142,7 @@ describe.skipIf(why !== null)(`a works on ${FROM} updated, its proofs as they we
         const addOn = addOnBundle("customiser");
         const stagedAddOn = await staff.post(`/api/v1/add-ons/upload?expectedSha512=${encodeURIComponent(addOn.integrity)}`, addOn.buffer);
         if (![200, 201].includes(stagedAddOn.status)) throw new Error(`add-on upload: ${JSON.stringify(stagedAddOn.body).slice(0, 600)}`);
-        const app = await install(FROM_MANIFEST);
+        const app = await install(FROM_MANIFEST, FROM_SEEDS);
         expect(app.version).toBe(FROM);
         const body = { key: app.key, version: app.version, connectionId };
         const plan = ok(await staff.post<{ plan: { checksum: string; installable: boolean } }>("/api/v1/apps/plan", body)).plan;
