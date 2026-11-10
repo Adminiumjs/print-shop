@@ -1063,8 +1063,8 @@ export const TABLES: Table[] = [
       figure("proof_ok", "int", "Ready for press", { formula: PROOF_OK }),
       figure("turnaround_days", "int", "Working days to ready", { formula: { add: [WORK_DAYS, PROOF_WAIT_DAYS] } }),
       // Counted from the order coming in, and again from the moment a change is asked or the proof approved: never
-      // earlier than the day it said already (an approval days after a change keeps the day the customer was told; a
-      // change taken back by deleting its proof leaves the day as it is).
+      // earlier than the day it said already (an approval days after a change keeps the day the customer was told; days
+      // taken back on the dashboard leave the day as it is).
       date("ready_by", "Ready by", {
         ...opt,
         rules: notEarlier(stamp(

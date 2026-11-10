@@ -11,17 +11,23 @@
 - **The ready-by never moves earlier than the day the customer was told.** A
   change asked adds a working day, and it stays when the next proof goes out.
   An approval counts the work from the approval, but never before that day,
-  whether it comes the same day or days later; deleting the proof a change was
-  asked of leaves the day as it is too. The job, the order's page and the
-  approval e-mail say the same day. Each further change adds one more, and
-  erasing the customer's data keeps them. Needs Adminium 0.3.53.
+  whether it comes the same day or days later; taking back days on the
+  dashboard (a proof by post) leaves the day as it is too. The job, the
+  order's page and the approval e-mail say the same day. Each further change
+  adds one more, and erasing the customer's data keeps them. Needs Adminium
+  0.3.53.
 - **Proofs are named by their order, job and number** ("MP-4129/1 #2", the
   second proof of the order's first job) wherever the dashboard links or opens
-  one, and the New Proof form's job picker shows each job's order number with
-  its product under it. A job added on the dashboard is given the next place
-  in its order. Proofs already there are named by the update.
+  one, and the New Proof form's job picker offers only the chosen order's
+  jobs, each by its order number with its product under it. A job added on
+  the dashboard is given the next place in its order. Proofs already there are
+  named by the update.
 - **The ticket keeps a replaced proof's change asked** once the customer's
   words were erased with their data.
+- **The screens import only the add-on code that fills their slots.** From
+  Adminium 0.3.53 the add-ons list also names add-on pages and record panels,
+  and their code is never taken for a slot's; the counter's dispatch screen
+  draws DHL's "Book a collection", which 0.3.53 serves it.
 
 ## 0.2.3 (10 November 2026)
 

@@ -454,17 +454,19 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
         expect(await run.readyBy()).toEqual(["2026-08-13", "2026-08-13"]);
       }, 240_000);
 
-      // The change counted no more (its proof deleted on the dashboard): the day the customer was told still stands.
-      it("keeps the day the customer was told when the proof they asked a change of is deleted", async () => {
+      // What the job waits on, taken back on the dashboard (a proof by post asked, then not): the day said already stands.
+      // (A proof a change was asked of cannot be deleted to the same end: its e-mails name it.)
+      it("keeps the day already said when the days the job waits on are taken back", async () => {
         await at("2026-08-10T10:00:00Z");
         const run = await across("rhea@quayside-print.dev");
+        expect(await run.readyBy()).toEqual(["2026-08-13", "2026-08-13"]);
+        await patch("jobs", run.job["id"], { proof_by_post: true });
+        expect(await run.readyBy()).toEqual(["2026-08-17", "2026-08-17"]);
+        await patch("jobs", run.job["id"], { proof_by_post: false });
+        expect(Number((await rows("jobs")).find((j) => String(j["id"]) === String(run.job["id"]))!["turnaround_days"])).toBe(3);
+        expect(await run.readyBy()).toEqual(["2026-08-17", "2026-08-17"]);
         const first = await sendProof(run.job);
-        await run.answer(first, { state: "change_asked", change_note: "Other paper." });
-        await sendProof(run.job);
-        expect(await run.readyBy()).toEqual(["2026-08-14", "2026-08-14"]);
-        ok(await staff.send("DELETE", `/api/v1/data/${connectionId}/${table("proofs")}/${String(first["id"])}`));
-        expect(Number((await rows("jobs")).find((j) => String(j["id"]) === String(run.job["id"]))!["changes"])).toBe(0);
-        expect(await run.readyBy()).toEqual(["2026-08-14", "2026-08-14"]);
+        expect((await staff.send("DELETE", `/api/v1/data/${connectionId}/${table("proofs")}/${String(first["id"])}?confirm=true`)).status).not.toBe(200);
       }, 240_000);
 
       it("leaves no e-mail failed: every one names only what Adminium fills", async () => {

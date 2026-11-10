@@ -126,18 +126,18 @@ describe.skipIf(why !== null)(`the works against a built Adminium${why === null 
         const customiser = addOnBundle("customiser");
         const stagedAddOn = await owner.post(`/api/v1/add-ons/upload?expectedSha512=${encodeURIComponent(customiser.integrity)}`, customiser.buffer);
         expect([200, 201], JSON.stringify(stagedAddOn.body).slice(0, 800)).toContain(stagedAddOn.status);
-        const app = appBundle({ manifest: MANIFEST_TEXT });
-        const staged = await owner.post(`/api/v1/apps/upload?expectedSha512=${encodeURIComponent(app.integrity)}`, app.buffer);
-        expect([200, 201], JSON.stringify(staged.body).slice(0, 800)).toContain(staged.status);
-        const body = { key: app.key, version: app.version, connectionId };
-        const plan = ok(await owner.post<{ plan: { installable: boolean; checksum: string } }>("/api/v1/apps/plan", body)).plan;
-        expect(plan.installable, JSON.stringify(plan).slice(0, 3000)).toBe(true);
         // DHL, which the shop suggests, where the add-ons checkout has it built: the counter books its collections.
         const dhl = DHL ? addOnBundle("shipping-dhl") : null;
         if (dhl !== null) {
           const stagedDhl = await owner.post(`/api/v1/add-ons/upload?expectedSha512=${encodeURIComponent(dhl.integrity)}`, dhl.buffer);
           expect([200, 201], JSON.stringify(stagedDhl.body).slice(0, 800)).toContain(stagedDhl.status);
         }
+        const app = appBundle({ manifest: MANIFEST_TEXT });
+        const staged = await owner.post(`/api/v1/apps/upload?expectedSha512=${encodeURIComponent(app.integrity)}`, app.buffer);
+        expect([200, 201], JSON.stringify(staged.body).slice(0, 800)).toContain(staged.status);
+        const body = { key: app.key, version: app.version, connectionId };
+        const plan = ok(await owner.post<{ plan: { installable: boolean; checksum: string } }>("/api/v1/apps/plan", body)).plan;
+        expect(plan.installable, JSON.stringify(plan).slice(0, 3000)).toBe(true);
         const addOns = [customiser, ...(dhl === null ? [] : [dhl])].map((a) => ({ key: a.key, version: a.version }));
         const install = await owner.post<{ rules: { skipped: unknown[] } }>("/api/v1/apps/install", { ...body, planChecksum: plan.checksum, addOns });
         if (install.status !== 200) throw new Error(`install refused: ${JSON.stringify(install.body).slice(0, 3000)}`);
