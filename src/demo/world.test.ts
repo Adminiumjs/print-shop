@@ -161,6 +161,31 @@ describe("the demo's Adminium", () => {
     expect((await demo.works.moveOrder(demo.world.get("orders", order.id)!, "ready"))["status"]).toBe("ready");
   });
 
+  it("keeps the day each change adds on the ready-by once the next proof goes out and once it is approved", async () => {
+    const demo = makeDemo();
+    const placed = await demo.shop.place(cards(demo), "demo-test-0000000011", String((await demo.shop.quote(cards(demo))).order["total"]));
+    const jobId = (await demo.works.load()).jobs.find((j) => String(j["order_id"]) === String(placed.order["id"]))!.id;
+    const now = () => {
+      const job = demo.world.get("jobs", jobId)!;
+      return [Number(job["changes"]), job["ready_by"], demo.world.get("orders", placed.order["id"] as number)!["ready_by"]];
+    };
+    const send = async () => demo.works.sendProof({ job: demo.world.get("jobs", jobId)!, kind: "email", file: { blob: new Blob(["%PDF-1.4"], { type: "application/pdf" }), filename: "proof.pdf" }, designVersionId: null, note: null });
+    expect(await demo.after.openShared(String(placed.link!.token))).toBe("opened");
+    expect(now()).toEqual([0, "2026-08-10", "2026-08-10"]);
+    const first = await send();
+    await demo.after.answerProof("link", first.id as number, { state: "change_asked", change_note: "Darker grey." });
+    expect(now()).toEqual([1, "2026-08-11", "2026-08-11"]);
+    const second = await send();
+    expect(demo.world.get("proofs", first.id)!["state"]).toBe("superseded");
+    expect(now()).toEqual([1, "2026-08-11", "2026-08-11"]);
+    await demo.after.answerProof("link", second.id as number, { state: "change_asked", change_note: "Phone line in bold." });
+    expect(now()).toEqual([2, "2026-08-12", "2026-08-12"]);
+    const third = await send();
+    expect(now()).toEqual([2, "2026-08-12", "2026-08-12"]);
+    await demo.after.answerProof("link", third.id as number, { state: "approved" });
+    expect(now()).toEqual([2, "2026-08-12", "2026-08-12"]);
+  });
+
   // As Adminium's `states.supersedes` on the proofs: a new proof sends the job's earlier ones still out again, in the same write.
   it("sends a job's earlier proofs again when a new one is made, a waiting one and one with a change asked alike, and no other job's", async () => {
     const demo = makeDemo();

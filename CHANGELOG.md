@@ -6,6 +6,11 @@
   PDF is refused, and the form asks for it: the proof it would have sent again
   stays the customer's to answer, and nothing is said to be sent before there
   is something to open. The works' screens always sent the PDF with the proof.
+- **The day a change adds stays on the ready-by.** Once a customer asks for a
+  change, its working day stays on the job's ready-by after the next proof
+  goes out and after the proof is approved, so the job, the order's page and
+  the approval e-mail keep the day the customer was told. Each further change
+  adds one more; erasing the customer's data keeps them.
 
 ## 0.2.3 (10 November 2026)
 

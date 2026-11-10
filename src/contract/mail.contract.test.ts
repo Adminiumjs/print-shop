@@ -102,8 +102,8 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
         return { id: "j2", productId: p.id, choice: { ...firstChoice(catalogue, p), qty }, design: null, features: [], artwork: [] };
       };
       let keys = 0;
-      const place = async (lines: BasketLine[], method: "collect" | "deliver") => {
-        const values = { ...SHOPPER, delivery_method: method };
+      const place = async (lines: BasketLine[], method: "collect" | "deliver", who: typeof SHOPPER = SHOPPER) => {
+        const values = { ...who, delivery_method: method };
         const quoted = await shop.quote(orderBody(values, lines, true));
         keys += 1;
         return shop.place(orderBody(values, lines, true), `printing-mail-${engine}-${String(keys).padStart(10, "0")}`, String(quoted.order["total"]));
@@ -355,6 +355,54 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
         const approvals = async () => (await sinkMail(server.sink)).filter((m) => m.to.includes(SHOPPER.email) && m.subject.includes(String(two.order["number"])) && m.subject.includes("printing") && m.text.includes("800 × Flyers") && m.text.includes("400 × Business cards"));
         await until(async () => ((await approvals()).length === 1 ? true : undefined), "the second job's approval in the sink");
       }, 240_000);
+
+      // A change asked adds a working day to the ready-by, and it stays: the next proof, the yes and an erase never take it back.
+      it("keeps the day each change adds on the ready-by: on the job, the order's page and the approval mail, through the next proof and an erase", async () => {
+        const who = { ...SHOPPER, name: "Nell Fairweather", email: "nell@fairweather-press.dev" };
+        // An hour and ten minutes on (11:30, still before the cut-off): this file's orders have spent the hour's anonymous ones.
+        await server.setClock(WEDNESDAY + 70 * 60_000);
+        const order = await place([cards(700)], "collect", who);
+        const [job] = await jobsOf(order.order);
+        const door = browser().after();
+        /** The ready-by on the job, its order, and the customer's page of the order. */
+        const readyBy = async (): Promise<string[]> => {
+          const stored = (await rows("jobs")).find((j) => String(j["id"]) === String(job!["id"]))!;
+          const placed = (await rows("orders")).find((o) => String(o["id"]) === String(order.order["id"]))!;
+          expect(await door.openShared(order.link!.token)).toBe("opened");
+          const page = (await door.readShared())!;
+          return [stored["ready_by"], placed["ready_by"], page.order["ready_by"], page.jobs[0]!["ready_by"]].map((d) => String(d).slice(0, 10));
+        };
+        const changesOf = async () => Number((await rows("jobs")).find((j) => String(j["id"]) === String(job!["id"]))!["changes"]);
+        // Placed at 10:20 on Wednesday: three working days on, Monday 10 August.
+        expect(await readyBy()).toEqual(Array(4).fill("2026-08-10"));
+        const first = await sendProof(job!);
+        await door.answerProof("link", first["id"] as number, { state: "change_asked", change_note: "A darker grey, please." });
+        const asked = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "change-asked", to: WORKS, row: message("change-asked", "proof_id", first["id"]) });
+        expect(asked.mail.text, asked.mail.text).toMatch(/Ready by moves to: Tuesday,? (11 August|August 11),? 2026/);
+        // A change adds a working day: Tuesday 11 August.
+        expect([await changesOf(), ...(await readyBy())]).toEqual([1, ...Array(4).fill("2026-08-11")]);
+        // The next proof sends the first again: the day the customer was told stays.
+        const second = await sendProof(job!);
+        expect((await rows("proofs")).find((p) => String(p["id"]) === String(first["id"]))!["state"]).toBe("superseded");
+        expect([await changesOf(), ...(await readyBy())]).toEqual([1, ...Array(4).fill("2026-08-11")]);
+        // A second change adds one more, and it too stays once the third proof goes out.
+        await door.answerProof("link", second["id"] as number, { state: "change_asked", change_note: "And the phone line in bold." });
+        expect([await changesOf(), ...(await readyBy())]).toEqual([2, ...Array(4).fill("2026-08-12")]);
+        const third = await sendProof(job!);
+        expect([await changesOf(), ...(await readyBy())]).toEqual([2, ...Array(4).fill("2026-08-12")]);
+        // The yes, the same day: the approval mail says the day the customer was told.
+        await door.answerProof("link", third["id"] as number, { state: "approved" });
+        expect([await changesOf(), ...(await readyBy())]).toEqual([2, ...Array(4).fill("2026-08-12")]);
+        const approved = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-approved", to: who.email, row: message("proof-approved", "proof_id", third["id"]) });
+        expect(approved.mail.text, approved.mail.text).toMatch(/Ready by: Wednesday,? (12 August|August 12),? 2026/);
+        // Erasing the customer empties the words they asked in, never the days their changes added.
+        ok(await staff.post("/api/v1/privacy/erase/preview", { address: who.email }));
+        ok(await staff.post("/api/v1/privacy/erase", { address: who.email, confirm: who.email }));
+        expect((await rows("proofs")).filter((p) => String(p["job_id"]) === String(job!["id"])).map((p) => p["change_note"] ?? null)).toEqual([null, null, null]);
+        const kept = (await rows("jobs")).find((j) => String(j["id"]) === String(job!["id"]))!;
+        expect([Number(kept["changes"]), String(kept["ready_by"]).slice(0, 10)]).toEqual([2, "2026-08-12"]);
+        expect(String((await rows("orders")).find((o) => String(o["id"]) === String(order.order["id"]))!["ready_by"]).slice(0, 10)).toBe("2026-08-12");
+      }, 360_000);
 
       it("leaves no e-mail failed: every one names only what Adminium fills", async () => {
         const failed = (await rows("messages")).filter((m) => m["status"] === "failed").map((m) => [m["kind"], m["error"]]);

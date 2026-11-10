@@ -9797,11 +9797,7 @@
               "rollup": {
                 "from": "proofs",
                 "via": "job_id",
-                "count": true,
-                "where": {
-                  "column": "state",
-                  "eq": "change_asked"
-                }
+                "sum": "change_asked"
               }
             }
           },
@@ -9900,16 +9896,32 @@
                     ]
                   },
                   {
-                    "if": [
+                    "add": [
                       {
-                        "eq": [
-                          "proof_state",
-                          "approved"
+                        "mul": [
+                          {
+                            "coalesce": [
+                              "changes",
+                              0
+                            ]
+                          },
+                          {
+                            "coalesce": [
+                              "change_days",
+                              1
+                            ]
+                          }
                         ]
                       },
-                      0,
                       {
-                        "add": [
+                        "if": [
+                          {
+                            "eq": [
+                              "proof_state",
+                              "approved"
+                            ]
+                          },
+                          0,
                           {
                             "if": [
                               {
@@ -9935,22 +9947,6 @@
                                 ]
                               },
                               0
-                            ]
-                          },
-                          {
-                            "mul": [
-                              {
-                                "coalesce": [
-                                  "changes",
-                                  0
-                                ]
-                              },
-                              {
-                                "coalesce": [
-                                  "change_days",
-                                  1
-                                ]
-                              }
                             ]
                           }
                         ]
@@ -11354,6 +11350,42 @@
                     "change_asked"
                   ]
                 }
+              }
+            }
+          },
+          {
+            "ref": "change_asked",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Change asked",
+              "de-DE": "Änderung gewünscht",
+              "fr-FR": "Modification demandée",
+              "da-DK": "Ændring ønsket",
+              "cs-CZ": "Žádost o změnu",
+              "ar-EG": "طُلب تعديل",
+              "zh-CN": "要求修改",
+              "zh-TW": "要求修改"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "or": [
+                      {
+                        "isNull": "answered_at"
+                      },
+                      {
+                        "eq": [
+                          "state",
+                          "approved"
+                        ]
+                      }
+                    ]
+                  },
+                  0,
+                  1
+                ]
               }
             }
           }

@@ -299,22 +299,30 @@ const yes = (column: string) => ({ eq: [column, true] });
 /** The working days a job's own work takes: express or standard. */
 const WORK_DAYS = { if: [yes("express"), { coalesce: ["express_days", 1] }, { coalesce: ["standard_days", 3] }] };
 /**
- * The days a job waits on its proof, until it is approved: the post days when
- * the proof goes by post (the customer ordered it, or the works posts one),
- * and a working day for each change asked.
+ * The days a job's proof adds: a working day for each change the customer
+ * asked, kept once the next proof is sent and once a proof is approved (the
+ * day the customer was told never moves earlier); and, until it is approved,
+ * the post days when the proof goes by post (the customer ordered it, or the
+ * works posts one).
  */
 const PROOF_WAIT_DAYS = {
-  if: [
-    { eq: ["proof_state", "approved"] },
-    0,
+  add: [
+    { mul: [{ coalesce: ["changes", 0] }, { coalesce: ["change_days", 1] }] },
     {
-      add: [
+      if: [
+        { eq: ["proof_state", "approved"] },
+        0,
         { if: [{ or: [yes("proof_by_post"), { gt: ["posted_proofs", 0] }] }, { coalesce: ["proof_post_days", 2] }, 0] },
-        { mul: [{ coalesce: ["changes", 0] }, { coalesce: ["change_days", 1] }] },
       ],
     },
   ],
 };
+/**
+ * Whether the customer asked a change of a proof: it was answered, and not
+ * with a yes. Still 1 once the next proof sends it again, and once an erase
+ * empties the words they asked in: the answer's time is kept.
+ */
+const CHANGE_ASKED = { if: [{ or: [{ isNull: "answered_at" }, { eq: ["state", "approved"] }] }, 0, 1] };
 /** Whether a job is still on the works' floor. */
 const ON_FLOOR = { if: [{ or: [{ eq: ["stage", "prepress"] }, { eq: ["stage", "printing"] }, { eq: ["stage", "finishing"] }] }, 1, 0] };
 /** Whether a job may go to press: only once its latest proof is approved. */
@@ -1044,7 +1052,8 @@ export const TABLES: Table[] = [
       figure("change_days", "int", "Days a change adds", fromSetting("change_days")),
       // Its proofs: the latest one's answer, the changes asked, and the proofs the works posted.
       choice("proof_state", "Proof", PROOF_STATE_LABELS, { ...opt, rules: { rollup: { from: "proofs", via: "job_id", latest: { of: "state", by: "version" } } } }),
-      figure("changes", "int", "Changes asked", { rollup: { from: "proofs", via: "job_id", count: true, where: { column: "state", eq: "change_asked" } } }),
+      // Every change asked of its proofs, those sent again since included: each keeps its day on the ready-by.
+      figure("changes", "int", "Changes asked", { rollup: { from: "proofs", via: "job_id", sum: "change_asked" } }),
       figure("posted_proofs", "int", "Proofs by post", { rollup: { from: "proofs", via: "job_id", count: true, where: { column: "kind", eq: "post" } } }),
       figure("proof_ok", "int", "Ready for press", { formula: PROOF_OK }),
       figure("turnaround_days", "int", "Working days to ready", { formula: { add: [WORK_DAYS, PROOF_WAIT_DAYS] } }),
@@ -1181,6 +1190,8 @@ export const TABLES: Table[] = [
       at("sent_at", "Sent", { ...opt, rules: stamp("now", onCreate) }),
       text("sent_by", 80, "Sent by", { ...opt, rules: stamp("user-name", onCreate) }),
       at("answered_at", "Answered", { ...opt, rules: stamp("now", onState("state", "approved", "change_asked")) }),
+      // 1 once the customer asked a change of it, whatever became of it since: what the job counts its change days from.
+      figure("change_asked", "int", "Change asked", { formula: CHANGE_ASKED }),
     ],
   },
   {
