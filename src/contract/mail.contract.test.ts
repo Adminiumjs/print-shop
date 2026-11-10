@@ -377,7 +377,8 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
         expect(await readyBy()).toEqual(Array(4).fill("2026-08-10"));
         const first = await sendProof(job!);
         await door.answerProof("link", first["id"] as number, { state: "change_asked", change_note: "A darker grey, please." });
-        const asked = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "change-asked", to: WORKS, row: message("change-asked", "proof_id", first["id"]) });
+        const number = String(order.order["number"]);
+        const asked = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "change-asked", to: WORKS, known: { "order.number": number }, row: message("change-asked", "proof_id", first["id"]) });
         expect(asked.mail.text, asked.mail.text).toMatch(/Ready by moves to: Tuesday,? (11 August|August 11),? 2026/);
         // A change adds a working day: Tuesday 11 August.
         expect([await changesOf(), ...(await readyBy())]).toEqual([1, ...Array(4).fill("2026-08-11")]);
@@ -393,7 +394,7 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
         // The yes, the same day: the approval mail says the day the customer was told.
         await door.answerProof("link", third["id"] as number, { state: "approved" });
         expect([await changesOf(), ...(await readyBy())]).toEqual([2, ...Array(4).fill("2026-08-12")]);
-        const approved = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-approved", to: who.email, row: message("proof-approved", "proof_id", third["id"]) });
+        const approved = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-approved", to: who.email, known: { "order.number": number }, row: message("proof-approved", "proof_id", third["id"]) });
         expect(approved.mail.text, approved.mail.text).toMatch(/Ready by: Wednesday,? (12 August|August 12),? 2026/);
         // Erasing the customer empties the words they asked in, never the days their changes added.
         ok(await staff.post("/api/v1/privacy/erase/preview", { address: who.email }));
