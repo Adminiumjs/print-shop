@@ -346,7 +346,9 @@ describe.skipIf(why !== null)(`the works against a built Adminium${why === null 
       });
 
       // The dispatch screen draws DHL's "Book a collection" from DHL's slot code: the counter must be served it, not only its list.
-      it.skipIf(!DHL)("serves the counter DHL's slot code, which draws Book a collection on its dispatch screen", async () => {
+      // This checks the serving (the code the list names, for this app, answered 200 and filling the dispatch screen's slot),
+      // not the drawing: nothing here mounts the screen.
+      it.skipIf(!DHL)("serves the counter DHL's slot code, the code that fills the dispatch screen's actions", async () => {
         const counter = sessions["counter"]!;
         const listed = ok(await counter.caller.get<{ addOns?: Row[]; data?: Row[] } | Row[]>("/api/v1/add-ons"));
         const rowsOf = (Array.isArray(listed) ? listed : (listed.addOns ?? listed.data ?? [])) as unknown as { key: string; attachments: { attachedTo: string }[]; bundles: { url: string; ref?: string; panel?: string }[] }[];

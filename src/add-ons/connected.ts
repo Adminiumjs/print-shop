@@ -475,8 +475,12 @@ export async function loadConnectedAddOns(options: ConnectedOptions): Promise<Co
     // never imports as its slots.
     const bundle = dto.bundles.find((b) => b.ref === undefined && b.panel === undefined);
     if (bundle === undefined) {
-      // A data pack: it fills no slot, so it ships no client half. Not a
-      // failure — there is simply nothing for this host to mount.
+      // No slot code listed. Mostly a data pack: it fills no slot, so it ships
+      // no client half, and there is nothing for this host to mount. But the
+      // list never says a bundle is missing: Adminium (0.3.53) leaves out a
+      // bundle whose pin it cannot read, rather than sending it without one,
+      // so an add-on that does fill slots can land here too, and is passed
+      // over with no problem reported.
       continue;
     }
     if (!bundleUrlIsSafe(bundle.url, origin)) {
