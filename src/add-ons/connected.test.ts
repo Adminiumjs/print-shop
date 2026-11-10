@@ -218,6 +218,30 @@ describe('loading what this host hosts', () => {
   });
 });
 
+describe("an add-on's pages and record panels in its bundle list", () => {
+  /*
+   * From 0.3.53 the list also names an add-on's page and record-panel code (`ref`, `panel`), first
+   * where the server lists them first. The host imports only the code that fills its slots.
+   */
+  const SLOT = dto().bundles[0]!;
+  const page = { path: 'pages/customiser/bundle', url: '/api/v1/add-ons/holiday-calendars/pages/customiser/bundle', integrity: SLOT.integrity, ref: 'customiser' };
+  const panel = { path: 'panels/line/bundle', url: '/api/v1/add-ons/holiday-calendars/panels/line/bundle', integrity: SLOT.integrity, panel: 'customiser-line' };
+
+  it('imports the slot code, never a page or a panel listed before it', async () => {
+    const s = stub({ listed: [dto({ bundles: [page, panel, SLOT] })] });
+    const { addOns, problems } = await s.load();
+    expect(problems).toEqual([]);
+    expect(addOns.map((a) => a.key)).toEqual(['holiday-calendars']);
+    expect(s.imported).toEqual([`${ORIGIN}${SLOT.url}`]);
+  });
+
+  it('mounts nothing for an add-on whose list holds only pages and panels', async () => {
+    const s = stub({ listed: [dto({ bundles: [page, panel] })] });
+    const { addOns, problems } = await s.load();
+    expect([addOns, problems, s.imported]).toEqual([[], [], []]);
+  });
+});
+
 describe('one add-on installed on two databases', () => {
   /*
    * The app is installed on db-1 (install `inst-1`) and db-2 (`inst-2`), and

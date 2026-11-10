@@ -129,6 +129,10 @@ export interface ConnectedBundle {
   path: string;
   url: string;
   integrity: string;
+  /** Set on a page's code (from 0.3.53): the page's ref. Never a slot's. */
+  ref?: string;
+  /** Set on a record panel's code (from 0.3.53): the panel's id. Never a slot's. */
+  panel?: string;
 }
 
 /** One installed add-on, as the server describes it. Narrowed to what is read. */
@@ -467,7 +471,9 @@ export async function loadConnectedAddOns(options: ConnectedOptions): Promise<Co
 
   const addOns: AddOn[] = [];
   for (const dto of mine) {
-    const bundle = dto.bundles[0];
+    // The slots' code: the list also names an add-on's pages and record panels (`ref`, `panel`), which this host
+    // never imports as its slots.
+    const bundle = dto.bundles.find((b) => b.ref === undefined && b.panel === undefined);
     if (bundle === undefined) {
       // A data pack: it fills no slot, so it ships no client half. Not a
       // failure — there is simply nothing for this host to mount.
