@@ -103,6 +103,23 @@ Once installed, the works' screens are served at `/apps/printing/staff/` and the
 shop at `/apps/printing/customer/`. A works can also give the shop a domain of
 its own.
 
+**A second works on the same Adminium.** Install Print Shop again and pick
+another database. That copy has its own tables, roles, settings, keys and
+e-mails, and its own Customiser, installed with it in its database. Its
+screens are served too: the works' at `/apps/printing/<slug>/staff/` and the
+shop at `/apps/printing/<slug>/customer/`, where `<slug>` is the short name
+Adminium made from the database's name. Its owner sets up its shop on its own
+Customiser's set-up page, `/add-ons/customiser~<slug>/customiser`; the
+dashboard's menu lists that page once for each copy you can open, with its
+database's name beside it. Every copy runs the same version of Print Shop.
+
+**Updating from 0.2.2 or earlier?** From 0.2.3 the roles hold more of the
+Customiser: the owner changes its settings, and prepress and press read them.
+Adminium lists what each role gets before the update, and updates only once
+you allow it: **Update** in the dashboard allows it, and through the API the
+update is sent with `"roleTables": true`. Without it the update is refused
+(`ROLE_TABLES_WIDER`) and nothing changes.
+
 **Coming from 0.1.x?** The 0.1 Print Shop was an example with its own database,
 and the Design studio and Import from Canva add-ons in place of the Customiser.
 0.2 is a different app on new tables:
