@@ -43,6 +43,8 @@ import { MANIFEST_TEXT } from "./release.ts";
 const why = missing() ?? missingAddOn("customiser");
 if (why !== null && process.env["ADMINIUM_REQUIRE_CONTRACT"] === "1") throw new Error(`the contract must run here, and cannot: ${why}`);
 const PORT_BASE = Number(process.env["CONTRACT_PORT_BASE"] ?? 4990);
+/** DHL is installed beside the Customiser where the add-ons checkout has it built (`npm run build -w packages/shipping-dhl`). */
+const DHL = missingAddOn("shipping-dhl") === null;
 const ADMIN = { email: process.env["E2E_ADMIN_EMAIL"] ?? "e2e@adminium.local", password: process.env["E2E_ADMIN_PASSWORD"] ?? "adminium-e2e-password" };
 /** 10:20 on Wednesday 5 August 2026 in Marlow (British Summer Time). */
 const WEDNESDAY = Date.parse("2026-08-05T09:20:00Z");
@@ -130,7 +132,14 @@ describe.skipIf(why !== null)(`the works against a built Adminium${why === null 
         const body = { key: app.key, version: app.version, connectionId };
         const plan = ok(await owner.post<{ plan: { installable: boolean; checksum: string } }>("/api/v1/apps/plan", body)).plan;
         expect(plan.installable, JSON.stringify(plan).slice(0, 3000)).toBe(true);
-        const install = await owner.post<{ rules: { skipped: unknown[] } }>("/api/v1/apps/install", { ...body, planChecksum: plan.checksum, addOns: [{ key: customiser.key, version: customiser.version }] });
+        // DHL, which the shop suggests, where the add-ons checkout has it built: the counter books its collections.
+        const dhl = DHL ? addOnBundle("shipping-dhl") : null;
+        if (dhl !== null) {
+          const stagedDhl = await owner.post(`/api/v1/add-ons/upload?expectedSha512=${encodeURIComponent(dhl.integrity)}`, dhl.buffer);
+          expect([200, 201], JSON.stringify(stagedDhl.body).slice(0, 800)).toContain(stagedDhl.status);
+        }
+        const addOns = [customiser, ...(dhl === null ? [] : [dhl])].map((a) => ({ key: a.key, version: a.version }));
+        const install = await owner.post<{ rules: { skipped: unknown[] } }>("/api/v1/apps/install", { ...body, planChecksum: plan.checksum, addOns });
         if (install.status !== 200) throw new Error(`install refused: ${JSON.stringify(install.body).slice(0, 3000)}`);
         expect(JSON.stringify(install.body.rules.skipped)).toBe("[]");
         ok(await owner.patch(`/api/v1/connections/${connectionId}`, { timezone: "Europe/London", currency: "GBP" }));
@@ -332,6 +341,19 @@ describe.skipIf(why !== null)(`the works against a built Adminium${why === null 
         // The press is not the counter: it hands nothing over.
         const handed = await press.moveJob(after.job, "collected").catch((e: unknown) => e);
         expect(isApiError(handed) && [403, 409, 422].includes(handed.status)).toBe(true);
+      });
+
+      // The dispatch screen draws DHL's "Book a collection" from DHL's slot code: the counter must be served it, not only its list.
+      it.skipIf(!DHL)("serves the counter DHL's slot code, which draws Book a collection on its dispatch screen", async () => {
+        const counter = sessions["counter"]!;
+        const listed = ok(await counter.caller.get<{ addOns?: Row[]; data?: Row[] } | Row[]>("/api/v1/add-ons"));
+        const rowsOf = (Array.isArray(listed) ? listed : (listed.addOns ?? listed.data ?? [])) as unknown as { key: string; attachments: { attachedTo: string }[]; bundles: { url: string; ref?: string; panel?: string }[] }[];
+        const dhl = rowsOf.find((a) => a.key === "shipping-dhl")!;
+        expect(dhl.attachments.map((a) => a.attachedTo)).toContain("printing");
+        const slot = dhl.bundles.find((b) => b.ref === undefined && b.panel === undefined)!;
+        const served = await counter.caller.send("GET", slot.url.replace(/^https?:\/\/[^/]+/, ""));
+        expect(served.status).toBe(200);
+        expect(String(served.body)).toContain("order.dispatch.actions");
       });
 
       it("hands it over at the counter: the job and the order collected", async () => {

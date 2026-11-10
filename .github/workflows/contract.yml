@@ -92,12 +92,14 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm turbo run build --filter="@adminium/e2e..."
 
-      # Only the add-on the contract installs: the Customiser, which the app requires.
-      - name: Build the Customiser
+      # The add-ons the contract installs: the Customiser, which the app requires, and DHL, whose
+      # booking the counter's dispatch screen draws.
+      - name: Build the Customiser and DHL
         run: |
           cd .add-ons
           npm ci
           npm run build -w packages/customiser
+          npm run build -w packages/shipping-dhl
 
       - name: Move the checkouts out of the workspace
         run: |
