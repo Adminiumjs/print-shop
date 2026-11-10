@@ -403,6 +403,19 @@ describe("the shell", () => {
     expect(history).toHaveLength(3);
   });
 
+  it("keeps a replaced proof's change in the history once an erase emptied the customer's words", async () => {
+    const door = new FakeDoor({ roles: ["prepress"] });
+    const first = door.data.proofs.find((p) => p.id === 3)!;
+    Object.assign(first, { state: "superseded", change_note: null });
+    door.data.proofs.find((p) => p.id === 4)!["state"] = "sent";
+    await mount(door, "ticket", { jobId: 5 });
+    const history = [...document.querySelectorAll(".wk-history-row")].map((row) => row.textContent ?? "");
+    expect(history[0]).toContain("Proof 1 sent, since replaced");
+    expect(history[1]).toContain("Change asked");
+    expect(history[1]).not.toContain("Make the logo bigger.");
+    expect(history).toHaveLength(3);
+  });
+
   it("says a proof sent again before any answer was replaced, with no change under it", async () => {
     const door = new FakeDoor({ roles: ["prepress"] });
     const first = door.data.proofs.find((p) => p.id === 3)!;

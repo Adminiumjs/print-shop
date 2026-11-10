@@ -276,12 +276,13 @@ function ProofHistory({ job }: { job: Row }) {
   const entries = proofsOf(data, job).flatMap((proof): Entry[] => {
     const how = t(proof["kind"] === "post" ? "works.proof.byPost" : "works.proof.byEmail");
     const note = text(proof["note"]);
-    // A proof sent again by the next one reads as replaced; the change the customer asked of it stays said under it.
+    // A proof sent again by the next one reads as replaced; the change the customer asked of it stays said under it, even
+    // once an erase emptied their words: a replaced proof that was answered was answered with a change (a yes is never replaced).
     const replaced = proof["state"] === "superseded";
     const title = t(replaced ? "works.proof.replaced" : "works.proof.sent", { n: fmt.number(proof["version"]) });
     const sent: Entry = { key: `${String(proof.id)}-sent`, kind: "sent", title, note: note === null ? how : t("works.proof.sentNote", { how, note }), at: proof["sent_at"], file: fileSrc(proof["file"]) };
     if (proof["state"] === "approved") return [sent, { key: `${String(proof.id)}-yes`, kind: "approved", title: t("works.proof.approved"), note: null, at: proof["answered_at"], file: null }];
-    const changed = proof["state"] === "change_asked" || (replaced && text(proof["change_note"]) !== null && proof["answered_at"] != null);
+    const changed = proof["state"] === "change_asked" || (replaced && proof["answered_at"] != null);
     if (changed) return [sent, { key: `${String(proof.id)}-change`, kind: "changes", title: t("works.proof.change"), note: text(proof["change_note"]), at: proof["answered_at"], file: null }];
     return [sent];
   });
