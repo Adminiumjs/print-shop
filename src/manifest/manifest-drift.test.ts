@@ -398,6 +398,17 @@ describe("the e-mails", () => {
     for (const p of [...of("proof-ready"), ...of("change-asked"), ...of("proof-approved")]) expect(JSON.stringify(p), String(p["kind"])).not.toContain('"via"');
   });
 
+  // A proof sends the job's earlier one again as it is made: made without its PDF, it would leave the customer nothing to answer.
+  it("makes a proof only with its PDF, and the dashboard's form asks for it", () => {
+    expect((table("proofs")["states"] as Json)["create"]).toEqual({ requires: { where: [{ column: "file", isNull: false }] } });
+    expect((table("proofs")["states"] as Json)["supersedes"]).toEqual({ by: "job_id", from: ["sent", "change_asked"], to: "superseded" });
+    const page = (manifest["pages"] as { ref: string; config: { form: { sections: { fields: Json[] }[] } } }[]).find((p) => p.ref === "printing-proofs")!;
+    const fields = page.config.form.sections.flatMap((s) => s.fields);
+    expect(fields.find((f) => f["column"] === "file")).toMatchObject({ column: "file", required: true });
+    // The works' screens send the PDF with the proof, as prepress's limits let them.
+    expect(role("prepress").limits!["proofs"]!["creatable"] as string[]).toContain("file");
+  });
+
   it("never e-mails a proof that has no PDF to open: only once it is given one", () => {
     const producers = (manifest.outbox as unknown as { producers: Record<string, unknown>[] }).producers;
     const ready = producers.filter((p) => p["kind"] === "proof-ready");

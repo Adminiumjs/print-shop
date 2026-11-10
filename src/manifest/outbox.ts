@@ -91,8 +91,8 @@ export const OUTBOX = {
   producers: [
     { kind: "order-received", link: "order_id", onCreate: { table: "orders" } },
     // About the proof itself, so each proof of an order is its own e-mail (a fresh one after a change asked too); the
-    // order and its customer are found through it. Only a proof with its PDF: one added on the dashboard with none has
-    // nothing to open, and is e-mailed once it is given its PDF.
+    // order and its customer are found through it. Only a proof with its PDF: one added on the dashboard with none before
+    // 0.2.4 (a proof is now made with it) has nothing to open, and is e-mailed once it is given its PDF.
     { kind: "proof-ready", link: "proof_id", onCreate: { table: "proofs", where: { column: "file", isNull: false } } },
     { kind: "proof-ready", link: "proof_id", onChange: { table: "proofs", columns: ["file"], changed: true, where: { column: "file", isNull: false } } },
     // Each proof approved, about its own proof: an order's second job approved is told the customer too.

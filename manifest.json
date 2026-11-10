@@ -10915,6 +10915,16 @@
               "superseded"
             ]
           },
+          "create": {
+            "requires": {
+              "where": [
+                {
+                  "column": "file",
+                  "isNull": false
+                }
+              ]
+            }
+          },
           "supersedes": {
             "by": "job_id",
             "from": [
@@ -17796,7 +17806,8 @@
                   "control": "segmented"
                 },
                 {
-                  "column": "file"
+                  "column": "file",
+                  "required": true
                 },
                 {
                   "column": "note",

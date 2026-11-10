@@ -55,6 +55,8 @@ describe.skipIf(why !== null)(`the works against a built Adminium${why === null 
       let connectionId = "";
       let tables: Record<string, string> = {};
       const doors: Record<string, AdminiumWorks> = {};
+      /** Each role's own session, and the write token its screens were handed. */
+      const sessions: Record<string, { caller: Caller; csrf: string }> = {};
 
       const rows = async (table: string): Promise<Row[]> => {
         const real = tables[table] ?? `printing_${table}`;
@@ -65,8 +67,9 @@ describe.skipIf(why !== null)(`the works against a built Adminium${why === null 
           if (page.length < 200) return out;
         }
       };
-      const doorFor = async (caller: Caller): Promise<AdminiumWorks> => {
+      const doorFor = async (caller: Caller, role?: string): Promise<AdminiumWorks> => {
         const cfg = (await loadStaffConfig({ hostedStaff: true, base: "/apps/printing/staff/", fetchImpl: caller.fetchAs() }))!;
+        if (role !== undefined) sessions[role] = { caller, csrf: cfg.csrfToken ?? "" };
         tables = { ...tables, ...cfg.tables };
         const transport = createSessionTransport({
           tableOfRef: cfg.tables,
@@ -78,16 +81,26 @@ describe.skipIf(why !== null)(`the works against a built Adminium${why === null 
         return new AdminiumWorks(transport, cfg, { fetchImpl: caller.fetchAs(), skew: Number.isNaN(said) ? 0 : said - Date.now() });
       };
       /** Someone holding one of the app's roles, signed in as their screens sign them in. */
-      const staffAs = async (role: string, name: string): Promise<AdminiumWorks> => {
+      /** Someone invited to one of the app's roles: their address and password. */
+      const invite = async (role: string, name: string): Promise<{ email: string; password: string }> => {
         const roles = ok(await owner.get<{ roles: { id: string; name: string; slug?: string }[] }>("/api/v1/roles")).roles;
         const found = roles.find((r) => r.slug === `printing-${role}`) ?? roles.find((r) => r.name.toLowerCase() === role)!;
         const email = `${role}.${engine}@marlowpress.example`;
         const invited = ok(await owner.post<{ invite: { token: string } }>("/api/v1/users", { email, name, roleIds: [found.id] }), 201);
         const password = newPassword();
         ok(await new Caller(server.base).post("/api/v1/auth/password/reset", { token: invited.invite.token, newPassword: password }));
+        return { email, password };
+      };
+      const staffAs = async (role: string, name: string): Promise<AdminiumWorks> => {
+        const { email, password } = await invite(role, name);
         const caller = new Caller(server.base);
         ok(await caller.post("/api/v1/auth/login", { email, password }));
-        return doorFor(caller);
+        return doorFor(caller, role);
+      };
+      /** A proof's PDF stored through the files route, as someone's own session stores it. */
+      const storeProofPdf = async (who: { caller: Caller; csrf: string }): Promise<string> => {
+        const query = new URLSearchParams({ filename: "proof.pdf", connectionId, table: tables["proofs"] ?? "printing_proofs", column: "file" });
+        return ok(await who.caller.send<{ ref: string }>("POST", `/api/v1/files?${query.toString()}`, Buffer.from("%PDF-1.4\n%%EOF\n", "latin1"), { "content-type": "application/pdf", "x-adminium-csrf": who.csrf }), 201).ref;
       };
       const job = async (door: AdminiumWorks, number: string): Promise<{ data: Awaited<ReturnType<AdminiumWorks["load"]>>; job: Row; order: Row }> => {
         const data = await door.load();
@@ -132,6 +145,11 @@ describe.skipIf(why !== null)(`the works against a built Adminium${why === null 
         doors["prepress"] = await staffAs("prepress", "Priya Shah");
         doors["press"] = await staffAs("press", "Tom Ellis");
         doors["counter"] = await staffAs("counter", "Jo Marsh");
+        // The works' owner as the app's own role gives it, not the operator: signed in to the dashboard.
+        const rosa = await invite("owner", "Rosa Marlow");
+        const caller = new Caller(server.base, { origin: server.base });
+        await caller.signIn(rosa.email, rosa.password);
+        sessions["owner"] = { caller, csrf: caller.session().csrfToken };
       }, 600_000);
 
       afterAll(async () => {
@@ -229,13 +247,43 @@ describe.skipIf(why !== null)(`the works against a built Adminium${why === null 
         // The customer asks a change on the second (as the order's own link sends it).
         const second = (await rows("proofs")).find((p) => String(p["job_id"]) === String(posters.id) && Number(p["version"]) === 2)!;
         ok(await owner.patch(`${api}/${String(second.id)}`, { values: { state: "change_asked", change_note: "Darker blue." }, from: "sent" }));
-        ok(await owner.post(api, { values: { job_id: posters.id, kind: "email", note: "Date line made bigger." } }), 201);
+        const file = await storeProofPdf({ caller: owner, csrf: owner.session().csrfToken });
+        ok(await owner.post(api, { values: { job_id: posters.id, kind: "email", file, note: "Date line made bigger." } }), 201);
         expect(await proofsOfJob("MP-4114")).toEqual([
           [1, "superseded"],
           [2, "superseded"],
           [3, "sent"],
         ]);
         expect(await proofsOfJob("MP-4123")).toEqual(otherBefore);
+      });
+
+      it("refuses a proof made without its PDF, from the owner's dashboard or prepress's session, and leaves the one out with the customer", async () => {
+        const api = `/api/v1/data/${connectionId}/${encodeURIComponent(tables["proofs"] ?? "printing_proofs")}`;
+        // Two Rivers Cycles' banners (MP-4123): their first proof waits on the customer. Read row by row, not through a
+        // door's whole load: this file's requests stay under the server's per-minute limit.
+        const order = (await rows("orders")).find((o) => o["number"] === "MP-4123")!;
+        const banners = (await rows("jobs")).find((j) => String(j["order_id"]) === String(order.id))!;
+        const proofsOn = async () =>
+          (await rows("proofs"))
+            .filter((p) => String(p["job_id"]) === String(banners.id))
+            .sort((a, b) => Number(a["version"]) - Number(b["version"]))
+            .map((p) => [p["version"], p["state"]]);
+        expect(await proofsOn()).toEqual([[1, "sent"]]);
+        for (const role of ["owner", "prepress"]) {
+          const who = sessions[role]!;
+          const bare = await who.caller.send("POST", api, { values: { job_id: banners.id, kind: "email", note: "PDF to follow." } }, { "x-adminium-csrf": who.csrf });
+          expect([role, bare.status === 201, bare.code, bare.details["requires"]]).toEqual([role, false, "STATE_MOVE_REFUSED", "file"]);
+        }
+        // Nothing made, nothing sent again: the customer still has proof 1 to answer.
+        expect(await proofsOn()).toEqual([[1, "sent"]]);
+        // With its PDF, the owner's proof is made and sends the first again.
+        const rosa = sessions["owner"]!;
+        const file = await storeProofPdf(rosa);
+        ok(await rosa.caller.send("POST", api, { values: { job_id: banners.id, kind: "email", file, note: "Hems marked." } }, { "x-adminium-csrf": rosa.csrf }), 201);
+        expect(await proofsOn()).toEqual([
+          [1, "superseded"],
+          [2, "sent"],
+        ]);
       });
 
       it("records spoilage on the press as a row of its own, added up on the job", async () => {

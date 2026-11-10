@@ -145,7 +145,8 @@ const SPECS: PageSpec[] = [
     table: "proofs",
     config: form(
       [ref("order_id"), ref("job_id"), number("version"), f("state", { control: "segmented" })],
-      [f("kind", { control: "segmented" }), f("file"), wide("note", "text"), wide("change_note", "text")],
+      // A proof is made with its PDF (`states.create`): the form asks for it.
+      [f("kind", { control: "segmented" }), f("file", { required: true }), wide("note", "text"), wide("change_note", "text")],
       [when("sent_at"), f("sent_by"), when("answered_at")],
     ),
   },

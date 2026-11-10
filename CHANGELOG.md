@@ -1,5 +1,12 @@
 # Print Shop releases
 
+## 0.2.4 (not released yet)
+
+- **A proof is made with its PDF.** A proof added on the dashboard without its
+  PDF is refused, and the form asks for it: the proof it would have sent again
+  stays the customer's to answer, and nothing is said to be sent before there
+  is something to open. The works' screens always sent the PDF with the proof.
+
 ## 0.2.3 (10 November 2026)
 
 Needs Adminium **0.3.52** and asks for the add-ons at **1.0.23**. Updating from

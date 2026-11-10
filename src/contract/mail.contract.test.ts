@@ -272,19 +272,16 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
         expect(await copies()).toHaveLength(2);
       }, 360_000);
 
-      it("never e-mails a proof added with no PDF, and e-mails it once it is given one", async () => {
+      it("never e-mails a proof added with no PDF: it is refused, and the proof made with its PDF is e-mailed once", async () => {
         const order = await place([cards(600)], "collect");
         const [job] = await jobsOf(order.order);
-        const bare = ok(await staff.post<{ data: Row }>(`/api/v1/data/${connectionId}/${table("proofs")}`, { values: { job_id: job!["id"], kind: "email" } }), 201).data;
-        expect(bare["file_added_at"] ?? null).toBeNull();
-        // A later write the outbox hears (the works' note on the job) is in before the check: nothing was queued for the bare proof.
-        await patch("jobs", job!["id"], { works_note: "Proof PDF to follow." });
-        await new Promise((resolve) => setTimeout(resolve, 3_000));
-        expect(await message("proof-ready", "proof_id", bare["id"])()).toBeUndefined();
-        const stored = ok(await staff.send<{ ref: string }>("POST", `/api/v1/files?${new URLSearchParams({ filename: "proof.pdf", connectionId, table: tables()["proofs"] ?? "printing_proofs", column: "file" }).toString()}`, PDF, { "content-type": "application/pdf" }), 201);
-        const filed = await patch("proofs", bare["id"], { file: stored.ref });
-        expect((filed as { data?: Row }).data?.["file_added_at"] ?? (await rows("proofs")).find((p) => String(p["id"]) === String(bare["id"]))!["file_added_at"]).not.toBeNull();
-        await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-ready", to: SHOPPER.email, row: message("proof-ready", "proof_id", bare["id"]), body: new RegExp(`/order#${order.link!.token}`) });
+        const bare = await staff.post<{ data: Row }>(`/api/v1/data/${connectionId}/${table("proofs")}`, { values: { job_id: job!["id"], kind: "email" } });
+        expect([bare.status === 201, bare.code]).toEqual([false, "STATE_MOVE_REFUSED"]);
+        expect((await rows("proofs")).filter((p) => String(p["job_id"]) === String(job!["id"]))).toEqual([]);
+        const proof = await sendProof(job!);
+        expect(proof["file_added_at"] ?? (await rows("proofs")).find((p) => String(p["id"]) === String(proof["id"]))!["file_added_at"]).not.toBeNull();
+        await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-ready", to: SHOPPER.email, row: message("proof-ready", "proof_id", proof["id"]), body: new RegExp(`/order#${order.link!.token}`) });
+        expect((await rows("messages")).filter((m) => m["kind"] === "proof-ready" && String(m["proof_id"]) === String(proof["id"]))).toHaveLength(1);
       }, 240_000);
 
       it("sends the works its copy of a new order whose artwork warning was accepted", async () => {

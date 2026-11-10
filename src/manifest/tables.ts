@@ -1146,6 +1146,10 @@ export const TABLES: Table[] = [
         sent: ["approved", "change_asked", "superseded"],
         change_asked: ["superseded"],
       },
+      // A proof is made with its PDF: the one it sends again stays the customer's to answer until there is a new one to open.
+      // The works' screens always send one; a proof added on the dashboard without it is refused. An import and the sample
+      // bring in history, which Adminium never holds to this.
+      create: { requires: { where: [{ column: "file", isNull: false }] } },
       // A proof sent again: the job's earlier proof still out (waiting, or with a change asked) is sent again, in the same write, whoever makes it.
       supersedes: { by: "job_id", from: ["sent", "change_asked"], to: "superseded" },
     },
@@ -1160,7 +1164,7 @@ export const TABLES: Table[] = [
       // By e-mail, or printed and posted: the order's choice, or the works' own at its cost.
       choice("kind", "Sent", { email: "By e-mail", post: "Printed, by post" }, { default: "email" }),
       text("file", 64, "Proof PDF", { ...opt, rules: { file: { accept: ["pdf"], maxBytes: 104857600 } } }),
-      // When it was given its PDF: a proof added on the dashboard with none never had one, which the customer's page tells
+      // When it was given its PDF: a proof added on the dashboard with none (before 0.2.4) never had one, which the customer's page tells
       // from a PDF erased with their data, and which is never e-mailed (`outbox.ts`).
       at("file_added_at", "PDF added", { ...opt, rules: stamp("now", { column: "file", filled: true }) }),
       // Stamped on every proof made from 0.2.3. An update adds both columns empty on the proofs already there, which all
