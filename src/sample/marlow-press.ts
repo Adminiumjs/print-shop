@@ -449,13 +449,23 @@ export function sampleBundle(): SampleBundle {
   };
 }
 
-/** The Customiser's rows for Marlow Press, as its own sample ships them, each design version labelled for the proofs. */
+/**
+ * The Customiser's rows for Marlow Press, as its own sample ships them, each design version labelled for the proofs,
+ * and no part said to hold a file the sample has none of: a sample row brings no logo (Adminium takes a design's files
+ * only as a person uploads them), so Harbour Bakery's card shows the logo's place, never "their own logo".
+ */
 function customiserTables(): Table[] {
   const tables = structuredClone(CUSTOMISER_ROWS.tables) as Table[];
   const versions = tables.find((t) => t.ref === "design_versions")!;
   for (const row of versions.rows) {
     const design = ((row["design_id"] as { "@ref": string })["@ref"]).replace("design:", "");
     row["@label"] = `version:${design}-${String(row["version"])}`;
+  }
+  for (const table of tables.filter((t) => t.ref === "designs" || t.ref === "design_versions")) {
+    for (const row of table.rows) {
+      const parts = (row["values"] as { parts?: Record<string, { file?: string }> } | undefined)?.parts ?? {};
+      for (const [part, value] of Object.entries(parts)) if (value.file !== undefined && (row[value.file] ?? null) === null) delete parts[part];
+    }
   }
   return tables;
 }
@@ -545,6 +555,9 @@ export function customiserSection(): SampleBundle {
         change_note: pr.answer?.note ?? null,
         sent_at: wall(pr.sent, PROOF_SENT_AT),
         answered_at: pr.answer === undefined ? null : wall(pr.answer.on, ANSWERED_AT),
+        // Recorded, with no PDF (a sample row brings none): the customer's page says nothing was erased, as of a proof
+        // added with none, never "no longer kept" (which a proof with neither stamp and no PDF is: its PDF was erased).
+        recorded_at: wall(pr.sent, PROOF_SENT_AT),
       });
     }
   }

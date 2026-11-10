@@ -46,12 +46,35 @@ describe("the sample files are what their source writes", () => {
     expect(manifest.sampleData.addOns).toEqual({ customiser: { file: "seeds/printing.customiser.sample.json" } });
   });
 
-  it("carry the Customiser's own rows for Marlow Press as it ships them, each design version labelled", () => {
+  it("carry the Customiser's own rows for Marlow Press as it ships them, each design version labelled, no part said to hold a file it lacks", () => {
+    /** A design's or version's values without the parts that name a file the row has none of. */
+    const filed = (row: Row): Row => {
+      const values = structuredClone(row["values"]) as { parts?: Record<string, { file?: string }> };
+      for (const [part, value] of Object.entries(values.parts ?? {})) if (value.file !== undefined && (row[value.file] ?? null) === null) delete values.parts![part];
+      return { ...row, values };
+    };
     for (const table of CUSTOMISER_ROWS.tables) {
       const ours = section.tables.find((t) => t.ref === table.ref)!.rows;
       const unlabelled = table.ref === "design_versions" ? ours.map(({ "@label": _label, ...rest }) => rest) : ours;
-      expect(unlabelled, table.ref).toEqual(table.rows);
+      const theirs = table.ref === "designs" || table.ref === "design_versions" ? (table.rows as Row[]).map(filed) : table.rows;
+      expect(unlabelled, table.ref).toEqual(theirs);
     }
+  });
+
+  // A sample row brings no file: Harbour Bakery's card shows the place for a logo, and its proof was never given a PDF.
+  it("say no design holds a logo it was never given, and no proof had a PDF erased", () => {
+    for (const ref of ["designs", "design_versions"]) {
+      for (const row of rowsOf(section, ref)) {
+        const parts = (row["values"] as { parts: Record<string, { file?: string }> }).parts;
+        expect(Object.entries(parts).filter(([, part]) => part.file !== undefined && (row[part.file] ?? null) === null), ref).toEqual([]);
+      }
+    }
+    const mp4112 = rowsOf(section, "designs").find((d) => d["@label"] === "design:mp-4112")!;
+    expect(Object.keys((mp4112["values"] as { parts: Row }).parts)).not.toContain("logo");
+    const proofs = rowsOf(section, "proofs");
+    expect(proofs.length).toBeGreaterThan(10);
+    // Recorded, with no PDF and none added: the customer's page reads it as a proof never given one, not one erased.
+    for (const proof of proofs) expect([proof["file"] ?? null, proof["file_added_at"] ?? null, proof["recorded_at"]]).toEqual([null, null, proof["sent_at"]]);
   });
 });
 

@@ -4272,9 +4272,6 @@
               },
               "addr": {
                 "text": "12 Quay Street\nMarlow SL7 1BT"
-              },
-              "logo": {
-                "file": "logo_file"
               }
             }
           },
@@ -4313,9 +4310,6 @@
               },
               "addr": {
                 "text": "12 Quay Street\nMarlow SL7 1BT"
-              },
-              "logo": {
-                "file": "logo_file"
               }
             }
           },
@@ -6447,6 +6441,11 @@
             "@day": -4,
             "@time": "09:30",
             "@week": true
+          },
+          "recorded_at": {
+            "@day": -5,
+            "@time": "11:00",
+            "@week": true
           }
         },
         {
@@ -6467,6 +6466,11 @@
           "answered_at": {
             "@day": -4,
             "@time": "09:30",
+            "@week": true
+          },
+          "recorded_at": {
+            "@day": -4,
+            "@time": "11:00",
             "@week": true
           }
         },
@@ -6489,6 +6493,11 @@
             "@day": -2,
             "@time": "09:30",
             "@week": true
+          },
+          "recorded_at": {
+            "@day": -5,
+            "@time": "11:00",
+            "@week": true
           }
         },
         {
@@ -6506,7 +6515,12 @@
             "@time": "11:00",
             "@week": true
           },
-          "answered_at": null
+          "answered_at": null,
+          "recorded_at": {
+            "@day": -1,
+            "@time": "11:00",
+            "@week": true
+          }
         },
         {
           "job_id": {
@@ -6523,7 +6537,12 @@
             "@time": "11:00",
             "@week": true
           },
-          "answered_at": null
+          "answered_at": null,
+          "recorded_at": {
+            "@day": -1,
+            "@time": "11:00",
+            "@week": true
+          }
         },
         {
           "job_id": {
@@ -6543,6 +6562,11 @@
           "answered_at": {
             "@day": -2,
             "@time": "09:30",
+            "@week": true
+          },
+          "recorded_at": {
+            "@day": -5,
+            "@time": "11:00",
             "@week": true
           }
         },
@@ -6565,6 +6589,11 @@
             "@day": -5,
             "@time": "09:30",
             "@week": true
+          },
+          "recorded_at": {
+            "@day": -5,
+            "@time": "11:00",
+            "@week": true
           }
         },
         {
@@ -6585,6 +6614,11 @@
           "answered_at": {
             "@day": -2,
             "@time": "09:30",
+            "@week": true
+          },
+          "recorded_at": {
+            "@day": -5,
+            "@time": "11:00",
             "@week": true
           }
         },
@@ -6607,6 +6641,11 @@
             "@day": -2,
             "@time": "09:30",
             "@week": true
+          },
+          "recorded_at": {
+            "@day": -5,
+            "@time": "11:00",
+            "@week": true
           }
         },
         {
@@ -6627,6 +6666,11 @@
           "answered_at": {
             "@day": -5,
             "@time": "09:30",
+            "@week": true
+          },
+          "recorded_at": {
+            "@day": -5,
+            "@time": "11:00",
             "@week": true
           }
         },
@@ -6649,6 +6693,11 @@
             "@day": -2,
             "@time": "09:30",
             "@week": true
+          },
+          "recorded_at": {
+            "@day": -5,
+            "@time": "11:00",
+            "@week": true
           }
         },
         {
@@ -6666,7 +6715,12 @@
             "@time": "11:00",
             "@week": true
           },
-          "answered_at": null
+          "answered_at": null,
+          "recorded_at": {
+            "@day": -1,
+            "@time": "11:00",
+            "@week": true
+          }
         },
         {
           "job_id": {
@@ -6687,6 +6741,11 @@
             "@day": -2,
             "@time": "09:30",
             "@week": true
+          },
+          "recorded_at": {
+            "@day": -5,
+            "@time": "11:00",
+            "@week": true
           }
         },
         {
@@ -6706,7 +6765,12 @@
             "@time": "11:00",
             "@week": true
           },
-          "answered_at": null
+          "answered_at": null,
+          "recorded_at": {
+            "@day": -1,
+            "@time": "11:00",
+            "@week": true
+          }
         }
       ]
     },
