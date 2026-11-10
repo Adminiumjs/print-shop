@@ -179,6 +179,12 @@ describe.skipIf(why !== null)(`a works on ${FROM} updated, its proofs as they we
         served = ok(await new Caller(server.base).get<typeof served>("/apps/printing/customer/surface-config.json"));
         const kept = (await rows("proofs")).find((p) => String(p["id"]) === String(oldProof["id"]))!;
         expect([kept["file_added_at"] ?? null, kept["recorded_at"] ?? null]).toEqual([null, null]);
+        // What the update works out for the rows already there: every proof named, and the sample's MP-4114 counting the
+        // change asked of its first proof, sent again since (the count before it read only changes still waiting).
+        expect((await rows("proofs")).filter((p) => !/^MP-\d+\/\d+ #\d+$/.test(String(p["title"] ?? "")))).toEqual([]);
+        const mp4114 = (await rows("orders")).find((o) => o["number"] === "MP-4114")!;
+        const posters = (await rows("jobs")).find((j) => String(j["order_id"]) === String(mp4114["id"]))!;
+        expect(Number(posters["changes"])).toBe(1);
         expect(kept["file"]).not.toBeNull();
         // Its customer's page still offers it: the PDF is there.
         const [job] = await page(before.link!.token);
