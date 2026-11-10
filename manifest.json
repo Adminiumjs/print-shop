@@ -17917,7 +17917,11 @@
                     "name": "order_number",
                     "detail": [
                       "product_name"
-                    ]
+                    ],
+                    "scope": {
+                      "field": "order_id",
+                      "column": "order_id"
+                    }
                   }
                 },
                 {

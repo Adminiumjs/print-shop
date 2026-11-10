@@ -412,7 +412,7 @@ describe("the e-mails", () => {
     expect(role("prepress").limits!["proofs"]!["creatable"] as string[]).toContain("file");
   });
 
-  it("names a proof by its order, its job and its number, and picks its job by the order's number with the product under it", () => {
+  it("names a proof by its order, its job and its number, and picks its job among the chosen order's by its number and product", () => {
     expect(table("proofs")["keyField"]).toBe("title");
     expect(rules("proofs", "title")["formula"]).toEqual({ join: ["order_number", "/", "job_position", " #", "version"] });
     // Kept in step: a job moved to another place in its order, or an order renumbered, names its proofs again.
@@ -423,7 +423,11 @@ describe("the e-mails", () => {
     // A job always has a place in its order, so its proofs never read "MP-41292": the shop sends it, else the next is given.
     expect(rules("jobs", "position")["sequence"]).toEqual({ gapless: true, scope: "order_id", sample: true });
     const page = (manifest["pages"] as { ref: string; config: { form: { sections: { fields: Json[] }[] } } }[]).find((p) => p.ref === "printing-proofs")!;
-    expect(page.config.form.sections.flatMap((s) => s.fields).find((f) => f["column"] === "job_id")).toEqual({ column: "job_id", control: "reference", reference: { name: "order_number", detail: ["product_name"] } });
+    expect(page.config.form.sections.flatMap((s) => s.fields).find((f) => f["column"] === "job_id")).toEqual({
+      column: "job_id",
+      control: "reference",
+      reference: { name: "order_number", detail: ["product_name"], scope: { field: "order_id", column: "order_id" } },
+    });
   });
 
   // A change asked counts while the proof is sent again and after an erase (its answer's time is kept), and when brought in without that time.
