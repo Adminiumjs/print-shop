@@ -2,9 +2,12 @@
 
 ## 0.2.4 (10 November 2026)
 
-Needs Adminium **0.3.53** and asks for the add-ons at **1.0.24**. The update
+Needs Adminium **0.3.53** and asks for the add-ons at **1.0.25**. The update
 gives the jobs already there their place in their order and names their proofs.
 
+- **The Customiser's panel draws on the works' screens again.** With the
+  Customiser 1.0.24 a job's panel on prepress and the press stayed on
+  "Loading"; 1.0.25 draws it.
 - **Two customised jobs in one order.** With the Customiser 1.0.24, an order
   that holds two jobs a customer designed is taken: each design's version is
   labelled by its design, where two were refused as the same.

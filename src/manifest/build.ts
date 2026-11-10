@@ -41,7 +41,7 @@ export const VERSION = "0.2.4";
  * the Customiser 1.0.23 (an app's owner changes its settings, each shop kept
  * to its own rows) and tells a screens-only role which add-ons its app has,
  * so the counter books the delivery company's collection. 0.3.53 bundles the
- * Customiser 1.0.24, keeps a ready-by told to the customer from moving
+ * Customiser 1.0.25, keeps a ready-by told to the customer from moving
  * earlier (`stamp.notEarlier`) and offers only the chosen order's jobs in the
  * proofs form's picker (`reference.scope`).
  */
