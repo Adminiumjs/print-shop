@@ -47,11 +47,11 @@ describe("manifest.json is what src/manifest/ writes", () => {
     expect(readFileSync(FILE, "utf8") === manifestText()).toBe(true);
   });
 
-  it("is prefixed, keyed printing, at 0.2.4, and needs the engine that reads its rules", () => {
+  it("is prefixed, keyed printing, at 0.2.5, and needs the engine that reads its rules", () => {
     expect(manifest.requiredSchema.prefixed).toBe(true);
     expect(manifest["key"]).toBe("printing");
-    expect(manifest["version"]).toBe("0.2.4");
-    expect((manifest["compatibility"] as Json)["minAdminiumVersion"]).toBe("0.3.53");
+    expect(manifest["version"]).toBe("0.2.5");
+    expect((manifest["compatibility"] as Json)["minAdminiumVersion"]).toBe("0.3.54");
     // Both sides may be installed once per database.
     expect((manifest["frontends"] as Json[]).map((f) => [f["side"], f["instances"]])).toEqual([["staff", true], ["customer", true]]);
   });
@@ -249,7 +249,7 @@ describe("every total, number and date is Adminium's", () => {
 
 describe("the Customiser is bound as its README asks", () => {
   it("requires it at the release that carries it, suggests neither Design Studio nor the Canva import, and names the page its saved-design mail opens", () => {
-    expect(manifest.addOns.requires).toEqual([expect.objectContaining({ key: "customiser", range: "^1.0.25" })]);
+    expect(manifest.addOns.requires).toEqual([expect.objectContaining({ key: "customiser", range: "^1.0.26" })]);
     expect(manifest.addOns.suggests.map((s) => s["key"])).toEqual(["shipping-dhl", "inventory", "invoices", "holiday-calendars"]);
     expect(CUSTOMER_ROUTES.customiserDesign).toBe("/design");
   });

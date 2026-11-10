@@ -29,8 +29,8 @@ on:
 
 env:
   # The Adminium release the contract runs on, and the add-ons release the app asks for.
-  ADMINIUM_REF: v0.3.53
-  ADD_ONS_REF: v1.0.25
+  ADMINIUM_REF: v0.3.54
+  ADD_ONS_REF: v1.0.26
 
 jobs:
   contract:

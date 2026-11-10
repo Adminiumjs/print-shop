@@ -20,7 +20,7 @@ import { rolesFor } from "./roles.ts";
 import { SETTINGS } from "./settings.ts";
 import { TABLES } from "./tables.ts";
 
-export const VERSION = "0.2.4";
+export const VERSION = "0.2.5";
 
 /**
  * The Adminium release that first reads everything below: delivery bands
@@ -43,9 +43,11 @@ export const VERSION = "0.2.4";
  * so the counter books the delivery company's collection. 0.3.53 bundles the
  * Customiser 1.0.25, keeps a ready-by told to the customer from moving
  * earlier (`stamp.notEarlier`) and offers only the chosen order's jobs in the
- * proofs form's picker (`reference.scope`).
+ * proofs form's picker (`reference.scope`). 0.3.54 bundles the Customiser
+ * 1.0.26, whose shop editor takes a ready-made design again, and gives at
+ * every update a place to the jobs added by hand before places were numbered.
  */
-export const MIN_ADMINIUM = "0.3.53";
+export const MIN_ADMINIUM = "0.3.54";
 
 /**
  * The release that reads two more things this app says: a role's grant of

@@ -1,18 +1,22 @@
 # Print Shop releases
 
-## 0.2.5 (not released yet)
+## 0.2.5 (11 November 2026)
+
+Needs Adminium **0.3.54** and asks for the add-ons at **1.0.26**.
 
 Corrects what 0.2.4 said of its update: "the update gives the jobs already
 there their place in their order" was not so. The update named the proofs of
 the jobs the shop had placed, but a job added on the dashboard in 0.2.3 or
 before kept no place: it read "MP-4129", and its proofs "MP-4129 #2".
 
-- **Jobs added on the dashboard before 0.2.4 are given their place.** Updating
-  from 0.2.3 or earlier with Adminium 0.3.54, each job with no place is given
-  the next in its order, and it and its proofs are named by it ("MP-4129/2",
-  "MP-4129/2 #1"). Needs Adminium 0.3.54: with 0.3.53 they keep none. A works
-  already on 0.2.4 keeps its jobs as they are: the update numbers only a place
-  it numbers for the first time, and a place once numbered cannot be typed.
+- **A customer can order a ready-made design again.** With the Customiser
+  1.0.24 and 1.0.25 the shop's editor refused every ready-made design ("This
+  design can't be made as it is"); 1.0.26 takes them. Starting from blank and
+  uploaded files were not affected.
+- **Jobs added on the dashboard before 0.2.4 are given their place.** Adminium
+  0.3.54 gives each job with no place the next one in its order at every
+  update, so this update does it for a works already on 0.2.4 too; it and its
+  proofs are named by it ("MP-4129/2", "MP-4129/2 #1").
 - **Each job is named by its order and its place** ("MP-4129/1") on the
   dashboard: the Jobs list, a job's page, and every picker and link to a job,
   so two jobs of one order (two lots of business cards) never read the same.

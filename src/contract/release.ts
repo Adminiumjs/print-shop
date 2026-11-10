@@ -20,7 +20,7 @@ const REPO = fileURLToPath(new URL("../..", import.meta.url));
  *
  * A checkout built before its version was moved still says the release
  * before, and refuses a manifest whose floor is the one it is about to be:
- * `CONTRACT_ENGINE_RELEASE=0.3.53` names the release it becomes, and its
+ * `CONTRACT_ENGINE_RELEASE=0.3.54` names the release it becomes, and its
  * server is run as that release (`engine-release.mjs`). Never set in CI,
  * which runs a released Adminium.
  */
