@@ -1,5 +1,41 @@
 # Print Shop releases
 
+## 0.2.5 (not released yet)
+
+Corrects what 0.2.4 said of its update: "the update gives the jobs already
+there their place in their order" was not so. The update named the proofs of
+the jobs the shop had placed, but a job added on the dashboard in 0.2.3 or
+before kept no place: it read "MP-4129", and its proofs "MP-4129 #2".
+
+- **Jobs added on the dashboard before 0.2.4 are given their place.** Updating
+  from 0.2.3 or earlier with Adminium 0.3.54, each job with no place is given
+  the next in its order, and it and its proofs are named by it ("MP-4129/2",
+  "MP-4129/2 #1"). Needs Adminium 0.3.54: with 0.3.53 they keep none. A works
+  already on 0.2.4 keeps its jobs as they are: the update numbers only a place
+  it numbers for the first time, and a place once numbered cannot be typed.
+- **Each job is named by its order and its place** ("MP-4129/1") on the
+  dashboard: the Jobs list, a job's page, and every picker and link to a job,
+  so two jobs of one order (two lots of business cards) never read the same.
+  The New Proof form's job picker offers each by that name, its product under
+  it.
+- **The customer and the works are told which job a proof is of.** On an
+  order of several jobs the customer's order page names each job ("MP-4129/2
+  · Business cards") on its proof and on the answer given, and the proof's
+  file is named after its job. The "proof ready" e-mail and the works' copy of
+  a change asked name the proof they are about ("Proof: MP-4129/2 #1") and
+  list each proof by its job.
+- **Jobs in progress keep their ready-by at the update.** The update counts,
+  for each job, every change asked of its proofs, those sent again since
+  included, and the working days they add; it writes no ready-by. So a job
+  whose change was asked of a proof since sent again (the sample's MP-4114)
+  keeps the day it had, which left that change's day out; its next change
+  asked sets the day again from then, and its approval counts from the
+  approval, never earlier.
+- **The sample says only what it holds.** Its proofs never had a PDF, and the
+  customer's page no longer says they are "no longer kept". Harbour Bakery's
+  card (MP-4112) shows the place for a logo rather than "their own logo": the
+  sample brings no logo file.
+
 ## 0.2.4 (10 November 2026)
 
 Needs Adminium **0.3.53** and asks for the add-ons at **1.0.25**. The update
