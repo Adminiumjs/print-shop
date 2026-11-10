@@ -329,6 +329,10 @@ export const INSTALL_FLOOR_WORD_NAMES = [
   // the app check reads the sample files and holds the floor to them.
   'sampleData.addOns.assets',
   'sampleData.productAssets',
+  // A form's reference picker narrowed by another field of the same form (an order line among the chosen order's).
+  'form.referenceScope',
+  // A stamp that never moves its date earlier than the one the column holds.
+  'stamp.notEarlier',
 ] as const;
 export type ManifestWordName = (typeof INSTALL_FLOOR_WORD_NAMES)[number];
 
@@ -611,6 +615,10 @@ export const WORD_FLOORS: Readonly<Partial<Record<ManifestWordName, string>>> = 
   // gives a sample's file to a picture column only.
   'sampleData.addOns.assets': '0.3.51',
   'sampleData.productAssets': '0.3.51',
+  // A release before drops the key at install, and the picker offers every row.
+  'form.referenceScope': '0.3.53',
+  // A release before refuses the key.
+  'stamp.notEarlier': '0.3.53',
 };
 
 /** The kinds of file a column takes from the release that cleans SVG and reads models and fonts whole (`ASSET_FILE_KINDS`). */
@@ -830,6 +838,7 @@ export function installFloorWords(document: unknown): ManifestWord[] {
         else if (bound !== undefined && ((type !== 'date' && type !== 'timestamptz') || (isDoc(bound) && bound['days'] !== undefined))) out.push({ word: 'bounds.other', path: `${here}.${side}` });
       }
       if (isDoc(rules['stamp']) && rules['stamp']['strict'] !== undefined) out.push({ word: 'stamp.strict', path: `${here}.stamp.strict` });
+      if (isDoc(rules['stamp']) && rules['stamp']['notEarlier'] !== undefined) out.push({ word: 'stamp.notEarlier', path: `${here}.stamp.notEarlier` });
       if (rules['band'] !== undefined) out.push({ word: 'column.band', path: `${here}.band` });
       if (isDoc(rules['stamp']) && isDoc(rules['stamp']['set']) && rules['stamp']['set']['addWorkingDays'] !== undefined) {
         out.push({ word: 'stamp.addWorkingDays', path: `${here}.stamp.set.addWorkingDays` });
@@ -921,6 +930,15 @@ export function installFloorWords(document: unknown): ManifestWord[] {
     if (config['bulk'] !== undefined) out.push({ word: 'config.bulk', path: `${here}.bulk` });
     if (config['columns'] !== undefined) out.push({ word: 'config.columns', path: `${here}.columns` });
     if (config['board'] !== undefined) out.push({ word: 'config.board', path: `${here}.board` });
+    // A reference picker narrowed by another field of its form.
+    const form = isDoc(config['form']) ? config['form'] : {};
+    list(form['sections']).forEach((section, si) => {
+      list(isDoc(section) ? section['fields'] : undefined).forEach((field, fi) => {
+        if (isDoc(field) && isDoc(field['reference']) && field['reference']['scope'] !== undefined) {
+          out.push({ word: 'form.referenceScope', path: `${here}.form.sections.${String(si)}.fields.${String(fi)}.reference.scope` });
+        }
+      });
+    });
     const board = isDoc(config['board']) ? config['board'] : {};
     const boardCard = isDoc(board['card']) ? board['card'] : {};
     if (board['toolbar'] !== undefined) out.push({ word: 'board.toolbar', path: `${here}.board.toolbar` });
