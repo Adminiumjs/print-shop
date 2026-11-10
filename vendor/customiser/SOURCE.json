@@ -1,10 +1,10 @@
 {
-  "from": "checkout",
+  "from": "release",
   "package": "@adminiumjs/add-on-customiser",
-  "version": "1.0.23",
-  "commit": "807a53f",
+  "version": "1.0.24",
+  "integrity": "sha512-wrVN+OVK4QzB1NdCbcLORCK0TU6cjfyGVP6Bt9R2XrorOTiZFFDGo6F7zBAZjJKK2KQilVgjUUZGpU8KMp1/hw==",
   "files": {
-    "index.js": "5ed14bf57fb5fc3f22eac5373d361444de93642569593b26e6b2c568501900fe",
+    "index.js": "5aa4b7af10555934049ee97b5a077d8f327a72530637d52245386552f40b9cf9",
     "stage3d.js": "4d471102105a7c7fd216e69afd0300d5d89a1cda0c5d5e98fcbbd27a0956eeb1",
     "editor.css": "67cf89c95b18bb6b817eb9e180eb9857021cedc01c2cc25c10e38277d7437c76",
     "app-grants.json": "568fb8d6f53afed32b2abbb19e86e04e45b6129452adcace23ca7ee83b548b76"
