@@ -9903,32 +9903,16 @@
                     ]
                   },
                   {
-                    "add": [
+                    "if": [
                       {
-                        "mul": [
-                          {
-                            "coalesce": [
-                              "changes",
-                              0
-                            ]
-                          },
-                          {
-                            "coalesce": [
-                              "change_days",
-                              1
-                            ]
-                          }
+                        "eq": [
+                          "proof_state",
+                          "approved"
                         ]
                       },
+                      0,
                       {
-                        "if": [
-                          {
-                            "eq": [
-                              "proof_state",
-                              "approved"
-                            ]
-                          },
-                          0,
+                        "add": [
                           {
                             "if": [
                               {
@@ -9954,6 +9938,22 @@
                                 ]
                               },
                               0
+                            ]
+                          },
+                          {
+                            "mul": [
+                              {
+                                "coalesce": [
+                                  "changes",
+                                  0
+                                ]
+                              },
+                              {
+                                "coalesce": [
+                                  "change_days",
+                                  1
+                                ]
+                              }
                             ]
                           }
                         ]
@@ -10007,7 +10007,8 @@
                       "turnaround_days"
                     ]
                   }
-                ]
+                ],
+                "notEarlier": true
               }
             }
           },

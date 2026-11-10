@@ -264,7 +264,8 @@ function fires(on: On | On[], before: Row | undefined, after: Row): boolean {
  * The stamps a write sets: for every row it made or changed (`before` is the
  * tables as they were), each stamp whose `on` fires, set to now, the person,
  * a moment some days on, or a day so many working days on. A new row keeps
- * a stamp the write itself gave (a sample's own dates). True when one fired.
+ * a stamp the write itself gave (a sample's own dates); a `notEarlier` stamp
+ * never moves its column earlier. True when one fired.
  */
 export function stamp(tables: Tables, before: Tables, at: Moment): boolean {
   let any = false;
@@ -276,7 +277,7 @@ export function stamp(tables: Tables, before: Tables, at: Moment): boolean {
     for (const row of tables[table.ref] ?? []) {
       const old = was.get(String(row.id));
       for (const column of stamps) {
-        const rule = column.rules!["stamp"] as { set: unknown; on: On | On[] };
+        const rule = column.rules!["stamp"] as { set: unknown; on: On | On[]; notEarlier?: true };
         if (!fires(rule.on, old, row)) continue;
         if (old === undefined && row[column.ref] !== undefined && row[column.ref] !== null) continue;
         const set = rule.set;
@@ -292,6 +293,9 @@ export function stamp(tables: Tables, before: Tables, at: Moment): boolean {
           const days = Number(row[w.days]);
           value = Number.isFinite(days) ? workingDaysOn(at, days, closures) : null;
         }
+        // `notEarlier`: the later of what the row holds and the new value (an empty one takes the new).
+        const held = Date.parse(String(row[column.ref] ?? ""));
+        if (rule.notEarlier === true && !Number.isNaN(held) && value !== null && Date.parse(String(value)) < held) value = row[column.ref];
         if (!same(row[column.ref], value)) any = true;
         row[column.ref] = value;
       }

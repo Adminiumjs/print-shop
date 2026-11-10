@@ -6,14 +6,22 @@
   PDF is refused, and the form asks for it: the proof it would have sent again
   stays the customer's to answer, and nothing is said to be sent before there
   is something to open. The works' screens always sent the PDF with the proof.
-- **The day a change adds stays on the ready-by.** Once a customer asks for a
-  change, its working day stays on the job's ready-by after the next proof
-  goes out and after the proof is approved, so the job, the order's page and
-  the approval e-mail keep the day the customer was told. Each further change
-  adds one more; erasing the customer's data keeps them.
-- **Proofs are named by their order and number** ("MP-4129/1 #2", the second proof of the order's first job) wherever the
-  dashboard links or opens one, and the New Proof form's job picker shows each
-  job's order number with its product under it.
+  The dashboard's form also marks the PDF as needed when an older proof
+  without one is edited.
+- **The ready-by never moves earlier than the day the customer was told.** A
+  change asked adds a working day, and it stays when the next proof goes out.
+  An approval counts the work from the approval, but never before that day,
+  whether it comes the same day or days later; deleting the proof a change was
+  asked of leaves the day as it is too. The job, the order's page and the
+  approval e-mail say the same day. Each further change adds one more, and
+  erasing the customer's data keeps them. Needs Adminium 0.3.53.
+- **Proofs are named by their order, job and number** ("MP-4129/1 #2", the
+  second proof of the order's first job) wherever the dashboard links or opens
+  one, and the New Proof form's job picker shows each job's order number with
+  its product under it. A job added on the dashboard is given the next place
+  in its order. Proofs already there are named by the update.
+- **The ticket keeps a replaced proof's change asked** once the customer's
+  words were erased with their data.
 
 ## 0.2.3 (10 November 2026)
 

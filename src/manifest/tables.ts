@@ -158,6 +158,8 @@ function picture(ref: string, label: string): Column {
   return { ref, type: "text", maxLength: 64, nullable: true, semantic: "image", label: l(label), rules: { file: { accept: ["png", "jpeg", "webp"], maxBytes: 5242880 } } };
 }
 const stamp = (set: unknown, on: unknown) => ({ stamp: { set, on } });
+/** A stamp that never moves its date earlier: the later of what the row holds and what it works out. */
+const notEarlier = (rule: { stamp: Record<string, unknown> }) => ({ stamp: { ...rule.stamp, notEarlier: true } });
 const onCreate = "create";
 const onState = (column: string, ...values: string[]) => ({ column, values });
 const setting = (column: string) => ({ table: "settings", column });
@@ -299,20 +301,19 @@ const yes = (column: string) => ({ eq: [column, true] });
 /** The working days a job's own work takes: express or standard. */
 const WORK_DAYS = { if: [yes("express"), { coalesce: ["express_days", 1] }, { coalesce: ["standard_days", 3] }] };
 /**
- * The days a job's proof adds: a working day for each change the customer
- * asked, kept once the next proof is sent and once a proof is approved (the
- * day the customer was told never moves earlier); and, until it is approved,
- * the post days when the proof goes by post (the customer ordered it, or the
- * works posts one).
+ * The days a job waits on its proof, until it is approved: the post days when
+ * the proof goes by post (the customer ordered it, or the works posts one),
+ * and a working day for each change asked. Once approved, the work is counted
+ * from the approval; the day the customer was told stands (`notEarlier`).
  */
 const PROOF_WAIT_DAYS = {
-  add: [
-    { mul: [{ coalesce: ["changes", 0] }, { coalesce: ["change_days", 1] }] },
+  if: [
+    { eq: ["proof_state", "approved"] },
+    0,
     {
-      if: [
-        { eq: ["proof_state", "approved"] },
-        0,
+      add: [
         { if: [{ or: [yes("proof_by_post"), { gt: ["posted_proofs", 0] }] }, { coalesce: ["proof_post_days", 2] }, 0] },
+        { mul: [{ coalesce: ["changes", 0] }, { coalesce: ["change_days", 1] }] },
       ],
     },
   ],
@@ -1061,10 +1062,12 @@ export const TABLES: Table[] = [
       figure("posted_proofs", "int", "Proofs by post", { rollup: { from: "proofs", via: "job_id", count: true, where: { column: "kind", eq: "post" } } }),
       figure("proof_ok", "int", "Ready for press", { formula: PROOF_OK }),
       figure("turnaround_days", "int", "Working days to ready", { formula: { add: [WORK_DAYS, PROOF_WAIT_DAYS] } }),
-      // Counted from the order coming in, and again from the moment a change is asked or the proof approved.
+      // Counted from the order coming in, and again from the moment a change is asked or the proof approved: never
+      // earlier than the day it said already (an approval days after a change keeps the day the customer was told; a
+      // change taken back by deleting its proof leaves the day as it is).
       date("ready_by", "Ready by", {
         ...opt,
-        rules: stamp(
+        rules: notEarlier(stamp(
           {
             addWorkingDays: {
               from: "now",
@@ -1075,7 +1078,7 @@ export const TABLES: Table[] = [
             },
           },
           [onCreate, onState("proof_state", "approved"), { columns: ["turnaround_days"] }],
-        ),
+        )),
       }),
       // Its artwork: how many files, and the warnings the customer accepted on them.
       figure("artwork_count", "int", "Artwork files", { rollup: { from: "artwork", via: "job_id", count: true } }),

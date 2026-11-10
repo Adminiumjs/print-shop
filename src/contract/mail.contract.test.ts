@@ -36,6 +36,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { checkFile } from "../shop/checks.ts";
 import { firstChoice, jobValues } from "../shop/config.ts";
 import { AdminiumShop } from "../shop/door.ts";
+import type { ProofAnswer } from "../shop/after-port.ts";
 import { type Catalogue, type Row } from "../shop/port.ts";
 import { orderBody, useShop, type BasketLine } from "../shop/store.ts";
 import { addOnBundle, appBundle, boot, Caller, ENGINES, missing, missingAddOn, ok, PORTS_PER_ENGINE, until, type Engine, type Server } from "./harness.ts";
@@ -404,6 +405,67 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
         expect([Number(kept["changes"]), String(kept["ready_by"]).slice(0, 10)]).toEqual([2, "2026-08-12"]);
         expect(String((await rows("orders")).find((o) => String(o["id"]) === String(order.order["id"]))!["ready_by"]).slice(0, 10)).toBe("2026-08-12");
       }, 360_000);
+
+      /**
+       * One customer's job, proofed and answered across the working week: the ready-by on the job and its order after
+       * each step. Each case its own shopper, an order apart, so no hourly or per-address limit is spent.
+       */
+      const across = async (email: string) => {
+        const who = { ...SHOPPER, name: "Ivo Marsh", email };
+        const order = await place([cards(650)], "collect", who);
+        const [job] = await jobsOf(order.order);
+        const door = browser().after();
+        const readyBy = async () => {
+          const stored = (await rows("jobs")).find((j) => String(j["id"]) === String(job!["id"]))!;
+          const placed = (await rows("orders")).find((o) => String(o["id"]) === String(order.order["id"]))!;
+          return [stored["ready_by"], placed["ready_by"]].map((d) => String(d).slice(0, 10));
+        };
+        const answer = async (proof: Row, values: ProofAnswer) => {
+          expect(await door.openShared(order.link!.token)).toBe("opened");
+          await door.answerProof("link", proof["id"] as number, values);
+        };
+        return { who, order, job: job!, readyBy, answer };
+      };
+      const at = (iso: string) => server.setClock(Date.parse(iso));
+
+      // Told Tuesday 11 August by a change on Wednesday; approved on Thursday, three working days on is that Tuesday too.
+      it("keeps the day the customer was told when they approve on the next working day", async () => {
+        await at("2026-08-05T11:00:00Z");
+        const run = await across("orla@quayside-print.dev");
+        await run.answer(await sendProof(run.job), { state: "change_asked", change_note: "Smaller logo." });
+        expect(await run.readyBy()).toEqual(["2026-08-11", "2026-08-11"]);
+        await at("2026-08-06T09:00:00Z");
+        const second = await sendProof(run.job);
+        await run.answer(second, { state: "approved" });
+        expect(await run.readyBy()).toEqual(["2026-08-11", "2026-08-11"]);
+        const approved = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-approved", to: run.who.email, known: { "order.number": String(run.order.order["number"]) }, row: message("proof-approved", "proof_id", second["id"]) });
+        expect(approved.mail.text, approved.mail.text).toMatch(/Ready by: Tuesday,? (11 August|August 11),? 2026/);
+      }, 240_000);
+
+      // Told Thursday 13 August by a change on Friday; approved on Monday, three working days on is that Thursday.
+      it("keeps the day the customer was told when they approve after a weekend", async () => {
+        await at("2026-08-07T09:00:00Z");
+        const run = await across("piet@quayside-print.dev");
+        expect(await run.readyBy()).toEqual(["2026-08-12", "2026-08-12"]);
+        await run.answer(await sendProof(run.job), { state: "change_asked", change_note: "Bigger phone number." });
+        expect(await run.readyBy()).toEqual(["2026-08-13", "2026-08-13"]);
+        await at("2026-08-10T09:00:00Z");
+        await run.answer(await sendProof(run.job), { state: "approved" });
+        expect(await run.readyBy()).toEqual(["2026-08-13", "2026-08-13"]);
+      }, 240_000);
+
+      // The change counted no more (its proof deleted on the dashboard): the day the customer was told still stands.
+      it("keeps the day the customer was told when the proof they asked a change of is deleted", async () => {
+        await at("2026-08-10T10:00:00Z");
+        const run = await across("rhea@quayside-print.dev");
+        const first = await sendProof(run.job);
+        await run.answer(first, { state: "change_asked", change_note: "Other paper." });
+        await sendProof(run.job);
+        expect(await run.readyBy()).toEqual(["2026-08-14", "2026-08-14"]);
+        ok(await staff.send("DELETE", `/api/v1/data/${connectionId}/${table("proofs")}/${String(first["id"])}`));
+        expect(Number((await rows("jobs")).find((j) => String(j["id"]) === String(run.job["id"]))!["changes"])).toBe(0);
+        expect(await run.readyBy()).toEqual(["2026-08-14", "2026-08-14"]);
+      }, 240_000);
 
       it("leaves no e-mail failed: every one names only what Adminium fills", async () => {
         const failed = (await rows("messages")).filter((m) => m["status"] === "failed").map((m) => [m["kind"], m["error"]]);

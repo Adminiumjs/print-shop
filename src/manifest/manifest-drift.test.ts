@@ -200,6 +200,8 @@ describe("every total, number and date is Adminium's", () => {
       closures: { table: "closures", from: "from_date", to: "to_date", active: "active" },
     });
     expect((rules("jobs", "ready_by")["stamp"] as Json)["on"]).toEqual(["create", { column: "proof_state", values: ["approved"] }, { columns: ["turnaround_days"] }]);
+    // Never earlier than the day it said: an approval days after a change, or a change taken back, keeps it.
+    expect((rules("jobs", "ready_by")["stamp"] as Json)["notEarlier"]).toBe(true);
     expect(rules("orders", "ready_by")["rollup"]).toEqual({ from: "jobs", via: "order_id", latest: { of: "ready_by", by: "ready_by" }, unlessSet: "cancelled_at" });
     const settings = manifest["settings"] as Json[];
     expect(settings.map((s) => [s["key"], s["default"]])).toEqual([["working_days", "mon,tue,wed,thu,fri"], ["cutoff", "14:00"]]);
