@@ -30,6 +30,12 @@
       "version": "0.2.4",
       "integrity": "sha512-bCk7C7jxxd7zb1H68ZVOcvL/oMYe0poYD65/7B4aezeN5rSWufEy5gHxVnarTEYCBzHnqeF5N2zdZDmi1gd6OQ==",
       "publishedAt": "2026-11-10T21:33:29.000Z"
+    },
+    {
+      "name": "@adminiumjs/app-printing",
+      "version": "0.2.5",
+      "integrity": "sha512-FyFrMLBbjaDKVrwyB1SRkdZEnQnQSd2JjWuwRyKROeAlDStD1gzhT2OkQ4jyj6F6qzP/5JwkTpriyKkY09CedA==",
+      "publishedAt": "2026-11-11T00:43:23.000Z"
     }
   ]
 }
