@@ -52,8 +52,11 @@ export const VERSION = "0.2.5";
  * (`payments:@:refund`), answers the customer's page whether the works takes
  * payments online now and where to pay (`payments.available`,
  * `payments.start`), and fills a pay button's link in the e-mails (`pay_url`).
+ * 0.3.61 tells the customer who comes back from the pay page how their
+ * payment stands (`payments.state`: the bank still confirming it, not
+ * finished, or the pay page's time run out).
  */
-export const MIN_ADMINIUM = "0.3.60";
+export const MIN_ADMINIUM = "0.3.61";
 
 /**
  * The release that reads two more things this app says: a role's grant of

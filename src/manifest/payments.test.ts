@@ -104,8 +104,9 @@ describe("an order paid online", () => {
     expect(column("payments", "card_last4")).toMatchObject({ type: "text", maxLength: 4 });
   });
 
-  it("needs Adminium 0.3.60: an older one refuses a catalog app's payables", () => {
+  it("ships at 0.3.61, and an Adminium before 0.3.60 refuses a catalog app's payables", () => {
     const at = (floor: string) => validateManifest({ ...manifest, compatibility: { ...(manifest["compatibility"] as Json), minAdminiumVersion: floor } });
+    expect(at("0.3.61").ok).toBe(true);
     expect(at("0.3.60").ok).toBe(true);
     expect(at("0.3.59").ok).toBe(false);
   });

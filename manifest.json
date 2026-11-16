@@ -18,7 +18,7 @@
     "commerce"
   ],
   "compatibility": {
-    "minAdminiumVersion": "0.3.60",
+    "minAdminiumVersion": "0.3.61",
     "engines": [
       "sqlite",
       "postgres",
