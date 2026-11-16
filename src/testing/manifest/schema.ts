@@ -4401,7 +4401,7 @@ export interface FormsEntry {
   /** The limits on a create nobody signed in for. */
   anonymous: { perValue?: { columns: string[]; n: number }; perKeyHour?: number; perIpHour?: number };
   /** Refused while one of these settings is off. */
-  requireSetting: { table: string; column: string }[];
+  requireSetting: { table: string; column: string; in?: string[] }[];
   /** The part of the app the entry belongs to: closed while it is off. */
   module?: string;
   /** The `writable` text column a form's fixed "Source" value goes into; absent when the entry names none. */
@@ -4437,7 +4437,7 @@ export function formsEntriesOf(m: Manifest): FormsEntry[] {
         ...(anonymous.perKeyHour === undefined ? {} : { perKeyHour: anonymous.perKeyHour }),
         ...(anonymous.perIpHour === undefined ? {} : { perIpHour: anonymous.perIpHour }),
       },
-      requireSetting: (entry.requireSetting ?? []).map((setting) => ({ table: setting.table, column: setting.column })),
+      requireSetting: (entry.requireSetting ?? []).map((setting) => ({ table: setting.table, column: setting.column, ...(setting.in === undefined ? {} : { in: [...setting.in] }) })),
       ...(entry.module === undefined ? {} : { module: entry.module }),
       ...(entry.source === undefined ? {} : { source: entry.source }),
     };

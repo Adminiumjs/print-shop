@@ -302,6 +302,13 @@ export const timedMoveSchema = z
       .record(refSchema, z.union([scalarSchema, z.null()]))
       .refine((set) => Object.keys(set).length >= 1 && Object.keys(set).length <= 8, { message: 'a timed move sets 1 to 8 columns' })
       .optional(),
+    /**
+     * The move waits while a payment for the row is on its way (the customer
+     * paid and the service has not settled, or the money is being written
+     * down): an unpaid hold never lapses under a payment that is landing. It
+     * waits a few hours at most; money later than that goes to a person.
+     */
+    waitsForPayment: z.literal(true).optional(),
   })
   .strict();
 export type TimedMove = z.infer<typeof timedMoveSchema>;
@@ -411,6 +418,14 @@ export const statesSchema = z
   .object({
     column: refSchema,
     initial: stateName,
+    /**
+     * Other states a new row may be made in besides `initial`: an order a guest
+     * pays for as they check out is made already waiting for the payment
+     * (`paying`), while one paid at pickup is made `placed`. Whoever makes the
+     * row says which, by the value it writes (a public entry by its
+     * `defaults`); a state not listed here is refused on a new row, as before.
+     */
+    starts: z.array(stateName).min(1).max(4).optional(),
     moves: z.record(stateName, z.array(stateMoveSchema).max(16)),
     lock: z
       .object({
@@ -590,6 +605,12 @@ export function statesIssues<C extends ColumnShape>(
     if (!isState(value)) out.push({ path, message: `"${value}" is not a value of "${table}.${states.column}"` });
   };
   known(states.initial, at('initial'));
+  (states.starts ?? []).forEach((value, i) => {
+    known(value, at('starts', i));
+    if (value === states.initial) out.push({ path: at('starts', i), message: `"${value}" is the first state already` });
+    else if ((states.starts ?? []).indexOf(value) !== i) out.push({ path: at('starts', i), message: `"${value}" is named twice` });
+    else if ((states.moves[value] ?? []).length === 0) out.push({ path: at('starts', i), message: `a row made in "${value}" would never leave it: list a move from it` });
+  });
   for (const [from, moves] of Object.entries(states.moves)) {
     known(from, at('moves', from));
     moves.forEach((move, m) => {

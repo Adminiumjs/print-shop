@@ -258,6 +258,8 @@ export const INSTALL_FLOOR_WORD_NAMES = [
   'appGrants.more',
   // An app role that finds, downloads and erases a person's data (`privacy:@:people`).
   'roles.privacyPeople',
+  // An app role that gives back the money paid online for the app's own records (`payments:@:refund`).
+  'roles.paymentsRefund',
   // The columns a records page's list opens on, in order (`config.columns`).
   'config.columns',
   // An add-on kept once per server rather than installed per database.
@@ -333,6 +335,18 @@ export const INSTALL_FLOOR_WORD_NAMES = [
   'form.referenceScope',
   // A stamp that never moves its date earlier than the one the column holds.
   'stamp.notEarlier',
+  // Other states a new row may be made in (an order made already waiting for its payment).
+  'states.starts',
+  // A public entry open only while a choice in the settings row holds some values.
+  'publicAccess.requireSettingIn',
+  // Payable tables in a catalog app's own file, and what a payable says beyond the payments screen's mapping:
+  // when a row may be paid, where the customer comes back, who sends the receipt, the columns only a payment fills.
+  'payments.appPayables',
+  'payments.payableExtras',
+  // A timed move that waits while a payment for the row is on its way.
+  'states.waitsForPayment',
+  // A public create that answers the new row's pay link.
+  'publicAccess.pay',
 ] as const;
 export type ManifestWordName = (typeof INSTALL_FLOOR_WORD_NAMES)[number];
 
@@ -557,6 +571,7 @@ export const WORD_FLOORS: Readonly<Partial<Record<ManifestWordName, string>>> = 
   'roles.addOnActions': '0.3.47',
   'appGrants.more': '0.3.47',
   'roles.privacyPeople': '0.3.47',
+  'roles.paymentsRefund': '0.3.60',
   // A release before ignores the key, and the list opens on the columns Adminium picks.
   'config.columns': '0.3.47',
   'addOn.scope': '0.3.49',
@@ -619,6 +634,14 @@ export const WORD_FLOORS: Readonly<Partial<Record<ManifestWordName, string>>> = 
   'form.referenceScope': '0.3.53',
   // A release before refuses the key.
   'stamp.notEarlier': '0.3.53',
+  // A release before refuses the key (and a new row made outside `initial`), or the value list.
+  'states.starts': '0.3.60',
+  'publicAccess.requireSettingIn': '0.3.60',
+  // A release before refuses payables from any file but a local one, and the keys it does not know.
+  'payments.appPayables': '0.3.60',
+  'payments.payableExtras': '0.3.60',
+  'states.waitsForPayment': '0.3.60',
+  'publicAccess.pay': '0.3.60',
 };
 
 /** The kinds of file a column takes from the release that cleans SVG and reads models and fonts whole (`ASSET_FILE_KINDS`). */
@@ -719,12 +742,30 @@ export function installFloorWords(document: unknown): ManifestWord[] {
         const ref = typeof grant === 'string' ? /^page:@([a-z][a-z0-9-]*):view$/.exec(grant)?.[1] : undefined;
         if (ref !== undefined && !ownPages.has(ref)) out.push({ word: 'roles.addOnPages', path: `roles.${String(r)}.permissions.${String(g)}` });
         if (grant === 'privacy:@:people') out.push({ word: 'roles.privacyPeople', path: `roles.${String(r)}.permissions.${String(g)}` });
+        if (grant === 'payments:@:refund') out.push({ word: 'roles.paymentsRefund', path: `roles.${String(r)}.permissions.${String(g)}` });
       });
     });
     // What only a file made on an Adminium carries.
     for (const block of ['reports', 'invoiceLayouts', 'scheduledReports', 'payments'] as const) {
       if (document[block] !== undefined) out.push({ word: block, path: block });
     }
+    // Payables any app carries, and what a payable says beyond the payments screen's mapping.
+    const local = isDoc(document['publisher']) && document['publisher']['id'] === 'local';
+    const payables = isDoc(document['payments']) ? list(document['payments']['payables']) : [];
+    if (!local && payables.length > 0) out.push({ word: 'payments.appPayables', path: 'payments.payables' });
+    const EXTRAS = ['shape', 'payableWhen', 'returnTo', 'receipt', 'onlyOnline', 'instantOnly', 'refunds', 'refundOn'];
+    const PAYMENT_EXTRAS = ['paidAt', 'provider', 'approvalCode', 'last4', 'currency', 'refundedElsewhere', 'tip'];
+    payables.forEach((payable, p) => {
+      if (!isDoc(payable)) return;
+      const payments = isDoc(payable['payments']) ? payable['payments'] : null;
+      const status = isDoc(payable['status']) ? payable['status'] : null;
+      const extra =
+        EXTRAS.some((key) => payable[key] !== undefined) ||
+        (isDoc(payable['currency']) && payable['currency']['setting'] !== undefined) ||
+        (status !== null && (status['from'] !== undefined || status['refundedFrom'] !== undefined)) ||
+        (payments !== null && payments['kind'] === 'table' && (payments['date'] === undefined || PAYMENT_EXTRAS.some((key) => payments[key] !== undefined)));
+      if (extra) out.push({ word: 'payments.payableExtras', path: `payments.payables.${String(p)}` });
+    });
     // A row removed through a public entry of an app (an add-on's own link says `publicAccess.ownDelete`).
     list(document['publicAccess']).forEach((entry, e) => {
       if (isDoc(entry) && Array.isArray(entry['methods']) && entry['methods'].includes('DELETE')) out.push({ word: 'publicAccess.delete', path: `publicAccess.${String(e)}.methods` });
@@ -742,6 +783,11 @@ export function installFloorWords(document: unknown): ManifestWord[] {
 
   // An agreement on a text's length, on an entry or on its child rows (two levels).
   list(document['publicAccess']).forEach((entry, e) => {
+    if (isDoc(entry) && entry['pay'] !== undefined) out.push({ word: 'publicAccess.pay', path: `publicAccess.${String(e)}.pay` });
+    // A choice in the settings row that must hold one of some values.
+    list(isDoc(entry) ? entry['requireSetting'] : undefined).forEach((setting, r) => {
+      if (isDoc(setting) && setting['in'] !== undefined) out.push({ word: 'publicAccess.requireSettingIn', path: `publicAccess.${String(e)}.requireSetting.${String(r)}.in` });
+    });
     const lengths = (holder: unknown, at: string): void => {
       if (!isDoc(holder)) return;
       list(holder['agrees']).forEach((agree, a) => {
@@ -799,6 +845,10 @@ export function installFloorWords(document: unknown): ManifestWord[] {
         if (isDoc(rule) && rule['moveOnCreate'] !== undefined) out.push({ word: 'states.moveOnCreate', path: `${at}.states.children.${child}.moveOnCreate` });
       }
       if (table['states']['supersedes'] !== undefined) out.push({ word: 'states.supersedes', path: `${at}.states.supersedes` });
+      if (table['states']['starts'] !== undefined) out.push({ word: 'states.starts', path: `${at}.states.starts` });
+      list(table['states']['timed']).forEach((rule, r) => {
+        if (isDoc(rule) && rule['waitsForPayment'] !== undefined) out.push({ word: 'states.waitsForPayment', path: `${at}.states.timed.${String(r)}.waitsForPayment` });
+      });
     }
     list(table['columns']).forEach((column, c) => {
       const rules = isDoc(column) && isDoc(column['rules']) ? column['rules'] : null;
