@@ -20,6 +20,7 @@ import { qrSvg } from "@adminiumjs/public-client/qr";
 import { useEffect, useId, useState } from "react";
 
 import { collectJob, customerOf } from "../actions.ts";
+import { deviceNow } from "../clock.ts";
 import { reload, useData, useEnv, useRun } from "../env.tsx";
 import { byId, jobById, orderOf, refOf } from "../facts.ts";
 import { useFmt } from "../format.ts";
@@ -234,11 +235,14 @@ export function RefundSheet({ orderId, attemptId }: { orderId: unknown; attemptI
 
 type Way = "card" | "cash" | "link";
 
-/** A key for one payment taken: the same payment asked twice is recorded once. */
-function newKey(): string {
-  const bytes = new Uint8Array(18);
-  crypto.getRandomValues(bytes);
-  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+/**
+ * A key for one payment taken, made when the sheet opens: the same payment
+ * asked twice (a press again after a lost answer) is recorded once. Adminium
+ * holds a key to the person and the order, so the order and the moment the
+ * sheet opened are enough to tell one taking from the next.
+ */
+function newKey(orderId: unknown): string {
+  return `counter_${String(orderId)}_${deviceNow().toString(36)}`.replace(/[^A-Za-z0-9_-]/g, "").padEnd(16, "0").slice(0, 59);
 }
 
 const APPROVAL = /^[A-Za-z0-9]{1,12}$/;
@@ -263,7 +267,7 @@ export function TakeSheet({ jobId }: { jobId: unknown }) {
   const [approval, setApproval] = useState("");
   const [last4, setLast4] = useState("");
   const [tried, setTried] = useState(false);
-  const [key] = useState(newKey);
+  const [key] = useState(() => newKey(job?.["order_id"]));
   const [link, setLink] = useState<{ state: "idle" | "making" | "ready" | "failed"; url: string | null; why: string | null }>({ state: "idle", url: null, why: null });
   const [qr, setQr] = useState(false);
   const [check, setCheck] = useState<"idle" | "checking" | "notYet">("idle");

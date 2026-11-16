@@ -179,7 +179,7 @@ describe("with payments on", () => {
     await mount(LINK);
     await press('[data-testid="pay-now"]');
     expect(calls("startPay").map((c) => c.args)).toEqual([["link", 13]]);
-    expect(left).toEqual(["https://pay.example/p/tok_13"]);
+    expect(left).toEqual(["/pay/tok_13"]);
     const kept = JSON.parse(sessionStorage.getItem(PAYING_KEY)!) as Record<string, unknown>;
     expect(kept).toMatchObject({ via: "link", orderId: "13", session: { token: "LINKSESSION" } });
     // Nothing of the link's own code is kept, and nothing rides the pay page's address.

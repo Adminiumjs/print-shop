@@ -243,7 +243,7 @@ export function fakeAfter(): FakeAfter {
     async startPay(via: Via, orderId: Id) {
       record("startPay", via, orderId);
       refuse();
-      return { payUrl: `https://pay.example/p/tok_${String(orderId)}` };
+      return { payUrl: `/pay/tok_${String(orderId)}` };
     },
     heldSession(via: Via) {
       if (via === "mine") return fake.session === null ? null : { token: `SESSION:${fake.session}`, expiresAt: Date.parse("2027-01-01") };

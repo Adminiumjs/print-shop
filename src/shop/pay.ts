@@ -33,6 +33,7 @@
  */
 import { create } from "zustand";
 
+import { deviceNow } from "../studio/clock.ts";
 import type { PayOffer, Via } from "./after-port.ts";
 import type { Id, Row } from "./port.ts";
 
@@ -68,7 +69,7 @@ function tab(): Storage | null {
 }
 
 /** The order this tab went to pay for lately, with the session that read it; null otherwise. Never throws. */
-export function wentToPay(now = Date.now()): Kept | null {
+export function wentToPay(now = deviceNow()): Kept | null {
   try {
     const raw = tab()?.getItem(PAYING_KEY) ?? null;
     if (raw === null) return null;
@@ -144,7 +145,7 @@ export async function payNow(door: PayDoor | null, via: Via, order: Row): Promis
       return "paid";
     }
     const session = door.heldSession?.(via) ?? null;
-    if (session !== null) keep({ via, orderId: String(order["id"]), session, at: Date.now() });
+    if (session !== null) keep({ via, orderId: String(order["id"]), session, at: deviceNow() });
     leave(payUrl);
     return "away";
   } catch {
