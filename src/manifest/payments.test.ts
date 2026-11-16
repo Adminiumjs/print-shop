@@ -81,11 +81,14 @@ describe("an order paid online", () => {
     expect(column("orders", "proofs_approved").rules!["rollup"]).toEqual({ from: "jobs", via: "order_id", sum: "proof_ok", unlessSet: "cancelled_at" });
   });
 
-  it("owes its total less what its payments kept, never below nothing, and prints it only while something is owed", () => {
+  it("owes its total less what its payments took, never below nothing, and prints it only while something is owed", () => {
     const due = (row: Json) => evaluateFormula(formula("orders", "due"), row, 2);
-    expect(due({ total: "120.00", paid: null })).toBe("120.00");
-    expect(due({ total: "120.00", paid: "100.00" })).toBe("20.00");
-    expect(due({ total: "120.00", paid: "130.00" })).toBe("0.00");
+    expect(due({ total: "120.00", paid_in: null })).toBe("120.00");
+    expect(due({ total: "120.00", paid_in: "100.00" })).toBe("20.00");
+    expect(due({ total: "120.00", paid_in: "130.00" })).toBe("0.00");
+    // A refund does not make the order owe it again: the works gave it back.
+    expect(due({ total: "120.00", paid_in: "120.00", paid: "108.00" })).toBe("0.00");
+    expect(column("orders", "paid_in").rules!["rollup"]).toEqual({ from: "payments", via: "order_id", sum: "amount" });
     expect(evaluateFormula(formula("orders", "owing"), { due: "0.00" }, 2)).toBeNull();
     expect(evaluateFormula(formula("orders", "owing"), { due: "20.00" }, 2)).toBe("20.00");
     // A refund takes off what a payment kept.

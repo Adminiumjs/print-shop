@@ -32,6 +32,8 @@ const CONFIG: StaffConfig = {
   access: null,
   addOns: { customiser: { version: "1.0.19", settings: {}, tables: {} }, "shipping-dhl": { version: "1.0.19", settings: { demo_transport: true }, tables: { shipments: "shipments" } } },
   sharedTables: {},
+  kit: null,
+  payments: null,
 };
 
 interface Sent {
@@ -64,6 +66,84 @@ function transport(reads: Record<string, unknown> = {}): { t: SessionTransport; 
 }
 
 const JOB: Row = { id: 1, order_id: 4126, stage: "printing" };
+
+describe("the works' payments, through Adminium's own payment routes", () => {
+  const paying: StaffConfig = { ...CONFIG, payments: { on: true, online: true, test: false, refund: true }, kit: { contract: 1, entry: "/assets/kit-abc.js" } };
+  const withTable = (t: SessionTransport) => Object.assign(t, { tableId: async (name: string) => `main.${name}` });
+  // The add-ons list the counter's carrier is found in: none here.
+  const reads = { "/api/v1/add-ons": { addOns: [] } };
+
+  it("has none on an Adminium that does not say the works takes payments, and reads no payments table there", async () => {
+    const { t, sent } = transport(reads);
+    const door = new AdminiumWorks(t, CONFIG);
+    expect(door.payments()).toBeNull();
+    expect(door.facts().payments).toBeNull();
+    await door.load();
+    expect(sent.some((s) => s.path.includes("printing_payments"))).toBe(false);
+  });
+
+  it("reads an order's payment panel by its table and key", async () => {
+    const { t, sent } = transport();
+    (t as { mutate: unknown }).mutate = async (path: string, method: string, body?: unknown) => {
+      sent.push({ method, path, body });
+      return { data: { payable: { kind: "profile", connectionId: "conn-1", tableName: "main.printing_orders", rowKey: "4126" }, due: "0", mayChange: true, mayRefund: true, waiting: [], payments: [{ attemptId: "pat_1", refundable: "120.00", refunds: [{ id: "r1", amount: "12.00", state: "succeeded", createdAt: 5 }] }] } };
+    };
+    const panel = await new AdminiumWorks(withTable(t), paying).payments()!.state({ id: 4126 });
+    expect(sent).toEqual([{ method: "POST", path: "/api/v1/payments/panel", body: { connectionId: "conn-1", table: "main.printing_orders", recordId: "4126" } }]);
+    expect(panel).toEqual({
+      payable: { kind: "profile", connectionId: "conn-1", tableName: "main.printing_orders", rowKey: "4126" },
+      due: "0",
+      mayChange: true,
+      mayRefund: true,
+      waiting: false,
+      payments: [{ attemptId: "pat_1", refundable: "120.00", refunds: [{ id: "r1", amount: "12.00", state: "succeeded", createdAt: 5 }] }],
+    });
+  });
+
+  it("copies the order's current pay link, and makes one only when there is none", async () => {
+    const answers: unknown[] = [{ data: null }, { data: { link: { url: "https://pay.example/p/new", expiresAt: 9 }, replaced: false } }, { data: { url: "https://pay.example/p/held", expiresAt: 8 } }];
+    const { t, sent } = transport();
+    (t as { mutate: unknown }).mutate = async (path: string, method: string, body?: unknown) => {
+      sent.push({ method, path, body });
+      return answers.shift();
+    };
+    const pay = new AdminiumWorks(withTable(t), paying).payments()!;
+    expect(await pay.link({ id: 4126 })).toEqual({ url: "https://pay.example/p/new", expiresAt: 9 });
+    expect(await pay.link({ id: 4126 })).toEqual({ url: "https://pay.example/p/held", expiresAt: 8 });
+    const payable = { kind: "profile", connectionId: "conn-1", tableName: "main.printing_orders", rowKey: "4126" };
+    expect(sent).toEqual([
+      { method: "POST", path: "/api/v1/payments/links/current", body: payable },
+      { method: "POST", path: "/api/v1/payments/links", body: payable },
+      { method: "POST", path: "/api/v1/payments/links/current", body: payable },
+    ]);
+  });
+
+  it("records a payment taken by hand through Adminium, as the person signed in", async () => {
+    const { t, sent } = transport();
+    (t as { mutate: unknown }).mutate = async (path: string, method: string, body?: unknown) => {
+      sent.push({ method, path, body });
+      return { data: { key: "k".repeat(24), already: false, due: "0" } };
+    };
+    const said = await new AdminiumWorks(withTable(t), paying).payments()!.record({ id: 4126 }, { amount: "85.15", way: "card", approvalCode: "084213", last4: "4417", paidOn: "2026-08-05", key: "k".repeat(24) });
+    expect(said).toEqual({ due: "0", already: false });
+    expect(sent).toEqual([
+      {
+        method: "POST",
+        path: "/api/v1/payments/record-payment",
+        body: { connectionId: "conn-1", table: "main.printing_orders", recordId: "4126", amount: "85.15", way: "card", paidOn: "2026-08-05", note: null, approvalCode: "084213", last4: "4417", key: "k".repeat(24) },
+      },
+    ]);
+  });
+
+  it("reads the payments with the orders, and hands the kit's refund part the session's token", async () => {
+    const { t, sent } = transport(reads);
+    const door = new AdminiumWorks(t, paying);
+    await door.load();
+    expect(sent.some((s) => s.method === "GET" && s.path.startsWith("/api/v1/data/conn-1/printing_payments?"))).toBe(true);
+    expect(door.facts().payments).toEqual({ on: true, online: true, test: false, refund: true });
+    expect(door.payments()!.kit()).toMatchObject({ contract: 1, entry: "/assets/kit-abc.js", csrfToken: "tok" });
+  });
+});
 
 describe("the writes, as Adminium reads them", () => {
   it("moves a job and an order with the state the screen saw", async () => {

@@ -8,7 +8,7 @@
  *
  * Tests only; nothing that ships imports it.
  */
-import type { ActivityEntry, CatalogEntry, InstalledAddOn, PanelDoor, Person, ProofFile, Table, WorksData, WorksDoor, WorksFacts } from "../door.ts";
+import type { ActivityEntry, CatalogEntry, HandPayment, InstalledAddOn, PanelDoor, PaymentDoor, PaymentPanel, Person, ProofFile, Table, WorksData, WorksDoor, WorksFacts } from "../door.ts";
 import { JOB_MOVES } from "../roles.ts";
 import { ApiError, num, same, type Id, type Row } from "../wire.ts";
 import { FACTS, fixture, person, WEDNESDAY } from "./fixture.ts";
@@ -178,6 +178,40 @@ export class FakeDoor implements WorksDoor {
   async catalog(): Promise<CatalogEntry[]> {
     this.record("catalog", {});
     return structuredClone(this.shelf);
+  }
+
+  /**
+   * Adminium's payments, as a test sets them: the panel's answer for an order
+   * (`panel`), the pay link it hands out, and each payment taken by hand
+   * written into the rows as Adminium would (the order then owes what is
+   * left). None until a test sets `paying` (an Adminium older than payments).
+   */
+  paying: { panel: (order: Row) => PaymentPanel | null; link: string; kit: boolean } | null = null;
+  payments(): PaymentDoor | null {
+    const paying = this.paying;
+    if (paying === null) return null;
+    return {
+      state: async (order: Row) => {
+        this.record("paymentState", { id: order.id });
+        return paying.panel(order);
+      },
+      link: async (order: Row) => {
+        this.record("payLink", { id: order.id });
+        return { url: paying.link, expiresAt: WEDNESDAY + 30 * 86_400_000 };
+      },
+      record: async (order: Row, payment: HandPayment) => {
+        this.record("recordPayment", { id: order.id, ...payment });
+        const now = this.data.orders.find((o) => same(o.id, order.id))!;
+        const due = (num(now["due"]) ?? 0) - Number(payment.amount);
+        if (due < -0.001) throw new ApiError(422, "VALIDATION_FAILED", "More than is due.", { reason: "BALANCE_EXCEEDED" });
+        this.nextId += 1;
+        this.data.payments.push({ id: this.nextId, order_id: order.id, amount: payment.amount, method: payment.way, paid_at: new Date(WEDNESDAY).toISOString(), payment_ref: `hand_${payment.key}`, approval_code: payment.approvalCode, card_last4: payment.last4, refunded: "0", net_amount: payment.amount, taken_by: this.person.name });
+        const paid = (num(now["paid"]) ?? 0) + Number(payment.amount);
+        this.update(this.data.orders, order.id, { paid: paid.toFixed(2), due: Math.max(0, due).toFixed(2), last_paid_at: new Date(WEDNESDAY).toISOString() });
+        return { due: Math.max(0, due).toFixed(2), already: false };
+      },
+      kit: () => (paying.kit ? { contract: 1, entry: "/kit/entry.js", csrfToken: "tok", fetch: globalThis.fetch } : null),
+    };
   }
 
   /** The Customiser's panels' door a test hands in; none by default, as in the demo. */

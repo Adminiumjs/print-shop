@@ -17,6 +17,10 @@ export type Overlay =
   | { kind: "proof"; jobId: Id }
   | { kind: "spoil"; jobId: Id }
   | { kind: "quote"; orderId: Id }
+  /** Taking payment for a job's order as it is handed over the counter. */
+  | { kind: "take"; jobId: Id }
+  /** Giving back an online payment of an order, in Adminium's own two steps. */
+  | { kind: "refund"; orderId: Id; attemptId: string }
   | { kind: "connect"; key: string }
   | { kind: "manage"; key: string }
   | { kind: "disconnect"; key: string }

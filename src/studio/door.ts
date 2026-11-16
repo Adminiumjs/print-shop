@@ -30,7 +30,8 @@ export type Table =
   | "job_features"
   | "artwork"
   | "proofs"
-  | "spoils";
+  | "spoils"
+  | "payments";
 
 /** The add-ons' tables the works reads, by add-on and table (`customiser:designs`; a carrier's `shipments`). */
 export type AddOnTable = `${string}:${string}`;
@@ -64,6 +65,8 @@ export interface WorksData {
   artwork: Row[];
   proofs: Row[];
   spoils: Row[];
+  /** The orders' payments, online and by hand; none for a role that does not read them. */
+  payments: Row[];
   /** The Customiser's designs the jobs name, and their versions (newest first per design), and their made files. */
   designs: Row[];
   versions: Row[];
@@ -98,6 +101,83 @@ export interface WorksFacts {
   addOnSettings: Record<string, Record<string, unknown>>;
   /** The connection the app's tables are in: a record page's address names it. */
   connectionId: string | null;
+  /**
+   * Whether the works takes payments, and what this person may do with
+   * them, as Adminium says it; null where it does not say (an Adminium older
+   * than payments): then every screen reads as it did before.
+   */
+  payments: PaymentsFacts | null;
+}
+
+/** What Adminium says of the works' payments for the person signed in. */
+export interface PaymentsFacts {
+  /** Someone who manages payments switched the works on. */
+  on: boolean;
+  /** Customers can pay online right now (a service connected, the pay page reachable). */
+  online: boolean;
+  /** This person is rehearsing: a payment is a test one. */
+  test: boolean;
+  /** This person may give money back. */
+  refund: boolean;
+}
+
+/** One online payment as Adminium's payment panel reads it: what may still be refunded of it, and its refunds. */
+export interface PanelPayment {
+  /** The online payment behind it: what its row's reference holds. */
+  attemptId: string | null;
+  refundable: string;
+  refunds: { id: string; amount: string; state: string; createdAt: number }[];
+}
+
+/** What Adminium's payment panel says of an order: who may do what, and its online payments. */
+export interface PaymentPanel {
+  /** The order as a pay link names it. */
+  payable: { kind: "profile" | "shape" | "document"; connectionId: string | null; tableName: string | null; rowKey: string };
+  due: string;
+  /** May make a pay link and record a payment: the order's update grant. */
+  mayChange: boolean;
+  /** May give an online payment back. */
+  mayRefund: boolean;
+  /** A payment begun on the pay page and not settled yet. */
+  waiting: boolean;
+  payments: PanelPayment[];
+}
+
+/** A payment taken over the counter, as the person types it: card on the works' terminal, or cash. */
+export interface HandPayment {
+  /** What is due, as Adminium said it: the counter takes it all. */
+  amount: string;
+  way: "card" | "cash";
+  approvalCode: string | null;
+  last4: string | null;
+  /** The day it was paid, on the works' calendar. */
+  paidOn: string;
+  /** Made when the sheet opened: the same payment asked twice is recorded once. */
+  key: string;
+}
+
+/** What the kit's refund part is drawn with: where the kit is, the session's write token, and the sender of its calls. */
+export interface KitAccess {
+  contract: number;
+  entry: string;
+  csrfToken: string;
+  fetch: typeof fetch;
+}
+
+/**
+ * The works' payments through Adminium, over the person's own session: an
+ * order's state on the payment panel, its pay link, a payment taken by hand.
+ * Each route asks the person's rights again.
+ */
+export interface PaymentDoor {
+  /** Adminium's payment panel on an order; null when it has none for it. */
+  state(order: Row): Promise<PaymentPanel | null>;
+  /** The order's current pay link, made only when there is none: a customer's link is never retired. */
+  link(order: Row): Promise<{ url: string; expiresAt: number }>;
+  /** A payment taken by hand, written by Adminium into the order's payments as this person, never above what is due. */
+  record(order: Row, payment: HandPayment): Promise<{ due: string; already: boolean }>;
+  /** The kit, for its refund part; null where this Adminium serves none. */
+  kit(): KitAccess | null;
 }
 
 /** One installed add-on as Adminium lists it, narrowed to what the shelf reads. */
@@ -199,6 +279,8 @@ export interface WorksDoor {
   who(): Person;
   /** The door the Customiser's panels draw through on these screens; null where no Adminium serves them (the demo). */
   panels(): PanelDoor | null;
+  /** The works' payments through Adminium; null where none answers (an older Adminium, or the demo's stand-in). */
+  payments(): PaymentDoor | null;
   facts(): WorksFacts;
   /** The server's clock, as epoch ms. */
   now(): number;

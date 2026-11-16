@@ -23,7 +23,7 @@ import { deviceNow } from "./clock.ts";
 import { withInstall, type StaffConfig } from "./transport/staffConnection.ts";
 import { SessionPortError, type SessionTransport } from "./transport/sessionSource.ts";
 import { momentOf } from "./time.ts";
-import type { Action, ActivityEntry, AddOnTable, CatalogEntry, InstalledAddOn, PanelDoor, PanelList, PanelOpen, PanelUploaded, Person, ProofFile, Table, WorksData, WorksDoor, WorksFacts } from "./door.ts";
+import type { Action, ActivityEntry, AddOnTable, CatalogEntry, InstalledAddOn, PanelDoor, PanelList, PanelOpen, PanelUploaded, PaymentDoor, PaymentPanel, Person, ProofFile, Table, WorksData, WorksDoor, WorksFacts } from "./door.ts";
 import { ApiError, text, type Id, type Row } from "./wire.ts";
 import { loadPanelModule } from "../add-ons/connected.ts";
 import { PANEL_HOST } from "./panels/host.tsx";
@@ -34,11 +34,12 @@ const PAGE = 200;
 
 /** The moments each table holds: SQLite hands them back without a zone. */
 export const MOMENTS: Readonly<Partial<Record<Table | AddOnTable, readonly string[]>>> = {
-  orders: ["delivery_quote_sent_at", "delivery_quote_accepted_at", "placed_at", "ready_at", "collected_at", "dispatched_at", "cancelled_at", "link_expires"],
+  orders: ["delivery_quote_sent_at", "delivery_quote_accepted_at", "placed_at", "ready_at", "collected_at", "dispatched_at", "cancelled_at", "link_expires", "last_paid_at"],
   jobs: ["artwork_checked_at", "printing_at", "finishing_at", "ready_at", "handed_over_at"],
   artwork: ["uploaded_at"],
   proofs: ["sent_at", "answered_at"],
   spoils: ["spoiled_at"],
+  payments: ["paid_at"],
   "customiser:designs": ["created_at", "updated_at"],
   "customiser:design_versions": ["made_at"],
   "customiser:version_files": ["made_at"],
@@ -78,6 +79,26 @@ function asApiError(error: unknown): unknown {
     return new ApiError(error.status, error.code, error.message, details);
   }
   return error;
+}
+
+/** Adminium's payment panel on an order, as the screens read it; null when it said none. */
+export function panelOf(data: Record<string, unknown> | null): PaymentPanel | null {
+  if (data === null || typeof data !== "object") return null;
+  const payable = (data["payable"] ?? {}) as Record<string, unknown>;
+  const kind = payable["kind"] === "shape" || payable["kind"] === "document" ? payable["kind"] : "profile";
+  const list = (value: unknown): Record<string, unknown>[] => (Array.isArray(value) ? (value as Record<string, unknown>[]) : []);
+  return {
+    payable: { kind, connectionId: text(payable["connectionId"]), tableName: text(payable["tableName"]), rowKey: String(payable["rowKey"] ?? "") },
+    due: String(data["due"] ?? "0"),
+    mayChange: data["mayChange"] === true,
+    mayRefund: data["mayRefund"] === true,
+    waiting: list(data["waiting"]).length > 0,
+    payments: list(data["payments"]).map((one) => ({
+      attemptId: text(one["attemptId"]),
+      refundable: String(one["refundable"] ?? "0"),
+      refunds: list(one["refunds"]).map((r) => ({ id: String(r["id"]), amount: String(r["amount"] ?? "0"), state: String(r["state"] ?? ""), createdAt: Number(r["createdAt"] ?? 0) })),
+    })),
+  };
 }
 
 /** A read the person's roles do not reach, or of a table not there: an empty answer, not a failure. */
@@ -278,6 +299,62 @@ export class AdminiumWorks implements WorksDoor {
     return this.panelDoor;
   }
 
+  // ── the works' payments ───────────────────────────────────────────────────
+
+  private paymentDoor: PaymentDoor | null = null;
+
+  /**
+   * The works' payments through Adminium's own payment routes, as the person
+   * signed in: the panel's read of an order (`/payments/panel`), its current
+   * pay link or a new one when there is none (`/payments/links/current`,
+   * `/payments/links`, the record's update grant), and a payment taken by
+   * hand (`/payments/record-payment`, which writes the row as this person,
+   * never above what is due, and checks the card's approval code and last
+   * four). None from an Adminium that does not say the app takes payments.
+   */
+  payments(): PaymentDoor | null {
+    if (this.cfg.payments === null) return null;
+    if (this.paymentDoor !== null) return this.paymentDoor;
+    const record = async (order: Row) => ({ connectionId: await this.conn(), table: await this.t.tableId(this.real("orders")), recordId: String(order.id) });
+    const ready = async () => {
+      // The session's write token comes with the first read.
+      await this.t.port.config();
+    };
+    this.paymentDoor = {
+      state: (order: Row) =>
+        this.run(async () => {
+          await ready();
+          try {
+            const said = await this.t.mutate<{ data?: Record<string, unknown> | null }>("/api/v1/payments/panel", "POST", await record(order));
+            return panelOf(said?.data ?? null);
+          } catch (error) {
+            // No panel for this person or this order: the rows still say what was paid, and nothing is offered.
+            if (closed(error)) return null;
+            throw error;
+          }
+        }),
+      link: (order: Row) =>
+        this.run(async () => {
+          await ready();
+          const at = await record(order);
+          const payable = { kind: "profile", connectionId: at.connectionId, tableName: at.table, rowKey: at.recordId };
+          const current = await this.t.mutate<{ data?: { url: string; expiresAt: number } | null }>("/api/v1/payments/links/current", "POST", payable);
+          if (current?.data != null) return current.data;
+          const made = await this.t.mutate<{ data: { link: { url: string; expiresAt: number } } }>("/api/v1/payments/links", "POST", payable);
+          return made.data.link;
+        }),
+      record: (order: Row, payment) =>
+        this.run(async () => {
+          await ready();
+          const body = { ...(await record(order)), amount: payment.amount, way: payment.way, paidOn: payment.paidOn, note: null, approvalCode: payment.approvalCode, last4: payment.last4, key: payment.key };
+          const said = await this.t.mutate<{ data: { due: string; already: boolean } }>("/api/v1/payments/record-payment", "POST", body);
+          return { due: said.data.due, already: said.data.already };
+        }),
+      kit: () => (this.cfg.kit === null || this.cfg.csrfToken === null ? null : { contract: this.cfg.kit.contract, entry: this.cfg.kit.entry, csrfToken: this.cfg.csrfToken, fetch: this.fetchImpl }),
+    };
+    return this.paymentDoor;
+  }
+
   who(): Person {
     const prefix = `${APP_KEY}-`;
     const roles = (this.cfg.access?.roles ?? []).map((r) => r.slug).filter((slug) => slug.startsWith(prefix)).map((slug) => slug.slice(prefix.length));
@@ -301,6 +378,7 @@ export class AdminiumWorks implements WorksDoor {
       carrier: this.carrier,
       addOnSettings: Object.fromEntries(Object.entries(this.cfg.addOns).map(([key, addOn]) => [key, addOn.settings])),
       connectionId: this.cfg.connectionId,
+      payments: this.cfg.payments,
     };
   }
 
@@ -312,7 +390,7 @@ export class AdminiumWorks implements WorksDoor {
     return this.run(async () => {
       // The session's write token comes with the first read.
       await this.t.port.config();
-      const [settings, products, options, materials, sizes, finishes, breaks, packaging, bands, machines, closures, orders, jobs, artwork, proofs, spoils] = await Promise.all([
+      const [settings, products, options, materials, sizes, finishes, breaks, packaging, bands, machines, closures, orders, jobs, artwork, proofs, spoils, payments] = await Promise.all([
         this.list("settings"),
         this.list("products", "position.asc,id.asc"),
         this.list("options", "position.asc,id.asc"),
@@ -329,6 +407,8 @@ export class AdminiumWorks implements WorksDoor {
         this.list("artwork", "job_id.asc,id.asc"),
         this.list("proofs", "job_id.asc,version.asc"),
         this.list("spoils", "job_id.asc,id.asc"),
+        // An Adminium older than payments has no such table: nothing was ever paid through it.
+        this.cfg.payments === null ? Promise.resolve([]) : this.list("payments", "order_id.asc,id.asc"),
       ]);
       const on = new Set(Object.keys(this.cfg.addOns));
       // Only what this person's role reads of the add-ons' tables: a read it is not given is never asked for.
@@ -376,6 +456,7 @@ export class AdminiumWorks implements WorksDoor {
         artwork: artwork!,
         proofs: proofs!,
         spoils: spoils!,
+        payments: payments!,
         designs,
         versions,
         files,

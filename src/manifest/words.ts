@@ -363,6 +363,7 @@ export const WORDS: Record<string, Translation> = {
   "Stock weight (gsm)": { "de-DE": "Grammatur des Bedruckstoffs (gsm)", "fr-FR": "Grammage du support (gsm)", "da-DK": "Trykmediets gramvægt (gsm)", "cs-CZ": "Gramáž tiskového materiálu (gsm)", "ar-EG": "وزن خامة الطباعة (gsm)", "zh-CN": "承印物克重（gsm）", "zh-TW": "承印物克重（gsm）" },
   "Stocks in sample packs": { "de-DE": "Bedruckstoffe in Musterpaketen", "fr-FR": "Supports des jeux d’échantillons", "da-DK": "Trykmedier i prøvepakker", "cs-CZ": "Tiskové materiály ve vzorkovnících", "ar-EG": "خامات حزم العينات", "zh-CN": "样张包中的承印物", "zh-TW": "樣張包中的承印物" },
   "Subtotal (ex tax)": { "de-DE": "Zwischensumme (ohne Steuer)", "fr-FR": "Sous-total (HT)", "da-DK": "Subtotal (ekskl. moms)", "cs-CZ": "Mezisoučet (bez daně)", "ar-EG": "المجموع الفرعي (قبل الضريبة)", "zh-CN": "小计（不含税）", "zh-TW": "小計（未稅）" },
+  "Taken": { "de-DE": "Eingenommen", "fr-FR": "Encaissé", "da-DK": "Modtaget", "cs-CZ": "Přijato", "ar-EG": "المحصَّل", "zh-CN": "已收", "zh-TW": "已收" },
   "Taking orders": { "de-DE": "Nimmt Bestellungen an", "fr-FR": "Prend des commandes", "da-DK": "Tager imod bestillinger", "cs-CZ": "Přijímá objednávky", "ar-EG": "يستقبل الطلبات", "zh-CN": "接受订单", "zh-TW": "接受訂單" },
   "Tax": { "de-DE": "Steuer", "fr-FR": "Taxes", "da-DK": "Moms", "cs-CZ": "Daň", "ar-EG": "الضريبة", "zh-CN": "税额", "zh-TW": "稅額" },
   "Tax rate (%)": { "de-DE": "Steuersatz (%)", "fr-FR": "Taux de taxe (%)", "da-DK": "Momssats (%)", "cs-CZ": "Sazba daně (%)", "ar-EG": "نسبة الضريبة (%)", "zh-CN": "税率（%）", "zh-TW": "稅率（%）" },

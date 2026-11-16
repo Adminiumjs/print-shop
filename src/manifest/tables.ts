@@ -364,8 +364,12 @@ const DELIVERY_PRICED = { if: [{ eq: ["delivery_to_quote", 1] }, { div: [0, 0] }
 /** An order with the works' delivery quote on it, before the customer accepts it: its tax and total. */
 const QUOTED_SUBTOTAL = { add: ["goods_total", "delivery_quote"] };
 const QUOTED_TAX = { round: [{ div: [{ mul: [QUOTED_SUBTOTAL, { coalesce: ["tax_rate", 0] }] }, 100] }, 2] };
-/** What is still to pay on an order: its total, less what was paid and kept; never below nothing. */
-const DUE = { max: [0, { sub: [{ coalesce: ["total", 0] }, { coalesce: ["paid", 0] }] }] };
+/**
+ * What is still to pay on an order: its total, less every payment taken for
+ * it; never below nothing. Money given back is not owed again: a refund is
+ * the works' own call (flyers trimmed short), and the order stays settled.
+ */
+const DUE = { max: [0, { sub: [{ coalesce: ["total", 0] }, { coalesce: ["paid_in", 0] }] }] };
 /** The same, empty once nothing is owed: what an e-mail prints only while something is. */
 const OWING = { if: [{ gt: ["due", 0] }, "due", { div: [0, 0] }] };
 /** A delivery the works prices by hand that the customer has not accepted yet: the order's total leaves it out until then. */
@@ -1016,7 +1020,9 @@ export const TABLES: Table[] = [
       // What the order comes to with the works' quote on it, as the quote's e-mail and page show it.
       money("quote_tax", "Tax with the delivery quote", { formula: QUOTED_TAX }),
       money("quote_total", "Total with the delivery quote", { formula: { add: [QUOTED_SUBTOTAL, "quote_tax"] } }),
-      // What came in for it, by its payments: what was paid less what went back, online and in all; still to pay; the latest payment.
+      // What came in for it, by its payments: taken, kept once refunds went back (online, and in all), given back; still
+      // to pay; the latest payment.
+      money("paid_in", "Taken", { rollup: { from: "payments", via: "order_id", sum: "amount" } }),
       money("paid", "Paid", { rollup: { from: "payments", via: "order_id", sum: "net_amount" } }),
       money("paid_online", "Paid online", { rollup: { from: "payments", via: "order_id", sum: "net_amount", where: { column: "method", eq: "online" } } }),
       money("refunded", "Refunded", { rollup: { from: "payments", via: "order_id", sum: "refunded" } }),

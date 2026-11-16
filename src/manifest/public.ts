@@ -61,6 +61,7 @@ export const ORDER_SELECT = [
   "cancelled_at",
   "link_expires",
   // What was paid and is still to pay, and whether it can be paid now: never a payment's own row.
+  "paid_in",
   "paid",
   "paid_online",
   "due",

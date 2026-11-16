@@ -136,6 +136,49 @@ export interface StaffConfig {
    * a server up to 0.3.7, which does not say.
    */
   sharedTables: Record<string, string[]>;
+  /**
+   * Adminium's own larger parts, which a screen asks it to draw (the refund
+   * of an online payment, with the dashboard's own two steps and words): the
+   * contract of its mount call and the file to import, whose name changes
+   * with every version of Adminium (read each time the page loads, never
+   * kept). Null from a server that serves none.
+   */
+  kit: StaffKit | null;
+  /**
+   * Whether this app takes payments, and what this person may do with them:
+   * `on` — someone who manages payments switched the app on; `online` —
+   * customers can pay online right now; `test` — this person is rehearsing;
+   * `refund` — they may give money back. Null from a server that does not
+   * say (older than 0.3.60): then the screens read as they did before
+   * payments.
+   */
+  payments: StaffPayments | null;
+}
+
+export interface StaffKit {
+  contract: number;
+  entry: string;
+}
+
+export interface StaffPayments {
+  on: boolean;
+  online: boolean;
+  test: boolean;
+  refund: boolean;
+}
+
+/** The kit as the server sent it; null when it sent none, or one with no file to import. */
+function kitOf(value: unknown): StaffKit | null {
+  const doc = record(value);
+  const entry = text(doc.entry);
+  return entry === null || typeof doc.contract !== "number" ? null : { contract: doc.contract, entry };
+}
+
+/** `payments` as the server sent it; null when it sent none. */
+function paymentsOf(value: unknown): StaffPayments | null {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return null;
+  const doc = value as Record<string, unknown>;
+  return { on: doc.on === true, online: doc.online === true, test: doc.test === true, refund: doc.refund === true };
 }
 
 export interface StaffAddOn {
@@ -236,6 +279,8 @@ export async function loadStaffConfig(opts: StaffConfigOptions = {}): Promise<St
           .map(([ref, keys]) => [ref, Array.isArray(keys) ? keys.filter((k): k is string => typeof k === "string") : []] as const)
           .filter(([, keys]) => keys.length > 0),
       ),
+      kit: kitOf(d.kit),
+      payments: paymentsOf(d.payments),
     };
   } catch {
     // An older server answers this path with the SPA index (HTML).

@@ -4,13 +4,13 @@
  * That distinction is the whole of this file now. What is left is the wording
  * the shop reads around any add-on — the OAuth note, "Account authorized", the
  * line that says the sign-in is simulated, the fallback where an add-on renders
- * no settings, the words on the artwork screen — plus the four shelf entries
+ * no settings, the words on the artwork screen — plus the three shelf entries
  * that are described honestly but not built, which are the host's own copy
  * because there is no repo behind them to hold it.
  *
- * Those four (`addon.stub.*`) NAME NO COMPANY, in any locale. They say what the
- * thing would do — a second delivery company, a card payment processor, a
- * mailing-list service — because a host that printed three real firms' names
+ * Those three (`addon.stub.*`) NAME NO COMPANY, in any locale. They say what
+ * the thing would do — a second delivery company, a mailing-list service, a
+ * spreadsheet export — because a host that printed real firms' names
  * for integrations it does not have would be failing the no-company rule in
  * eight languages at once. `add-ons/shelf.ts` holds the entries themselves and
  * the full reasoning; a translator who reaches for a brand name here is
@@ -36,26 +36,21 @@
 
 export const addOns = {
   "en-US": {
-    // ── The four described-but-not-built shelf entries ─────────────────────
+    // ── The three described-but-not-built shelf entries ─────────────────────
     "addon.stub.secondCarrier.name": "A second delivery company",
-    "addon.stub.cardPayments.name": "A card payment processor",
     "addon.stub.mailingList.name": "A mailing-list service",
     "addon.stub.sheets.name": "Spreadsheet export",
     "addon.stub.secondCarrier.line":
       "Book collections with another delivery company. Every carrier is its own add-on, so the works can run two.",
-    "addon.stub.cardPayments.line":
-      "Take card payments on the site instead of invoicing after collection.",
     "addon.stub.mailingList.line":
       "Add customers who opt in to a mailing list, so the works can tell them when a run is on.",
     "addon.stub.sheets.line":
       "Write each finished job to a spreadsheet overnight, for the accounts.",
-    // The affiliation line, on the SHELF CARD: each of the four says, in its
+    // The affiliation line, on the SHELF CARD: each of the three says, in its
     // own key, that it names no company. See `add-ons/shelf.ts` — these
     // entries are the host’s own catalogue copy, so the sentence is the host’s
     // too; the three BUILT add-ons carry theirs in their own repos.
     "addon.stub.secondCarrier.noCompany":
-      "Described here, not built — and it names no company, only what one would do.",
-    "addon.stub.cardPayments.noCompany":
       "Described here, not built — and it names no company, only what one would do.",
     "addon.stub.mailingList.noCompany":
       "Described here, not built — and it names no company, only what one would do.",
@@ -94,20 +89,15 @@ export const addOns = {
 
   "de-DE": {
     "addon.stub.secondCarrier.name": "Ein weiterer Versanddienst",
-    "addon.stub.cardPayments.name": "Ein Kartenzahlungsdienst",
     "addon.stub.mailingList.name": "Ein Verteilerlisten-Dienst",
     "addon.stub.sheets.name": "Tabellen-Export",
     "addon.stub.secondCarrier.line":
       "Abholungen bei einem weiteren Versanddienst buchen. Jeder Dienst ist eine eigene Erweiterung, die Werkstatt kann also zwei betreiben.",
-    "addon.stub.cardPayments.line":
-      "Kartenzahlung auf der Website annehmen, statt nach der Abholung eine Rechnung zu schreiben.",
     "addon.stub.mailingList.line":
       "Kundschaft, die zustimmt, in eine Verteilerliste aufnehmen, damit die Werkstatt von einer Auflage erzählen kann.",
     "addon.stub.sheets.line":
       "Jeden fertigen Auftrag über Nacht in eine Tabelle schreiben, für die Buchhaltung.",
     "addon.stub.secondCarrier.noCompany":
-      "Hier nur beschrieben, nicht gebaut — und es nennt keine Firma, nur das, was so etwas täte.",
-    "addon.stub.cardPayments.noCompany":
       "Hier nur beschrieben, nicht gebaut — und es nennt keine Firma, nur das, was so etwas täte.",
     "addon.stub.mailingList.noCompany":
       "Hier nur beschrieben, nicht gebaut — und es nennt keine Firma, nur das, was so etwas täte.",
@@ -140,20 +130,15 @@ export const addOns = {
 
   "fr-FR": {
     "addon.stub.secondCarrier.name": "Un autre transporteur",
-    "addon.stub.cardPayments.name": "Un service de paiement par carte",
     "addon.stub.mailingList.name": "Un service de liste de diffusion",
     "addon.stub.sheets.name": "Export vers un tableur",
     "addon.stub.secondCarrier.line":
       "Réserver des enlèvements chez un autre transporteur. Chaque transporteur est un module à part, l'atelier peut donc en avoir deux.",
-    "addon.stub.cardPayments.line":
-      "Encaisser par carte sur le site, au lieu d'envoyer une facture après le retrait.",
     "addon.stub.mailingList.line":
       "Ajouter à une liste de diffusion les clients qui l'acceptent, pour annoncer un tirage.",
     "addon.stub.sheets.line":
       "Écrire chaque travail terminé dans un tableur pendant la nuit, pour la comptabilité.",
     "addon.stub.secondCarrier.noCompany":
-      "Décrit ici, pas construit — et il ne nomme aucune société, seulement ce qu’un tel module ferait.",
-    "addon.stub.cardPayments.noCompany":
       "Décrit ici, pas construit — et il ne nomme aucune société, seulement ce qu’un tel module ferait.",
     "addon.stub.mailingList.noCompany":
       "Décrit ici, pas construit — et il ne nomme aucune société, seulement ce qu’un tel module ferait.",
@@ -186,20 +171,15 @@ export const addOns = {
 
   "cs-CZ": {
     "addon.stub.secondCarrier.name": "Další dopravce",
-    "addon.stub.cardPayments.name": "Zpracovatel plateb kartou",
     "addon.stub.mailingList.name": "Rozesílková služba",
     "addon.stub.sheets.name": "Export do tabulky",
     "addon.stub.secondCarrier.line":
       "Objednávejte svozy u dalšího dopravce. Každý dopravce je vlastní doplněk, dílna jich tedy může mít dva.",
-    "addon.stub.cardPayments.line":
-      "Přijímejte platby kartou na webu místo faktury po vyzvednutí.",
     "addon.stub.mailingList.line":
       "Přidávejte zákazníky, kteří souhlasí, do rozesílky, aby dílna mohla dát vědět o nákladu.",
     "addon.stub.sheets.line":
       "Zapisujte každou hotovou zakázku přes noc do tabulky, pro účetnictví.",
     "addon.stub.secondCarrier.noCompany":
-      "Tady jen popsané, ne postavené — a nejmenuje žádnou firmu, jen to, co by takové rozšíření dělalo.",
-    "addon.stub.cardPayments.noCompany":
       "Tady jen popsané, ne postavené — a nejmenuje žádnou firmu, jen to, co by takové rozšíření dělalo.",
     "addon.stub.mailingList.noCompany":
       "Tady jen popsané, ne postavené — a nejmenuje žádnou firmu, jen to, co by takové rozšíření dělalo.",
@@ -232,20 +212,15 @@ export const addOns = {
 
   "da-DK": {
     "addon.stub.secondCarrier.name": "Endnu et fragtfirma",
-    "addon.stub.cardPayments.name": "En kortbetalingsudbyder",
     "addon.stub.mailingList.name": "En mailelistetjeneste",
     "addon.stub.sheets.name": "Regnearkseksport",
     "addon.stub.secondCarrier.line":
       "Bestil afhentninger hos endnu et fragtfirma. Hvert firma er sin egen udvidelse, så værkstedet kan køre to.",
-    "addon.stub.cardPayments.line":
-      "Tag imod kortbetaling på siden i stedet for at sende en faktura efter afhentning.",
     "addon.stub.mailingList.line":
       "Skriv kunder, der siger ja, på en maileliste, så værkstedet kan fortælle om et oplag.",
     "addon.stub.sheets.line":
       "Skriv hver færdig opgave til et regneark om natten, til bogholderiet.",
     "addon.stub.secondCarrier.noCompany":
-      "Kun beskrevet her, ikke bygget — og den nævner intet firma, kun hvad sådan en ville gøre.",
-    "addon.stub.cardPayments.noCompany":
       "Kun beskrevet her, ikke bygget — og den nævner intet firma, kun hvad sådan en ville gøre.",
     "addon.stub.mailingList.noCompany":
       "Kun beskrevet her, ikke bygget — og den nævner intet firma, kun hvad sådan en ville gøre.",
@@ -278,18 +253,14 @@ export const addOns = {
 
   "zh-CN": {
     "addon.stub.secondCarrier.name": "另一家快递公司",
-    "addon.stub.cardPayments.name": "银行卡收款服务",
     "addon.stub.mailingList.name": "邮件名单服务",
     "addon.stub.sheets.name": "表格导出",
     "addon.stub.secondCarrier.line":
       "向另一家快递公司预约取件。每家快递都是独立的扩展，因此工坊可以同时接两家。",
-    "addon.stub.cardPayments.line": "在网站上直接收银行卡付款，不必等取件后再开发票。",
     "addon.stub.mailingList.line":
       "把同意的客户加入邮件名单，工坊开印时就能通知他们。",
     "addon.stub.sheets.line": "每晚把当天完工的活儿写进一份表格，供账房查阅。",
     "addon.stub.secondCarrier.noCompany":
-      "这里只是描述，并没有做出来；它没有点名任何公司，只说这样一个扩展会做什么。",
-    "addon.stub.cardPayments.noCompany":
       "这里只是描述，并没有做出来；它没有点名任何公司，只说这样一个扩展会做什么。",
     "addon.stub.mailingList.noCompany":
       "这里只是描述，并没有做出来；它没有点名任何公司，只说这样一个扩展会做什么。",
@@ -319,18 +290,14 @@ export const addOns = {
 
   "zh-TW": {
     "addon.stub.secondCarrier.name": "另一家快遞公司",
-    "addon.stub.cardPayments.name": "信用卡收款服務",
     "addon.stub.mailingList.name": "郵件名單服務",
     "addon.stub.sheets.name": "試算表匯出",
     "addon.stub.secondCarrier.line":
       "向另一家快遞公司預約取件。每家快遞都是獨立的擴充，工坊可以同時接兩家。",
-    "addon.stub.cardPayments.line": "在網站上直接收信用卡付款，不必等取件後再開發票。",
     "addon.stub.mailingList.line":
       "把同意的客戶加入郵件名單，工坊開印時就能通知他們。",
     "addon.stub.sheets.line": "每晚把當天完工的活兒寫進一份試算表，供帳房查閱。",
     "addon.stub.secondCarrier.noCompany":
-      "這裡只是描述，並沒有做出來；它沒有點名任何公司，只說這樣一個擴充會做什麼。",
-    "addon.stub.cardPayments.noCompany":
       "這裡只是描述，並沒有做出來；它沒有點名任何公司，只說這樣一個擴充會做什麼。",
     "addon.stub.mailingList.noCompany":
       "這裡只是描述，並沒有做出來；它沒有點名任何公司，只說這樣一個擴充會做什麼。",
@@ -360,20 +327,15 @@ export const addOns = {
 
   "ar-EG": {
     "addon.stub.secondCarrier.name": "شركة شحن أخرى",
-    "addon.stub.cardPayments.name": "خدمة دفع بالبطاقة",
     "addon.stub.mailingList.name": "خدمة قوائم بريدية",
     "addon.stub.sheets.name": "تصدير إلى جدول بيانات",
     "addon.stub.secondCarrier.line":
       "احجز استلام الطرود مع شركة شحن أخرى. كل شركة إضافة مستقلة، فيمكن للمطبعة تشغيل اثنتين.",
-    "addon.stub.cardPayments.line":
-      "اقبل الدفع بالبطاقة على الموقع بدل إرسال فاتورة بعد الاستلام.",
     "addon.stub.mailingList.line":
       "أضف العملاء الموافقين إلى قائمة بريدية، حتى تخبرهم المطبعة عند تشغيل طبعة.",
     "addon.stub.sheets.line":
       "اكتب كل شغلة منتهية في جدول بيانات أثناء الليل، لأجل الحسابات.",
     "addon.stub.secondCarrier.noCompany":
-      "موصوف هنا فقط وغير مبني، ولا يذكر أي شركة، بل ما قد يفعله شيء كهذا.",
-    "addon.stub.cardPayments.noCompany":
       "موصوف هنا فقط وغير مبني، ولا يذكر أي شركة، بل ما قد يفعله شيء كهذا.",
     "addon.stub.mailingList.noCompany":
       "موصوف هنا فقط وغير مبني، ولا يذكر أي شركة، بل ما قد يفعله شيء كهذا.",

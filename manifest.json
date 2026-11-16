@@ -5218,6 +5218,29 @@
             }
           },
           {
+            "ref": "paid_in",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Taken",
+              "de-DE": "Eingenommen",
+              "fr-FR": "Encaissé",
+              "da-DK": "Modtaget",
+              "cs-CZ": "Přijato",
+              "ar-EG": "المحصَّل",
+              "zh-CN": "已收",
+              "zh-TW": "已收"
+            },
+            "rules": {
+              "rollup": {
+                "from": "payments",
+                "via": "order_id",
+                "sum": "amount"
+              }
+            }
+          },
+          {
             "ref": "paid",
             "type": "decimal",
             "scale": "currency",
@@ -5319,7 +5342,7 @@
                       },
                       {
                         "coalesce": [
-                          "paid",
+                          "paid_in",
                           0
                         ]
                       }
@@ -21995,6 +22018,7 @@
         "tracking",
         "cancelled_at",
         "link_expires",
+        "paid_in",
         "paid",
         "paid_online",
         "due",
@@ -22600,6 +22624,7 @@
         "tracking",
         "cancelled_at",
         "link_expires",
+        "paid_in",
         "paid",
         "paid_online",
         "due",
@@ -23122,6 +23147,7 @@
         "tracking",
         "cancelled_at",
         "link_expires",
+        "paid_in",
         "paid",
         "paid_online",
         "due",

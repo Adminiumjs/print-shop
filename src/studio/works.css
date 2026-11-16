@@ -1248,6 +1248,9 @@ a.wk-art-name {
 .wk-ic-info {
   color: var(--info);
 }
+.wk-ic-pos {
+  color: var(--pos);
+}
 .wk-ic-warn {
   color: var(--warn);
 }
@@ -1330,6 +1333,153 @@ a.wk-art-name {
 .wk-quote-chip--accepted {
   color: var(--pos);
   background: var(--pos-soft);
+}
+
+/* ── The order's money on the ticket, and taking payment at the counter ─── */
+.wk-pay-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 99px;
+  padding: 3px 10px;
+  color: var(--fg-muted);
+  background: var(--surface-2);
+}
+.wk-pay-chip--pos {
+  color: var(--pos);
+  background: var(--pos-soft);
+}
+.wk-pay-chip--warn {
+  color: var(--warn);
+  background: var(--warn-soft);
+}
+.wk-pay-chip--info {
+  color: var(--info);
+  background: var(--info-soft);
+}
+.wk-pay-rows {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.wk-pay-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 13px;
+}
+.wk-pay-label {
+  font-weight: 700;
+}
+.wk-pay-row .wk-pay-chip {
+  justify-self: start;
+}
+.wk-pay-amount {
+  justify-self: end;
+  font-weight: 700;
+}
+.wk-pay-meta {
+  grid-column: 1 / -1;
+  color: var(--fg-muted);
+  font-size: 12px;
+}
+.wk-pay-refund {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+.wk-pay-row--refund .wk-pay-label,
+.wk-pay-row--refund .wk-pay-amount {
+  color: var(--fg-muted);
+}
+.wk-pay-sum {
+  display: flex;
+  justify-content: space-between;
+  border-block-start: 1px solid var(--border);
+  padding-block-start: 9px;
+  font-size: 13px;
+  font-weight: 800;
+}
+.wk-pay-link {
+  display: grid;
+  gap: 8px;
+  margin-block-start: 10px;
+}
+.wk-pay-link p {
+  margin: 0;
+  font-size: 12.5px;
+}
+.wk-take-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 520px) {
+  .wk-take-card {
+    grid-template-columns: 1fr;
+  }
+}
+.wk-take-paid {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+}
+.wk-take-paid > div {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+.wk-take-paid-title {
+  font-weight: 800;
+}
+.wk-take-link {
+  display: grid;
+  gap: 8px;
+}
+.wk-take-link p {
+  margin: 0;
+}
+.wk-take-url {
+  overflow-wrap: anywhere;
+  font-size: 12.5px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-2);
+}
+.wk-take-link-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.wk-take-qr {
+  inline-size: 176px;
+  block-size: 176px;
+  background: #fff;
+  border-radius: 9px;
+  padding: 4px;
+}
+.wk-take-qr svg {
+  inline-size: 100%;
+  block-size: 100%;
+}
+.wk-take-said {
+  margin: 0;
+  min-block-size: 1.2em;
+  font-size: 12.5px;
+  color: var(--fg-muted);
+}
+.wk-take-said[data-check="notYet"] {
+  color: var(--warn);
 }
 
 /* ── Jobs and the other tables ─────────────────────────────────────────── */
