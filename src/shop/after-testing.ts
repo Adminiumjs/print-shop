@@ -8,7 +8,7 @@
  *
  * Tests only; nothing that ships imports it.
  */
-import type { AfterPort, CodeAnswer, DeliveryAnswer, HeldQuote, Me, OrderRead, ProofAnswer, QuoteRead, Via } from "./after-port.ts";
+import type { AfterPort, CodeAnswer, DeliveryAnswer, HeldQuote, Me, OrderRead, PayOffer, ProofAnswer, QuoteRead, Via } from "./after-port.ts";
 import { ShopError, type Id, type Refused, type Row } from "./port.ts";
 
 export interface AfterCall {
@@ -39,6 +39,8 @@ export interface FakeAfter extends AfterPort {
   /** Who is signed in, by address, or nobody. */
   session: string | null;
   linkOpen: boolean;
+  /** What Adminium says of paying online; null for an Adminium that takes no payments online. */
+  paying: PayOffer | null;
 }
 
 export const CUSTOMER = { name: "Harbour Bakery", email: "hello@harbourbakery.example" };
@@ -131,6 +133,7 @@ export function fakeAfter(): FakeAfter {
     rows: sampleAfterRows(),
     session: null,
     linkOpen: false,
+    paying: null,
     refuseNext: (r) => {
       refusal = { status: 400, column: null, child: null, index: null, reason: null, changed: null, raw: null, ...r };
     },
@@ -233,6 +236,23 @@ export function fakeAfter(): FakeAfter {
       record("askSamples", write);
       refuse();
       return { id: 1, status: "new" };
+    },
+    async payOffer() {
+      return fake.paying ?? { online: false, test: false };
+    },
+    async startPay(via: Via, orderId: Id) {
+      record("startPay", via, orderId);
+      refuse();
+      return { payUrl: `https://pay.example/p/tok_${String(orderId)}` };
+    },
+    heldSession(via: Via) {
+      if (via === "mine") return fake.session === null ? null : { token: `SESSION:${fake.session}`, expiresAt: Date.parse("2027-01-01") };
+      return fake.linkOpen ? { token: "LINKSESSION", expiresAt: Date.parse("2027-01-01") } : null;
+    },
+    resumeSession(via: Via, session: { token: string; expiresAt: number }) {
+      record("resumeSession", via, session.token);
+      if (via === "mine") fake.session = session.token.replace(/^SESSION:/, "");
+      else fake.linkOpen = true;
     },
   };
   return fake;

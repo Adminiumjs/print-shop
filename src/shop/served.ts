@@ -80,12 +80,15 @@ export async function resolveShop(opts: ResolveOptions = {}): Promise<ShopServed
     const tables = strings(doc["tables"]);
     const publicKeys = strings(doc["publicKeys"]);
     const settings = doc["settings"] !== null && typeof doc["settings"] === "object" && !Array.isArray(doc["settings"]) ? (doc["settings"] as Record<string, unknown>) : null;
+    const rehearsal = doc["rehearsal"] !== null && typeof doc["rehearsal"] === "object" ? (doc["rehearsal"] as Record<string, unknown>) : null;
+    const rehearsalToken = typeof rehearsal?.["csrfToken"] === "string" && rehearsal["csrfToken"] !== "" ? rehearsal["csrfToken"] : null;
     return {
       baseUrl: typeof served === "string" && served !== "" ? served : (opts.origin ?? window.location.origin),
       publishableKey: key,
       ...(tables === null ? {} : { tables }),
       ...(publicKeys === null ? {} : { publicKeys }),
       ...(settings === null ? {} : { settings }),
+      ...(rehearsalToken === null ? {} : { rehearsalToken }),
     };
   } catch {
     // No answer, or the page's own HTML answered for the document: not configured.

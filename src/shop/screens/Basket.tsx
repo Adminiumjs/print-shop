@@ -18,6 +18,7 @@ import { optionById, optionsOf, sidesOf, trimOf } from "../config.ts";
 import { deliveryOf, figure, topBand } from "../figures.ts";
 import { dayFull, decimal, money } from "../format.ts";
 import { ProductIcon, rich, tintOf } from "../parts.tsx";
+import { usePay } from "../pay.ts";
 import type { Catalogue, Id } from "../port.ts";
 import { chooseDelivery, editLine, editLineDesign, firstBadField, formErrors, goView, openArtwork, placeOrder, productById, removeLine, setDetails, useShop, type BasketLine, type Field } from "../store.ts";
 
@@ -323,6 +324,10 @@ export function BasketScreen() {
   const basket = useShop((s) => s.basket);
   const moves = useShop((s) => s.priceMoves);
   const catalogue = useShop((s) => s.catalogue);
+  const delivery = useShop((s) => s.delivery);
+  // Paying online only once the proofs are approved; the works' own way said beside it. With payments off, as before.
+  const online = usePay((s) => s.offer?.online === true);
+  const payingLine = !online ? t("shop.checkout.payingBody") : delivery === "deliver" ? t("pay.checkout.onDelivery") : t("pay.checkout.on");
   const alert = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (moves !== null) alert.current?.focus();
@@ -369,7 +374,7 @@ export function BasketScreen() {
               </h2>
               <div className="mp-paying">
                 <ReceiptText size={18} aria-hidden="true" />
-                <p>{t("shop.checkout.payingBody")}</p>
+                <p>{payingLine}</p>
               </div>
             </section>
           </div>

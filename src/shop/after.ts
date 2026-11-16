@@ -16,6 +16,7 @@ import type { AfterPort, CodeAnswer, DeliveryAnswer, HeldQuote, Me, MyRows, Orde
 import { choiceOf, jobValues } from "./config.ts";
 import { isShopError, type Id, type JobValues, type QuoteBody, type Row } from "./port.ts";
 import { addLinesToBasket, goView, keepHeld, openProductAs, productById, toast, useShop, type BasketLine } from "./store.ts";
+import { checking, forgetPaying, payNow, settle, usePay, wentToPay } from "./pay.ts";
 
 // ── finding an order: a reference and the e-mail, then the code ────────────
 
@@ -391,10 +392,59 @@ export async function signOut(): Promise<void> {
   }
   remember(null);
   keepHeldQuotes([]);
+  // The session kept for the way back from the pay page ends with the rest.
+  forgetPaying();
   set({ ...initial(), held: [], templates: get().templates });
 }
 
 // ── the order open ─────────────────────────────────────────────────────────
+
+/** "Pay now" on the order open: Adminium's pay link for it, through the session that reads it, and this tab goes to pay. */
+export async function payOpenOrder(): Promise<"away" | "paid" | "failed" | null> {
+  const opened = get().opened;
+  const door = port();
+  if (opened === null || opened.read === null || door === null) return null;
+  const order = opened.read.order;
+  const went = await payNow(door, opened.via, order);
+  if (went === "paid") {
+    // The demo's stand-in took it: the order read again shows it paid.
+    await reread();
+    if (opened.via === "mine") {
+      const fresh = get().mine.orders.find((o) => String(o["id"]) === String(order["id"]));
+      if (fresh !== undefined) await openMine(fresh);
+    }
+    usePay.setState({ phase: "idle", paidOnReturn: order["id"] as Id });
+  }
+  return went;
+}
+
+/**
+ * Back from the pay page (the order page with nothing in the address): the
+ * order this tab went to pay for, opened again by the session it kept, and
+ * read until it shows paid. False when the tab kept none: the page opens as
+ * it would have.
+ */
+export async function backFromPaying(): Promise<boolean> {
+  const kept = wentToPay();
+  forgetPaying();
+  const door = port();
+  if (kept === null || door === null || door.resumeSession === undefined) return false;
+  door.resumeSession(kept.via, kept.session);
+  checking();
+  const current = (): Row | null => (get().opened?.read?.order ?? null);
+  const reread = async (): Promise<Row | null> => {
+    if (kept.via === "link") await readLinked();
+    else {
+      await loadMine();
+      const order = get().mine.orders.find((o) => String(o["id"]) === kept.orderId);
+      if (order !== undefined) await openMine(order);
+    }
+    const order = current();
+    return order !== null && String(order["id"]) === kept.orderId ? order : null;
+  };
+  await settle(reread);
+  return true;
+}
 
 /** The signed-in customer's order, with its jobs and what they hold. */
 export async function openMine(order: Row): Promise<void> {

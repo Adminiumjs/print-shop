@@ -1123,3 +1123,60 @@
     flex-wrap: wrap;
   }
 }
+
+/* ── Paying online on the order page ─────────────────────────────────── */
+.ma-total {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-block-start: 16px;
+  padding-block-start: 14px;
+  border-block-start: 1px solid var(--border);
+}
+.ma-total-label {
+  font-weight: 700;
+}
+.ma-total-amount {
+  font-weight: 700;
+  margin-inline-start: auto;
+}
+.ma-paid-chip {
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 99px;
+  padding: 3px 10px;
+  color: var(--pos);
+  background: var(--pos-soft);
+}
+.ma-pay {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+.ma-pay .mp-card-title,
+.ma-pay p {
+  margin: 0;
+}
+.ma-pay-test {
+  align-self: stretch;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--warn);
+  background: var(--warn-soft);
+  color: var(--fg);
+  font-size: 13px;
+}
+.ma-pay-wait {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: var(--surface);
+  color: var(--fg-muted);
+  font-size: 14px;
+}

@@ -24,6 +24,7 @@ import { heldDesign, type DesignForBasket, type HeldDesign, type SavedDesign } f
 import { checkFile, isArtworkName, needsAcceptance, type CheckRow } from "./checks.ts";
 import { firstChoice, jobValues, optionById, optionsOf, settle, sidesOf, sizeProblems, stepsOf, trimOf, type Choice, type FinishKind } from "./config.ts";
 import { freshClientKey } from "./door.ts";
+import { loadOffer } from "./pay.ts";
 import type { Elsewhere } from "./route.ts";
 import { isShopError, type ArtworkValues, type Catalogue, type Figures, type Id, type JobNode, type OrderBody, type Placed, type Product, type Refused, type Row, type ShopConfig, type ShopPort, type StoredChecks, type Uploaded } from "./port.ts";
 
@@ -270,6 +271,8 @@ export async function loadShop(): Promise<void> {
   try {
     const [config, catalogue] = await Promise.all([port.config(), port.catalogue()]);
     set({ config, catalogue, loading: "ok" });
+    // Whether the works takes payments online now: asked once, and the pages read as before until it says so.
+    void loadOffer(port.after());
     const view = get().view;
     if (view === "product" || view === "design" || view === "blank") openProduct(get().productCode, view, get().editing);
     if (view === "artwork" && lineOf(get().artLine) === null) goView("basket");

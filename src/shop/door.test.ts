@@ -138,3 +138,38 @@ describe("placing an order through the door", () => {
     expect(isShopError(error) && error.refused.changed).toEqual({ order: { total: "87.96" }, jobs: [{ price: "66.80" }] });
   });
 });
+
+describe("paying online through the door", () => {
+  it("asks whether the works takes payments online, and reads no answer as no", async () => {
+    const { fetch, sent } = wire({ "GET /api/v1/public/payments/available": { body: { data: { online: true, test: true } } } });
+    const door = new AdminiumShop(SERVED, { fetch, humanCheck: false });
+    expect(await door.after().payOffer!()).toEqual({ online: true, test: true });
+    expect(sent.map((s) => `${s.method} ${s.path}`)).toEqual(["GET /api/v1/public/payments/available"]);
+    const quiet = new AdminiumShop(SERVED, { fetch: wire({}).fetch, humanCheck: false });
+    expect(await quiet.after().payOffer!()).toEqual({ online: false, test: false });
+  });
+
+  it("starts the pay link of the order its own link opened, by the order's ref and key, never an amount", async () => {
+    const { fetch, sent } = wire({ "POST /api/v1/public/payments/start": { body: { data: { payUrl: "https://works.example/pay/tok" } } } });
+    const door = new AdminiumShop(SERVED, { fetch, humanCheck: false });
+    door.orderClient!.adoptSession({ token: "S1", expiresAt: 4102444800000, level: "verified" });
+    expect(await door.after().startPay!("link", 13)).toEqual({ payUrl: "https://works.example/pay/tok" });
+    expect(sent).toEqual([{ method: "POST", path: "/api/v1/public/payments/start", query: {}, body: { ref: PUBLIC_REFS.orderByLink, id: "13" } }]);
+    // The session the tab keeps across the pay page, and takes up again on the way back.
+    expect(door.after().heldSession!("link")).toEqual({ token: "S1", expiresAt: 4102444800000 });
+    const back = new AdminiumShop(SERVED, { fetch, humanCheck: false });
+    back.after().resumeSession!("link", { token: "S1", expiresAt: 4102444800000 });
+    expect(back.orderClient?.session()?.token).toBe("S1");
+  });
+
+  it("carries a rehearsing manager's write token, and nobody else's client carries one", async () => {
+    const headers: (string | null)[] = [];
+    const fetchImpl = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+      headers.push(new Headers(init?.headers).get("x-adminium-csrf"));
+      return new Response(JSON.stringify({ data: { payUrl: "https://works.example/pay/tok" } }), { status: 200, headers: { "content-type": "application/json" } });
+    }) as typeof fetch;
+    await new AdminiumShop({ ...SERVED, rehearsalToken: "csrf-rehearse" }, { fetch: fetchImpl, humanCheck: false }).after().startPay!("mine", 13);
+    await new AdminiumShop(SERVED, { fetch: fetchImpl, humanCheck: false }).after().startPay!("mine", 13);
+    expect(headers).toEqual(["csrf-rehearse", null]);
+  });
+});

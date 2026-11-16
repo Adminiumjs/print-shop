@@ -52,6 +52,12 @@ export interface ShopServed {
   publicKeys?: Record<string, string>;
   /** The app's own settings as Adminium serves them (its working days, its cut-off). */
   settings?: Record<string, unknown>;
+  /**
+   * The write token of someone who manages payments and is rehearsing on
+   * this address: their writes are held to their own sign-in's rules.
+   * Adminium hands it to that person alone; nobody else's client carries one.
+   */
+  rehearsalToken?: string;
 }
 
 export interface ShopDoorOptions {
@@ -244,13 +250,20 @@ export class AdminiumShop implements ShopPort {
     this.refs = shopRefs(served.tables);
     this.fetchImpl = options.fetch;
     const make = (publishableKey: string, humanCheck: ShopDoorOptions["humanCheck"]) =>
-      createPublicClient({ baseUrl: served.baseUrl, publishableKey, ...(options.fetch === undefined ? {} : { fetch: options.fetch }), ...(humanCheck === undefined ? {} : { humanCheck }) });
+      createPublicClient({
+        baseUrl: served.baseUrl,
+        publishableKey,
+        ...(options.fetch === undefined ? {} : { fetch: options.fetch }),
+        ...(humanCheck === undefined ? {} : { humanCheck }),
+        ...(served.rehearsalToken === undefined ? {} : { csrfToken: served.rehearsalToken }),
+      });
     // Placing an order, saving a quote, asking for samples and saving a design all ask the human check: solved before they are sent.
     const client = make(served.publishableKey, options.humanCheck ?? { refs: [this.refs.placeOrder, this.refs.saveQuote, this.refs.samplePack, CUSTOMISER_REFS.designs] });
     if (client === null) throw new Error("The shop's key could not be used.");
     this.client = client;
     const orderKey = served.publicKeys?.[KEYS.order];
-    this.orderClient = orderKey === undefined ? null : make(orderKey, false);
+    // Its answers ask no human check; starting a payment always solves one first (`payments.start`), so it is not switched off.
+    this.orderClient = orderKey === undefined ? null : make(orderKey, options.humanCheck === false ? false : { refs: [] });
   }
 
   private clientConfig(): Promise<PublicConfig> {

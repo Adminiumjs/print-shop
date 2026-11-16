@@ -143,6 +143,26 @@ export interface AfterPort {
   renameQuote(via: "mine" | HeldQuote, quoteId: Id, label: string): Promise<Row>;
   /** "Post me the pack": a guest's request, one to an address, with the stocks ticked. */
   askSamples(write: { values: Row; children: { sample_stocks: { values: { material_id: Id } }[] } }): Promise<Row>;
+  /**
+   * Whether the works takes payments online right now (`test`: someone who
+   * manages payments is rehearsing on this address). Absent from a door that
+   * cannot say: then nothing is offered, and every page reads as before.
+   */
+  payOffer?(): Promise<PayOffer>;
+  /** The order's pay link, asked through the session that reads it: the amount is the order's own, never one the page sends. */
+  startPay?(via: Via, orderId: Id): Promise<{ payUrl: string }>;
+  /** The session that reads orders this way now, for the tab to keep across the pay page; null when there is none. */
+  heldSession?(via: Via): { token: string; expiresAt: number } | null;
+  /** A session this tab kept before the pay page, taken up again on the way back. */
+  resumeSession?(via: Via, session: { token: string; expiresAt: number }): void;
+}
+
+/** Whether "Pay now" may be offered at all. */
+export interface PayOffer {
+  online: boolean;
+  test: boolean;
+  /** The website's demo: its stand-in takes the payment itself, no page is left and no money moves. */
+  standIn?: boolean;
 }
 
 const PAGE = 200;
@@ -341,6 +361,32 @@ export class AdminiumAfter implements AfterPort {
 
   askSamples(write: { values: Row; children: { sample_stocks: { values: { material_id: Id } }[] } }): Promise<Row> {
     return answer(async () => (await this.client.createTree<Row>(this.refs.samplePack, { values: write.values, children: write.children as never })).data);
+  }
+
+  async payOffer(): Promise<PayOffer> {
+    try {
+      const said = await this.client.payments.available();
+      return { online: said.online === true, test: said.test === true };
+    } catch {
+      // No answer is "not now": the page reads as it always did.
+      return { online: false, test: false };
+    }
+  }
+
+  startPay(via: Via, orderId: Id): Promise<{ payUrl: string }> {
+    const ref = via === "mine" ? this.refs.myOrders : this.refs.linkOrder;
+    return answer(() => this.on(via).payments.start(ref, String(orderId)));
+  }
+
+  heldSession(via: Via): { token: string; expiresAt: number } | null {
+    const client = via === "mine" ? this.client : this.orderClient;
+    const session = client?.session() ?? null;
+    return session === null ? null : { token: session.token, expiresAt: session.expiresAt };
+  }
+
+  resumeSession(via: Via, session: { token: string; expiresAt: number }): void {
+    const client = via === "mine" ? this.client : this.orderClient;
+    client?.adoptSession({ token: session.token, expiresAt: session.expiresAt, level: "verified" });
   }
 }
 

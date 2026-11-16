@@ -26,7 +26,8 @@ import type { CustomiserEditorProps, WaysInProps } from "../../vendor/customiser
 import { I18nProvider } from "../i18n/index.tsx";
 import ShopApp from "./ShopApp.tsx";
 import { money } from "./format.ts";
-import { goView, openProduct, resetShop, useShop } from "./store.ts";
+import { resetPay, usePay } from "./pay.ts";
+import { chooseDelivery, goView, openProduct, resetShop, useShop } from "./store.ts";
 import { fakePort, type FakePort } from "./testing.ts";
 
 const stand = vi.hoisted(() => ({ editor: null as CustomiserEditorProps | null, ways: null as WaysInProps | null }));
@@ -154,6 +155,7 @@ beforeEach(() => {
   window.scrollTo = () => {};
   port = fakePort();
   resetShop(port);
+  resetPay();
   stand.editor = null;
   stand.ways = null;
 });
@@ -472,5 +474,24 @@ describe.each(["en-US", "ar-EG"] as const)("the customer side in %s", (locale) =
     await sweep(`${locale} · not here`);
     await act(async () => useShop.setState({ loading: "failed" }));
     await sweep(`${locale} · the shop failed to open`);
+  });
+});
+
+describe("the checkout's line on paying", () => {
+  it("reads as it always did while the works takes no payments online, and offers paying online after the proofs once it does", async () => {
+    await mount();
+    await act(async () => openProduct("letterheads"));
+    await settle();
+    await press(".mp-quote-cta");
+    await drop([pdf("heading.pdf", { w: 216, h: 303, pages: 1 })]);
+    await press(".mp-button--wide");
+    expect(window.location.pathname).toBe("/basket");
+    const line = () => document.querySelector(".mp-paying p")?.textContent;
+    expect(line()).toBe("You pay when you collect, or by the invoice we send with your delivery. Nothing is charged now.");
+    await act(async () => usePay.setState({ offer: { online: true, test: false } }));
+    await act(async () => chooseDelivery("deliver"));
+    expect(line()).toBe("Nothing is charged now. Once you approve the proofs, you can pay online or by the invoice we send with your delivery.");
+    await act(async () => chooseDelivery("collect"));
+    expect(line()).toBe("Nothing is charged now. Once you approve the proofs, you can pay online or when you collect.");
   });
 });
