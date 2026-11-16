@@ -15,6 +15,7 @@ import { emailTemplates } from "./emails.ts";
 import { KINDS, OUTBOX } from "./outbox.ts";
 import { NAV_GROUPS, pages } from "./pages.ts";
 import { peopleFor } from "./people.ts";
+import { PAYMENTS } from "./payments.ts";
 import { PUBLIC_ACCESS, PUBLIC_KEYS } from "./public.ts";
 import { rolesFor } from "./roles.ts";
 import { SETTINGS } from "./settings.ts";
@@ -46,8 +47,13 @@ export const VERSION = "0.2.5";
  * proofs form's picker (`reference.scope`). 0.3.54 bundles the Customiser
  * 1.0.26, whose shop editor takes a ready-made design again, and gives at
  * every update a place to the jobs added by hand before places were numbered.
+ * 0.3.60 lets an order be paid online (`payments.payables`, arriving switched
+ * off), gives the owner the refund of the app's own payments
+ * (`payments:@:refund`), answers the customer's page whether the works takes
+ * payments online now and where to pay (`payments.available`,
+ * `payments.start`), and fills a pay button's link in the e-mails (`pay_url`).
  */
-export const MIN_ADMINIUM = "0.3.54";
+export const MIN_ADMINIUM = "0.3.60";
 
 /**
  * The release that reads two more things this app says: a role's grant of
@@ -135,6 +141,7 @@ export function buildManifest(options: { floor?: string } = {}): Record<string, 
     outbox: OUTBOX,
     people: peopleFor(newer),
     emailTemplates: emailTemplates(KINDS),
+    payments: PAYMENTS,
     sampleData: { file: "seeds/printing.sample.json", addOns: { customiser: { file: "seeds/printing.customiser.sample.json" } } },
   };
 }

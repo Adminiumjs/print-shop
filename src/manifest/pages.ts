@@ -114,6 +114,15 @@ const SPECS: PageSpec[] = [
         ]),
       ],
       MONEY_FIELDS,
+      [
+        rows("payments", [
+          { column: "paid_at", control: "datetime", width: "1.4fr" },
+          { column: "method", width: "1fr" },
+          { column: "amount", control: "currency", width: "110px" },
+          { column: "refunded", control: "currency", width: "110px" },
+        ]),
+      ],
+      [money("paid"), money("due"), when("last_paid_at")],
       [f("dhl_service"), money("delivery_quote"), f("delivery_quote_state", { control: "segmented" }), when("delivery_quote_sent_at"), when("delivery_quote_accepted_at")],
       [when("ready_at"), when("collected_at"), when("dispatched_at"), f("handed_over_by"), f("tracking"), when("cancelled_at"), wide("cancel_reason", "text")],
       [ref("customer_id"), number("warnings_accepted"), when("link_expires"), toggle("link_stopped")],

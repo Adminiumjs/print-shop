@@ -23,8 +23,8 @@ const OLDER = "0.3.43";
 describe("the manifest at the floor it ships with", () => {
   const shipped = buildManifest();
 
-  it("ships at 0.3.54, which reads the panels' grants, the copies into the versions, a role's personal columns and deletes, the owner's erase, installs the app once per database, sends a proof's earlier one again, installs the Customiser whose set-up the owner opens, tells the counter which add-ons it has, and keeps a ready-by from moving earlier", () => {
-    expect(MIN_ADMINIUM).toBe("0.3.54");
+  it("ships at 0.3.60, which reads the panels' grants, the copies into the versions, a role's personal columns and deletes, the owner's erase, installs the app once per database, sends a proof's earlier one again, installs the Customiser whose set-up the owner opens, tells the counter which add-ons it has, keeps a ready-by from moving earlier, and lets an order be paid online", () => {
+    expect(MIN_ADMINIUM).toBe("0.3.60");
     expect(shipped["compatibility"]).toMatchObject({ minAdminiumVersion: MIN_ADMINIUM });
     const result = validateManifest(shipped);
     expect(result.ok ? [] : result.issues).toEqual([]);

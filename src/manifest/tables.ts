@@ -295,6 +295,13 @@ const DELIVERY_QUOTE_STATES: Record<string, string> = { to_quote: "To quote", se
 /** A change the delivery quote takes only while the customer has never accepted it (`delivery_quote_accepted_at` is its stamp). */
 const UNTIL_ACCEPTED = { while: { column: "delivery_quote_accepted_at", isNull: true } };
 
+/**
+ * How an order was paid: online through the payment service the works
+ * connected (Adminium writes that row), or at the counter by card on the
+ * works' own terminal or in cash (the counter writes it).
+ */
+export const PAYMENT_METHODS: Record<string, string> = { online: "Online", card: "Card on the terminal", cash: "Cash" };
+
 // ── formulas ────────────────────────────────────────────────────────────────
 
 const yes = (column: string) => ({ eq: [column, true] });
@@ -349,6 +356,18 @@ const DELIVERY_PRICED = { if: [{ eq: ["delivery_to_quote", 1] }, { div: [0, 0] }
 /** An order with the works' delivery quote on it, before the customer accepts it: its tax and total. */
 const QUOTED_SUBTOTAL = { add: ["goods_total", "delivery_quote"] };
 const QUOTED_TAX = { round: [{ div: [{ mul: [QUOTED_SUBTOTAL, { coalesce: ["tax_rate", 0] }] }, 100] }, 2] };
+/** What is still to pay on an order: its total, less what was paid and kept; never below nothing. */
+const DUE = { max: [0, { sub: [{ coalesce: ["total", 0] }, { coalesce: ["paid", 0] }] }] };
+/** The same, empty once nothing is owed: what an e-mail prints only while something is. */
+const OWING = { if: [{ gt: ["due", 0] }, "due", { div: [0, 0] }] };
+/** A delivery the works prices by hand that the customer has not accepted yet: the order's total leaves it out until then. */
+const QUOTE_OPEN = { if: [{ eq: ["delivery_quote_state", "accepted"] }, 0, { coalesce: ["delivery_to_quote", 0] }] };
+/**
+ * Whether the customer may pay now: every job's proof approved (a cancelled
+ * job left out) and no delivery price still to agree, so the total is the
+ * one they will pay. Whether anything is left to pay is the balance's to say.
+ */
+const PAY_OPEN = { if: [{ and: [{ gt: ["item_count", 0] }, { gte: [{ coalesce: ["proofs_approved", 0] }, "item_count"] }, { eq: ["quote_open", 0] }] }, 1, 0] };
 /** The lines' prices added up, while every line has one; empty while one has none. */
 const GOODS = { if: [{ lt: [{ coalesce: ["priced_lines", 0] }, { coalesce: ["item_count", 0] }] }, { div: [0, 0] }, { coalesce: ["goods_sum", 0] }] };
 const SUBTOTAL = { add: ["goods_total", { coalesce: ["delivery", 0] }] };
@@ -989,6 +1008,17 @@ export const TABLES: Table[] = [
       // What the order comes to with the works' quote on it, as the quote's e-mail and page show it.
       money("quote_tax", "Tax with the delivery quote", { formula: QUOTED_TAX }),
       money("quote_total", "Total with the delivery quote", { formula: { add: [QUOTED_SUBTOTAL, "quote_tax"] } }),
+      // What came in for it, by its payments: what was paid less what went back, online and in all; still to pay; the latest payment.
+      money("paid", "Paid", { rollup: { from: "payments", via: "order_id", sum: "net_amount" } }),
+      money("paid_online", "Paid online", { rollup: { from: "payments", via: "order_id", sum: "net_amount", where: { column: "method", eq: "online" } } }),
+      money("refunded", "Refunded", { rollup: { from: "payments", via: "order_id", sum: "refunded" } }),
+      money("due", "To pay", { formula: DUE }),
+      money("owing", "Still owed", { formula: OWING }),
+      at("last_paid_at", "Last paid", { ...opt, rules: { rollup: { from: "payments", via: "order_id", latest: { of: "paid_at", by: "paid_at" } } } }),
+      // How many of its jobs have their proof approved (a cancelled job left out), and whether a delivery price is still to agree.
+      figure("proofs_approved", "int", "Proofs approved", { rollup: { from: "jobs", via: "order_id", sum: "proof_ok", unlessSet: "cancelled_at" } }),
+      figure("quote_open", "int", "Delivery price to agree", { formula: QUOTE_OPEN }),
+      figure("pay_open", "int", "Can be paid now", { formula: PAY_OPEN }),
       at("delivery_quote_sent_at", "Delivery quote sent", { ...opt, rules: stamp("now", onState("delivery_quote_state", "sent")) }),
       at("delivery_quote_accepted_at", "Delivery quote accepted", { ...opt, rules: stamp("now", onState("delivery_quote_state", "accepted")) }),
       // Artwork warnings the customer accepted at checkout, on all its jobs.
@@ -1228,6 +1258,34 @@ export const TABLES: Table[] = [
       text("note", 200, "Note", opt),
       at("spoiled_at", "Recorded", { ...opt, rules: stamp("now", onCreate) }),
       text("spoiled_by", 80, "Recorded by", { ...opt, rules: stamp("user-name", onCreate) }),
+    ],
+  },
+  {
+    // Money taken for an order. Online, Adminium writes the row once the payment service confirms it (its reference,
+    // the service, the moment), and only a refund changes it after: Adminium writes what went back. At the counter,
+    // the works writes it: card on its own terminal (the approval code and the card's last four from the slip), or cash.
+    ref: "payments",
+    keep: KEPT_FOR_TAX,
+    label: l("Payment"),
+    labelPlural: l("Payments"),
+    keyField: "method",
+    columns: [
+      id,
+      fk("order_id", "orders", "Order", { index: true }),
+      price("amount", "Amount", { rules: { validation: { min: 0.01 } } }),
+      choice("method", "Way paid", PAYMENT_METHODS, { tones: { online: "info", card: "neutral", cash: "neutral" } }),
+      at("paid_at", "Paid", opt),
+      // The online payment's own reference: Adminium writes it once, nobody else ever does.
+      text("payment_ref", 64, "Payment reference", { ...opt, unique: true }),
+      text("provider", 40, "Payment service", opt),
+      text("currency", 3, "Currency", opt),
+      // What was given back of it, online: Adminium writes the total refunded.
+      price("refunded", "Refunded", { default: 0 }),
+      money("net_amount", "Kept", { formula: { sub: ["amount", { coalesce: ["refunded", 0] }] } }),
+      text("approval_code", 12, "Approval code", { ...opt, rules: { validation: { minLength: 1, maxLength: 12 } } }),
+      text("card_last4", 4, "Card's last four digits", { ...opt, rules: { validation: { minLength: 4, maxLength: 4 } } }),
+      text("note", 200, "Note", opt),
+      text("taken_by", 80, "Recorded by", { ...opt, rules: stamp("user-name", onCreate) }),
     ],
   },
   {

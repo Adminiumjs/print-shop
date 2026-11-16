@@ -1,7 +1,9 @@
 /**
  * The one document this app declares: the invoice for an order, drawn by
  * Invoices & Receipts (the feature `invoices`). The customer pays when they
- * collect, or by the invoice sent with the delivery.
+ * collect, or by the invoice sent with the delivery; while the order can be
+ * paid online, Adminium prints its pay link and the link's QR in the
+ * layout's own places for them, and leaves them out otherwise.
  *
  * Each line is a job as the order kept it: what was printed, how many, and
  * its price; a cancelled job is no line. The delivery and the tax are the

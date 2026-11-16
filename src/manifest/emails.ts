@@ -91,6 +91,17 @@ export type EmailWords = Record<Kind, Words> & {
   footQuote: string;
   footSample: string;
   footWorks: string;
+  /**
+   * Paying online, while the order can be paid and something is owed: the
+   * button to the order's pay link and the line under it. Sent only with a
+   * pay link (`pay_url`): with the works taking no payments online, or
+   * nothing owed, an e-mail reads as it did.
+   */
+  payButton: string;
+  payNote: string;
+  /** Ready to collect, once nothing is owed: what was paid, and when. */
+  paid: string;
+  paidOn: string;
 };
 
 export const EMAIL_EN: EmailWords = {
@@ -122,6 +133,10 @@ export const EMAIL_EN: EmailWords = {
   footQuote: "You're getting this e-mail because you saved the quote {{quote.number}}.",
   footSample: "You're getting this e-mail because you asked for a sample pack.",
   footWorks: "Sent to the works about {{order.number}}.",
+  payButton: "Pay {{order.due.money}} online",
+  payNote: "The button opens a pay link. You'll pay on the Stripe or PayPal page.",
+  paid: "Paid",
+  paidOn: "{{order.paid.money}} on {{order.last_paid_at.date}}",
   "order-received": {
     name: "Order received",
     subject: "Thanks — we've got your order {{order.number}}",
@@ -152,10 +167,10 @@ export const EMAIL_EN: EmailWords = {
   "order-ready": {
     name: "Ready to collect",
     subject: "{{order.number}} is ready to collect",
-    preheader: "You pay {{order.total.money}} when you collect.",
+    preheader: "You pay {{order.due.money}} when you collect.",
     eyebrow: "Ready",
     heading: "Your order is ready to collect",
-    paras: ["You pay {{order.total.money}} when you collect, tax included."],
+    paras: ["You pay {{order.owing.money}} when you collect, tax included."],
     button: "Follow your order",
   },
   "order-dispatched": {
@@ -311,6 +326,14 @@ function orderMoney(w: EmailWords): Block[] {
   ];
 }
 
+/**
+ * The order's pay link, while it can be paid online: a button that opens it,
+ * and the line under it saying where they will pay. Both are left out when
+ * Adminium has no pay link for the order (the works takes no payments
+ * online, its proofs or delivery price are still open, or nothing is owed).
+ */
+const pay = (w: EmailWords): Block[] => [button("pay", w.payButton, "{{pay_url}}", { onlyWith: "pay_url" }), { block: "email.text", id: "pay-note", data: { paras: [w.payNote], onlyWith: "pay_url" } }];
+
 /** The private-link lines under a button: whose link it is, and the link written out. */
 const ownLink = (w: EmailWords, url: string): Block => text("own", [w.own, `${w.copy} ${url}`]);
 
@@ -338,10 +361,19 @@ function body(kind: Kind, w: EmailWords): Block[] {
         ownLink(w, ORDER_URL),
       ];
     case "proof-approved":
-      // The jobs approved so far, never one still waiting on its proof.
-      return [...head, facts("ready", [[w.readyBy, "{{order.ready_by}}"]]), proofs("approved"), ...follow(own.button!)];
+      // The jobs approved so far, never one still waiting on its proof; the last approval may make the order payable.
+      return [...head, facts("ready", [[w.readyBy, "{{order.ready_by}}"]]), proofs("approved"), ...pay(w), ...follow(own.button!)];
     case "order-ready":
-      return [...head, jobs(false), facts("where", [[w.where, "{{practice.address}}"], [w.open, "{{practice.hours}}"]]), ...paras, ...follow(own.button!)];
+      // What they pay when they collect while something is owed; what was paid once nothing is.
+      return [
+        ...head,
+        jobs(false),
+        facts("where", [[w.where, "{{practice.address}}"], [w.open, "{{practice.hours}}"]]),
+        { block: "email.text", id: "body", data: { paras: own.paras, onlyWith: "order.owing" } },
+        facts("paid", [[w.paid, w.paidOn]], { onlyWithout: "order.owing" }),
+        ...pay(w),
+        ...follow(own.button!),
+      ];
     case "order-dispatched":
       return [
         ...head,
@@ -364,6 +396,8 @@ function body(kind: Kind, w: EmailWords): Block[] {
         ),
         button("track", w.trackIt, TRACK_URL, { onlyWith: "order.tracking" }),
         ...paras,
+        // Delivered with its invoice, and payable online until it is paid.
+        ...pay(w),
         ...follow(own.button!),
       ];
     case "quote-saved":

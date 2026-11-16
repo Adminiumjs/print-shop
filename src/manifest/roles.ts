@@ -17,7 +17,14 @@
  *   counter   the works' screens: the orders ready to hand over, marking them
  *             collected or dispatched with the DHL service and a tracking
  *             number, pricing a delivery over the bands and sending its
- *             quote, and posting sample packs.
+ *             quote, and posting sample packs. Taking payment as it hands
+ *             an order over: card on the works' terminal (its approval code
+ *             and the card's last four) or cash, written as a payment of the
+ *             order; never one taken online, and never a refund.
+ *
+ * The owner may refund a payment taken online (`payments:@:refund`, this
+ * app's payments only), from the job ticket or Adminium's Payments; nobody
+ * else holds it by their role.
  *
  * Every role reads the Customiser's rows its work needs. The Customiser's
  * panels open for the roles below (`ROLE_PANELS`): a job's design for the
@@ -33,6 +40,10 @@
  * version's old files away, so its roles hold `read_pii` there and `delete`
  * on the files. The owner finds and erases a customer's data
  * (`privacy:@:people`, on the dashboard's privacy page).
+ *
+ * A payment taken online is Adminium's row: its reference, the service it
+ * came through and what was refunded of it are written by Adminium alone,
+ * so no role lists them among what it writes.
  *
  * The screens show or hide a button by the role, but the grants and limits
  * below are what refuse the write: a hidden button is not a lock.
@@ -179,6 +190,12 @@ const typed = (ref: string, ...leaveOut: string[]): string[] =>
 /** What only the customer gives, on their own order or quote: the tick for the works' news, the link, the retry key. */
 export const CUSTOMERS_OWN = ["may_email", "link_token", "client_key"];
 
+/** What only a payment taken online fills: its reference, the service, its currency and what was refunded of it. */
+export const ONLINE_ONLY = ["payment_ref", "provider", "currency", "refunded"];
+
+/** What the counter writes of a payment it takes as it hands an order over: card on the works' terminal, or cash. */
+export const COUNTER_PAYMENT = ["order_id", "amount", "method", "paid_at", "approval_code", "card_last4"];
+
 /** The rate card and the catalogue: every role reads them, the owner alone edits them. */
 const RATE_CARD = ["settings", "materials", "sizes", "finishes", "breaks", "packaging", "delivery_bands", "products", "options", "option_rules", "machines", "closures"];
 const ORDER_READS = ["orders", "jobs", "job_features", "artwork", "proofs", "spoils"];
@@ -214,8 +231,17 @@ export const ROLES = [
       `addOn:${HOLIDAYS}:settings`,
       // A customer's data found, handed to them and erased, on the dashboard's privacy page.
       "privacy:@:people",
+      // A payment taken online given back, in full or in part: this app's payments only.
+      "payments:@:refund",
     ],
     limits: {
+      // A payment by hand, never one marked online: only the payment service's confirmation writes that.
+      payments: {
+        writable: typed("payments", ...ONLINE_ONLY),
+        writableValues: { method: ["card", "cash"] },
+        creatable: typed("payments", ...ONLINE_ONLY),
+        creatableValues: { method: ["card", "cash"] },
+      },
       orders: { writable: typed("orders", ...CUSTOMERS_OWN), creatable: typed("orders", ...CUSTOMERS_OWN) },
       saved_quotes: { writable: typed("saved_quotes", ...CUSTOMERS_OWN), creatable: typed("saved_quotes", ...CUSTOMERS_OWN) },
     },
@@ -275,7 +301,8 @@ export const ROLES = [
     screensOnly: true,
     permissions: [
       "app:@:staff",
-      ...[...RATE_CARD, ...ORDER_READS, "sample_requests"].flatMap((table) => grant(table, "read")),
+      ...[...RATE_CARD, ...ORDER_READS, "sample_requests", "payments"].flatMap((table) => grant(table, "read")),
+      ...grant("payments", "create"),
       pii("orders"),
       pii("sample_requests"),
       ...grant("orders", "update"),
@@ -293,6 +320,8 @@ export const ROLES = [
       },
       jobs: { writable: ["stage"], writableValues: { stage: ["collected", "dispatched"] }, writableFrom: { stage: ["ready"] } },
       sample_requests: { writable: ["status"], writableValues: { status: ["posted"] } },
+      // A payment taken over the counter: never one marked online, which only the payment service's confirmation writes.
+      payments: { creatable: COUNTER_PAYMENT, creatableValues: { method: ["card", "cash"] } },
     },
     // Whether a job names a design, of the print shop's customers alone.
     tables: [{ addOn: CUSTOMISER, table: "designs", actions: ["read"], limit: { rows: { read: OWN_ROWS } } }, ...STOCK_READS, ...SHIPMENT_READS],

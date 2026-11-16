@@ -79,7 +79,7 @@ const LINKS_OF: Record<Kind, Set<string>> = Object.fromEntries(
 const PERSONAL = new Set(["name", "email", "address_line1", "address_line2", "town", "postcode", "client_key"]);
 const SETTINGS = columnsOf("settings");
 const FORMS = new Set(["money", "number", "percent", "label", "date", "time", "day_month", "relative_day", "days_since"]);
-const GLOBALS = new Set(["appName", "manage_url", "booking_url", "staff_url", "recipient.name", "recipient.first_name"]);
+const GLOBALS = new Set(["appName", "manage_url", "booking_url", "staff_url", "pay_url", "recipient.name", "recipient.first_name"]);
 
 describe("what the e-mails read", () => {
   it.each(KINDS)("%s reads only what Adminium fills for it", (kind) => {
@@ -154,5 +154,39 @@ describe("what the e-mails read", () => {
       const list = templateOf(kind, "en-US").blocks.find((b) => b.block === "email.rows")!;
       expect((list.data["row"] as { title: string }).title, kind).toBe("{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}");
     }
+  });
+});
+
+describe("paying online from an e-mail", () => {
+  type Block = { block: string; id: string; data: Record<string, unknown> };
+  const blocks = (kind: Kind) => templateOf(kind, "en-US").blocks as Block[];
+
+  it.each(["proof-approved", "order-ready", "order-dispatched"] as const)("%s carries a pay button and its line only with the order's pay link", (kind) => {
+    for (const tag of LOCALES) {
+      const own = templateOf(kind, tag).blocks as Block[];
+      const button = own.find((b) => b.id === "pay")!;
+      expect(button.data, `${kind} ${tag}`).toMatchObject({ url: "{{pay_url}}", onlyWith: "pay_url", label: emailWords()[tag].payButton });
+      expect(own.find((b) => b.id === "pay-note")!.data, `${kind} ${tag}`).toEqual({ paras: [emailWords()[tag].payNote], onlyWith: "pay_url" });
+    }
+    expect(EMAIL_EN.payButton).toBe("Pay {{order.due.money}} online");
+    expect(EMAIL_EN.payNote).toBe("The button opens a pay link. You'll pay on the Stripe or PayPal page.");
+  });
+
+  it("puts no pay button in any other e-mail", () => {
+    for (const kind of KINDS.filter((k) => !["proof-approved", "order-ready", "order-dispatched"].includes(k))) {
+      expect(JSON.stringify(blocks(kind)), kind).not.toContain("pay_url");
+    }
+  });
+
+  it("says what is paid when collecting while something is owed, and what was paid once nothing is", () => {
+    const ready = blocks("order-ready");
+    expect(ready.find((b) => b.id === "body")!.data).toEqual({ paras: ["You pay {{order.owing.money}} when you collect, tax included."], onlyWith: "order.owing" });
+    expect(ready.find((b) => b.id === "paid")!.data).toEqual({ lines: [{ label: "Paid", amount: "{{order.paid.money}} on {{order.last_paid_at.date}}" }], onlyWithout: "order.owing" });
+    expect(templateOf("order-ready", "en-US").preheader).toBe("You pay {{order.due.money}} when you collect.");
+  });
+
+  it("keeps the order received and the delivery quote as they were: nothing is payable then", () => {
+    expect(EMAIL_EN["order-received"].paras).toEqual(["You pay when you collect, or by the invoice we send with your delivery."]);
+    expect(JSON.stringify(blocks("delivery-quote"))).not.toContain("pay");
   });
 });

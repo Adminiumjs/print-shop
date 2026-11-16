@@ -37,6 +37,10 @@ export const EMAIL_TRANSLATIONS: Record<Exclude<Tag, "en-US">, EmailWords> = {
     footQuote: "Sie erhalten diese E-Mail, weil Sie das Angebot {{quote.number}} gespeichert haben.",
     footSample: "Sie erhalten diese E-Mail, weil Sie ein Musterpaket angefordert haben.",
     footWorks: "An die Druckerei gesendet, betrifft {{order.number}}.",
+    payButton: "{{order.due.money}} online bezahlen",
+    payNote: "Die Schaltfläche öffnet einen Bezahllink. Sie bezahlen auf der Seite von Stripe oder PayPal.",
+    paid: "Bezahlt",
+    paidOn: "{{order.paid.money}} am {{order.last_paid_at.date}}",
     "order-received": {
       name: "Bestellung eingegangen",
       subject: "Danke — Ihre Bestellung {{order.number}} ist bei uns eingegangen",
@@ -67,10 +71,10 @@ export const EMAIL_TRANSLATIONS: Record<Exclude<Tag, "en-US">, EmailWords> = {
     "order-ready": {
       name: "Abholbereit",
       subject: "{{order.number}} ist abholbereit",
-      preheader: "Sie zahlen {{order.total.money}} bei der Abholung.",
+      preheader: "Sie zahlen {{order.due.money}} bei der Abholung.",
       eyebrow: "Fertig",
       heading: "Ihre Bestellung ist abholbereit",
-      paras: ["Sie zahlen {{order.total.money}} bei der Abholung, inklusive Mehrwertsteuer."],
+      paras: ["Sie zahlen {{order.owing.money}} bei der Abholung, inklusive Mehrwertsteuer."],
       button: "Ihre Bestellung verfolgen",
     },
     "order-dispatched": {
@@ -158,6 +162,10 @@ export const EMAIL_TRANSLATIONS: Record<Exclude<Tag, "en-US">, EmailWords> = {
     footQuote: "Vous recevez cet e-mail parce que vous avez enregistré le devis {{quote.number}}.",
     footSample: "Vous recevez cet e-mail parce que vous avez demandé un jeu d’échantillons.",
     footWorks: "Envoyé à l’atelier au sujet de {{order.number}}.",
+    payButton: "Payer {{order.due.money}} en ligne",
+    payNote: "Le bouton ouvre un lien de paiement. Vous paierez sur la page Stripe ou PayPal.",
+    paid: "Payé",
+    paidOn: "{{order.paid.money}} le {{order.last_paid_at.date}}",
     "order-received": {
       name: "Commande reçue",
       subject: "Merci — nous avons bien reçu votre commande {{order.number}}",
@@ -188,10 +196,10 @@ export const EMAIL_TRANSLATIONS: Record<Exclude<Tag, "en-US">, EmailWords> = {
     "order-ready": {
       name: "Prête à retirer",
       subject: "Votre commande {{order.number}} est prête à retirer",
-      preheader: "Vous payez {{order.total.money}} au retrait.",
+      preheader: "Vous payez {{order.due.money}} au retrait.",
       eyebrow: "Prête",
       heading: "Votre commande est prête à retirer",
-      paras: ["Vous payez {{order.total.money}} au retrait, TVA comprise."],
+      paras: ["Vous payez {{order.owing.money}} au retrait, TVA comprise."],
       button: "Suivre votre commande",
     },
     "order-dispatched": {
@@ -279,6 +287,10 @@ export const EMAIL_TRANSLATIONS: Record<Exclude<Tag, "en-US">, EmailWords> = {
     footQuote: "Du får denne e-mail, fordi du har gemt tilbuddet {{quote.number}}.",
     footSample: "Du får denne e-mail, fordi du har bedt om en prøvepakke.",
     footWorks: "Sendt til trykkeriet om {{order.number}}.",
+    payButton: "Betal {{order.due.money}} online",
+    payNote: "Knappen åbner et betalingslink. Du betaler på Stripe- eller PayPal-siden.",
+    paid: "Betalt",
+    paidOn: "{{order.paid.money}} den {{order.last_paid_at.date}}",
     "order-received": {
       name: "Bestilling modtaget",
       subject: "Tak — vi har modtaget din ordre {{order.number}}",
@@ -309,10 +321,10 @@ export const EMAIL_TRANSLATIONS: Record<Exclude<Tag, "en-US">, EmailWords> = {
     "order-ready": {
       name: "Klar til afhentning",
       subject: "{{order.number}} er klar til afhentning",
-      preheader: "Du betaler {{order.total.money}} ved afhentning.",
+      preheader: "Du betaler {{order.due.money}} ved afhentning.",
       eyebrow: "Klar",
       heading: "Din ordre er klar til afhentning",
-      paras: ["Du betaler {{order.total.money}} ved afhentning, inkl. moms."],
+      paras: ["Du betaler {{order.owing.money}} ved afhentning, inkl. moms."],
       button: "Følg din ordre",
     },
     "order-dispatched": {
@@ -400,6 +412,10 @@ export const EMAIL_TRANSLATIONS: Record<Exclude<Tag, "en-US">, EmailWords> = {
     footQuote: "Tento e-mail dostáváte, protože jste si uložili nabídku {{quote.number}}.",
     footSample: "Tento e-mail dostáváte, protože jste požádali o vzorkovník.",
     footWorks: "Odesláno tiskárně ohledně {{order.number}}.",
+    payButton: "Zaplatit {{order.due.money}} online",
+    payNote: "Tlačítko otevře platební odkaz. Zaplatíte na stránce Stripe nebo PayPal.",
+    paid: "Zaplaceno",
+    paidOn: "{{order.paid.money}} dne {{order.last_paid_at.date}}",
     "order-received": {
       name: "Objednávka přijata",
       subject: "Děkujeme — vaši objednávku {{order.number}} jsme přijali",
@@ -430,10 +446,10 @@ export const EMAIL_TRANSLATIONS: Record<Exclude<Tag, "en-US">, EmailWords> = {
     "order-ready": {
       name: "Připraveno k vyzvednutí",
       subject: "Objednávka {{order.number}} je připravena k vyzvednutí",
-      preheader: "Při vyzvednutí zaplatíte {{order.total.money}}.",
+      preheader: "Při vyzvednutí zaplatíte {{order.due.money}}.",
       eyebrow: "Hotovo",
       heading: "Vaše objednávka je připravena k vyzvednutí",
-      paras: ["Při vyzvednutí zaplatíte {{order.total.money}} včetně DPH."],
+      paras: ["Při vyzvednutí zaplatíte {{order.owing.money}} včetně DPH."],
       button: "Sledovat zakázku",
     },
     "order-dispatched": {
@@ -521,6 +537,10 @@ export const EMAIL_TRANSLATIONS: Record<Exclude<Tag, "en-US">, EmailWords> = {
     footQuote: "تصلك هذه الرسالة لأنك حفظت عرض السعر {{quote.number}}.",
     footSample: "تصلك هذه الرسالة لأنك طلبت حزمة عينات.",
     footWorks: "أُرسلت إلى المطبعة بشأن {{order.number}}.",
+    payButton: "ادفع {{order.due.money}} عبر الإنترنت",
+    payNote: "يفتح الزر رابط دفع. ستدفع على صفحة Stripe أو PayPal.",
+    paid: "المدفوع",
+    paidOn: "{{order.paid.money}} في {{order.last_paid_at.date}}",
     "order-received": {
       name: "استُلم الطلب",
       subject: "شكرًا — وصلنا طلبك {{order.number}}",
@@ -551,10 +571,10 @@ export const EMAIL_TRANSLATIONS: Record<Exclude<Tag, "en-US">, EmailWords> = {
     "order-ready": {
       name: "جاهز للاستلام",
       subject: "طلبك {{order.number}} جاهز للاستلام",
-      preheader: "تدفع {{order.total.money}} عند الاستلام.",
+      preheader: "تدفع {{order.due.money}} عند الاستلام.",
       eyebrow: "جاهز",
       heading: "طلبك جاهز للاستلام",
-      paras: ["تدفع {{order.total.money}} عند الاستلام، شاملًا الضريبة."],
+      paras: ["تدفع {{order.owing.money}} عند الاستلام، شاملًا الضريبة."],
       button: "تتبّع طلبك",
     },
     "order-dispatched": {
@@ -642,6 +662,10 @@ export const EMAIL_TRANSLATIONS: Record<Exclude<Tag, "en-US">, EmailWords> = {
     footQuote: "您收到这封邮件，是因为您保存了报价 {{quote.number}}。",
     footSample: "您收到这封邮件，是因为您索取了样张包。",
     footWorks: "已发送给印刷厂，关于 {{order.number}}。",
+    payButton: "在线支付 {{order.due.money}}",
+    payNote: "此按钮会打开付款链接。您将在 Stripe 或 PayPal 页面上付款。",
+    paid: "已付",
+    paidOn: "{{order.last_paid_at.date}} 付款 {{order.paid.money}}",
     "order-received": {
       name: "已收到订单",
       subject: "谢谢，我们已收到您的订单 {{order.number}}",
@@ -672,10 +696,10 @@ export const EMAIL_TRANSLATIONS: Record<Exclude<Tag, "en-US">, EmailWords> = {
     "order-ready": {
       name: "可以取件",
       subject: "订单 {{order.number}} 可以取件了",
-      preheader: "取件时支付 {{order.total.money}}。",
+      preheader: "取件时支付 {{order.due.money}}。",
       eyebrow: "已完成",
       heading: "您的订单可以取件了",
-      paras: ["取件时支付 {{order.total.money}}，含税。"],
+      paras: ["取件时支付 {{order.owing.money}}，含税。"],
       button: "跟踪您的订单",
     },
     "order-dispatched": {
@@ -763,6 +787,10 @@ export const EMAIL_TRANSLATIONS: Record<Exclude<Tag, "en-US">, EmailWords> = {
     footQuote: "您收到這封郵件，是因為您儲存了報價 {{quote.number}}。",
     footSample: "您收到這封郵件，是因為您索取了樣張包。",
     footWorks: "已寄給印刷廠，關於 {{order.number}}。",
+    payButton: "線上支付 {{order.due.money}}",
+    payNote: "此按鈕會開啟付款連結。您將在 Stripe 或 PayPal 頁面上付款。",
+    paid: "已付",
+    paidOn: "{{order.last_paid_at.date}} 付款 {{order.paid.money}}",
     "order-received": {
       name: "已收到訂單",
       subject: "謝謝，我們已收到您的訂單 {{order.number}}",
@@ -793,10 +821,10 @@ export const EMAIL_TRANSLATIONS: Record<Exclude<Tag, "en-US">, EmailWords> = {
     "order-ready": {
       name: "可以取件",
       subject: "訂單 {{order.number}} 可以取件了",
-      preheader: "取件時支付 {{order.total.money}}。",
+      preheader: "取件時支付 {{order.due.money}}。",
       eyebrow: "已完成",
       heading: "您的訂單可以取件了",
-      paras: ["取件時支付 {{order.total.money}}，含稅。"],
+      paras: ["取件時支付 {{order.owing.money}}，含稅。"],
       button: "追蹤您的訂單",
     },
     "order-dispatched": {

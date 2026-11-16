@@ -60,6 +60,12 @@ export const ORDER_SELECT = [
   "tracking",
   "cancelled_at",
   "link_expires",
+  // What was paid and is still to pay, and whether it can be paid now: never a payment's own row.
+  "paid",
+  "paid_online",
+  "due",
+  "last_paid_at",
+  "pay_open",
 ];
 
 /** What placing an order answers: its figures, never the customer's own details back. */

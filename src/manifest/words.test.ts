@@ -19,10 +19,10 @@ const TAGS: Tag[] = ["de-DE", "fr-FR", "da-DK", "cs-CZ", "ar-EG", "zh-CN", "zh-T
 
 /** Labels that are the same word in English and in the language. */
 const SAME_AS_ENGLISH: Partial<Record<Tag, string[]>> = {
-  "de-DE": ["Code", "Express", "Express (+%)", "Material", "Matt", "Name", "Option", "Position", "Proof", "Proofs", "Status"],
+  "de-DE": ["Code", "Express", "Express (+%)", "Material", "Matt", "Name", "Online", "Option", "Position", "Proof", "Proofs", "Status"],
   "fr-FR": ["Code", "E-mail", "E-mails", "Express", "Express (+%)", "Machine", "Machines", "Note", "Option", "Options", "Photo", "Position", "Total"],
-  "da-DK": ["Design", "E-mail", "E-mails", "Note", "Prepress", "Side", "Status"],
-  "cs-CZ": ["E-mail"],
+  "da-DK": ["Design", "E-mail", "E-mails", "Note", "Online", "Prepress", "Side", "Status"],
+  "cs-CZ": ["E-mail", "Online"],
 };
 
 const ENTRIES = Object.entries(WORDS);
