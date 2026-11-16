@@ -6,7 +6,7 @@
  * customer's own session; the works' delivery quote, accepted or collected
  * instead; the files sent and what their checks said; how it leaves.
  */
-import { Check, CircleAlert, CircleCheckBig, CircleX, CreditCard, FileText, FlaskConical, FolderHeart, Link2, MailCheck, MessageSquareText, PenTool, Store, TriangleAlert, Truck } from "lucide-react";
+import { Check, CircleAlert, CircleCheckBig, CircleX, CreditCard, FileText, FlaskConical, FolderHeart, Hourglass, Link2, MailCheck, MessageSquareText, PenTool, Store, TriangleAlert, Truck } from "lucide-react";
 import { useEffect } from "react";
 
 import { useI18n, type MessageKey } from "../../i18n/index.tsx";
@@ -255,6 +255,7 @@ function PayBox({ order }: { order: Row }) {
   const offer = usePay((s) => s.offer);
   const phase = usePay((s) => s.phase);
   const paidOnReturn = usePay((s) => s.paidOnReturn);
+  const returned = usePay((s) => (s.returned !== null && String(s.returned.orderId) === String(order["id"]) ? s.returned.standing : null));
   const day = useDay();
   if (phase === "checking")
     return (
@@ -268,6 +269,17 @@ function PayBox({ order }: { order: Row }) {
         <CircleCheckBig size={20} aria-hidden="true" />
         <div className="ma-done-title">
           {t("pay.paid", { amount: money(order["paid_online"] ?? order["paid"], currency, locale), date: day.full(typeof order["last_paid_at"] === "string" ? order["last_paid_at"] : null) })}
+        </div>
+      </div>
+    );
+  // Back from the pay page with the bank still confirming: never offered again, whatever else the page would say.
+  if (returned === "confirming" && !isPaid(order))
+    return (
+      <div role="status" className="ma-done ma-done--warn" data-testid="pay-confirming">
+        <Hourglass size={20} aria-hidden="true" />
+        <div>
+          <div className="ma-done-title">{t("pay.confirmingTitle")}</div>
+          <div className="ma-muted">{t("pay.confirmingBody")}</div>
         </div>
       </div>
     );
@@ -300,10 +312,10 @@ function PayBox({ order }: { order: Row }) {
       </button>
       <p className="ma-muted">{offer.standIn === true ? t("pay.demo") : t("pay.where")}</p>
       <p className="ma-muted">{t(order["delivery_method"] === "deliver" ? "pay.orInvoice" : "pay.orCollect")}</p>
-      {phase === "failed" && (
-        <p role="alert" className="mp-field-error">
+      {(phase === "failed" || returned === "failed" || returned === "expired") && (
+        <p role="alert" className="mp-field-error" data-testid="pay-not-taken">
           <TriangleAlert size={13} aria-hidden="true" />
-          {t("pay.failed")}
+          {t(returned === "expired" && phase !== "failed" ? "pay.expired" : "pay.failed")}
         </p>
       )}
       <span className="mp-sr" role="status" aria-live="polite">

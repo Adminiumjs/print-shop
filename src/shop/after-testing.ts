@@ -8,7 +8,7 @@
  *
  * Tests only; nothing that ships imports it.
  */
-import type { AfterPort, CodeAnswer, DeliveryAnswer, HeldQuote, Me, OrderRead, PayOffer, ProofAnswer, QuoteRead, Via } from "./after-port.ts";
+import type { AfterPort, CodeAnswer, DeliveryAnswer, HeldQuote, Me, OrderRead, PayOffer, PayStanding, ProofAnswer, QuoteRead, Via } from "./after-port.ts";
 import { ShopError, type Id, type Refused, type Row } from "./port.ts";
 
 export interface AfterCall {
@@ -41,6 +41,8 @@ export interface FakeAfter extends AfterPort {
   linkOpen: boolean;
   /** What Adminium says of paying online; null for an Adminium that takes no payments online. */
   paying: PayOffer | null;
+  /** What Adminium answers of the order's newest payment, one answer a call; "none" once they run out. */
+  standings: PayStanding[];
 }
 
 export const CUSTOMER = { name: "Harbour Bakery", email: "hello@harbourbakery.example" };
@@ -134,6 +136,7 @@ export function fakeAfter(): FakeAfter {
     session: null,
     linkOpen: false,
     paying: null,
+    standings: [],
     refuseNext: (r) => {
       refusal = { status: 400, column: null, child: null, index: null, reason: null, changed: null, raw: null, ...r };
     },
@@ -244,6 +247,10 @@ export function fakeAfter(): FakeAfter {
       record("startPay", via, orderId);
       refuse();
       return { payUrl: `/pay/tok_${String(orderId)}` };
+    },
+    async payState(via: Via, orderId: Id) {
+      record("payState", via, orderId);
+      return fake.standings.shift() ?? "none";
     },
     heldSession(via: Via) {
       if (via === "mine") return fake.session === null ? null : { token: `SESSION:${fake.session}`, expiresAt: Date.parse("2027-01-01") };

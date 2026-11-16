@@ -96,7 +96,8 @@ for an order online once every proof is approved and no delivery price is
 still to agree: "Pay now" on their order page, and a pay button in the
 "proof approved", "ready to collect" and "on its way" e-mails while something
 is owed. They pay on the Stripe or PayPal page through Adminium's pay page,
-and come back to their order page, which says when it is paid. Collecting at
+and come back to their order page, which says when it is paid (or that
+their bank is still confirming it, or that nothing was taken). Collecting at
 the works, or paying by the invoice sent with a delivery, stays beside it.
 At the counter "Mark collected" becomes **Take payment and hand over**: card
 on the works' own terminal (the approval code and the card's last four from

@@ -151,11 +151,20 @@ export interface AfterPort {
   payOffer?(): Promise<PayOffer>;
   /** The order's pay link, asked through the session that reads it: the amount is the order's own, never one the page sends. */
   startPay?(via: Via, orderId: Id): Promise<{ payUrl: string }>;
+  /** How the order's newest online payment stands, for the customer back from the pay page: one word, nothing of the payment. */
+  payState?(via: Via, orderId: Id): Promise<PayStanding>;
   /** The session that reads orders this way now, for the tab to keep across the pay page; null when there is none. */
   heldSession?(via: Via): { token: string; expiresAt: number } | null;
   /** A session this tab kept before the pay page, taken up again on the way back. */
   resumeSession?(via: Via, session: { token: string; expiresAt: number }): void;
 }
+
+/**
+ * How an order's newest online payment stands, as Adminium says it: none
+ * started; a checkout still open at the service; the bank confirming it;
+ * paid; not finished; or the pay page's time run out.
+ */
+export type PayStanding = "none" | "open" | "confirming" | "paid" | "failed" | "expired";
 
 /** Whether "Pay now" may be offered at all. */
 export interface PayOffer {
@@ -376,6 +385,11 @@ export class AdminiumAfter implements AfterPort {
   startPay(via: Via, orderId: Id): Promise<{ payUrl: string }> {
     const ref = via === "mine" ? this.refs.myOrders : this.refs.linkOrder;
     return answer(() => this.on(via).payments.start(ref, String(orderId)));
+  }
+
+  payState(via: Via, orderId: Id): Promise<PayStanding> {
+    const ref = via === "mine" ? this.refs.myOrders : this.refs.linkOrder;
+    return answer(async () => (await this.on(via).payments.state(ref, String(orderId))).state);
   }
 
   heldSession(via: Via): { token: string; expiresAt: number } | null {

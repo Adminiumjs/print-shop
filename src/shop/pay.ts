@@ -26,18 +26,23 @@
  * "Pay now" is pressed, the hand-off is shown a moment, and the order reads
  * paid (no money moves).
  *
- * Coming back unpaid, the page cannot yet tell a payment the bank is still
- * confirming from one given up: Adminium's public read of a payment's state
- * is not there yet. So the order is read twice, a few seconds apart, and
- * then shows as it stands (`settle` is where that read goes).
+ * Coming back, the page asks Adminium how the order's newest payment stands
+ * (`payState`) and says so: paid (the order read again); the bank still
+ * confirming it, which some ways take days for (no "Pay now" then: it is
+ * not to be paid twice); not finished, or the pay page's time run out
+ * (nothing was taken, and "Pay now" is there again). A checkout the service
+ * has not answered yet is asked about again, a few seconds apart.
  */
 import { create } from "zustand";
 
 import { deviceNow } from "../studio/clock.ts";
-import type { PayOffer, Via } from "./after-port.ts";
+import type { PayOffer, PayStanding, Via } from "./after-port.ts";
 import type { Id, Row } from "./port.ts";
 
 export type PayPhase = "idle" | "taking" | "checking" | "failed";
+
+/** What the way back from the pay page found, when it was not paid: the bank confirming it, not finished, or out of time. */
+export type Returned = "confirming" | "failed" | "expired";
 
 export interface PayState {
   /** Adminium's answer; null until asked, and then the page reads as it always has. */
@@ -45,9 +50,11 @@ export interface PayState {
   phase: PayPhase;
   /** The order this tab came back to from the pay page and found paid: the page says so once. */
   paidOnReturn: Id | null;
+  /** The order this tab came back to unpaid, and how its payment stands. */
+  returned: { orderId: Id; standing: Returned } | null;
 }
 
-export const usePay = create<PayState>(() => ({ offer: null, phase: "idle", paidOnReturn: null }));
+export const usePay = create<PayState>(() => ({ offer: null, phase: "idle", paidOnReturn: null, returned: null }));
 
 /** Where this tab keeps the order it went to pay for, and how long that holds. */
 export const PAYING_KEY = "printing.shop.paying";
@@ -116,6 +123,7 @@ export const isPaid = (order: Row): boolean => order["due"] !== null && order["d
 
 export interface PayDoor {
   payOffer?(): Promise<PayOffer>;
+  payState?(via: Via, orderId: Id): Promise<PayStanding>;
   startPay?(via: Via, orderId: Id): Promise<{ payUrl: string }>;
   heldSession?(via: Via): { token: string; expiresAt: number } | null;
 }
@@ -136,7 +144,7 @@ export async function payNow(door: PayDoor | null, via: Via, order: Row): Promis
     usePay.setState({ phase: "failed" });
     return "failed";
   }
-  usePay.setState({ phase: "taking", paidOnReturn: null });
+  usePay.setState({ phase: "taking", paidOnReturn: null, returned: null });
   try {
     const { payUrl } = await door.startPay(via, order["id"] as Id);
     if (usePay.getState().offer?.standIn === true) {
@@ -162,20 +170,35 @@ export function checking(): void {
 }
 
 /**
- * The order as it stands after the way back: read again by `reread` until it
- * shows paid, twice at most, `wait` apart (the payment service tells
- * Adminium a moment after the customer is sent back).
+ * The order as it stands after the way back: read (`reread`), then, with
+ * Adminium's word on the payment (`ask`), a checkout still open is asked
+ * about again, `wait` apart, a few times; then the order is read again and
+ * the page says what was found. With no word to ask (an older door), the order alone is
+ * read, twice, and shows paid or as it stood.
  */
-export async function settle(reread: () => Promise<Row | null>, wait = 3_000): Promise<void> {
+export async function settle(reread: () => Promise<Row | null>, ask: (() => Promise<PayStanding>) | null = null, wait = 3_000, tries = 5): Promise<void> {
+  const pause = () => new Promise((resolve) => setTimeout(resolve, wait));
+  // The order first, so the page stands behind "Checking your payment…".
   let order = await reread();
-  if (order !== null && !isPaid(order) && wait > 0) {
-    await new Promise((resolve) => setTimeout(resolve, wait));
+  let standing: PayStanding | null = null;
+  if (ask !== null) {
+    for (let i = 0; i < tries; i += 1) {
+      standing = await ask().catch(() => null);
+      if (standing !== "open" || wait <= 0) break;
+      await pause();
+    }
+    // What the payment did to the order: read it again.
+    order = await reread();
+  } else if (order !== null && !isPaid(order) && wait > 0) {
+    await pause();
     order = await reread();
   }
-  usePay.setState({ phase: "idle", paidOnReturn: order !== null && isPaid(order) ? (order["id"] as Id) : null });
+  const paid = order !== null && (isPaid(order) || standing === "paid");
+  const returned = !paid && order !== null && (standing === "confirming" || standing === "failed" || standing === "expired") ? { orderId: order["id"] as Id, standing } : null;
+  usePay.setState({ phase: "idle", paidOnReturn: paid ? (order!["id"] as Id) : null, returned });
 }
 
 /** Forget the flow (sign-out, a test). */
 export function resetPay(): void {
-  usePay.setState({ offer: null, phase: "idle", paidOnReturn: null });
+  usePay.setState({ offer: null, phase: "idle", paidOnReturn: null, returned: null });
 }

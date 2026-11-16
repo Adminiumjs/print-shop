@@ -173,3 +173,13 @@ describe("paying online through the door", () => {
     expect(headers).toEqual(["csrf-rehearse", null]);
   });
 });
+
+describe("how a payment stands, through the door", () => {
+  it("asks Adminium by the order's entry and key, and hands back its one word", async () => {
+    const { fetch, sent } = wire({ "GET /api/v1/public/payments/state": { body: { data: { state: "confirming" } } } });
+    const door = new AdminiumShop(SERVED, { fetch, humanCheck: false });
+    door.orderClient!.adoptSession({ token: "S1", expiresAt: 4102444800000, level: "verified" });
+    expect(await door.after().payState!("link", 13)).toBe("confirming");
+    expect(sent).toEqual([{ method: "GET", path: "/api/v1/public/payments/state", query: { ref: PUBLIC_REFS.orderByLink, id: "13" }, body: null }]);
+  });
+});

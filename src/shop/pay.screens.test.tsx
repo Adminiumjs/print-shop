@@ -238,8 +238,56 @@ describe("back from the pay page", () => {
     await sweep("back, paid");
   });
 
+  it("asks Adminium again while the checkout is still open, and says paid once it is", async () => {
+    payable({ due: "0", paid_in: "104.69", paid: "104.69", paid_online: "104.69", last_paid_at: "2026-08-05T09:42:00Z" });
+    port.afterPort.standings = ["open", "paid"];
+    await mount("/order");
+    expect(document.querySelector('[data-testid="pay-checking"]')?.textContent).toBe("Checking your payment…");
+    await settle(12);
+    expect(calls("payState").map((c) => c.args)).toEqual([
+      ["link", "13"],
+      ["link", "13"],
+    ]);
+    expect(document.querySelector('[data-testid="pay-paid"]')).not.toBeNull();
+  });
+
+  it("says the bank is confirming, and offers no second payment", async () => {
+    payable();
+    port.afterPort.standings = ["confirming"];
+    await mount("/order");
+    await settle(4);
+    const box = document.querySelector('[data-testid="pay-confirming"]')!;
+    expect(box.textContent).toContain("Your bank is confirming the payment");
+    expect(box.textContent).toContain("Some ways to pay take a few days. Please don't pay again. We'll e-mail you when it's confirmed.");
+    expect(document.querySelector('[data-testid="pay-now"]')).toBeNull();
+    await sweep("back, the bank confirming");
+  });
+
+  it("says a payment that did not finish, or whose page ran out of time, took nothing, and offers Pay now again", async () => {
+    for (const [standing, words] of [
+      ["failed", "The payment didn't finish. Nothing was taken."],
+      ["expired", "The payment page ran out of time. Nothing was taken."],
+    ] as const) {
+      sessionStorage.setItem(PAYING_KEY, JSON.stringify({ via: "link", orderId: "13", session: { token: "LINKSESSION", expiresAt: Date.parse("2027-01-01") }, at: Date.now() }));
+      payable();
+      port.afterPort.standings = [standing];
+      await mount("/order");
+      await settle(4);
+      expect(document.querySelector('[data-testid="pay-not-taken"]')?.textContent).toBe(words);
+      expect(document.querySelector('[data-testid="pay-now"]')).not.toBeNull();
+      await sweep(`back, ${standing}`);
+      await act(async () => root?.unmount());
+      root = null;
+      host.remove();
+      resetAfter(null);
+      resetPay();
+      port.afterPort.linkOpen = false;
+    }
+  });
+
   it("checks, then shows the order as it stands when nothing has come in", async () => {
     payable();
+    port.afterPort.standings = ["open"];
     await mount("/order");
     expect(document.querySelector('[data-testid="pay-checking"]')?.textContent).toBe("Checking your payment…");
     await settle(12);

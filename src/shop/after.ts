@@ -442,7 +442,8 @@ export async function backFromPaying(): Promise<boolean> {
     const order = current();
     return order !== null && String(order["id"]) === kept.orderId ? order : null;
   };
-  await settle(reread);
+  const ask = door.payState === undefined ? null : () => door.payState!(kept.via, kept.orderId);
+  await settle(reread, ask);
   return true;
 }
 
