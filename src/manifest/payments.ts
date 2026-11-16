@@ -12,8 +12,10 @@
  * payments kept), never a figure a page sends. A payment the service confirms
  * lands as a row of the order's payments, written by Adminium, with the
  * method `online`, the service it came through and its reference; a refund
- * writes what went back on that row. The counter's own payments (card on the
- * works' terminal, cash) are rows the works writes beside them.
+ * writes what went back on that row. A payment taken by hand (the counter's
+ * card on the works' terminal or cash, a bank transfer for an invoice) is
+ * recorded through Adminium too, as the person who took it: never above what
+ * is due, its approval code and the card's last four checked.
  *
  * Installing or updating the app switches nothing on: the order arrives
  * switched off in Payments, and someone who manages payments switches it on.
@@ -36,10 +38,13 @@ export const PAYMENTS = {
         link: "order_id",
         amount: "amount",
         paidAt: "paid_at",
-        // Every payment service's payment is "online"; the counter writes its own ways.
+        // Every payment service's payment is "online"; one recorded by hand keeps its own way (cash, card…).
         method: { column: "method", values: { "*": "online" } },
         note: "note",
         reference: "payment_ref",
+        // A card on the works' own terminal: what its slip says, as the counter types it.
+        approvalCode: "approval_code",
+        last4: "card_last4",
         refunded: "refunded",
         provider: "provider",
         currency: "currency",

@@ -12059,7 +12059,10 @@
             "enum": [
               "online",
               "card",
-              "cash"
+              "cash",
+              "bank-transfer",
+              "cheque",
+              "other"
             ],
             "label": {
               "en-US": "Way paid",
@@ -12103,12 +12106,45 @@
                     "ar-EG": "نقدًا",
                     "zh-CN": "现金",
                     "zh-TW": "現金"
+                  },
+                  "bank-transfer": {
+                    "en-US": "Bank transfer",
+                    "de-DE": "Überweisung",
+                    "fr-FR": "Virement",
+                    "da-DK": "Bankoverførsel",
+                    "cs-CZ": "Bankovní převod",
+                    "ar-EG": "تحويل بنكي",
+                    "zh-CN": "银行转账",
+                    "zh-TW": "銀行轉帳"
+                  },
+                  "cheque": {
+                    "en-US": "Cheque",
+                    "de-DE": "Scheck",
+                    "fr-FR": "Chèque",
+                    "da-DK": "Check",
+                    "cs-CZ": "Šek",
+                    "ar-EG": "شيك",
+                    "zh-CN": "支票",
+                    "zh-TW": "支票"
+                  },
+                  "other": {
+                    "en-US": "Other",
+                    "de-DE": "Sonstiges",
+                    "fr-FR": "Autre",
+                    "da-DK": "Andet",
+                    "cs-CZ": "Jiné",
+                    "ar-EG": "أخرى",
+                    "zh-CN": "其他",
+                    "zh-TW": "其他"
                   }
                 },
                 "tones": {
                   "online": "info",
                   "card": "neutral",
-                  "cash": "neutral"
+                  "cash": "neutral",
+                  "bank-transfer": "neutral",
+                  "cheque": "neutral",
+                  "other": "neutral"
                 }
               }
             }
@@ -20277,14 +20313,15 @@
             "amount",
             "method",
             "paid_at",
-            "approval_code",
-            "card_last4",
             "note"
           ],
           "writableValues": {
             "method": [
               "card",
-              "cash"
+              "cash",
+              "bank-transfer",
+              "cheque",
+              "other"
             ]
           },
           "creatable": [
@@ -20292,14 +20329,15 @@
             "amount",
             "method",
             "paid_at",
-            "approval_code",
-            "card_last4",
             "note"
           ],
           "creatableValues": {
             "method": [
               "card",
-              "cash"
+              "cash",
+              "bank-transfer",
+              "cheque",
+              "other"
             ]
           }
         },
@@ -21783,7 +21821,6 @@
         "table:@spoils:read",
         "table:@sample_requests:read",
         "table:@payments:read",
-        "table:@payments:create",
         "table:@orders:read_pii",
         "table:@sample_requests:read_pii",
         "table:@orders:update",
@@ -21837,22 +21874,6 @@
           "writableValues": {
             "status": [
               "posted"
-            ]
-          }
-        },
-        "payments": {
-          "creatable": [
-            "order_id",
-            "amount",
-            "method",
-            "paid_at",
-            "approval_code",
-            "card_last4"
-          ],
-          "creatableValues": {
-            "method": [
-              "card",
-              "cash"
             ]
           }
         }
@@ -32356,6 +32377,8 @@
           },
           "note": "note",
           "reference": "payment_ref",
+          "approvalCode": "approval_code",
+          "last4": "card_last4",
           "refunded": "refunded",
           "provider": "provider",
           "currency": "currency"

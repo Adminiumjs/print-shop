@@ -19,8 +19,10 @@
  *             number, pricing a delivery over the bands and sending its
  *             quote, and posting sample packs. Taking payment as it hands
  *             an order over: card on the works' terminal (its approval code
- *             and the card's last four) or cash, written as a payment of the
- *             order; never one taken online, and never a refund.
+ *             and the card's last four) or cash, recorded through Adminium
+ *             as a payment of the order it may change (Adminium writes the
+ *             row, never above what is due); it reads the payments, writes
+ *             none itself, and never refunds.
  *
  * The owner may refund a payment taken online (`payments:@:refund`, this
  * app's payments only), from the job ticket or Adminium's Payments; nobody
@@ -190,11 +192,15 @@ const typed = (ref: string, ...leaveOut: string[]): string[] =>
 /** What only the customer gives, on their own order or quote: the tick for the works' news, the link, the retry key. */
 export const CUSTOMERS_OWN = ["may_email", "link_token", "client_key"];
 
-/** What only a payment taken online fills: its reference, the service, its currency and what was refunded of it. */
-export const ONLINE_ONLY = ["payment_ref", "provider", "currency", "refunded"];
+/**
+ * What Adminium alone fills of a payment: an online one's reference, service,
+ * currency and refunds, and a card's approval code and last four, which it
+ * checks as a person records them.
+ */
+export const ONLINE_ONLY = ["payment_ref", "provider", "currency", "refunded", "approval_code", "card_last4"];
 
-/** What the counter writes of a payment it takes as it hands an order over: card on the works' terminal, or cash. */
-export const COUNTER_PAYMENT = ["order_id", "amount", "method", "paid_at", "approval_code", "card_last4"];
+/** The ways a person may write by hand: never online, which only the payment service's confirmation writes. */
+export const BY_HAND = ["card", "cash", "bank-transfer", "cheque", "other"];
 
 /** The rate card and the catalogue: every role reads them, the owner alone edits them. */
 const RATE_CARD = ["settings", "materials", "sizes", "finishes", "breaks", "packaging", "delivery_bands", "products", "options", "option_rules", "machines", "closures"];
@@ -238,9 +244,9 @@ export const ROLES = [
       // A payment by hand, never one marked online: only the payment service's confirmation writes that.
       payments: {
         writable: typed("payments", ...ONLINE_ONLY),
-        writableValues: { method: ["card", "cash"] },
+        writableValues: { method: BY_HAND },
         creatable: typed("payments", ...ONLINE_ONLY),
-        creatableValues: { method: ["card", "cash"] },
+        creatableValues: { method: BY_HAND },
       },
       orders: { writable: typed("orders", ...CUSTOMERS_OWN), creatable: typed("orders", ...CUSTOMERS_OWN) },
       saved_quotes: { writable: typed("saved_quotes", ...CUSTOMERS_OWN), creatable: typed("saved_quotes", ...CUSTOMERS_OWN) },
@@ -302,7 +308,6 @@ export const ROLES = [
     permissions: [
       "app:@:staff",
       ...[...RATE_CARD, ...ORDER_READS, "sample_requests", "payments"].flatMap((table) => grant(table, "read")),
-      ...grant("payments", "create"),
       pii("orders"),
       pii("sample_requests"),
       ...grant("orders", "update"),
@@ -320,8 +325,6 @@ export const ROLES = [
       },
       jobs: { writable: ["stage"], writableValues: { stage: ["collected", "dispatched"] }, writableFrom: { stage: ["ready"] } },
       sample_requests: { writable: ["status"], writableValues: { status: ["posted"] } },
-      // A payment taken over the counter: never one marked online, which only the payment service's confirmation writes.
-      payments: { creatable: COUNTER_PAYMENT, creatableValues: { method: ["card", "cash"] } },
     },
     // Whether a job names a design, of the print shop's customers alone.
     tables: [{ addOn: CUSTOMISER, table: "designs", actions: ["read"], limit: { rows: { read: OWN_ROWS } } }, ...STOCK_READS, ...SHIPMENT_READS],

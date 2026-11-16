@@ -48,6 +48,8 @@ describe("an order paid online", () => {
       method: { column: "method", values: { "*": "online" } },
       note: "note",
       reference: "payment_ref",
+      approvalCode: "approval_code",
+      last4: "card_last4",
       refunded: "refunded",
       provider: "provider",
       currency: "currency",
@@ -92,9 +94,9 @@ describe("an order paid online", () => {
     expect(column("orders", "paid_online").rules!["rollup"]).toEqual({ from: "payments", via: "order_id", sum: "net_amount", where: { column: "method", eq: "online" } });
   });
 
-  it("keeps each payment's reference in a text column marked unique, and its ways online, card on the terminal and cash", () => {
+  it("keeps each payment's reference in a text column marked unique, and its ways online and Adminium's ways by hand", () => {
     expect(column("payments", "payment_ref")).toMatchObject({ type: "text", unique: true, nullable: true });
-    expect((column("payments", "method") as Column & { enum: string[] }).enum).toEqual(["online", "card", "cash"]);
+    expect((column("payments", "method") as Column & { enum: string[] }).enum).toEqual(["online", "card", "cash", "bank-transfer", "cheque", "other"]);
     expect(column("payments", "approval_code")).toMatchObject({ type: "text", maxLength: 12 });
     expect(column("payments", "card_last4")).toMatchObject({ type: "text", maxLength: 4 });
   });
@@ -112,13 +114,12 @@ describe("who writes a payment, and who gives money back", () => {
     for (const key of ["prepress", "press", "counter"]) expect(role(key).permissions.filter((p) => p.startsWith("payments:")), key).toEqual([]);
   });
 
-  it("lets the counter take a payment as it hands an order over, by card on the terminal or cash, and change none", () => {
+  it("lets the counter read the payments and write none itself: Adminium records what it takes", () => {
     const held = role("counter").permissions.filter((p) => p.startsWith("table:@payments:"));
-    expect(held.sort()).toEqual(["table:@payments:create", "table:@payments:read"]);
-    expect(role("counter").limits!["payments"]).toEqual({
-      creatable: ["order_id", "amount", "method", "paid_at", "approval_code", "card_last4"],
-      creatableValues: { method: ["card", "cash"] },
-    });
+    expect(held).toEqual(["table:@payments:read"]);
+    expect(role("counter").limits!["payments"]).toBeUndefined();
+    // Recording a payment by hand asks to change the order: the counter may.
+    expect(role("counter").permissions).toContain("table:@orders:update");
   });
 
   it("lets the press and prepress neither read nor write a payment", () => {
@@ -134,8 +135,8 @@ describe("who writes a payment, and who gives money back", () => {
         expect(limit!.creatable ?? [], `${r.key} creates ${c}`).not.toContain(c);
         expect(limit!.writable ?? [], `${r.key} writes ${c}`).not.toContain(c);
       }
-      expect(limit!.creatableValues, r.key).toEqual({ method: ["card", "cash"] });
-      if (limit!.writable !== undefined) expect(limit!.writableValues, r.key).toEqual({ method: ["card", "cash"] });
+      expect(limit!.creatableValues, r.key).toEqual({ method: ["card", "cash", "bank-transfer", "cheque", "other"] });
+      if (limit!.writable !== undefined) expect(limit!.writableValues, r.key).toEqual({ method: ["card", "cash", "bank-transfer", "cheque", "other"] });
     }
   });
 

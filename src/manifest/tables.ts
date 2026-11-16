@@ -297,10 +297,18 @@ const UNTIL_ACCEPTED = { while: { column: "delivery_quote_accepted_at", isNull: 
 
 /**
  * How an order was paid: online through the payment service the works
- * connected (Adminium writes that row), or at the counter by card on the
- * works' own terminal or in cash (the counter writes it).
+ * connected, at the counter by card on the works' own terminal or in cash,
+ * or by the invoice sent with a delivery (a bank transfer, a cheque). The
+ * ways by hand are Adminium's own words for a payment recorded by a person.
  */
-export const PAYMENT_METHODS: Record<string, string> = { online: "Online", card: "Card on the terminal", cash: "Cash" };
+export const PAYMENT_METHODS: Record<string, string> = {
+  online: "Online",
+  card: "Card on the terminal",
+  cash: "Cash",
+  "bank-transfer": "Bank transfer",
+  cheque: "Cheque",
+  other: "Other",
+};
 
 // ── formulas ────────────────────────────────────────────────────────────────
 
@@ -1262,8 +1270,9 @@ export const TABLES: Table[] = [
   },
   {
     // Money taken for an order. Online, Adminium writes the row once the payment service confirms it (its reference,
-    // the service, the moment), and only a refund changes it after: Adminium writes what went back. At the counter,
-    // the works writes it: card on its own terminal (the approval code and the card's last four from the slip), or cash.
+    // the service, the moment), and only a refund changes it after: Adminium writes what went back. A payment taken by
+    // hand (at the counter: card on the works' own terminal with the approval code and the card's last four from its
+    // slip, or cash) is written by Adminium too, as the person who took it, never for more than is due.
     ref: "payments",
     keep: KEPT_FOR_TAX,
     label: l("Payment"),
@@ -1273,7 +1282,7 @@ export const TABLES: Table[] = [
       id,
       fk("order_id", "orders", "Order", { index: true }),
       price("amount", "Amount", { rules: { validation: { min: 0.01 } } }),
-      choice("method", "Way paid", PAYMENT_METHODS, { tones: { online: "info", card: "neutral", cash: "neutral" } }),
+      choice("method", "Way paid", PAYMENT_METHODS, { tones: { online: "info", card: "neutral", cash: "neutral", "bank-transfer": "neutral", cheque: "neutral", other: "neutral" } }),
       at("paid_at", "Paid", opt),
       // The online payment's own reference: Adminium writes it once, nobody else ever does.
       text("payment_ref", 64, "Payment reference", { ...opt, unique: true }),
