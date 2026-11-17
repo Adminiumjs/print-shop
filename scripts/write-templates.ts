@@ -24,7 +24,7 @@ const n = (v: number) => (Math.round(v * 100) / 100).toFixed(2);
 const lit = (s: string) => `(${s.replace(/[^\x20-\x7e]/g, "-").replace(/([\\()])/g, "\\$1")})`;
 
 interface Page {
-  /** The trim size, in millimetres; null for a page of words only (A4). */
+  /** The trim size, in millimetres; null for a page of words only, which prints on A4. */
   trim: { w: number; h: number } | null;
   lines: string[];
 }

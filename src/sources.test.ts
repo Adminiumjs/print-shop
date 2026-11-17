@@ -276,7 +276,7 @@ const ALLOWED_MODULES: readonly AllowedModule[] = [
   { name: 'zustand', why: 'the in-memory store. It holds state and makes no request' },
   {
     name: '@adminiumjs/public-client',
-    why: 'the connected mode\u2019s client for this shop\u2019s own Adminium instance (28-T28). It DOES issue requests, which is what it is for, and the address it may reach is not forgiven here \u2014 it is `connectedBackend`\u2019s single declared origin, checked over every file and over the built output',
+    why: 'the connected mode\u2019s client for this shop\u2019s own Adminium instance. It DOES issue requests, which is what it is for, and the address it may reach is not forgiven here \u2014 it is `connectedBackend`\u2019s single declared origin, checked over every file and over the built output',
   },
 ];
 
