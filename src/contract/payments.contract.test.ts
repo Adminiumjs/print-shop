@@ -29,7 +29,11 @@ import { fileURLToPath } from "node:url";
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { firstChoice } from "../shop/config.ts";
 import { AdminiumShop } from "../shop/door.ts";
+import type { Catalogue } from "../shop/port.ts";
+import { orderBody, useShop, type BasketLine } from "../shop/store.ts";
+import { sinkMail } from "./mail.ts";
 import { addOnBundle, appBundle, boot, Caller, ENGINES, missing, missingAddOn, ok, PORTS_PER_ENGINE, until, type Engine, type Server } from "./harness.ts";
 import { engineAtLeast, MANIFEST_TEXT } from "./release.ts";
 
@@ -184,6 +188,116 @@ describe.skipIf(why !== null)(`a works on ${FROM}, updated to take payments${why
         expect(again.data.already).toBe(true);
         expect(await rows("payments")).toHaveLength(1);
       }, 120_000);
+
+      /*
+       * THE E-MAILS THAT FOLLOW PAYMENTS. With payments off, an order over the bands, its proof approved and its
+       * delivery quote accepted, sends the e-mails it always did and nothing on accepting. Then a payments manager
+       * rehearses the checkout (the way a works tries paying online before going live, with no payment service
+       * live): the order they place on the shop from the staff address, with their own sign-in, is theirs, and the
+       * outbox judges its mail as payments on. Each of the three e-mails is queued once, in its payments-on form,
+       * addressed to them; carrying the order's own link, Adminium does not send it there.
+       */
+      describe("the e-mails that follow payments", () => {
+        let catalogue: Catalogue;
+        const SHOPPER = { name: "Ruth Okafor", email: "ruth@okafor-studio.dev", address_line1: "4 Mill Lane", town: "Bourne End", postcode: "SL8 5PQ", may_email: false, language: "en-US" };
+        const PDF = Buffer.from("%PDF-1.4\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 258 173] >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF\n", "latin1");
+        const ON = ["order-received-online", "proof-approved-online", "delivery-quote-accepted"];
+        const OFF = ["order-received", "proof-approved"];
+        let keys = 0;
+        const served = async () => ok(await new Caller(server.base).get<{ publishableKey: string; tables?: Record<string, string>; publicKeys?: Record<string, string>; settings?: Record<string, unknown> }>("/apps/printing/customer/surface-config.json"));
+        /** The shop as a customer's browser at the shop's address asks it; or as the payments manager rehearsing, signed in there. */
+        const shopFor = async (rehearsing: boolean) => {
+          const config = await served();
+          const session = staff.session();
+          const send: typeof fetch = (input, init) => {
+            const headers = new Headers(init?.headers);
+            headers.set("origin", server.base);
+            if (rehearsing) headers.set("cookie", session.cookie);
+            return fetch(input, { ...init, headers });
+          };
+          return new AdminiumShop(
+            { baseUrl: server.base, publishableKey: config.publishableKey, ...(config.tables === undefined ? {} : { tables: config.tables }), ...(config.publicKeys === undefined ? {} : { publicKeys: config.publicKeys }), ...(rehearsing ? { rehearsalToken: session.csrfToken } : {}) },
+            { fetch: send },
+          );
+        };
+        /** An order of 20,000 flyers delivered: over every band, so the works prices its delivery. */
+        const placeHeavy = async (shop: AdminiumShop) => {
+          const product = catalogue.products.find((p) => p.code === "flyers")!;
+          const lines: BasketLine[] = [{ id: "j1", productId: product.id, choice: { ...firstChoice(catalogue, product), qty: 20000 }, design: null, features: [], artwork: [] }];
+          const values = { ...SHOPPER, delivery_method: "deliver" as const };
+          const quoted = await shop.quote(orderBody(values, lines, true));
+          keys += 1;
+          return shop.place(orderBody(values, lines, true), `printing-pay-mail-${engine}-${String(keys).padStart(10, "0")}`, String(quoted.order["total"]));
+        };
+        const patch = async (ref: string, id: unknown, values: Row, from?: string) => ok(await staff.patch(`/api/v1/data/${connectionId}/${table(ref)}/${String(id)}`, { values, ...(from === undefined ? {} : { from }) }));
+        /** Its proof sent and approved, then its delivery priced and accepted: an order that may be paid. */
+        const approveAndAccept = async (shop: AdminiumShop, orderId: unknown) => {
+          for (const job of (await rows("jobs")).filter((j) => String(j["order_id"]) === String(orderId))) {
+            const stored = ok(await staff.send<{ ref: string }>("POST", `/api/v1/files?${new URLSearchParams({ filename: "proof.pdf", connectionId, table: tables["proofs"] ?? "printing_proofs", column: "file" }).toString()}`, PDF, { "content-type": "application/pdf" }), 201);
+            const proof = ok(await staff.post<{ data: Row }>(`/api/v1/data/${connectionId}/${table("proofs")}`, { values: { job_id: job["id"], kind: "email", file: stored.ref } }), 201).data;
+            await patch("proofs", proof["id"], { state: "approved" }, "sent");
+          }
+          await patch("orders", orderId, { delivery_quote: "32.80", delivery_quote_state: "sent" });
+          // The customer accepts it on their order's page, through the order's own link.
+          await shop.after().answerDelivery("link", orderId as number, { delivery_quote_state: "accepted" });
+          const order = (await rows("orders")).find((o) => String(o["id"]) === String(orderId))!;
+          expect([Number(order["pay_open"]), Number(order["due"]) > 0], "the order may be paid now").toEqual([1, true]);
+        };
+        /** The e-mails queued about an order, by kind, once every producer has heard: each counted, and how each went. */
+        const mailOf = async (orderId: unknown, kinds: string[]) =>
+          until(
+            async () => {
+              const mine = (await rows("messages")).filter((m) => String(m["order_id"]) === String(orderId));
+              const settled = kinds.every((kind) => mine.some((m) => m["kind"] === kind && m["status"] !== "queued"));
+              return settled ? mine : undefined;
+            },
+            `the e-mails ${kinds.join(", ")} of order ${String(orderId)} to go`,
+          );
+        const count = (mine: Row[]) => Object.fromEntries([...ON, ...OFF].map((kind) => [kind, mine.filter((m) => m["kind"] === kind).length]));
+
+        beforeAll(async () => {
+          ok(await staff.put("/api/v1/settings/email", { publicOrigin: server.base }));
+          catalogue = await (await shopFor(false)).catalogue();
+          useShop.setState({ catalogue });
+        }, 120_000);
+
+        it("sends the e-mails it always did with payments off, and nothing on accepting a delivery quote", async () => {
+          ok(await staff.post("/api/v1/payments/apps/switch", { connectionId, appKey: "printing", enabled: false }));
+          const customer = await shopFor(false);
+          const placed = await placeHeavy(customer);
+          await approveAndAccept(customer, placed.order["id"]);
+          const mine = await mailOf(placed.order["id"], OFF);
+          // A moment more for anything else to be queued: nothing is.
+          await new Promise((resolve) => setTimeout(resolve, 3_000));
+          expect(count(await mailOf(placed.order["id"], OFF))).toEqual({ "order-received-online": 0, "proof-approved-online": 0, "delivery-quote-accepted": 0, "order-received": 1, "proof-approved": 1 });
+          for (const m of mine.filter((one) => OFF.includes(String(one["kind"])))) expect([m["kind"], m["status"], m["to_address"]]).toEqual([m["kind"], "sent", SHOPPER.email]);
+        }, 300_000);
+
+        it("queues each of the three in its payments-on form, once, for the payments manager rehearsing", async () => {
+          expect(ok(await staff.put<{ data: { until: number | null } }>("/api/v1/payments/rehearsal", { on: true })).data.until).not.toBeNull();
+          try {
+            const rehearsing = await shopFor(true);
+            expect(await rehearsing.after().payOffer!()).toEqual({ online: true, test: true });
+            const placed = await placeHeavy(rehearsing);
+            await approveAndAccept(rehearsing, placed.order["id"]);
+            const mine = await mailOf(placed.order["id"], ON);
+            await new Promise((resolve) => setTimeout(resolve, 3_000));
+            expect(count(await mailOf(placed.order["id"], ON))).toEqual({ "order-received-online": 1, "proof-approved-online": 1, "delivery-quote-accepted": 1, "order-received": 0, "proof-approved": 0 });
+            // A rehearsal's mail is addressed to the person rehearsing, never the address the order carries. Every one of
+            // these carries the order's own link, a code Adminium sends only to the address of the person it belongs
+            // to: so it is tried, and not sent, with that reason (the outbox's own rule for a code, whoever rehearses).
+            for (const m of mine.filter((one) => ON.includes(String(one["kind"])))) {
+              expect([m["kind"], m["status"], m["to_address"]], String(m["error"] ?? "")).toEqual([m["kind"], "failed", ADMIN.email]);
+              expect(String(m["error"]), String(m["kind"])).toContain("{{order.link_token}} is a code, and goes only to the address on file of the person it belongs to");
+            }
+            // Nothing of it reached anybody: neither the person rehearsing nor the customer the order names.
+            const number = String(placed.order["number"]);
+            expect((await sinkMail(server.sink)).filter((m) => m.subject.includes(number))).toEqual([]);
+          } finally {
+            ok(await staff.put("/api/v1/payments/rehearsal", { on: false }));
+          }
+        }, 300_000);
+      });
     });
   });
 });
