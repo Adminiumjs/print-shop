@@ -6,11 +6,13 @@
  * customer's own session; the works' delivery quote, accepted or collected
  * instead; the files sent and what their checks said; how it leaves.
  */
-import { Check, CircleAlert, CircleCheckBig, CircleX, FileText, FolderHeart, Link2, MailCheck, MessageSquareText, PenTool, Store, TriangleAlert, Truck } from "lucide-react";
+import { Check, CircleAlert, CircleCheckBig, CircleX, CreditCard, FileText, FlaskConical, FolderHeart, Hourglass, Link2, MailCheck, MessageSquareText, PenTool, Store, TriangleAlert, Truck } from "lucide-react";
 import { useEffect } from "react";
 
 import { useI18n, type MessageKey } from "../../i18n/index.tsx";
-import { answerDelivery, answerProof, followAnother, openCodes, openMine, openOrderLink, openProof, readLinked, signedIn, typeChange, useAfter } from "../after.ts";
+import { answerDelivery, answerProof, backFromPaying, followAnother, openCodes, openMine, openOrderLink, openProof, payOpenOrder, readLinked, signedIn, typeChange, useAfter } from "../after.ts";
+import { isPaid, mayPay, usePay, wentToPay } from "../pay.ts";
+import type { Row } from "../port.ts";
 import { jobViews, leavingOf, type JobView, type ProofView, type StageKey } from "../after-view.ts";
 import { dayFull, dayShort, money } from "../format.ts";
 import { tintOf } from "../parts.tsx";
@@ -64,6 +66,8 @@ export function OrderScreen() {
     if (port === null) return;
     const token = linkInAddress();
     if (token !== null) void openOrderLink(token);
+    // Back from the pay page, with nothing in the address: the order this tab went to pay for.
+    else if (useAfter.getState().opened === null && wentToPay() !== null) void backFromPaying();
     // A link this tab opened before (the confirmation's), unless the one just tried opened nothing.
     else if (useAfter.getState().opened === null && useAfter.getState().link === null && port.after().sharedHeld()) void readLinked();
   }, [port]);
@@ -194,7 +198,10 @@ function OrderPage() {
               {job.cancelled ? <p className="ma-muted">{t("after.order.jobCancelled")}</p> : <Strip job={job} />}
             </div>
           ))}
+          <TotalRow order={order} />
         </div>
+
+        <PayBox order={order} />
 
         {jobs.map((job) => (
           <ProofAnswerCards key={job.id} job={job} />
@@ -208,6 +215,112 @@ function OrderPage() {
 
         <Dispatch />
       </div>
+    </section>
+  );
+}
+
+/** Whether the page says anything of paying: the works takes payments online, or the order was paid. */
+function useShowsMoney(order: Row): boolean {
+  const offer = usePay((s) => s.offer);
+  return offer?.online === true || Number(order["paid_in"] ?? 0) > 0;
+}
+
+/** The order's total, with a Paid chip once nothing is owed; the delivery's quote said in place of a total that leaves it out. */
+function TotalRow({ order }: { order: Row }) {
+  const { t, locale } = useI18n();
+  const currency = useShop((s) => s.config.currency);
+  const shows = useShowsMoney(order);
+  if (!shows || order["status"] === "cancelled") return null;
+  const leaving = leavingOf(order);
+  const open = leaving === "toQuote" || leaving === "quoteSent";
+  return (
+    <div className="ma-total" data-testid="order-total">
+      <span className="ma-total-label">{t("pay.total")}</span>
+      {open ? <span className="ma-muted">{t("shop.basket.deliveryQuote")}</span> : <span className="mp-mono ma-total-amount">{money(order["total"], currency, locale)}</span>}
+      {isPaid(order) && <span className="ma-paid-chip">{t("pay.chip.paid")}</span>}
+    </div>
+  );
+}
+
+/**
+ * Paying online, on the order page (comp `Marlow Press Payments` 172-219):
+ * "Pay now" once every proof is approved and no delivery price is open,
+ * beside the works' own way; the wait while a delivery price is agreed; the
+ * hand-off to the pay page; the way back, checked and then paid. Nothing at
+ * all while the works takes no payments online.
+ */
+function PayBox({ order }: { order: Row }) {
+  const { t, locale } = useI18n();
+  const currency = useShop((s) => s.config.currency);
+  const offer = usePay((s) => s.offer);
+  const phase = usePay((s) => s.phase);
+  const paidOnReturn = usePay((s) => s.paidOnReturn);
+  const returned = usePay((s) => (s.returned !== null && String(s.returned.orderId) === String(order["id"]) ? s.returned.standing : null));
+  const day = useDay();
+  if (phase === "checking")
+    return (
+      <p role="status" className="ma-pay-wait" data-testid="pay-checking">
+        {t("pay.checking")}
+      </p>
+    );
+  if (paidOnReturn !== null && String(paidOnReturn) === String(order["id"]) && isPaid(order))
+    return (
+      <div role="status" className="ma-done ma-done--pos" data-testid="pay-paid">
+        <CircleCheckBig size={20} aria-hidden="true" />
+        <div className="ma-done-title">
+          {t("pay.paid", { amount: money(order["paid_online"] ?? order["paid"], currency, locale), date: day.full(typeof order["last_paid_at"] === "string" ? order["last_paid_at"] : null) })}
+        </div>
+      </div>
+    );
+  // Back from the pay page with the bank still confirming: never offered again, whatever else the page would say.
+  if (returned === "confirming" && !isPaid(order))
+    return (
+      <div role="status" className="ma-done ma-done--warn" data-testid="pay-confirming">
+        <Hourglass size={20} aria-hidden="true" />
+        <div>
+          <div className="ma-done-title">{t("pay.confirmingTitle")}</div>
+          <div className="ma-muted">{t("pay.confirmingBody")}</div>
+        </div>
+      </div>
+    );
+  if (offer?.online !== true) return null;
+  const leaving = leavingOf(order);
+  const due = Number(order["due"] ?? 0);
+  if ((leaving === "toQuote" || leaving === "quoteSent") && due > 0)
+    return (
+      <p role="status" className="ma-pay-wait" data-testid="pay-quote-wait">
+        {t("pay.quoteWait")}
+      </p>
+    );
+  if (!mayPay(order, offer)) return null;
+  const amount = money(order["due"], currency, locale);
+  const taking = phase === "taking";
+  return (
+    <section className="mp-card ma-pay" aria-labelledby="ma-pay-title" data-testid="pay-box">
+      {offer.test && (
+        <p role="note" className="ma-pay-test">
+          <FlaskConical size={15} aria-hidden="true" />
+          {t("pay.test")}
+        </p>
+      )}
+      <h2 id="ma-pay-title" className="mp-card-title">
+        {t("pay.ready", { amount })}
+      </h2>
+      <button type="button" className="mp-button mp-button--accent ma-pay-now" aria-disabled={taking || undefined} aria-busy={taking || undefined} onClick={() => !taking && void payOpenOrder()} data-testid="pay-now">
+        <CreditCard size={16} aria-hidden="true" />
+        {taking ? t("pay.taking") : t("pay.now", { amount })}
+      </button>
+      <p className="ma-muted">{offer.standIn === true ? t("pay.demo") : t("pay.where")}</p>
+      <p className="ma-muted">{t(order["delivery_method"] === "deliver" ? "pay.orInvoice" : "pay.orCollect")}</p>
+      {(phase === "failed" || returned === "failed" || returned === "expired") && (
+        <p role="alert" className="mp-field-error" data-testid="pay-not-taken">
+          <TriangleAlert size={13} aria-hidden="true" />
+          {t(returned === "expired" && phase !== "failed" ? "pay.expired" : "pay.failed")}
+        </p>
+      )}
+      <span className="mp-sr" role="status" aria-live="polite">
+        {taking ? t("pay.taking") : ""}
+      </span>
     </section>
   );
 }

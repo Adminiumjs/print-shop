@@ -51,7 +51,7 @@ describe("manifest.json is what src/manifest/ writes", () => {
     expect(manifest.requiredSchema.prefixed).toBe(true);
     expect(manifest["key"]).toBe("printing");
     expect(manifest["version"]).toBe("0.2.5");
-    expect((manifest["compatibility"] as Json)["minAdminiumVersion"]).toBe("0.3.54");
+    expect((manifest["compatibility"] as Json)["minAdminiumVersion"]).toBe("0.3.62");
     // Both sides may be installed once per database.
     expect((manifest["frontends"] as Json[]).map((f) => [f["side"], f["instances"]])).toEqual([["staff", true], ["customer", true]]);
   });
@@ -84,6 +84,7 @@ describe("the tables of the rate card, the orders and the works", () => {
       "artwork",
       "proofs",
       "spoils",
+      "payments",
       "saved_quotes",
       "quote_lines",
       "sample_requests",
@@ -386,19 +387,40 @@ describe("the e-mails", () => {
       "quote-saved": "service",
       "sample-pack-sent": "service",
       "delivery-quote": "service",
+      "order-received-online": "service",
+      "proof-approved-online": "service",
+      "delivery-quote-accepted": "service",
     });
     expect(Object.keys(manifest.outbox.kinds)).toContain("change-asked");
     expect(Object.keys(manifest.outbox.kinds)).toContain("warnings-accepted");
   });
 
   // The outbox sends a kind once for each row its link names: linked to the order, a second proof of it was never sent.
-  it("e-mails every proof of an order, each change asked and each approval, about the proof itself", () => {
+  it("e-mails every proof of an order and each change asked about the proof itself, and each approval about its order", () => {
     const producers = (manifest.outbox as unknown as { producers: Record<string, unknown>[] }).producers;
     const of = (kind: string) => producers.filter((p) => p["kind"] === kind);
     expect(of("proof-ready").map((p) => p["link"])).toEqual(["proof_id", "proof_id"]);
     expect(of("change-asked").map((p) => p["link"])).toEqual(["proof_id"]);
-    expect(of("proof-approved").map((p) => p["link"])).toEqual(["proof_id"]);
-    for (const p of [...of("proof-ready"), ...of("change-asked"), ...of("proof-approved")]) expect(JSON.stringify(p), String(p["kind"])).not.toContain('"via"');
+    for (const p of [...of("proof-ready"), ...of("change-asked")]) expect(JSON.stringify(p), String(p["kind"])).not.toContain('"via"');
+    // An approval is about its order, so it may follow the order's payments: one e-mail for each approval, whichever way.
+    for (const [kind, payments] of [["proof-approved", "off"], ["proof-approved-online", "on"]] as const) {
+      expect(of(kind), kind).toEqual([{ kind, link: "order_id", onChange: { table: "proofs", via: "order_id", column: "state", to: "approved" }, repeat: true, payments }]);
+    }
+  });
+
+  it("says paying online only while the works takes payments online, and nothing new while it does not", () => {
+    const producers = (manifest.outbox as unknown as { producers: Record<string, unknown>[] }).producers;
+    const of = (kind: string) => producers.filter((p) => p["kind"] === kind);
+    expect(of("order-received")).toEqual([{ kind: "order-received", link: "order_id", onCreate: { table: "orders" }, payments: "off" }]);
+    expect(of("order-received-online")).toEqual([{ kind: "order-received-online", link: "order_id", onCreate: { table: "orders" }, payments: "on" }]);
+    // Accepting a delivery quote sent nothing before, and still sends nothing with payments off.
+    expect(of("delivery-quote-accepted")).toEqual([
+      { kind: "delivery-quote-accepted", link: "order_id", onChange: { table: "orders", column: "delivery_quote_state", to: "accepted", where: { column: "pay_open", eq: 1 } }, payments: "on" },
+    ]);
+    // Every other e-mail goes as it always did, payments on or off.
+    for (const p of producers.filter((one) => !["order-received", "order-received-online", "proof-approved", "proof-approved-online", "delivery-quote-accepted"].includes(String(one["kind"])))) {
+      expect(p["payments"], String(p["kind"])).toBeUndefined();
+    }
   });
 
   // A proof sends the job's earlier one again as it is made: made without its PDF, it would leave the customer nothing to answer.

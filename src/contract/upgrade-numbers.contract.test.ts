@@ -155,7 +155,7 @@ describe.skipIf(why !== null)(`a works on ${FROM} with a job added by hand, upda
         const app = await install(MANIFEST_TEXT);
         const plan = ok(await staff.post<{ plan: { checksum: string; installable: boolean; problems: unknown[] } }>("/api/v1/apps/plan", { key: app.key, version: app.version, connectionId })).plan;
         expect([plan.installable, plan.problems]).toEqual([true, []]);
-        const reply = await staff.post<{ from: string; to: string }>("/api/v1/apps/printing/update", { planChecksum: plan.checksum, publicAccess: true, roleTables: true });
+        const reply = await staff.post<{ from: string; to: string }>("/api/v1/apps/printing/update", { planChecksum: plan.checksum, publicAccess: true, publicWider: true, roleTables: true, roleGrants: true });
         expect(reply.status, JSON.stringify(reply.body).slice(0, 1500)).toBe(200);
         expect([reply.body.from, reply.body.to]).toEqual([FROM, app.version]);
         const numbers = new Map((await rows("orders")).map((o) => [String(o["id"]), String(o["number"])]));

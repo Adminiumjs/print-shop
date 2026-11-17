@@ -189,7 +189,7 @@ describe.skipIf(why !== null)(`a works on ${FROM} updated, its proofs as they we
           ["prepress", "settings", ["read"]],
           ["press", "settings", ["read"]],
         ]);
-        const reply = await staff.post<{ from: string; to: string }>("/api/v1/apps/printing/update", { planChecksum: plan.checksum, publicAccess: true, roleTables: true });
+        const reply = await staff.post<{ from: string; to: string }>("/api/v1/apps/printing/update", { planChecksum: plan.checksum, publicAccess: true, publicWider: true, roleTables: true, roleGrants: true });
         expect(reply.status, JSON.stringify(reply.body).slice(0, 1500)).toBe(200);
         expect([reply.body.from, reply.body.to]).toEqual([FROM, app.version]);
         served = ok(await new Caller(server.base).get<typeof served>("/apps/printing/customer/surface-config.json"));

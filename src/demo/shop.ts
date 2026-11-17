@@ -10,7 +10,7 @@
  * DEMO BUILD ONLY — nothing in a real build imports it.
  */
 import type { CustomiserApi, DesignData, DesignValues, HeldSession, SavedDesign } from "../../vendor/customiser/index.js";
-import type { AfterPort, CodeAnswer, DeliveryAnswer, HeldQuote, Me, MyRows, OrderRead, ProofAnswer, QuoteRead, Via } from "../shop/after-port.ts";
+import type { AfterPort, PayOffer, CodeAnswer, DeliveryAnswer, HeldQuote, Me, MyRows, OrderRead, ProofAnswer, QuoteRead, Via } from "../shop/after-port.ts";
 import { catalogueFrom } from "../shop/door.ts";
 import { ShopError, type Catalogue, type Figures, type Id, type JobNode, type OrderBody, type Placed, type QuoteBody, type QuoteFigures, type Refused, type SavedQuote, type ShopConfig, type ShopPort, type Uploaded } from "../shop/port.ts";
 import { APP_SETTINGS, deriveAll, mayMove, newRow, stamp, TABLE_OF, type Row, type Tables } from "./rules.ts";
@@ -324,6 +324,27 @@ export class DemoAfter implements AfterPort {
     if (!mayMove("proofs", proof, answer.state, [])) throw refusal("STATE_MOVE_REFUSED", 409);
     w.write(() => w.update("proofs", proofId, { ...answer }));
     return copy(w.get("proofs", proofId)!);
+  }
+
+  /** The demo takes payments online by its stand-in: "Pay now" shows, and no money moves. */
+  async payOffer(): Promise<PayOffer> {
+    return { online: true, test: false, standIn: true };
+  }
+
+  /**
+   * "Pay now", as the demo's stand-in answers it: the order may be paid now
+   * (every proof approved, no delivery price open, something owed), and the
+   * payment lands at once as Adminium records an online one, with no page to
+   * go to and no money moving.
+   */
+  async startPay(via: Via, orderId: Id): Promise<{ payUrl: string }> {
+    const w = this.world;
+    const order = w.get("orders", orderId);
+    if (order === undefined || !this.reaches(via, orderId)) throw refusal("PUBLIC_NOT_FOUND", 404);
+    const due = Number(order["due"] ?? 0);
+    if (Number(order["pay_open"] ?? 0) !== 1 || due <= 0 || !["placed", "ready", "dispatched"].includes(String(order["status"]))) throw refusal("PUBLIC_PAY_REFUSED", 409);
+    w.write(() => w.insert("payments", { order_id: order.id, amount: due.toFixed(2), method: "online", provider: "Demo", payment_ref: w.code("demo_", 24), currency: w.currency, paid_at: w.nowIso(), refunded: 0 }));
+    return { payUrl: "" };
   }
 
   async answerDelivery(via: Via, orderId: Id, answer: DeliveryAnswer): Promise<Row> {

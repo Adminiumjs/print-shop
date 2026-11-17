@@ -44,6 +44,11 @@ export class DemoWorks implements WorksDoor {
     return null;
   }
 
+  /** No payment service answers the demo's works: its screens read as a works that takes no payments online. */
+  payments(): null {
+    return null;
+  }
+
   who(): Person {
     return DEMO_PERSON;
   }
@@ -59,6 +64,7 @@ export class DemoWorks implements WorksDoor {
       carrier: null,
       addOnSettings: {},
       connectionId: null,
+      payments: null,
     };
   }
 
@@ -89,6 +95,7 @@ export class DemoWorks implements WorksDoor {
       artwork: [...w.all("artwork")].sort((a, b) => Number(a["job_id"]) - Number(b["job_id"]) || a.id - b.id),
       proofs: [...w.all("proofs")].sort((a, b) => Number(a["job_id"]) - Number(b["job_id"]) || Number(a["version"]) - Number(b["version"])),
       spoils: w.all("spoils"),
+      payments: w.all("payments"),
       designs: w.all("designs").filter((d) => named.has(String(d.id))),
       versions,
       files: w.all("version_files").filter((f) => versionIds.has(String(f["version_id"]))),

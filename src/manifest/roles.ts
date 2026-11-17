@@ -17,7 +17,16 @@
  *   counter   the works' screens: the orders ready to hand over, marking them
  *             collected or dispatched with the DHL service and a tracking
  *             number, pricing a delivery over the bands and sending its
- *             quote, and posting sample packs.
+ *             quote, and posting sample packs. Taking payment as it hands
+ *             an order over: card on the works' terminal (its approval code
+ *             and the card's last four) or cash, recorded through Adminium
+ *             as a payment of the order it may change (Adminium writes the
+ *             row, never above what is due); it reads the payments, writes
+ *             none itself, and never refunds.
+ *
+ * The owner may refund a payment taken online (`payments:@:refund`, this
+ * app's payments only), from the job ticket or Adminium's Payments; nobody
+ * else holds it by their role.
  *
  * Every role reads the Customiser's rows its work needs. The Customiser's
  * panels open for the roles below (`ROLE_PANELS`): a job's design for the
@@ -33,6 +42,10 @@
  * version's old files away, so its roles hold `read_pii` there and `delete`
  * on the files. The owner finds and erases a customer's data
  * (`privacy:@:people`, on the dashboard's privacy page).
+ *
+ * A payment taken online is Adminium's row: its reference, the service it
+ * came through and what was refunded of it are written by Adminium alone,
+ * so no role lists them among what it writes.
  *
  * The screens show or hide a button by the role, but the grants and limits
  * below are what refuse the write: a hidden button is not a lock.
@@ -179,6 +192,16 @@ const typed = (ref: string, ...leaveOut: string[]): string[] =>
 /** What only the customer gives, on their own order or quote: the tick for the works' news, the link, the retry key. */
 export const CUSTOMERS_OWN = ["may_email", "link_token", "client_key"];
 
+/**
+ * What Adminium alone fills of a payment: an online one's reference, service,
+ * currency and refunds, and a card's approval code and last four, which it
+ * checks as a person records them.
+ */
+export const ONLINE_ONLY = ["payment_ref", "provider", "currency", "refunded", "approval_code", "card_last4"];
+
+/** The ways a person may write by hand: never online, which only the payment service's confirmation writes. */
+export const BY_HAND = ["card", "cash", "bank-transfer", "cheque", "other"];
+
 /** The rate card and the catalogue: every role reads them, the owner alone edits them. */
 const RATE_CARD = ["settings", "materials", "sizes", "finishes", "breaks", "packaging", "delivery_bands", "products", "options", "option_rules", "machines", "closures"];
 const ORDER_READS = ["orders", "jobs", "job_features", "artwork", "proofs", "spoils"];
@@ -214,8 +237,17 @@ export const ROLES = [
       `addOn:${HOLIDAYS}:settings`,
       // A customer's data found, handed to them and erased, on the dashboard's privacy page.
       "privacy:@:people",
+      // A payment taken online given back, in full or in part: this app's payments only.
+      "payments:@:refund",
     ],
     limits: {
+      // A payment by hand, never one marked online: only the payment service's confirmation writes that.
+      payments: {
+        writable: typed("payments", ...ONLINE_ONLY),
+        writableValues: { method: BY_HAND },
+        creatable: typed("payments", ...ONLINE_ONLY),
+        creatableValues: { method: BY_HAND },
+      },
       orders: { writable: typed("orders", ...CUSTOMERS_OWN), creatable: typed("orders", ...CUSTOMERS_OWN) },
       saved_quotes: { writable: typed("saved_quotes", ...CUSTOMERS_OWN), creatable: typed("saved_quotes", ...CUSTOMERS_OWN) },
     },
@@ -275,7 +307,7 @@ export const ROLES = [
     screensOnly: true,
     permissions: [
       "app:@:staff",
-      ...[...RATE_CARD, ...ORDER_READS, "sample_requests"].flatMap((table) => grant(table, "read")),
+      ...[...RATE_CARD, ...ORDER_READS, "sample_requests", "payments"].flatMap((table) => grant(table, "read")),
       pii("orders"),
       pii("sample_requests"),
       ...grant("orders", "update"),

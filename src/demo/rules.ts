@@ -163,7 +163,7 @@ function rollRow(table: Table, row: Row, tables: Tables): void {
 }
 
 /** The tables in the order their rows read each other: a line after its rate card, an order after its lines. */
-const ORDER = ["settings", "materials", "sizes", "finishes", "breaks", "packaging", "delivery_bands", "products", "options", "option_rules", "machines", "closures", "customers", "artwork", "proofs", "job_features", "spoils", "jobs", "orders", "quote_lines", "saved_quotes", "sample_stocks", "sample_requests", "messages"];
+const ORDER = ["settings", "materials", "sizes", "finishes", "breaks", "packaging", "delivery_bands", "products", "options", "option_rules", "machines", "closures", "customers", "artwork", "proofs", "job_features", "spoils", "jobs", "payments", "orders", "quote_lines", "saved_quotes", "sample_stocks", "sample_requests", "messages"];
 
 /** Every stored figure again, after a write: rate card, lines, orders, until nothing moves. */
 export function deriveAll(tables: Tables): void {

@@ -5,8 +5,10 @@
  * the checks they were shown, the proofs as they went and came back, what it
  * takes off the shelf (Inventory's count when Inventory keeps the stock), and
  * what the person may do next: send a proof, mark it printed or ready, record
- * spoilage, hand it over, book its collection, price a delivery over the
- * bands. A job made in the Customiser shows the design it was made from and
+ * spoilage, hand it over (taking payment first, while the works takes
+ * payments), book its collection, price a delivery over the bands. Beside
+ * it, the order's money (`Payment.tsx`): paid or not, how, and what may be
+ * done about it. A job made in the Customiser shows the design it was made from and
  * the files the Customiser made of it; its panel on the job's own page makes
  * the proof and the print files.
  */
@@ -43,6 +45,7 @@ import { go, useWorks } from "../store.ts";
 import { DueChip, FamilyTile, Mono, Typed } from "../ui.tsx";
 import { num, same, text, type Id, type Row } from "../wire.ts";
 import { STAGE_LABEL, targetsFor } from "./Today.tsx";
+import { PaymentCard, PaymentChip, useOrderPayment, usePanel } from "./Payment.tsx";
 import { BLEED_MM } from "../../shop/checks.ts";
 import { useT, type MessageKey } from "../../i18n/index.tsx";
 
@@ -83,6 +86,8 @@ function Ticket({ job }: { job: Row }) {
   const ref = refOf(data, job);
   const due = dueOf(job, today, facts.workingDays, closuresOf(data));
   const stage = String(job["stage"]);
+  const panel = usePanel(order);
+  const payment = useOrderPayment(order, panel);
 
   return (
     <section className="wk-screen wk-ticket" aria-labelledby="wk-ticket-ref">
@@ -98,6 +103,7 @@ function Ticket({ job }: { job: Row }) {
               <span id="wk-ticket-ref">{ref}</span>
             </Mono>
             <span className={`wk-stage wk-stage--${stage}`}>{t(STAGE_LABEL[stage] ?? "works.stage.prepress")}</span>
+            <PaymentChip payment={payment} />
           </div>
           <div className="wk-ticket-title">
             {t("works.card.title", { product: text(job["product_name"]) ?? "", qty: String(job["qty"] ?? "") })} · <Typed>{text(order?.["name"]) ?? ""}</Typed>
@@ -116,6 +122,7 @@ function Ticket({ job }: { job: Row }) {
         </div>
         <div className="wk-ticket-side">
           <Shelf job={job} />
+          {order !== undefined && payment !== null && <PaymentCard order={order} payment={payment} panel={panel} />}
           <Actions job={job} order={order} />
         </div>
       </div>
@@ -374,6 +381,8 @@ function Actions({ job, order }: { job: Row; order: Row | undefined }) {
   const made = version === undefined ? [] : data.files.filter((f) => same(f["version_id"], version.id));
   const quoteState = text(order?.["delivery_quote_state"]);
   const toQuote = num(order?.["delivery_to_quote"]) === 1 && deliver;
+  // With payments on, the counter takes the payment as it hands the order over (Adminium records it).
+  const takesPayment = door.facts().payments?.on === true && door.payments() !== null;
 
   const walk = (to: "finishing" | "ready", said: MessageKey) =>
     run(async (d, fresh) => {
@@ -483,10 +492,17 @@ function Actions({ job, order }: { job: Row; order: Row | undefined }) {
 
         {stage === "ready" && !deliver && moves.includes("collected") && (
           <div className="wk-action-row">
-            <button type="button" className="wk-action wk-action--pos" disabled={busy} onClick={() => void collect()}>
-              <HandCoins size={16} aria-hidden="true" />
-              {t("works.actions.collected")}
-            </button>
+            {takesPayment ? (
+              <button type="button" className="wk-action wk-action--pos" disabled={busy} onClick={() => useWorks.setState({ overlay: { kind: "take", jobId: job.id } })} data-testid="take-payment">
+                <HandCoins size={16} aria-hidden="true" />
+                {t("works.actions.takeHand")}
+              </button>
+            ) : (
+              <button type="button" className="wk-action wk-action--pos" disabled={busy} onClick={() => void collect()}>
+                <HandCoins size={16} aria-hidden="true" />
+                {t("works.actions.collected")}
+              </button>
+            )}
           </div>
         )}
         {stage === "ready" && deliver && order !== undefined && moves.includes("dispatched") && (

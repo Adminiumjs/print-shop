@@ -17,8 +17,9 @@ import { after } from "./strings/after.ts";
 import { chrome } from "./strings/chrome.ts";
 import { shop } from "./strings/shop.ts";
 import { works } from "./strings/works.ts";
+import { pay } from "./strings/pay.ts";
 
-const AREAS = [chrome, shop, after, works, addOns] as const;
+const AREAS = [chrome, shop, after, works, addOns, pay] as const;
 const BUNDLES = Object.fromEntries(
   LOCALE_TAGS.map((t) => [t, Object.assign({}, ...AREAS.map((a) => a[t]))]),
 ) as Record<LocaleTag, Record<string, string>>;
@@ -33,10 +34,10 @@ const FORMS: Record<LocaleTag, number> = { "en-US": 2, "de-DE": 2, "fr-FR": 2, "
 
 /** Strings that are the same word in English and in the language. */
 const SAME_AS_ENGLISH: Partial<Record<LocaleTag, string[]>> = {
-  "de-DE": ["after.samples.name", "after.samples.optional", "chrome.brand", "common.mm", "common.sqm", "shop.artwork.req.cmyk", "shop.check.colour.cmyk", "shop.config.look.matt", "shop.config.material", "shop.m2", "shop.mm", "shop.quote.part.material", "works.addOns.details", "works.materials.sra3", "works.materials.unitMetres", "works.prices.express", "works.prices.perM2", "works.proofSheet.size", "works.shelf.sheets", "works.spec.material", "works.spec.matt"],
-  "fr-FR": ["after.lookup.email", "after.proof.page1", "chrome.brand", "common.mm", "common.sqm", "shop.basket.express", "shop.checkout.email", "shop.config.options", "shop.m2", "shop.mm", "shop.quote.total", "works.actions.title", "works.addOns.cat.email", "works.addOns.version", "works.impose.title", "works.materials.sra3", "works.materials.unitMetres", "works.menu", "works.prices.express", "works.prices.perM2", "works.shelf.sheets"],
-  "cs-CZ": ["after.lookup.email", "chrome.brand", "common.mm", "common.sqm", "shop.artwork.req.cmyk", "shop.check.colour.cmyk", "shop.checkout.email", "shop.m2", "shop.mm", "works.addOns.cat.email", "works.materials.sra3", "works.materials.unitMetres", "works.prices.perM2", "works.proofSheet.size", "works.shelf.sheets"],
-  "da-DK": ["after.delivery.over", "after.lookup.email", "chrome.brand", "common.mm", "common.sqm", "shop.artwork.req.cmyk", "shop.check.colour.cmyk", "shop.checkout.email", "shop.config.finish", "shop.m2", "shop.mm", "shop.products.fromFor", "works.addOns.cat.email", "works.addOns.version", "works.materials.sra3", "works.materials.unitMetres", "works.menu", "works.nav.designs", "works.prices.perM2", "works.proofSheet.send", "works.proofSheet.size", "works.role.prepress", "works.shelf.sheets", "works.shipments.label", "works.stage.prepress"],
+  "de-DE": ["after.samples.name", "after.samples.optional", "chrome.brand", "common.mm", "common.sqm", "shop.artwork.req.cmyk", "shop.check.colour.cmyk", "shop.config.look.matt", "shop.config.material", "shop.m2", "shop.mm", "shop.quote.part.material", "works.addOns.details", "works.materials.sra3", "works.materials.unitMetres", "works.prices.express", "works.prices.perM2", "works.proofSheet.size", "works.shelf.sheets", "works.spec.material", "works.spec.matt", "works.pay.online", "works.pay.onlineRow"],
+  "fr-FR": ["after.lookup.email", "after.proof.page1", "chrome.brand", "common.mm", "common.sqm", "shop.basket.express", "shop.checkout.email", "shop.config.options", "shop.m2", "shop.mm", "shop.quote.total", "works.actions.title", "works.addOns.cat.email", "works.addOns.version", "works.impose.title", "works.materials.sra3", "works.materials.unitMetres", "works.menu", "works.prices.express", "works.prices.perM2", "works.shelf.sheets", "pay.total"],
+  "cs-CZ": ["after.lookup.email", "chrome.brand", "common.mm", "common.sqm", "shop.artwork.req.cmyk", "shop.check.colour.cmyk", "shop.checkout.email", "shop.m2", "shop.mm", "works.addOns.cat.email", "works.materials.sra3", "works.materials.unitMetres", "works.prices.perM2", "works.proofSheet.size", "works.shelf.sheets", "works.pay.online", "works.pay.onlineRow"],
+  "da-DK": ["after.delivery.over", "after.lookup.email", "chrome.brand", "common.mm", "common.sqm", "shop.artwork.req.cmyk", "shop.check.colour.cmyk", "shop.checkout.email", "shop.config.finish", "shop.m2", "shop.mm", "shop.products.fromFor", "works.addOns.cat.email", "works.addOns.version", "works.materials.sra3", "works.materials.unitMetres", "works.menu", "works.nav.designs", "works.prices.perM2", "works.proofSheet.send", "works.proofSheet.size", "works.role.prepress", "works.shelf.sheets", "works.shipments.label", "works.stage.prepress", "works.pay.online", "works.pay.onlineRow"],
   "zh-CN": ["chrome.brand", "shop.artwork.req.cmyk", "works.materials.sra3", "works.proofSheet.size", "works.shelf.sheets"],
   "zh-TW": ["chrome.brand", "shop.artwork.req.cmyk", "works.materials.sra3", "works.proofSheet.size", "works.shelf.sheets"],
   "ar-EG": ["chrome.brand", "shop.artwork.req.cmyk", "shop.check.colour.cmyk", "works.materials.sra3", "works.shelf.sheets"],

@@ -52,6 +52,7 @@ import { chrome } from "../strings/chrome.ts";
 import { shop } from "../strings/shop.ts";
 import { after } from "../strings/after.ts";
 import { works } from "../strings/works.ts";
+import { pay } from "../strings/pay.ts";
 
 /**
  * Parity guard. `en-US` defines the keys; the other seven must each carry a
@@ -70,7 +71,8 @@ const AREAS: [
   Area<(typeof shop)["en-US"]>,
   Area<(typeof after)["en-US"]>,
   Area<(typeof works)["en-US"]>,
-] = [chrome, addOns, shop, after, works];
+  Area<(typeof pay)["en-US"]>,
+] = [chrome, addOns, shop, after, works, pay];
 
 export const MESSAGES = Object.fromEntries(
   LOCALE_TAGS.map((t) => [t, Object.assign({}, ...AREAS.map((a) => a[t] ?? {}))]),
@@ -82,7 +84,8 @@ export type MessageKey =
   | keyof (typeof addOns)["en-US"]
   | keyof (typeof shop)["en-US"]
   | keyof (typeof after)["en-US"]
-  | keyof (typeof works)["en-US"];
+  | keyof (typeof works)["en-US"]
+  | keyof (typeof pay)["en-US"];
 
 /** One add-on's bundle, as it travels on the add-on object. */
 export type AddOnMessages = Readonly<Record<string, Readonly<Record<string, string>>>>;

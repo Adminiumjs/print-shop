@@ -1,8 +1,9 @@
 /**
  * The overlays over the works' screens: the send-a-proof sheet and the
  * spoilage dialog (comp `I - Marlow Press` 1388-1430), the delivery quote
- * drawn on the proof sheet's anatomy, the Customiser's panel on a job
- * (`PanelSheet`), and the add-ons' dialogs (`AddOnOverlays`). Each is a dialog with its own label, focus kept
+ * drawn on the proof sheet's anatomy, taking payment as an order is handed
+ * over and giving an online payment back (`Payment.tsx`), the Customiser's
+ * panel on a job (`PanelSheet`), and the add-ons' dialogs (`AddOnOverlays`). Each is a dialog with its own label, focus kept
  * inside it and given back to what opened it, closed by Escape.
  */
 import { useId, useRef, useState, type ChangeEvent, type DragEvent } from "react";
@@ -19,6 +20,7 @@ import type { ProofFile } from "../door.ts";
 import { close, Modal } from "./Modal.tsx";
 import { AddOnOverlays } from "./AddOns.tsx";
 import { PanelSheet } from "../panels/PanelSheet.tsx";
+import { RefundSheet, TakeSheet } from "./Payment.tsx";
 import { useT } from "../../i18n/index.tsx";
 
 /** What the proofs table's `file` column takes: a PDF, up to 100 MB (`manifest/tables.ts`). */
@@ -43,6 +45,10 @@ export function Overlays() {
       const order = byId(data.orders, overlay.orderId);
       return order === undefined ? null : <QuoteSheet order={order} />;
     }
+    case "take":
+      return <TakeSheet jobId={overlay.jobId} />;
+    case "refund":
+      return <RefundSheet orderId={overlay.orderId} attemptId={overlay.attemptId} />;
     case "panel":
       return <PanelSheet panel={overlay.panel} linked={overlay.linked} title={overlay.title} />;
     default:

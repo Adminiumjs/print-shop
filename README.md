@@ -21,7 +21,7 @@ the two o'clock cut-off — and the works prints Monday to Friday.
 
 ## What it needs
 
-- Adminium **0.3.54** or later, on SQLite, Postgres or MySQL.
+- Adminium **0.3.62** or later, on SQLite, Postgres or MySQL.
 - The **Customiser** add-on (1.0.26 or later): it is where a customer fills in a
   ready-made design or starts from blank, and the job names the design they
   made. Adminium installs it with the app.
@@ -91,6 +91,31 @@ mail: the do-not-email list never stops them and none has an unsubscribe line.
 The sign-in code is Adminium's own e-mail; the saved design's is the
 Customiser's.
 
+**Paying online** (optional, off until you switch it on). A customer may pay
+for an order online once every proof is approved and no delivery price is
+still to agree: "Pay now" on their order page, and a pay button in the
+"proof approved", "ready to collect" and "on its way" e-mails while something
+is owed. They pay on the Stripe or PayPal page through Adminium's pay page,
+and come back to their order page, which says when it is paid (or that
+their bank is still confirming it, or that nothing was taken). Collecting at
+the works, or paying by the invoice sent with a delivery, stays beside it.
+At the counter "Mark collected" becomes **Take payment and hand over**: card
+on the works' own terminal (the approval code and the card's last four from
+its slip), cash, or the order's pay link and its QR code on the customer's
+own phone; Adminium records the payment, never above what is owed. The job
+ticket shows Paid or Not paid beside the reference, each payment and refund,
+"Copy pay link" while something is owed, and **Refund** on an online payment
+for the **owner** (the only role that may give money back; it reaches this
+app's payments only). A refund does not make the order owe the money again.
+Adminium e-mails the customer's receipt.
+
+Nothing changes until someone who manages payments connects a payment
+service in Adminium and switches Print Shop on in **Payments**: installing or
+updating the app leaves it off, and with it off every page, e-mail and the
+counter read exactly as before. To try it first, switch on **Rehearsal** in
+Payments with the service in test mode and place an order on the shop
+yourself: it is sample data, and goes when you remove sample data.
+
 ## Installing it
 
 Install Print Shop from Adminium's app catalog and pick the database it should
@@ -119,6 +144,15 @@ Adminium lists what each role gets before the update, and updates only once
 you allow it: **Update** in the dashboard allows it, and through the API the
 update is sent with `"roleTables": true`. Without it the update is refused
 (`ROLE_TABLES_WIDER`) and nothing changes.
+
+**Updating to the release that takes payments online?** It needs Adminium
+0.3.62. The update adds the payments table (`printing_payments`) and the
+order's paid and owed figures (every order already there reads as owing its
+total, and nothing in it changes), lets the shop's pages read those figures,
+and gives the owner the refund of this app's online payments. Adminium lists
+the wider reads and the owner's new right before the update and updates only
+once you allow it (**Update** in the dashboard). Payments stay off until you
+switch them on.
 
 **Coming from 0.1.x?** The 0.1 Print Shop was an example with its own database,
 and the Design studio and Import from Canva add-ons in place of the Customiser.

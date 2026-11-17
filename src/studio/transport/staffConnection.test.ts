@@ -108,6 +108,8 @@ describe("loadStaffConfig", () => {
       access: { tables: { tickets: ["read", "update", "fly"], odd: "all" }, roles: [{ slug: "pos-cashier", name: "POS cashier" }, { name: "no slug" }] },
       addOns: { invoices: { version: "1.0.3", settings: { business_name: "Harbour Café" }, tables: { profiles: "invoices_profiles", odd: 4 } }, odd: 3 },
       sharedTables: { menu_items: ["ordering"], tickets: [], odd: "all" },
+      kit: { contract: 1, entry: "/assets/kit-9f.js", styles: ["/assets/kit-9f.css"] },
+      payments: { on: true, online: false, test: "yes", refund: true, extra: 1 },
     });
     expect(await loadStaffConfig({ hostedStaff: true, base: "/apps/pos/staff/", fetchImpl })).toEqual({
       connectionId: "con_42",
@@ -126,7 +128,15 @@ describe("loadStaffConfig", () => {
       access: { tables: { tickets: ["read", "update"] }, roles: [{ slug: "pos-cashier", name: "POS cashier" }] },
       addOns: { invoices: { version: "1.0.3", settings: { business_name: "Harbour Café" }, tables: { profiles: "invoices_profiles" } } },
       sharedTables: { menu_items: ["ordering"] },
+      kit: { contract: 1, entry: "/assets/kit-9f.js" },
+      payments: { on: true, online: false, test: false, refund: true },
     });
+  });
+
+  it("says nothing of payments or the kit when the server said nothing, so the screens read as before", async () => {
+    const config = await loadStaffConfig({ hostedStaff: true, base: "/apps/pos/staff/", fetchImpl: ok({ connectionId: "con_42", kit: { contract: 1 } }) });
+    expect(config?.payments).toBeNull();
+    expect(config?.kit).toBeNull();
   });
 
   it("says nothing of access when the server said nothing, so no button is hidden on a guess", async () => {

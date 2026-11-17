@@ -247,10 +247,24 @@ const DECLARED_SENDERS: Readonly<Record<string, { means: readonly string[]; why:
     means: ['location.assign()/replace(), a navigation'],
     why: 'nobody signed in is sent to the same Adminium\u2019s sign-in, with the way back',
   },
+  /*
+   * PAYING ONLINE. "Pay now" takes the customer to the pay link the shop's own
+   * Adminium handed out for their order (`payments.start`): Adminium's pay
+   * page, never an address of this app's.
+   */
+  'shop/pay.ts': {
+    means: ['location.assign()/replace(), a navigation'],
+    why: 'the customer goes to the pay page their own Adminium handed out for the order, and comes back to it',
+  },
 };
 
-/** The dynamic `import()` this file is allowed, for the same reason. */
-const DECLARED_DYNAMIC_IMPORT = 'add-ons/connected.ts';
+/**
+ * The dynamic `import()` these files are allowed: the connected add-ons'
+ * bundles (for the same reason), and Adminium's own kit on the works' screens,
+ * imported from the address the works' Adminium names in its staff config
+ * (`kit.entry`), which draws the refund of an online payment.
+ */
+const DECLARED_DYNAMIC_IMPORT: readonly string[] = ['add-ons/connected.ts', 'studio/kit.tsx'];
 
 const ALLOWED_MODULES: readonly AllowedModule[] = [
   { name: 'react', why: 'the renderer; this is a React app and every screen imports it' },
@@ -262,7 +276,7 @@ const ALLOWED_MODULES: readonly AllowedModule[] = [
   { name: 'zustand', why: 'the in-memory store. It holds state and makes no request' },
   {
     name: '@adminiumjs/public-client',
-    why: 'the connected mode\u2019s client for this shop\u2019s own Adminium instance (28-T28). It DOES issue requests, which is what it is for, and the address it may reach is not forgiven here \u2014 it is `connectedBackend`\u2019s single declared origin, checked over every file and over the built output',
+    why: 'the connected mode\u2019s client for this shop\u2019s own Adminium instance. It DOES issue requests, which is what it is for, and the address it may reach is not forgiven here \u2014 it is `connectedBackend`\u2019s single declared origin, checked over every file and over the built output',
   },
 ];
 
@@ -326,7 +340,7 @@ describe('no real third-party call, no real clock', () => {
       ...sendersIn(codeOf(file))
         .filter((means) => !declaredMeans(file).includes(means))
         .map((means) => `${relative(file)} → ${means}`),
-      ...(relative(file) === DECLARED_DYNAMIC_IMPORT
+      ...(DECLARED_DYNAMIC_IMPORT.includes(relative(file))
         ? []
         : foreignImportsIn(codeOf(file)).map((spec) => `${relative(file)} → ${spec}`)),
       ...foreignModulesIn(codeOf(file), ALLOWED_MODULES).map(
@@ -743,13 +757,23 @@ describe('the host names no company', () => {
    */
   const ADD_ON_KEY_LINE = /shipping-dhl/;
 
+  /**
+   * Paying online: the two payment services Adminium's own payment add-ons
+   * connect, named plainly where a customer is told whose page they will pay
+   * on (`pay.where`, in each language), and where the works' ticket spells a
+   * payment's service as the service spells itself (`serviceName`). No
+   * integration ships in this app: the payment is Adminium's.
+   */
+  const PAY_LINE = (file: string, line: string): boolean =>
+    (file === "i18n/strings/pay.ts" && /^"pay\.where": /.test(line)) || (file === "studio/payment.ts" && /^if \(plain === "(stripe|paypal)"\) return "(Stripe|PayPal)";$/.test(line));
+
   it('mentions one only where an add-on bundle is imported', () => {
     const own = SHIPPED.filter((file) => !file.includes(`/vendor/`));
     const offenders = own.flatMap((file) =>
       codeOf(file)
         .split('\n')
         .map((line) => line.trim())
-        .filter((line) => COMPANIES.test(line) && !IMPORT_LINE.test(line) && !(relative(file) === "i18n/strings/shop.ts" && RULED_LINE.test(line)) && !(relative(file).startsWith("demo/") && ADD_ON_KEY_LINE.test(line)))
+        .filter((line) => COMPANIES.test(line) && !IMPORT_LINE.test(line) && !(relative(file) === "i18n/strings/shop.ts" && RULED_LINE.test(line)) && !(relative(file).startsWith("demo/") && ADD_ON_KEY_LINE.test(line)) && !PAY_LINE(relative(file), line))
         .map((line) => `${relative(file)} · ${line}`),
     );
     expect(offenders).toEqual([]);

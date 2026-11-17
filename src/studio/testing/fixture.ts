@@ -13,7 +13,7 @@ import type { Row } from "../wire.ts";
 /** 10:20 on Wednesday 5 August 2026 in Marlow (British Summer Time). */
 export const WEDNESDAY = Date.parse("2026-08-05T09:20:00Z");
 
-export const FACTS: WorksFacts = { zone: "Europe/London", currency: "GBP", workingDays: ["mon", "tue", "wed", "thu", "fri"], cutoff: "14:00", addOns: ["customiser"], carrier: null, addOnSettings: {}, connectionId: "conn-1" };
+export const FACTS: WorksFacts = { zone: "Europe/London", currency: "GBP", workingDays: ["mon", "tue", "wed", "thu", "fri"], cutoff: "14:00", addOns: ["customiser"], carrier: null, addOnSettings: {}, connectionId: "conn-1", payments: null };
 
 const r = (row: Record<string, unknown> & { id: number }): Row => row;
 
@@ -144,6 +144,7 @@ export function fixture(): WorksData {
       r({ id: 5, order_id: 4127, job_id: 8, version: 1, kind: "email", file: DESIGN_PROOF, note: "Made from the customer's design in the customiser.", state: "sent", sent_at: "2026-08-04T09:00:00.000Z" }),
     ],
     spoils: [r({ id: 1, job_id: 4, order_id: 4125, material_id: 2, qty: "10", spoiled_at: "2026-08-04T14:00:00.000Z" })],
+    payments: [],
     designs: [r({ id: 70, code: "HB-CARD", state: "ordered" })],
     versions: [r({ id: 700, design_id: 70, version: 1, proof_file: DESIGN_PROOF })],
     files: [r({ id: 7000, version_id: 700, kind: "print", name: "hb-card-print.pdf", about: "CMYK PDF, 3mm bleed", file: DESIGN_PROOF, position: 1 })],
@@ -160,7 +161,7 @@ export function person(roles: string[], name = "Rosa Marlow"): Person {
   const grants: Record<string, Partial<Record<Table, Action[]>>> = {
     prepress: { jobs: ["read", "update"], proofs: ["read", "create", "update"], orders: ["read"], materials: ["read"], settings: ["read"], spoils: ["read"] },
     press: { jobs: ["read", "update"], orders: ["read", "update"], spoils: ["read", "create"], materials: ["read"], settings: ["read"], proofs: ["read"] },
-    counter: { jobs: ["read", "update"], orders: ["read", "update"], materials: ["read"], settings: ["read"], proofs: ["read"], spoils: ["read"] },
+    counter: { jobs: ["read", "update"], orders: ["read", "update"], materials: ["read"], settings: ["read"], proofs: ["read"], spoils: ["read"], payments: ["read"] },
   };
   return {
     name,
