@@ -77,6 +77,21 @@ describe("an order paid online", () => {
     expect(open({ ...base, item_count: 0, proofs_approved: 0 })).toBe("0");
   });
 
+  it("marks for the e-mails what holds of paying, each empty unless it holds", () => {
+    const mark = (c: string, row: Json) => evaluateFormula(formula("orders", c), row, 0);
+    expect([mark("collects", { delivery_method: "collect" }), mark("collects", { delivery_method: "deliver" })]).toEqual(["1", null]);
+    const payable = { pay_open: 1, due: "20.00" };
+    expect(mark("pay_collect", { ...payable, delivery_method: "collect" })).toBe("1");
+    expect(mark("pay_collect", { ...payable, delivery_method: "deliver" })).toBeNull();
+    expect(mark("pay_invoice", { ...payable, delivery_method: "deliver" })).toBe("1");
+    expect(mark("pay_invoice", { pay_open: 0, due: "20.00", delivery_method: "deliver" })).toBeNull();
+    expect(mark("pay_collect", { pay_open: 1, due: "0.00", delivery_method: "collect" })).toBeNull();
+    const settled = { due: "0.00", paid_in: "120.00" };
+    expect([mark("paid_all_online", { ...settled, paid: "120.00", paid_online: "120.00" }), mark("paid_by_hand", { ...settled, paid: "120.00", paid_online: "120.00" })]).toEqual(["1", null]);
+    expect([mark("paid_all_online", { ...settled, paid: "120.00", paid_online: null }), mark("paid_by_hand", { ...settled, paid: "120.00", paid_online: null })]).toEqual([null, "1"]);
+    expect([mark("paid_all_online", { due: "20.00", paid_in: "100.00", paid: "100.00", paid_online: "100.00" }), mark("paid_by_hand", { due: "20.00", paid_in: "0", paid: "0" })]).toEqual([null, null]);
+  });
+
   it("counts a job's approved proof only while the job is not cancelled", () => {
     expect(column("orders", "proofs_approved").rules!["rollup"]).toEqual({ from: "jobs", via: "order_id", sum: "proof_ok", unlessSet: "cancelled_at" });
   });
@@ -104,10 +119,10 @@ describe("an order paid online", () => {
     expect(column("payments", "card_last4")).toMatchObject({ type: "text", maxLength: 4 });
   });
 
-  it("ships at 0.3.61, and an Adminium before 0.3.60 refuses a catalog app's payables", () => {
+  it("ships at 0.3.62, whose e-mails follow payments, and an older Adminium refuses it", () => {
     const at = (floor: string) => validateManifest({ ...manifest, compatibility: { ...(manifest["compatibility"] as Json), minAdminiumVersion: floor } });
-    expect(at("0.3.61").ok).toBe(true);
-    expect(at("0.3.60").ok).toBe(true);
+    expect(at("0.3.62").ok).toBe(true);
+    expect(at("0.3.61").ok).toBe(false);
     expect(at("0.3.59").ok).toBe(false);
   });
 });

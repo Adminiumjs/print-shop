@@ -17,6 +17,14 @@
  *   sample-pack-sent    the sample pack is in the post;
  *   delivery-quote      an order over the delivery bands: the price the works
  *                       set for its delivery, to accept or collect instead.
+ * While the works takes payments online (each producer's `payments`), three
+ * say so instead of the words above, each with its own template:
+ *   order-received-online    paying online is there once the proofs are
+ *                            approved, beside the works' own way;
+ *   proof-approved-online    the pay button once the order can be paid, and
+ *                            the works' own way beside it;
+ *   delivery-quote-accepted  the quote accepted and the pay button, sent only
+ *                            when accepting made the order payable.
  * To the works' own address (staff mail, no class):
  *   change-asked        a customer asked for a change on a proof;
  *   warnings-accepted   a new order whose customer accepted artwork warnings.
@@ -37,6 +45,9 @@ export const KINDS = [
   "delivery-quote",
   "change-asked",
   "warnings-accepted",
+  "order-received-online",
+  "proof-approved-online",
+  "delivery-quote-accepted",
 ] as const;
 export type Kind = (typeof KINDS)[number];
 
@@ -55,6 +66,9 @@ export const KIND_NAMES: Record<Kind, string> = {
   "delivery-quote": "Delivery quote",
   "change-asked": "Change asked: works copy",
   "warnings-accepted": "Warnings accepted: works copy",
+  "order-received-online": "Order received, paying online",
+  "proof-approved-online": "Proof approved, paying online",
+  "delivery-quote-accepted": "Delivery quote accepted",
 };
 
 const works = { setting: { table: "settings", column: "email" } };
@@ -89,19 +103,27 @@ export const OUTBOX = {
   kinds: Object.fromEntries(KINDS.map((kind) => [kind, `printing-${kind}`])),
   classes: Object.fromEntries(KINDS.filter((kind) => !TO_WORKS.has(kind)).map((kind) => [kind, "service"])),
   producers: [
-    { kind: "order-received", link: "order_id", onCreate: { table: "orders" } },
+    // The order is in: while the works takes payments online, the e-mail says paying online is there once the proofs
+    // are approved; while it does not, it says what it always said.
+    { kind: "order-received", link: "order_id", onCreate: { table: "orders" }, payments: "off" },
+    { kind: "order-received-online", link: "order_id", onCreate: { table: "orders" }, payments: "on" },
     // About the proof itself, so each proof of an order is its own e-mail (a fresh one after a change asked too); the
     // order and its customer are found through it. Only a proof with its PDF: one added on the dashboard with none before
     // 0.2.4 (a proof is now made with it) has nothing to open, and is e-mailed once it is given its PDF.
     { kind: "proof-ready", link: "proof_id", onCreate: { table: "proofs", where: { column: "file", isNull: false } } },
     { kind: "proof-ready", link: "proof_id", onChange: { table: "proofs", columns: ["file"], changed: true, where: { column: "file", isNull: false } } },
-    // Each proof approved, about its own proof: an order's second job approved is told the customer too.
-    { kind: "proof-approved", link: "proof_id", onChange: { table: "proofs", column: "state", to: "approved" } },
+    // Each proof approved (`repeat`: an order's second job approved is told the customer too), about its order: while the
+    // works takes payments online, with the pay button once the order can be paid and the works' own way beside it.
+    { kind: "proof-approved", link: "order_id", onChange: { table: "proofs", via: "order_id", column: "state", to: "approved" }, repeat: true, payments: "off" },
+    { kind: "proof-approved-online", link: "order_id", onChange: { table: "proofs", via: "order_id", column: "state", to: "approved" }, repeat: true, payments: "on" },
     { kind: "order-ready", link: "order_id", onChange: { table: "orders", column: "status", to: "ready", where: { column: "delivery_method", eq: "collect" } } },
     { kind: "order-dispatched", link: "order_id", onChange: { table: "orders", column: "status", to: "dispatched" } },
     { kind: "quote-saved", link: "quote_id", onCreate: { table: "saved_quotes" }, recipient: { column: "email", name: "name", language: "language" } },
     { kind: "sample-pack-sent", link: "sample_id", onChange: { table: "sample_requests", column: "status", to: "posted" }, recipient: { column: "email", name: "name", language: "language" } },
     { kind: "delivery-quote", link: "order_id", onChange: { table: "orders", column: "delivery_quote_state", to: "sent" } },
+    // The delivery quote accepted and the order payable by it: only while the works takes payments online, with the pay
+    // button. With payments off accepting sends nothing, as it always did.
+    { kind: "delivery-quote-accepted", link: "order_id", onChange: { table: "orders", column: "delivery_quote_state", to: "accepted", where: { column: "pay_open", eq: 1 } }, payments: "on" },
     // Each change asked, about its own proof: a second change on the next proof is told the works too.
     { kind: "change-asked", link: "proof_id", onChange: { table: "proofs", column: "state", to: "change_asked" }, recipient: works },
     { kind: "warnings-accepted", link: "order_id", onCreate: { table: "orders", where: { column: "has_warnings", eq: 1 } }, recipient: works },

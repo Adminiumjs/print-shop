@@ -54,9 +54,12 @@ export const VERSION = "0.2.5";
  * `payments.start`), and fills a pay button's link in the e-mails (`pay_url`).
  * 0.3.61 tells the customer who comes back from the pay page how their
  * payment stands (`payments.state`: the bank still confirming it, not
- * finished, or the pay page's time run out).
+ * finished, or the pay page's time run out). 0.3.62 sends an e-mail only
+ * while the works takes payments online, or only while it does not
+ * (`producers[].payments`), and tells the job ticket who gave money back and
+ * why.
  */
-export const MIN_ADMINIUM = "0.3.61";
+export const MIN_ADMINIUM = "0.3.62";
 
 /**
  * The release that reads two more things this app says: a role's grant of

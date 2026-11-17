@@ -380,6 +380,22 @@ const QUOTE_OPEN = { if: [{ eq: ["delivery_quote_state", "accepted"] }, 0, { coa
  * one they will pay. Whether anything is left to pay is the balance's to say.
  */
 const PAY_OPEN = { if: [{ and: [{ gt: ["item_count", 0] }, { gte: [{ coalesce: ["proofs_approved", 0] }, "item_count"] }, { eq: ["quote_open", 0] }] }, 1, 0] };
+
+/**
+ * What the e-mails say of paying, each a mark that is empty unless it holds
+ * (a block is sent only while its mark is filled): the order is collected
+ * from the works; it may be paid now and is collected, or delivered; nothing
+ * is owed and all of it came online, or some came by hand.
+ */
+const NONE = { div: [0, 0] };
+const mark = (when: unknown) => ({ if: [when, 1, NONE] });
+const COLLECTS = mark({ eq: ["delivery_method", "collect"] });
+const PAYABLE_NOW = [{ eq: ["pay_open", 1] }, { gt: [{ coalesce: ["due", 0] }, 0] }];
+const PAY_COLLECT = mark({ and: [{ eq: ["delivery_method", "collect"] }, ...PAYABLE_NOW] });
+const PAY_INVOICE = mark({ and: [{ eq: ["delivery_method", "deliver"] }, ...PAYABLE_NOW] });
+const SETTLED = [{ lte: [{ coalesce: ["due", 0] }, 0] }, { gt: [{ coalesce: ["paid_in", 0] }, 0] }];
+const PAID_ONLINE_ALL = mark({ and: [...SETTLED, { gte: [{ coalesce: ["paid_online", 0] }, { coalesce: ["paid", 0] }] }] });
+const PAID_BY_HAND = mark({ and: [...SETTLED, { lt: [{ coalesce: ["paid_online", 0] }, { coalesce: ["paid", 0] }] }] });
 /** The lines' prices added up, while every line has one; empty while one has none. */
 const GOODS = { if: [{ lt: [{ coalesce: ["priced_lines", 0] }, { coalesce: ["item_count", 0] }] }, { div: [0, 0] }, { coalesce: ["goods_sum", 0] }] };
 const SUBTOTAL = { add: ["goods_total", { coalesce: ["delivery", 0] }] };
@@ -1033,6 +1049,12 @@ export const TABLES: Table[] = [
       figure("proofs_approved", "int", "Proofs approved", { rollup: { from: "jobs", via: "order_id", sum: "proof_ok", unlessSet: "cancelled_at" } }),
       figure("quote_open", "int", "Delivery price to agree", { formula: QUOTE_OPEN }),
       figure("pay_open", "int", "Can be paid now", { formula: PAY_OPEN }),
+      // The e-mails' marks on paying: each empty unless it holds.
+      figure("collects", "int", "Collected from the works", { formula: COLLECTS }),
+      figure("pay_collect", "int", "Can be paid now, collected", { formula: PAY_COLLECT }),
+      figure("pay_invoice", "int", "Can be paid now, delivered", { formula: PAY_INVOICE }),
+      figure("paid_all_online", "int", "Paid, all of it online", { formula: PAID_ONLINE_ALL }),
+      figure("paid_by_hand", "int", "Paid, some of it by hand", { formula: PAID_BY_HAND }),
       at("delivery_quote_sent_at", "Delivery quote sent", { ...opt, rules: stamp("now", onState("delivery_quote_state", "sent")) }),
       at("delivery_quote_accepted_at", "Delivery quote accepted", { ...opt, rules: stamp("now", onState("delivery_quote_state", "accepted")) }),
       // Artwork warnings the customer accepted at checkout, on all its jobs.

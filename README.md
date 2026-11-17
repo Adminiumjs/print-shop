@@ -21,7 +21,7 @@ the two o'clock cut-off — and the works prints Monday to Friday.
 
 ## What it needs
 
-- Adminium **0.3.61** or later, on SQLite, Postgres or MySQL.
+- Adminium **0.3.62** or later, on SQLite, Postgres or MySQL.
 - The **Customiser** add-on (1.0.26 or later): it is where a customer fills in a
   ready-made design or starts from blank, and the job names the design they
   made. Adminium installs it with the app.
@@ -146,7 +146,7 @@ update is sent with `"roleTables": true`. Without it the update is refused
 (`ROLE_TABLES_WIDER`) and nothing changes.
 
 **Updating to the release that takes payments online?** It needs Adminium
-0.3.61. The update adds the payments table (`printing_payments`) and the
+0.3.62. The update adds the payments table (`printing_payments`) and the
 order's paid and owed figures (every order already there reads as owing its
 total, and nothing in it changes), lets the shop's pages read those figures,
 and gives the owner the refund of this app's online payments. Adminium lists

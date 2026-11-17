@@ -99,9 +99,13 @@ export type EmailWords = Record<Kind, Words> & {
    */
   payButton: string;
   payNote: string;
-  /** Ready to collect, once nothing is owed: what was paid, and when. */
+  /** Ready to collect, once nothing is owed: what was paid, and when (all of it online, or some by hand). */
   paid: string;
   paidOn: string;
+  paidOnline: string;
+  /** The works' own ways, beside the pay button: collected, or delivered with its invoice. */
+  orCollect: string;
+  orInvoice: string;
 };
 
 export const EMAIL_EN: EmailWords = {
@@ -137,6 +141,9 @@ export const EMAIL_EN: EmailWords = {
   payNote: "The button opens a pay link. You'll pay on the Stripe or PayPal page.",
   paid: "Paid",
   paidOn: "{{order.paid.money}} on {{order.last_paid_at.date}}",
+  paidOnline: "{{order.paid.money}} online on {{order.last_paid_at.date}}",
+  orCollect: "Or pay when you collect.",
+  orInvoice: "Or pay by the invoice we send with your delivery.",
   "order-received": {
     name: "Order received",
     subject: "Thanks — we've got your order {{order.number}}",
@@ -210,6 +217,36 @@ export const EMAIL_EN: EmailWords = {
       "Rather collect it? Collection from the works costs nothing.",
     ],
     button: "Accept the quote",
+  },
+  "order-received-online": {
+    name: "Order received, paying online",
+    subject: "Thanks — we've got your order {{order.number}}",
+    preheader: "Ready by {{order.ready_by}}.",
+    eyebrow: "Order received",
+    heading: "Thanks — we've got your order {{order.number}}.",
+    paras: [
+      "Nothing is charged now. Once you approve the proofs, you can pay online or when you collect.",
+      "Nothing is charged now. Once you approve the proofs, you can pay online or by the invoice we send with your delivery.",
+    ],
+    button: "Follow your order",
+  },
+  "proof-approved-online": {
+    name: "Proof approved, paying online",
+    subject: "Thanks — we're printing {{order.number}}",
+    preheader: "Ready by {{order.ready_by}}.",
+    eyebrow: "Proof approved",
+    heading: "Thanks — we're printing it.",
+    paras: [],
+    button: "Follow your order",
+  },
+  "delivery-quote-accepted": {
+    name: "Delivery quote accepted",
+    subject: "Delivery quote accepted for {{order.number}}",
+    preheader: "Total with delivery: {{order.total.money}}.",
+    eyebrow: "Delivery quote",
+    heading: "Thanks — your delivery quote is accepted.",
+    paras: [],
+    button: "Follow your order",
   },
   "change-asked": {
     name: "Change asked: works copy",
@@ -334,6 +371,12 @@ function orderMoney(w: EmailWords): Block[] {
  */
 const pay = (w: EmailWords): Block[] => [button("pay", w.payButton, "{{pay_url}}", { onlyWith: "pay_url" }), { block: "email.text", id: "pay-note", data: { paras: [w.payNote], onlyWith: "pay_url" } }];
 
+/** The works' own way beside the pay button, while the order can be paid: collected, or delivered with its invoice. */
+const ways = (w: EmailWords): Block[] => [
+  { block: "email.text", id: "or-collect", data: { paras: [w.orCollect], onlyWith: "order.pay_collect" } },
+  { block: "email.text", id: "or-invoice", data: { paras: [w.orInvoice], onlyWith: "order.pay_invoice" } },
+];
+
 /** The private-link lines under a button: whose link it is, and the link written out. */
 const ownLink = (w: EmailWords, url: string): Block => text("own", [w.own, `${w.copy} ${url}`]);
 
@@ -361,8 +404,35 @@ function body(kind: Kind, w: EmailWords): Block[] {
         ownLink(w, ORDER_URL),
       ];
     case "proof-approved":
-      // The jobs approved so far, never one still waiting on its proof; the last approval may make the order payable.
-      return [...head, facts("ready", [[w.readyBy, "{{order.ready_by}}"]]), proofs("approved"), ...pay(w), ...follow(own.button!)];
+      // The jobs approved so far, never one still waiting on its proof.
+      return [...head, facts("ready", [[w.readyBy, "{{order.ready_by}}"]]), proofs("approved"), ...follow(own.button!)];
+    case "proof-approved-online":
+      // The same, and once the approval makes the order payable, the pay button and the works' own way beside it.
+      return [...head, facts("ready", [[w.readyBy, "{{order.ready_by}}"]]), proofs("approved"), ...pay(w), ...ways(w), ...follow(own.button!)];
+    case "order-received-online":
+      return [
+        ...head,
+        jobs(true),
+        ...orderMoney(w),
+        facts("ready", [[w.readyBy, "{{order.ready_by}}"]]),
+        { block: "email.text", id: "body", data: { paras: [own.paras[0]!], onlyWith: "order.collects" } },
+        { block: "email.text", id: "body-delivered", data: { paras: [own.paras[1]!], onlyWithout: "order.collects" } },
+        ...follow(own.button!),
+      ];
+    case "delivery-quote-accepted":
+      return [
+        ...head,
+        jobs(true),
+        facts("money", [
+          [w.goods, "{{order.goods_total.money}}"],
+          ["{{order.delivery_method.label}}", "{{order.delivery_quote.money}}"],
+          [`${w.tax} ({{order.tax_rate.percent}})`, "{{order.tax.money}}"],
+          [w.totalWithDelivery, "{{order.total.money}}"],
+        ]),
+        ...pay(w),
+        ...ways(w),
+        ...follow(own.button!),
+      ];
     case "order-ready":
       // What they pay when they collect while something is owed; what was paid once nothing is.
       return [
@@ -370,7 +440,8 @@ function body(kind: Kind, w: EmailWords): Block[] {
         jobs(false),
         facts("where", [[w.where, "{{practice.address}}"], [w.open, "{{practice.hours}}"]]),
         { block: "email.text", id: "body", data: { paras: own.paras, onlyWith: "order.owing" } },
-        facts("paid", [[w.paid, w.paidOn]], { onlyWithout: "order.owing" }),
+        facts("paid-online", [[w.paid, w.paidOnline]], { onlyWith: "order.paid_all_online" }),
+        facts("paid", [[w.paid, w.paidOn]], { onlyWith: "order.paid_by_hand" }),
         ...pay(w),
         ...follow(own.button!),
       ];

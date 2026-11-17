@@ -18,7 +18,7 @@
     "commerce"
   ],
   "compatibility": {
-    "minAdminiumVersion": "0.3.61",
+    "minAdminiumVersion": "0.3.62",
     "engines": [
       "sqlite",
       "postgres",
@@ -5515,6 +5515,290 @@
                   },
                   1,
                   0
+                ]
+              }
+            }
+          },
+          {
+            "ref": "collects",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Collected from the works",
+              "de-DE": "Wird in der Druckerei abgeholt",
+              "fr-FR": "Retiré à l’atelier",
+              "da-DK": "Afhentes på trykkeriet",
+              "cs-CZ": "Vyzvedává se v tiskárně",
+              "ar-EG": "يُستلم من المطبعة",
+              "zh-CN": "在印刷厂自取",
+              "zh-TW": "在印刷廠自取"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "eq": [
+                      "delivery_method",
+                      "collect"
+                    ]
+                  },
+                  1,
+                  {
+                    "div": [
+                      0,
+                      0
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "ref": "pay_collect",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Can be paid now, collected",
+              "de-DE": "Jetzt bezahlbar, Abholung",
+              "fr-FR": "Payable maintenant, retrait",
+              "da-DK": "Kan betales nu, afhentning",
+              "cs-CZ": "Lze zaplatit nyní, vyzvednutí",
+              "ar-EG": "يمكن دفعه الآن، استلام",
+              "zh-CN": "现在可付款，自取",
+              "zh-TW": "現在可付款，自取"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "and": [
+                      {
+                        "eq": [
+                          "delivery_method",
+                          "collect"
+                        ]
+                      },
+                      {
+                        "eq": [
+                          "pay_open",
+                          1
+                        ]
+                      },
+                      {
+                        "gt": [
+                          {
+                            "coalesce": [
+                              "due",
+                              0
+                            ]
+                          },
+                          0
+                        ]
+                      }
+                    ]
+                  },
+                  1,
+                  {
+                    "div": [
+                      0,
+                      0
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "ref": "pay_invoice",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Can be paid now, delivered",
+              "de-DE": "Jetzt bezahlbar, Lieferung",
+              "fr-FR": "Payable maintenant, livraison",
+              "da-DK": "Kan betales nu, levering",
+              "cs-CZ": "Lze zaplatit nyní, doručení",
+              "ar-EG": "يمكن دفعه الآن، توصيل",
+              "zh-CN": "现在可付款，配送",
+              "zh-TW": "現在可付款，配送"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "and": [
+                      {
+                        "eq": [
+                          "delivery_method",
+                          "deliver"
+                        ]
+                      },
+                      {
+                        "eq": [
+                          "pay_open",
+                          1
+                        ]
+                      },
+                      {
+                        "gt": [
+                          {
+                            "coalesce": [
+                              "due",
+                              0
+                            ]
+                          },
+                          0
+                        ]
+                      }
+                    ]
+                  },
+                  1,
+                  {
+                    "div": [
+                      0,
+                      0
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "ref": "paid_all_online",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Paid, all of it online",
+              "de-DE": "Bezahlt, alles online",
+              "fr-FR": "Payé, tout en ligne",
+              "da-DK": "Betalt, alt online",
+              "cs-CZ": "Zaplaceno, vše online",
+              "ar-EG": "مدفوع، كله عبر الإنترنت",
+              "zh-CN": "已付，全部在线支付",
+              "zh-TW": "已付，全部線上支付"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "and": [
+                      {
+                        "lte": [
+                          {
+                            "coalesce": [
+                              "due",
+                              0
+                            ]
+                          },
+                          0
+                        ]
+                      },
+                      {
+                        "gt": [
+                          {
+                            "coalesce": [
+                              "paid_in",
+                              0
+                            ]
+                          },
+                          0
+                        ]
+                      },
+                      {
+                        "gte": [
+                          {
+                            "coalesce": [
+                              "paid_online",
+                              0
+                            ]
+                          },
+                          {
+                            "coalesce": [
+                              "paid",
+                              0
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  1,
+                  {
+                    "div": [
+                      0,
+                      0
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "ref": "paid_by_hand",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Paid, some of it by hand",
+              "de-DE": "Bezahlt, teils vor Ort",
+              "fr-FR": "Payé, en partie sur place",
+              "da-DK": "Betalt, delvist på stedet",
+              "cs-CZ": "Zaplaceno, částečně na místě",
+              "ar-EG": "مدفوع، جزء منه يدويًا",
+              "zh-CN": "已付，部分线下支付",
+              "zh-TW": "已付，部分線下支付"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "and": [
+                      {
+                        "lte": [
+                          {
+                            "coalesce": [
+                              "due",
+                              0
+                            ]
+                          },
+                          0
+                        ]
+                      },
+                      {
+                        "gt": [
+                          {
+                            "coalesce": [
+                              "paid_in",
+                              0
+                            ]
+                          },
+                          0
+                        ]
+                      },
+                      {
+                        "lt": [
+                          {
+                            "coalesce": [
+                              "paid_online",
+                              0
+                            ]
+                          },
+                          {
+                            "coalesce": [
+                              "paid",
+                              0
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  1,
+                  {
+                    "div": [
+                      0,
+                      0
+                    ]
+                  }
                 ]
               }
             }
@@ -17527,7 +17811,10 @@
               "sample-pack-sent",
               "delivery-quote",
               "change-asked",
-              "warnings-accepted"
+              "warnings-accepted",
+              "order-received-online",
+              "proof-approved-online",
+              "delivery-quote-accepted"
             ],
             "label": {
               "en-US": "Kind",
@@ -17641,6 +17928,36 @@
                     "ar-EG": "قُبلت التحذيرات: نسخة المطبعة",
                     "zh-CN": "已接受提示：印刷厂副本",
                     "zh-TW": "已接受提示：印刷廠副本"
+                  },
+                  "order-received-online": {
+                    "en-US": "Order received, paying online",
+                    "de-DE": "Bestellung eingegangen, Online-Zahlung",
+                    "fr-FR": "Commande reçue, paiement en ligne",
+                    "da-DK": "Bestilling modtaget, onlinebetaling",
+                    "cs-CZ": "Objednávka přijata, platba online",
+                    "ar-EG": "استُلم الطلب، الدفع عبر الإنترنت",
+                    "zh-CN": "已收到订单，在线付款",
+                    "zh-TW": "已收到訂單，線上付款"
+                  },
+                  "proof-approved-online": {
+                    "en-US": "Proof approved, paying online",
+                    "de-DE": "Proof freigegeben, Online-Zahlung",
+                    "fr-FR": "Épreuve validée, paiement en ligne",
+                    "da-DK": "Korrektur godkendt, onlinebetaling",
+                    "cs-CZ": "Nátisk schválen, platba online",
+                    "ar-EG": "اعتُمدت البروفة، الدفع عبر الإنترنت",
+                    "zh-CN": "校样已确认，在线付款",
+                    "zh-TW": "打樣已確認，線上付款"
+                  },
+                  "delivery-quote-accepted": {
+                    "en-US": "Delivery quote accepted",
+                    "de-DE": "Lieferangebot angenommen",
+                    "fr-FR": "Devis de livraison accepté",
+                    "da-DK": "Leveringstilbud godtaget",
+                    "cs-CZ": "Nabídka dopravy přijata",
+                    "ar-EG": "قُبل عرض سعر التوصيل",
+                    "zh-CN": "配送报价已接受",
+                    "zh-TW": "配送報價已接受"
                   }
                 }
               }
@@ -23529,7 +23846,10 @@
       "sample-pack-sent": "printing-sample-pack-sent",
       "delivery-quote": "printing-delivery-quote",
       "change-asked": "printing-change-asked",
-      "warnings-accepted": "printing-warnings-accepted"
+      "warnings-accepted": "printing-warnings-accepted",
+      "order-received-online": "printing-order-received-online",
+      "proof-approved-online": "printing-proof-approved-online",
+      "delivery-quote-accepted": "printing-delivery-quote-accepted"
     },
     "classes": {
       "order-received": "service",
@@ -23539,7 +23859,10 @@
       "order-dispatched": "service",
       "quote-saved": "service",
       "sample-pack-sent": "service",
-      "delivery-quote": "service"
+      "delivery-quote": "service",
+      "order-received-online": "service",
+      "proof-approved-online": "service",
+      "delivery-quote-accepted": "service"
     },
     "producers": [
       {
@@ -23547,7 +23870,16 @@
         "link": "order_id",
         "onCreate": {
           "table": "orders"
-        }
+        },
+        "payments": "off"
+      },
+      {
+        "kind": "order-received-online",
+        "link": "order_id",
+        "onCreate": {
+          "table": "orders"
+        },
+        "payments": "on"
       },
       {
         "kind": "proof-ready",
@@ -23577,12 +23909,27 @@
       },
       {
         "kind": "proof-approved",
-        "link": "proof_id",
+        "link": "order_id",
         "onChange": {
           "table": "proofs",
+          "via": "order_id",
           "column": "state",
           "to": "approved"
-        }
+        },
+        "repeat": true,
+        "payments": "off"
+      },
+      {
+        "kind": "proof-approved-online",
+        "link": "order_id",
+        "onChange": {
+          "table": "proofs",
+          "via": "order_id",
+          "column": "state",
+          "to": "approved"
+        },
+        "repeat": true,
+        "payments": "on"
       },
       {
         "kind": "order-ready",
@@ -23640,6 +23987,20 @@
           "column": "delivery_quote_state",
           "to": "sent"
         }
+      },
+      {
+        "kind": "delivery-quote-accepted",
+        "link": "order_id",
+        "onChange": {
+          "table": "orders",
+          "column": "delivery_quote_state",
+          "to": "accepted",
+          "where": {
+            "column": "pay_open",
+            "eq": 1
+          }
+        },
+        "payments": "on"
       },
       {
         "kind": "change-asked",
@@ -25844,11 +26205,9 @@
       "vars": [
         "appName",
         "manage_url",
-        "order.due.money",
         "order.link_token",
         "order.number",
         "order.ready_by",
-        "pay_url",
         "practice.address",
         "practice.email",
         "practice.hours",
@@ -25906,25 +26265,6 @@
                   "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}"
                 }
-              }
-            },
-            {
-              "block": "email.button",
-              "id": "pay",
-              "data": {
-                "label": "Pay {{order.due.money}} online",
-                "url": "{{pay_url}}",
-                "onlyWith": "pay_url"
-              }
-            },
-            {
-              "block": "email.text",
-              "id": "pay-note",
-              "data": {
-                "paras": [
-                  "The button opens a pay link. You'll pay on the Stripe or PayPal page."
-                ],
-                "onlyWith": "pay_url"
               }
             },
             {
@@ -26003,25 +26343,6 @@
             },
             {
               "block": "email.button",
-              "id": "pay",
-              "data": {
-                "label": "{{order.due.money}} online bezahlen",
-                "url": "{{pay_url}}",
-                "onlyWith": "pay_url"
-              }
-            },
-            {
-              "block": "email.text",
-              "id": "pay-note",
-              "data": {
-                "paras": [
-                  "Die Schaltfläche öffnet einen Bezahllink. Sie bezahlen auf der Seite von Stripe oder PayPal."
-                ],
-                "onlyWith": "pay_url"
-              }
-            },
-            {
-              "block": "email.button",
               "id": "follow",
               "data": {
                 "label": "Ihre Bestellung verfolgen",
@@ -26092,25 +26413,6 @@
                   "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}"
                 }
-              }
-            },
-            {
-              "block": "email.button",
-              "id": "pay",
-              "data": {
-                "label": "Payer {{order.due.money}} en ligne",
-                "url": "{{pay_url}}",
-                "onlyWith": "pay_url"
-              }
-            },
-            {
-              "block": "email.text",
-              "id": "pay-note",
-              "data": {
-                "paras": [
-                  "Le bouton ouvre un lien de paiement. Vous paierez sur la page Stripe ou PayPal."
-                ],
-                "onlyWith": "pay_url"
               }
             },
             {
@@ -26189,25 +26491,6 @@
             },
             {
               "block": "email.button",
-              "id": "pay",
-              "data": {
-                "label": "Betal {{order.due.money}} online",
-                "url": "{{pay_url}}",
-                "onlyWith": "pay_url"
-              }
-            },
-            {
-              "block": "email.text",
-              "id": "pay-note",
-              "data": {
-                "paras": [
-                  "Knappen åbner et betalingslink. Du betaler på Stripe- eller PayPal-siden."
-                ],
-                "onlyWith": "pay_url"
-              }
-            },
-            {
-              "block": "email.button",
               "id": "follow",
               "data": {
                 "label": "Følg din ordre",
@@ -26278,25 +26561,6 @@
                   "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}"
                 }
-              }
-            },
-            {
-              "block": "email.button",
-              "id": "pay",
-              "data": {
-                "label": "Zaplatit {{order.due.money}} online",
-                "url": "{{pay_url}}",
-                "onlyWith": "pay_url"
-              }
-            },
-            {
-              "block": "email.text",
-              "id": "pay-note",
-              "data": {
-                "paras": [
-                  "Tlačítko otevře platební odkaz. Zaplatíte na stránce Stripe nebo PayPal."
-                ],
-                "onlyWith": "pay_url"
               }
             },
             {
@@ -26375,25 +26639,6 @@
             },
             {
               "block": "email.button",
-              "id": "pay",
-              "data": {
-                "label": "ادفع {{order.due.money}} عبر الإنترنت",
-                "url": "{{pay_url}}",
-                "onlyWith": "pay_url"
-              }
-            },
-            {
-              "block": "email.text",
-              "id": "pay-note",
-              "data": {
-                "paras": [
-                  "يفتح الزر رابط دفع. ستدفع على صفحة Stripe أو PayPal."
-                ],
-                "onlyWith": "pay_url"
-              }
-            },
-            {
-              "block": "email.button",
               "id": "follow",
               "data": {
                 "label": "تتبّع طلبك",
@@ -26468,25 +26713,6 @@
             },
             {
               "block": "email.button",
-              "id": "pay",
-              "data": {
-                "label": "在线支付 {{order.due.money}}",
-                "url": "{{pay_url}}",
-                "onlyWith": "pay_url"
-              }
-            },
-            {
-              "block": "email.text",
-              "id": "pay-note",
-              "data": {
-                "paras": [
-                  "此按钮会打开付款链接。您将在 Stripe 或 PayPal 页面上付款。"
-                ],
-                "onlyWith": "pay_url"
-              }
-            },
-            {
-              "block": "email.button",
               "id": "follow",
               "data": {
                 "label": "跟踪您的订单",
@@ -26557,25 +26783,6 @@
                   "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
                   "meta": "{{row.job.dims|}}"
                 }
-              }
-            },
-            {
-              "block": "email.button",
-              "id": "pay",
-              "data": {
-                "label": "線上支付 {{order.due.money}}",
-                "url": "{{pay_url}}",
-                "onlyWith": "pay_url"
-              }
-            },
-            {
-              "block": "email.text",
-              "id": "pay-note",
-              "data": {
-                "paras": [
-                  "此按鈕會開啟付款連結。您將在 Stripe 或 PayPal 頁面上付款。"
-                ],
-                "onlyWith": "pay_url"
               }
             },
             {
@@ -26704,6 +26911,19 @@
             },
             {
               "block": "email.tax-breakdown",
+              "id": "paid-online",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Paid",
+                    "amount": "{{order.paid.money}} online on {{order.last_paid_at.date}}"
+                  }
+                ],
+                "onlyWith": "order.paid_all_online"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
               "id": "paid",
               "data": {
                 "lines": [
@@ -26712,7 +26932,7 @@
                     "amount": "{{order.paid.money}} on {{order.last_paid_at.date}}"
                   }
                 ],
-                "onlyWithout": "order.owing"
+                "onlyWith": "order.paid_by_hand"
               }
             },
             {
@@ -26830,6 +27050,19 @@
             },
             {
               "block": "email.tax-breakdown",
+              "id": "paid-online",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Bezahlt",
+                    "amount": "{{order.paid.money}} online am {{order.last_paid_at.date}}"
+                  }
+                ],
+                "onlyWith": "order.paid_all_online"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
               "id": "paid",
               "data": {
                 "lines": [
@@ -26838,7 +27071,7 @@
                     "amount": "{{order.paid.money}} am {{order.last_paid_at.date}}"
                   }
                 ],
-                "onlyWithout": "order.owing"
+                "onlyWith": "order.paid_by_hand"
               }
             },
             {
@@ -26956,6 +27189,19 @@
             },
             {
               "block": "email.tax-breakdown",
+              "id": "paid-online",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Payé",
+                    "amount": "{{order.paid.money}} en ligne le {{order.last_paid_at.date}}"
+                  }
+                ],
+                "onlyWith": "order.paid_all_online"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
               "id": "paid",
               "data": {
                 "lines": [
@@ -26964,7 +27210,7 @@
                     "amount": "{{order.paid.money}} le {{order.last_paid_at.date}}"
                   }
                 ],
-                "onlyWithout": "order.owing"
+                "onlyWith": "order.paid_by_hand"
               }
             },
             {
@@ -27082,6 +27328,19 @@
             },
             {
               "block": "email.tax-breakdown",
+              "id": "paid-online",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Betalt",
+                    "amount": "{{order.paid.money}} online den {{order.last_paid_at.date}}"
+                  }
+                ],
+                "onlyWith": "order.paid_all_online"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
               "id": "paid",
               "data": {
                 "lines": [
@@ -27090,7 +27349,7 @@
                     "amount": "{{order.paid.money}} den {{order.last_paid_at.date}}"
                   }
                 ],
-                "onlyWithout": "order.owing"
+                "onlyWith": "order.paid_by_hand"
               }
             },
             {
@@ -27208,6 +27467,19 @@
             },
             {
               "block": "email.tax-breakdown",
+              "id": "paid-online",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Zaplaceno",
+                    "amount": "{{order.paid.money}} online dne {{order.last_paid_at.date}}"
+                  }
+                ],
+                "onlyWith": "order.paid_all_online"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
               "id": "paid",
               "data": {
                 "lines": [
@@ -27216,7 +27488,7 @@
                     "amount": "{{order.paid.money}} dne {{order.last_paid_at.date}}"
                   }
                 ],
-                "onlyWithout": "order.owing"
+                "onlyWith": "order.paid_by_hand"
               }
             },
             {
@@ -27334,6 +27606,19 @@
             },
             {
               "block": "email.tax-breakdown",
+              "id": "paid-online",
+              "data": {
+                "lines": [
+                  {
+                    "label": "المدفوع",
+                    "amount": "{{order.paid.money}} عبر الإنترنت في {{order.last_paid_at.date}}"
+                  }
+                ],
+                "onlyWith": "order.paid_all_online"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
               "id": "paid",
               "data": {
                 "lines": [
@@ -27342,7 +27627,7 @@
                     "amount": "{{order.paid.money}} في {{order.last_paid_at.date}}"
                   }
                 ],
-                "onlyWithout": "order.owing"
+                "onlyWith": "order.paid_by_hand"
               }
             },
             {
@@ -27460,6 +27745,19 @@
             },
             {
               "block": "email.tax-breakdown",
+              "id": "paid-online",
+              "data": {
+                "lines": [
+                  {
+                    "label": "已付",
+                    "amount": "{{order.last_paid_at.date}} 在线支付 {{order.paid.money}}"
+                  }
+                ],
+                "onlyWith": "order.paid_all_online"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
               "id": "paid",
               "data": {
                 "lines": [
@@ -27468,7 +27766,7 @@
                     "amount": "{{order.last_paid_at.date}} 付款 {{order.paid.money}}"
                   }
                 ],
-                "onlyWithout": "order.owing"
+                "onlyWith": "order.paid_by_hand"
               }
             },
             {
@@ -27586,6 +27884,19 @@
             },
             {
               "block": "email.tax-breakdown",
+              "id": "paid-online",
+              "data": {
+                "lines": [
+                  {
+                    "label": "已付",
+                    "amount": "{{order.last_paid_at.date}} 線上支付 {{order.paid.money}}"
+                  }
+                ],
+                "onlyWith": "order.paid_all_online"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
               "id": "paid",
               "data": {
                 "lines": [
@@ -27594,7 +27905,7 @@
                     "amount": "{{order.last_paid_at.date}} 付款 {{order.paid.money}}"
                   }
                 ],
-                "onlyWithout": "order.owing"
+                "onlyWith": "order.paid_by_hand"
               }
             },
             {
@@ -32371,6 +32682,3267 @@
             }
           ],
           "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\n已寄給印刷廠，關於 {{order.number}}。"
+        }
+      }
+    },
+    {
+      "key": "printing-order-received-online",
+      "name": {
+        "en-US": "Order received, paying online",
+        "de-DE": "Bestellung eingegangen, Online-Zahlung",
+        "fr-FR": "Commande reçue, paiement en ligne",
+        "da-DK": "Bestilling modtaget, onlinebetaling",
+        "cs-CZ": "Objednávka přijata, platba online",
+        "ar-EG": "استُلم الطلب، الدفع عبر الإنترنت",
+        "zh-CN": "已收到订单，在线付款",
+        "zh-TW": "已收到訂單，線上付款"
+      },
+      "vars": [
+        "appName",
+        "manage_url",
+        "order.delivery_method.label",
+        "order.delivery_priced.money",
+        "order.goods_total.money",
+        "order.link_token",
+        "order.number",
+        "order.ready_by",
+        "order.tax.money",
+        "order.tax_rate.percent",
+        "order.total.money",
+        "practice.address",
+        "practice.email",
+        "practice.hours",
+        "practice.phone"
+      ],
+      "locales": {
+        "en-US": {
+          "subject": "Thanks — we've got your order {{order.number}}",
+          "preheader": "Ready by {{order.ready_by}}.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "Order received"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "Thanks — we've got your order {{order.number}}."
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "jobs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "jobs",
+                  "via": "order_id",
+                  "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
+                  "limit": 50
+                },
+                "row": {
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}",
+                  "amount": "{{row.price.money}}"
+                }
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Price (ex tax)",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "{{order.delivery_method.label}}",
+                    "amount": "{{order.delivery_priced.money}}"
+                  },
+                  {
+                    "label": "Tax ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "Total",
+                    "amount": "{{order.total.money}}"
+                  }
+                ],
+                "onlyWith": "order.delivery_priced"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money-to-quote",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Price (ex tax)",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "Delivery: we'll e-mail a quote",
+                    "amount": ""
+                  },
+                  {
+                    "label": "Tax ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "Total",
+                    "amount": "{{order.total.money}}"
+                  }
+                ],
+                "onlyWithout": "order.delivery_priced"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "ready",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Ready by",
+                    "amount": "{{order.ready_by}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body",
+              "data": {
+                "paras": [
+                  "Nothing is charged now. Once you approve the proofs, you can pay online or when you collect."
+                ],
+                "onlyWith": "order.collects"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body-delivered",
+              "data": {
+                "paras": [
+                  "Nothing is charged now. Once you approve the proofs, you can pay online or by the invoice we send with your delivery."
+                ],
+                "onlyWithout": "order.collects"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "Follow your order",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "This link is just for you — don't forward it.",
+                  "Or copy this link: {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nYou're getting this e-mail because of your order {{order.number}}."
+        },
+        "de-DE": {
+          "subject": "Danke — Ihre Bestellung {{order.number}} ist bei uns eingegangen",
+          "preheader": "Fertig bis {{order.ready_by}}.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "Bestellbestätigung"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "Danke — Ihre Bestellung {{order.number}} ist bei uns eingegangen."
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "jobs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "jobs",
+                  "via": "order_id",
+                  "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
+                  "limit": 50
+                },
+                "row": {
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}",
+                  "amount": "{{row.price.money}}"
+                }
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Preis (netto)",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "{{order.delivery_method.label}}",
+                    "amount": "{{order.delivery_priced.money}}"
+                  },
+                  {
+                    "label": "Mehrwertsteuer ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "Gesamtbetrag",
+                    "amount": "{{order.total.money}}"
+                  }
+                ],
+                "onlyWith": "order.delivery_priced"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money-to-quote",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Preis (netto)",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "Lieferung: Wir mailen ein Angebot",
+                    "amount": ""
+                  },
+                  {
+                    "label": "Mehrwertsteuer ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "Gesamtbetrag",
+                    "amount": "{{order.total.money}}"
+                  }
+                ],
+                "onlyWithout": "order.delivery_priced"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "ready",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Fertig bis",
+                    "amount": "{{order.ready_by}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body",
+              "data": {
+                "paras": [
+                  "Jetzt wird nichts berechnet. Sobald Sie die Proofs freigegeben haben, können Sie online oder bei der Abholung bezahlen."
+                ],
+                "onlyWith": "order.collects"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body-delivered",
+              "data": {
+                "paras": [
+                  "Jetzt wird nichts berechnet. Sobald Sie die Proofs freigegeben haben, können Sie online oder per Rechnung bezahlen, die wir mit der Lieferung schicken."
+                ],
+                "onlyWithout": "order.collects"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "Ihre Bestellung verfolgen",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "Dieser Link ist nur für Sie — bitte nicht weiterleiten.",
+                  "Oder kopieren Sie diesen Link: {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nSie erhalten diese E-Mail wegen Ihrer Bestellung {{order.number}}."
+        },
+        "fr-FR": {
+          "subject": "Merci — nous avons bien reçu votre commande {{order.number}}",
+          "preheader": "Prête le {{order.ready_by}}.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "Commande reçue"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "Merci — nous avons bien reçu votre commande {{order.number}}."
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "jobs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "jobs",
+                  "via": "order_id",
+                  "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
+                  "limit": 50
+                },
+                "row": {
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}",
+                  "amount": "{{row.price.money}}"
+                }
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Prix (HT)",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "{{order.delivery_method.label}}",
+                    "amount": "{{order.delivery_priced.money}}"
+                  },
+                  {
+                    "label": "TVA ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "Total TTC",
+                    "amount": "{{order.total.money}}"
+                  }
+                ],
+                "onlyWith": "order.delivery_priced"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money-to-quote",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Prix (HT)",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "Livraison : devis envoyé par e-mail",
+                    "amount": ""
+                  },
+                  {
+                    "label": "TVA ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "Total TTC",
+                    "amount": "{{order.total.money}}"
+                  }
+                ],
+                "onlyWithout": "order.delivery_priced"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "ready",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Prêt le",
+                    "amount": "{{order.ready_by}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body",
+              "data": {
+                "paras": [
+                  "Rien n’est débité maintenant. Une fois les épreuves validées, vous pourrez payer en ligne ou au retrait."
+                ],
+                "onlyWith": "order.collects"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body-delivered",
+              "data": {
+                "paras": [
+                  "Rien n’est débité maintenant. Une fois les épreuves validées, vous pourrez payer en ligne ou par la facture jointe à la livraison."
+                ],
+                "onlyWithout": "order.collects"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "Suivre votre commande",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "Ce lien est personnel — merci de ne pas le transférer.",
+                  "Ou copiez ce lien : {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nVous recevez cet e-mail au sujet de votre commande {{order.number}}."
+        },
+        "da-DK": {
+          "subject": "Tak — vi har modtaget din ordre {{order.number}}",
+          "preheader": "Klar den {{order.ready_by}}.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "Ordre modtaget"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "Tak — vi har modtaget din ordre {{order.number}}."
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "jobs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "jobs",
+                  "via": "order_id",
+                  "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
+                  "limit": 50
+                },
+                "row": {
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}",
+                  "amount": "{{row.price.money}}"
+                }
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Pris (ekskl. moms)",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "{{order.delivery_method.label}}",
+                    "amount": "{{order.delivery_priced.money}}"
+                  },
+                  {
+                    "label": "Moms ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "I alt",
+                    "amount": "{{order.total.money}}"
+                  }
+                ],
+                "onlyWith": "order.delivery_priced"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money-to-quote",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Pris (ekskl. moms)",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "Levering: vi sender et tilbud pr. e-mail",
+                    "amount": ""
+                  },
+                  {
+                    "label": "Moms ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "I alt",
+                    "amount": "{{order.total.money}}"
+                  }
+                ],
+                "onlyWithout": "order.delivery_priced"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "ready",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Klar den",
+                    "amount": "{{order.ready_by}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body",
+              "data": {
+                "paras": [
+                  "Der trækkes intet nu. Når du har godkendt korrekturerne, kan du betale online eller ved afhentning."
+                ],
+                "onlyWith": "order.collects"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body-delivered",
+              "data": {
+                "paras": [
+                  "Der trækkes intet nu. Når du har godkendt korrekturerne, kan du betale online eller via fakturaen, vi sender med leveringen."
+                ],
+                "onlyWithout": "order.collects"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "Følg din ordre",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "Linket er kun til dig — send det ikke videre.",
+                  "Eller kopier dette link: {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nDu får denne e-mail på grund af din ordre {{order.number}}."
+        },
+        "cs-CZ": {
+          "subject": "Děkujeme — vaši objednávku {{order.number}} jsme přijali",
+          "preheader": "Hotovo do {{order.ready_by}}.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "Objednávka přijata"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "Děkujeme — vaši objednávku {{order.number}} jsme přijali."
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "jobs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "jobs",
+                  "via": "order_id",
+                  "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
+                  "limit": 50
+                },
+                "row": {
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}",
+                  "amount": "{{row.price.money}}"
+                }
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Cena (bez daně)",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "{{order.delivery_method.label}}",
+                    "amount": "{{order.delivery_priced.money}}"
+                  },
+                  {
+                    "label": "DPH ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "Celkem",
+                    "amount": "{{order.total.money}}"
+                  }
+                ],
+                "onlyWith": "order.delivery_priced"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money-to-quote",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Cena (bez daně)",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "Doručení: nabídku pošleme e-mailem",
+                    "amount": ""
+                  },
+                  {
+                    "label": "DPH ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "Celkem",
+                    "amount": "{{order.total.money}}"
+                  }
+                ],
+                "onlyWithout": "order.delivery_priced"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "ready",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Hotovo do",
+                    "amount": "{{order.ready_by}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body",
+              "data": {
+                "paras": [
+                  "Teď se nic neúčtuje. Jakmile schválíte nátisky, můžete zaplatit online nebo při vyzvednutí."
+                ],
+                "onlyWith": "order.collects"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body-delivered",
+              "data": {
+                "paras": [
+                  "Teď se nic neúčtuje. Jakmile schválíte nátisky, můžete zaplatit online nebo fakturou, kterou pošleme se zásilkou."
+                ],
+                "onlyWithout": "order.collects"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "Sledovat zakázku",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "Tento odkaz je určen jen vám — nepřeposílejte ho.",
+                  "Nebo zkopírujte tento odkaz: {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nTento e-mail dostáváte kvůli své objednávce {{order.number}}."
+        },
+        "ar-EG": {
+          "subject": "شكرًا — وصلنا طلبك {{order.number}}",
+          "preheader": "جاهز بحلول {{order.ready_by}}.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "تأكيد الطلب"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "شكرًا — وصلنا طلبك {{order.number}}."
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "jobs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "jobs",
+                  "via": "order_id",
+                  "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
+                  "limit": 50
+                },
+                "row": {
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}",
+                  "amount": "{{row.price.money}}"
+                }
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money",
+              "data": {
+                "lines": [
+                  {
+                    "label": "السعر (دون الضريبة)",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "{{order.delivery_method.label}}",
+                    "amount": "{{order.delivery_priced.money}}"
+                  },
+                  {
+                    "label": "الضريبة ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "الإجمالي",
+                    "amount": "{{order.total.money}}"
+                  }
+                ],
+                "onlyWith": "order.delivery_priced"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money-to-quote",
+              "data": {
+                "lines": [
+                  {
+                    "label": "السعر (دون الضريبة)",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "التوصيل: سنرسل عرض سعر بالبريد",
+                    "amount": ""
+                  },
+                  {
+                    "label": "الضريبة ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "الإجمالي",
+                    "amount": "{{order.total.money}}"
+                  }
+                ],
+                "onlyWithout": "order.delivery_priced"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "ready",
+              "data": {
+                "lines": [
+                  {
+                    "label": "جاهز بحلول",
+                    "amount": "{{order.ready_by}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body",
+              "data": {
+                "paras": [
+                  "لا يُحتسب أي مبلغ الآن. بعد موافقتك على المعاينات، يمكنك الدفع عبر الإنترنت أو عند الاستلام."
+                ],
+                "onlyWith": "order.collects"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body-delivered",
+              "data": {
+                "paras": [
+                  "لا يُحتسب أي مبلغ الآن. بعد موافقتك على المعاينات، يمكنك الدفع عبر الإنترنت أو بالفاتورة التي نرسلها مع التوصيل."
+                ],
+                "onlyWithout": "order.collects"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "تتبّع طلبك",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "هذا الرابط لك وحدك — لا تُعِد توجيهه.",
+                  "أو انسخ هذا الرابط: {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nتصلك هذه الرسالة بسبب طلبك {{order.number}}."
+        },
+        "zh-CN": {
+          "subject": "谢谢，我们已收到您的订单 {{order.number}}",
+          "preheader": "{{order.ready_by}} 前完成。",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "已收到订单"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "谢谢，我们已收到您的订单 {{order.number}}。"
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "jobs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "jobs",
+                  "via": "order_id",
+                  "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
+                  "limit": 50
+                },
+                "row": {
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}",
+                  "amount": "{{row.price.money}}"
+                }
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money",
+              "data": {
+                "lines": [
+                  {
+                    "label": "价格（不含税）",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "{{order.delivery_method.label}}",
+                    "amount": "{{order.delivery_priced.money}}"
+                  },
+                  {
+                    "label": "税 ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "合计",
+                    "amount": "{{order.total.money}}"
+                  }
+                ],
+                "onlyWith": "order.delivery_priced"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money-to-quote",
+              "data": {
+                "lines": [
+                  {
+                    "label": "价格（不含税）",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "配送：我们会通过邮件报价",
+                    "amount": ""
+                  },
+                  {
+                    "label": "税 ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "合计",
+                    "amount": "{{order.total.money}}"
+                  }
+                ],
+                "onlyWithout": "order.delivery_priced"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "ready",
+              "data": {
+                "lines": [
+                  {
+                    "label": "完成日期",
+                    "amount": "{{order.ready_by}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body",
+              "data": {
+                "paras": [
+                  "现在不收费。确认校样后，您可以在线付款，或在取件时付款。"
+                ],
+                "onlyWith": "order.collects"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body-delivered",
+              "data": {
+                "paras": [
+                  "现在不收费。确认校样后，您可以在线付款，或凭我们随货寄出的发票付款。"
+                ],
+                "onlyWithout": "order.collects"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "跟踪您的订单",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "此链接仅供您本人使用，请勿转发。",
+                  "或复制此链接： {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\n您收到这封邮件，是因为您下了订单 {{order.number}}。"
+        },
+        "zh-TW": {
+          "subject": "謝謝，我們已收到您的訂單 {{order.number}}",
+          "preheader": "{{order.ready_by}} 前完成。",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "已收到訂單"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "謝謝，我們已收到您的訂單 {{order.number}}。"
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "jobs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "jobs",
+                  "via": "order_id",
+                  "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
+                  "limit": 50
+                },
+                "row": {
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}",
+                  "amount": "{{row.price.money}}"
+                }
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money",
+              "data": {
+                "lines": [
+                  {
+                    "label": "價格（未稅）",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "{{order.delivery_method.label}}",
+                    "amount": "{{order.delivery_priced.money}}"
+                  },
+                  {
+                    "label": "稅 ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "合計",
+                    "amount": "{{order.total.money}}"
+                  }
+                ],
+                "onlyWith": "order.delivery_priced"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money-to-quote",
+              "data": {
+                "lines": [
+                  {
+                    "label": "價格（未稅）",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "配送：我們會以郵件報價",
+                    "amount": ""
+                  },
+                  {
+                    "label": "稅 ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "合計",
+                    "amount": "{{order.total.money}}"
+                  }
+                ],
+                "onlyWithout": "order.delivery_priced"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "ready",
+              "data": {
+                "lines": [
+                  {
+                    "label": "完成日期",
+                    "amount": "{{order.ready_by}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body",
+              "data": {
+                "paras": [
+                  "現在不收費。確認打樣後，您可以線上付款，或在取件時付款。"
+                ],
+                "onlyWith": "order.collects"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body-delivered",
+              "data": {
+                "paras": [
+                  "現在不收費。確認打樣後，您可以線上付款，或憑我們隨貨寄出的發票付款。"
+                ],
+                "onlyWithout": "order.collects"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "追蹤您的訂單",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "此連結僅供您本人使用，請勿轉寄。",
+                  "或複製此連結： {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\n您收到這封郵件，是因為您下了訂單 {{order.number}}。"
+        }
+      }
+    },
+    {
+      "key": "printing-proof-approved-online",
+      "name": {
+        "en-US": "Proof approved, paying online",
+        "de-DE": "Proof freigegeben, Online-Zahlung",
+        "fr-FR": "Épreuve validée, paiement en ligne",
+        "da-DK": "Korrektur godkendt, onlinebetaling",
+        "cs-CZ": "Nátisk schválen, platba online",
+        "ar-EG": "اعتُمدت البروفة، الدفع عبر الإنترنت",
+        "zh-CN": "校样已确认，在线付款",
+        "zh-TW": "打樣已確認，線上付款"
+      },
+      "vars": [
+        "appName",
+        "manage_url",
+        "order.due.money",
+        "order.link_token",
+        "order.number",
+        "order.ready_by",
+        "pay_url",
+        "practice.address",
+        "practice.email",
+        "practice.hours",
+        "practice.phone"
+      ],
+      "locales": {
+        "en-US": {
+          "subject": "Thanks — we're printing {{order.number}}",
+          "preheader": "Ready by {{order.ready_by}}.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "Proof approved"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "Thanks — we're printing it."
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "ready",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Ready by",
+                    "amount": "{{order.ready_by}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "proofs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "proofs",
+                  "via": "order_id",
+                  "orderBy": "version",
+                  "where": {
+                    "column": "state",
+                    "in": [
+                      "approved"
+                    ]
+                  },
+                  "limit": 20
+                },
+                "row": {
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
+                  "meta": "{{row.job.dims|}}"
+                }
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "pay",
+              "data": {
+                "label": "Pay {{order.due.money}} online",
+                "url": "{{pay_url}}",
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "pay-note",
+              "data": {
+                "paras": [
+                  "The button opens a pay link. You'll pay on the Stripe or PayPal page."
+                ],
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-collect",
+              "data": {
+                "paras": [
+                  "Or pay when you collect."
+                ],
+                "onlyWith": "order.pay_collect"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-invoice",
+              "data": {
+                "paras": [
+                  "Or pay by the invoice we send with your delivery."
+                ],
+                "onlyWith": "order.pay_invoice"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "Follow your order",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "This link is just for you — don't forward it.",
+                  "Or copy this link: {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nYou're getting this e-mail because of your order {{order.number}}."
+        },
+        "de-DE": {
+          "subject": "Danke — wir drucken {{order.number}}",
+          "preheader": "Fertig bis {{order.ready_by}}.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "Andruck freigegeben"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "Danke — es geht in den Druck."
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "ready",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Fertig bis",
+                    "amount": "{{order.ready_by}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "proofs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "proofs",
+                  "via": "order_id",
+                  "orderBy": "version",
+                  "where": {
+                    "column": "state",
+                    "in": [
+                      "approved"
+                    ]
+                  },
+                  "limit": 20
+                },
+                "row": {
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
+                  "meta": "{{row.job.dims|}}"
+                }
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "pay",
+              "data": {
+                "label": "{{order.due.money}} online bezahlen",
+                "url": "{{pay_url}}",
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "pay-note",
+              "data": {
+                "paras": [
+                  "Die Schaltfläche öffnet einen Bezahllink. Sie bezahlen auf der Seite von Stripe oder PayPal."
+                ],
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-collect",
+              "data": {
+                "paras": [
+                  "Oder bezahlen Sie bei der Abholung."
+                ],
+                "onlyWith": "order.pay_collect"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-invoice",
+              "data": {
+                "paras": [
+                  "Oder bezahlen Sie per Rechnung, die wir mit der Lieferung schicken."
+                ],
+                "onlyWith": "order.pay_invoice"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "Ihre Bestellung verfolgen",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "Dieser Link ist nur für Sie — bitte nicht weiterleiten.",
+                  "Oder kopieren Sie diesen Link: {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nSie erhalten diese E-Mail wegen Ihrer Bestellung {{order.number}}."
+        },
+        "fr-FR": {
+          "subject": "Merci — nous imprimons {{order.number}}",
+          "preheader": "Prête le {{order.ready_by}}.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "Épreuve validée"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "Merci — c’est parti pour l’impression."
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "ready",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Prêt le",
+                    "amount": "{{order.ready_by}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "proofs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "proofs",
+                  "via": "order_id",
+                  "orderBy": "version",
+                  "where": {
+                    "column": "state",
+                    "in": [
+                      "approved"
+                    ]
+                  },
+                  "limit": 20
+                },
+                "row": {
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
+                  "meta": "{{row.job.dims|}}"
+                }
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "pay",
+              "data": {
+                "label": "Payer {{order.due.money}} en ligne",
+                "url": "{{pay_url}}",
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "pay-note",
+              "data": {
+                "paras": [
+                  "Le bouton ouvre un lien de paiement. Vous paierez sur la page Stripe ou PayPal."
+                ],
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-collect",
+              "data": {
+                "paras": [
+                  "Ou payez au retrait."
+                ],
+                "onlyWith": "order.pay_collect"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-invoice",
+              "data": {
+                "paras": [
+                  "Ou payez par la facture jointe à la livraison."
+                ],
+                "onlyWith": "order.pay_invoice"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "Suivre votre commande",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "Ce lien est personnel — merci de ne pas le transférer.",
+                  "Ou copiez ce lien : {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nVous recevez cet e-mail au sujet de votre commande {{order.number}}."
+        },
+        "da-DK": {
+          "subject": "Tak — vi trykker {{order.number}}",
+          "preheader": "Klar den {{order.ready_by}}.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "Korrektur godkendt"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "Tak — vi går i gang med at trykke."
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "ready",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Klar den",
+                    "amount": "{{order.ready_by}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "proofs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "proofs",
+                  "via": "order_id",
+                  "orderBy": "version",
+                  "where": {
+                    "column": "state",
+                    "in": [
+                      "approved"
+                    ]
+                  },
+                  "limit": 20
+                },
+                "row": {
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
+                  "meta": "{{row.job.dims|}}"
+                }
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "pay",
+              "data": {
+                "label": "Betal {{order.due.money}} online",
+                "url": "{{pay_url}}",
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "pay-note",
+              "data": {
+                "paras": [
+                  "Knappen åbner et betalingslink. Du betaler på Stripe- eller PayPal-siden."
+                ],
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-collect",
+              "data": {
+                "paras": [
+                  "Eller betal ved afhentning."
+                ],
+                "onlyWith": "order.pay_collect"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-invoice",
+              "data": {
+                "paras": [
+                  "Eller betal via fakturaen, vi sender med leveringen."
+                ],
+                "onlyWith": "order.pay_invoice"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "Følg din ordre",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "Linket er kun til dig — send det ikke videre.",
+                  "Eller kopier dette link: {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nDu får denne e-mail på grund af din ordre {{order.number}}."
+        },
+        "cs-CZ": {
+          "subject": "Děkujeme — objednávku {{order.number}} tiskneme",
+          "preheader": "Hotovo do {{order.ready_by}}.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "Náhled schválen"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "Děkujeme — dáváme ji do tisku."
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "ready",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Hotovo do",
+                    "amount": "{{order.ready_by}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "proofs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "proofs",
+                  "via": "order_id",
+                  "orderBy": "version",
+                  "where": {
+                    "column": "state",
+                    "in": [
+                      "approved"
+                    ]
+                  },
+                  "limit": 20
+                },
+                "row": {
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
+                  "meta": "{{row.job.dims|}}"
+                }
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "pay",
+              "data": {
+                "label": "Zaplatit {{order.due.money}} online",
+                "url": "{{pay_url}}",
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "pay-note",
+              "data": {
+                "paras": [
+                  "Tlačítko otevře platební odkaz. Zaplatíte na stránce Stripe nebo PayPal."
+                ],
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-collect",
+              "data": {
+                "paras": [
+                  "Nebo zaplaťte při vyzvednutí."
+                ],
+                "onlyWith": "order.pay_collect"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-invoice",
+              "data": {
+                "paras": [
+                  "Nebo zaplaťte fakturou, kterou pošleme se zásilkou."
+                ],
+                "onlyWith": "order.pay_invoice"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "Sledovat zakázku",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "Tento odkaz je určen jen vám — nepřeposílejte ho.",
+                  "Nebo zkopírujte tento odkaz: {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nTento e-mail dostáváte kvůli své objednávce {{order.number}}."
+        },
+        "ar-EG": {
+          "subject": "شكرًا — بدأنا طباعة طلبك {{order.number}}",
+          "preheader": "جاهز بحلول {{order.ready_by}}.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "تمت الموافقة على البروفة"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "شكرًا — بدأنا الطباعة."
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "ready",
+              "data": {
+                "lines": [
+                  {
+                    "label": "جاهز بحلول",
+                    "amount": "{{order.ready_by}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "proofs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "proofs",
+                  "via": "order_id",
+                  "orderBy": "version",
+                  "where": {
+                    "column": "state",
+                    "in": [
+                      "approved"
+                    ]
+                  },
+                  "limit": 20
+                },
+                "row": {
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
+                  "meta": "{{row.job.dims|}}"
+                }
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "pay",
+              "data": {
+                "label": "ادفع {{order.due.money}} عبر الإنترنت",
+                "url": "{{pay_url}}",
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "pay-note",
+              "data": {
+                "paras": [
+                  "يفتح الزر رابط دفع. ستدفع على صفحة Stripe أو PayPal."
+                ],
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-collect",
+              "data": {
+                "paras": [
+                  "أو ادفع عند الاستلام."
+                ],
+                "onlyWith": "order.pay_collect"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-invoice",
+              "data": {
+                "paras": [
+                  "أو ادفع بالفاتورة التي نرسلها مع التوصيل."
+                ],
+                "onlyWith": "order.pay_invoice"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "تتبّع طلبك",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "هذا الرابط لك وحدك — لا تُعِد توجيهه.",
+                  "أو انسخ هذا الرابط: {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nتصلك هذه الرسالة بسبب طلبك {{order.number}}."
+        },
+        "zh-CN": {
+          "subject": "谢谢，订单 {{order.number}} 已开始印刷",
+          "preheader": "{{order.ready_by}} 前完成。",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "打样已确认"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "谢谢，我们已开始印刷。"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "ready",
+              "data": {
+                "lines": [
+                  {
+                    "label": "完成日期",
+                    "amount": "{{order.ready_by}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "proofs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "proofs",
+                  "via": "order_id",
+                  "orderBy": "version",
+                  "where": {
+                    "column": "state",
+                    "in": [
+                      "approved"
+                    ]
+                  },
+                  "limit": 20
+                },
+                "row": {
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
+                  "meta": "{{row.job.dims|}}"
+                }
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "pay",
+              "data": {
+                "label": "在线支付 {{order.due.money}}",
+                "url": "{{pay_url}}",
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "pay-note",
+              "data": {
+                "paras": [
+                  "此按钮会打开付款链接。您将在 Stripe 或 PayPal 页面上付款。"
+                ],
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-collect",
+              "data": {
+                "paras": [
+                  "或在取件时付款。"
+                ],
+                "onlyWith": "order.pay_collect"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-invoice",
+              "data": {
+                "paras": [
+                  "或凭我们随货寄出的发票付款。"
+                ],
+                "onlyWith": "order.pay_invoice"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "跟踪您的订单",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "此链接仅供您本人使用，请勿转发。",
+                  "或复制此链接： {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\n您收到这封邮件，是因为您下了订单 {{order.number}}。"
+        },
+        "zh-TW": {
+          "subject": "謝謝，訂單 {{order.number}} 已開始印刷",
+          "preheader": "{{order.ready_by}} 前完成。",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "打樣已確認"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "謝謝，我們已開始印刷。"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "ready",
+              "data": {
+                "lines": [
+                  {
+                    "label": "完成日期",
+                    "amount": "{{order.ready_by}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "proofs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "proofs",
+                  "via": "order_id",
+                  "orderBy": "version",
+                  "where": {
+                    "column": "state",
+                    "in": [
+                      "approved"
+                    ]
+                  },
+                  "limit": 20
+                },
+                "row": {
+                  "title": "{{row.job.code}} · {{row.job.qty}} × {{row.job.product_name}}",
+                  "meta": "{{row.job.dims|}}"
+                }
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "pay",
+              "data": {
+                "label": "線上支付 {{order.due.money}}",
+                "url": "{{pay_url}}",
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "pay-note",
+              "data": {
+                "paras": [
+                  "此按鈕會開啟付款連結。您將在 Stripe 或 PayPal 頁面上付款。"
+                ],
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-collect",
+              "data": {
+                "paras": [
+                  "或在取件時付款。"
+                ],
+                "onlyWith": "order.pay_collect"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-invoice",
+              "data": {
+                "paras": [
+                  "或憑我們隨貨寄出的發票付款。"
+                ],
+                "onlyWith": "order.pay_invoice"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "追蹤您的訂單",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "此連結僅供您本人使用，請勿轉寄。",
+                  "或複製此連結： {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\n您收到這封郵件，是因為您下了訂單 {{order.number}}。"
+        }
+      }
+    },
+    {
+      "key": "printing-delivery-quote-accepted",
+      "name": {
+        "en-US": "Delivery quote accepted",
+        "de-DE": "Lieferangebot angenommen",
+        "fr-FR": "Devis de livraison accepté",
+        "da-DK": "Leveringstilbud godtaget",
+        "cs-CZ": "Nabídka dopravy přijata",
+        "ar-EG": "قُبل عرض سعر التوصيل",
+        "zh-CN": "配送报价已接受",
+        "zh-TW": "配送報價已接受"
+      },
+      "vars": [
+        "appName",
+        "manage_url",
+        "order.delivery_method.label",
+        "order.delivery_quote.money",
+        "order.due.money",
+        "order.goods_total.money",
+        "order.link_token",
+        "order.number",
+        "order.tax.money",
+        "order.tax_rate.percent",
+        "order.total.money",
+        "pay_url",
+        "practice.address",
+        "practice.email",
+        "practice.hours",
+        "practice.phone"
+      ],
+      "locales": {
+        "en-US": {
+          "subject": "Delivery quote accepted for {{order.number}}",
+          "preheader": "Total with delivery: {{order.total.money}}.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "Delivery quote"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "Thanks — your delivery quote is accepted."
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "jobs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "jobs",
+                  "via": "order_id",
+                  "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
+                  "limit": 50
+                },
+                "row": {
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}",
+                  "amount": "{{row.price.money}}"
+                }
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Goods (ex tax)",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "{{order.delivery_method.label}}",
+                    "amount": "{{order.delivery_quote.money}}"
+                  },
+                  {
+                    "label": "Tax ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "Total with delivery",
+                    "amount": "{{order.total.money}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "pay",
+              "data": {
+                "label": "Pay {{order.due.money}} online",
+                "url": "{{pay_url}}",
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "pay-note",
+              "data": {
+                "paras": [
+                  "The button opens a pay link. You'll pay on the Stripe or PayPal page."
+                ],
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-collect",
+              "data": {
+                "paras": [
+                  "Or pay when you collect."
+                ],
+                "onlyWith": "order.pay_collect"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-invoice",
+              "data": {
+                "paras": [
+                  "Or pay by the invoice we send with your delivery."
+                ],
+                "onlyWith": "order.pay_invoice"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "Follow your order",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "This link is just for you — don't forward it.",
+                  "Or copy this link: {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nYou're getting this e-mail because of your order {{order.number}}."
+        },
+        "de-DE": {
+          "subject": "Lieferangebot für {{order.number}} angenommen",
+          "preheader": "Gesamtbetrag mit Lieferung: {{order.total.money}}.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "Lieferangebot"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "Danke — Ihr Lieferangebot ist angenommen."
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "jobs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "jobs",
+                  "via": "order_id",
+                  "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
+                  "limit": 50
+                },
+                "row": {
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}",
+                  "amount": "{{row.price.money}}"
+                }
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Waren (netto)",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "{{order.delivery_method.label}}",
+                    "amount": "{{order.delivery_quote.money}}"
+                  },
+                  {
+                    "label": "Mehrwertsteuer ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "Gesamtbetrag mit Lieferung",
+                    "amount": "{{order.total.money}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "pay",
+              "data": {
+                "label": "{{order.due.money}} online bezahlen",
+                "url": "{{pay_url}}",
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "pay-note",
+              "data": {
+                "paras": [
+                  "Die Schaltfläche öffnet einen Bezahllink. Sie bezahlen auf der Seite von Stripe oder PayPal."
+                ],
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-collect",
+              "data": {
+                "paras": [
+                  "Oder bezahlen Sie bei der Abholung."
+                ],
+                "onlyWith": "order.pay_collect"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-invoice",
+              "data": {
+                "paras": [
+                  "Oder bezahlen Sie per Rechnung, die wir mit der Lieferung schicken."
+                ],
+                "onlyWith": "order.pay_invoice"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "Ihre Bestellung verfolgen",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "Dieser Link ist nur für Sie — bitte nicht weiterleiten.",
+                  "Oder kopieren Sie diesen Link: {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nSie erhalten diese E-Mail wegen Ihrer Bestellung {{order.number}}."
+        },
+        "fr-FR": {
+          "subject": "Devis de livraison accepté pour {{order.number}}",
+          "preheader": "Total avec livraison : {{order.total.money}}.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "Devis de livraison"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "Merci — votre devis de livraison est accepté."
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "jobs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "jobs",
+                  "via": "order_id",
+                  "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
+                  "limit": 50
+                },
+                "row": {
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}",
+                  "amount": "{{row.price.money}}"
+                }
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Marchandises (HT)",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "{{order.delivery_method.label}}",
+                    "amount": "{{order.delivery_quote.money}}"
+                  },
+                  {
+                    "label": "TVA ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "Total avec livraison",
+                    "amount": "{{order.total.money}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "pay",
+              "data": {
+                "label": "Payer {{order.due.money}} en ligne",
+                "url": "{{pay_url}}",
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "pay-note",
+              "data": {
+                "paras": [
+                  "Le bouton ouvre un lien de paiement. Vous paierez sur la page Stripe ou PayPal."
+                ],
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-collect",
+              "data": {
+                "paras": [
+                  "Ou payez au retrait."
+                ],
+                "onlyWith": "order.pay_collect"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-invoice",
+              "data": {
+                "paras": [
+                  "Ou payez par la facture jointe à la livraison."
+                ],
+                "onlyWith": "order.pay_invoice"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "Suivre votre commande",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "Ce lien est personnel — merci de ne pas le transférer.",
+                  "Ou copiez ce lien : {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nVous recevez cet e-mail au sujet de votre commande {{order.number}}."
+        },
+        "da-DK": {
+          "subject": "Leveringstilbud godtaget for {{order.number}}",
+          "preheader": "I alt med levering: {{order.total.money}}.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "Leveringstilbud"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "Tak — dit leveringstilbud er godtaget."
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "jobs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "jobs",
+                  "via": "order_id",
+                  "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
+                  "limit": 50
+                },
+                "row": {
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}",
+                  "amount": "{{row.price.money}}"
+                }
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Varer (ekskl. moms)",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "{{order.delivery_method.label}}",
+                    "amount": "{{order.delivery_quote.money}}"
+                  },
+                  {
+                    "label": "Moms ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "I alt med levering",
+                    "amount": "{{order.total.money}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "pay",
+              "data": {
+                "label": "Betal {{order.due.money}} online",
+                "url": "{{pay_url}}",
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "pay-note",
+              "data": {
+                "paras": [
+                  "Knappen åbner et betalingslink. Du betaler på Stripe- eller PayPal-siden."
+                ],
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-collect",
+              "data": {
+                "paras": [
+                  "Eller betal ved afhentning."
+                ],
+                "onlyWith": "order.pay_collect"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-invoice",
+              "data": {
+                "paras": [
+                  "Eller betal via fakturaen, vi sender med leveringen."
+                ],
+                "onlyWith": "order.pay_invoice"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "Følg din ordre",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "Linket er kun til dig — send det ikke videre.",
+                  "Eller kopier dette link: {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nDu får denne e-mail på grund af din ordre {{order.number}}."
+        },
+        "cs-CZ": {
+          "subject": "Nabídka na doručení k objednávce {{order.number}} přijata",
+          "preheader": "Celkem s doručením: {{order.total.money}}.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "Nabídka na doručení"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "Děkujeme — vaše nabídka na doručení je přijata."
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "jobs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "jobs",
+                  "via": "order_id",
+                  "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
+                  "limit": 50
+                },
+                "row": {
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}",
+                  "amount": "{{row.price.money}}"
+                }
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Zboží (bez daně)",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "{{order.delivery_method.label}}",
+                    "amount": "{{order.delivery_quote.money}}"
+                  },
+                  {
+                    "label": "DPH ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "Celkem s doručením",
+                    "amount": "{{order.total.money}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "pay",
+              "data": {
+                "label": "Zaplatit {{order.due.money}} online",
+                "url": "{{pay_url}}",
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "pay-note",
+              "data": {
+                "paras": [
+                  "Tlačítko otevře platební odkaz. Zaplatíte na stránce Stripe nebo PayPal."
+                ],
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-collect",
+              "data": {
+                "paras": [
+                  "Nebo zaplaťte při vyzvednutí."
+                ],
+                "onlyWith": "order.pay_collect"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-invoice",
+              "data": {
+                "paras": [
+                  "Nebo zaplaťte fakturou, kterou pošleme se zásilkou."
+                ],
+                "onlyWith": "order.pay_invoice"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "Sledovat zakázku",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "Tento odkaz je určen jen vám — nepřeposílejte ho.",
+                  "Nebo zkopírujte tento odkaz: {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nTento e-mail dostáváte kvůli své objednávce {{order.number}}."
+        },
+        "ar-EG": {
+          "subject": "تم قبول عرض التوصيل لـ {{order.number}}",
+          "preheader": "الإجمالي شاملًا التوصيل: {{order.total.money}}.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "عرض سعر التوصيل"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "شكرًا — تم قبول عرض التوصيل."
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "jobs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "jobs",
+                  "via": "order_id",
+                  "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
+                  "limit": 50
+                },
+                "row": {
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}",
+                  "amount": "{{row.price.money}}"
+                }
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money",
+              "data": {
+                "lines": [
+                  {
+                    "label": "البضاعة (دون الضريبة)",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "{{order.delivery_method.label}}",
+                    "amount": "{{order.delivery_quote.money}}"
+                  },
+                  {
+                    "label": "الضريبة ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "الإجمالي شاملًا التوصيل",
+                    "amount": "{{order.total.money}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "pay",
+              "data": {
+                "label": "ادفع {{order.due.money}} عبر الإنترنت",
+                "url": "{{pay_url}}",
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "pay-note",
+              "data": {
+                "paras": [
+                  "يفتح الزر رابط دفع. ستدفع على صفحة Stripe أو PayPal."
+                ],
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-collect",
+              "data": {
+                "paras": [
+                  "أو ادفع عند الاستلام."
+                ],
+                "onlyWith": "order.pay_collect"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-invoice",
+              "data": {
+                "paras": [
+                  "أو ادفع بالفاتورة التي نرسلها مع التوصيل."
+                ],
+                "onlyWith": "order.pay_invoice"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "تتبّع طلبك",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "هذا الرابط لك وحدك — لا تُعِد توجيهه.",
+                  "أو انسخ هذا الرابط: {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nتصلك هذه الرسالة بسبب طلبك {{order.number}}."
+        },
+        "zh-CN": {
+          "subject": "订单 {{order.number}} 的配送报价已接受",
+          "preheader": "含配送合计：{{order.total.money}}。",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "配送报价"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "谢谢，您的配送报价已接受。"
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "jobs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "jobs",
+                  "via": "order_id",
+                  "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
+                  "limit": 50
+                },
+                "row": {
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}",
+                  "amount": "{{row.price.money}}"
+                }
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money",
+              "data": {
+                "lines": [
+                  {
+                    "label": "货款（不含税）",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "{{order.delivery_method.label}}",
+                    "amount": "{{order.delivery_quote.money}}"
+                  },
+                  {
+                    "label": "税 ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "含配送合计",
+                    "amount": "{{order.total.money}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "pay",
+              "data": {
+                "label": "在线支付 {{order.due.money}}",
+                "url": "{{pay_url}}",
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "pay-note",
+              "data": {
+                "paras": [
+                  "此按钮会打开付款链接。您将在 Stripe 或 PayPal 页面上付款。"
+                ],
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-collect",
+              "data": {
+                "paras": [
+                  "或在取件时付款。"
+                ],
+                "onlyWith": "order.pay_collect"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-invoice",
+              "data": {
+                "paras": [
+                  "或凭我们随货寄出的发票付款。"
+                ],
+                "onlyWith": "order.pay_invoice"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "跟踪您的订单",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "此链接仅供您本人使用，请勿转发。",
+                  "或复制此链接： {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\n您收到这封邮件，是因为您下了订单 {{order.number}}。"
+        },
+        "zh-TW": {
+          "subject": "訂單 {{order.number}} 的配送報價已接受",
+          "preheader": "含配送合計：{{order.total.money}}。",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "配送報價"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "謝謝，您的配送報價已接受。"
+              }
+            },
+            {
+              "block": "email.rows",
+              "id": "jobs",
+              "data": {
+                "from": {
+                  "link": "order",
+                  "table": "jobs",
+                  "via": "order_id",
+                  "orderBy": "position",
+                  "where": {
+                    "column": "stage",
+                    "in": [
+                      "prepress",
+                      "printing",
+                      "finishing",
+                      "ready",
+                      "collected",
+                      "dispatched"
+                    ]
+                  },
+                  "limit": 50
+                },
+                "row": {
+                  "title": "{{row.qty.number}} × {{row.product_name}}",
+                  "meta": "{{row.size_option.name|}}{{row.dims|}} · {{row.material_option.name|}} · {{row.sides_option.name|}}",
+                  "note": "{{row.lamination_option.name|}}{{row.edges_option.name|}}",
+                  "amount": "{{row.price.money}}"
+                }
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "money",
+              "data": {
+                "lines": [
+                  {
+                    "label": "貨款（未稅）",
+                    "amount": "{{order.goods_total.money}}"
+                  },
+                  {
+                    "label": "{{order.delivery_method.label}}",
+                    "amount": "{{order.delivery_quote.money}}"
+                  },
+                  {
+                    "label": "稅 ({{order.tax_rate.percent}})",
+                    "amount": "{{order.tax.money}}"
+                  },
+                  {
+                    "label": "含配送合計",
+                    "amount": "{{order.total.money}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "pay",
+              "data": {
+                "label": "線上支付 {{order.due.money}}",
+                "url": "{{pay_url}}",
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "pay-note",
+              "data": {
+                "paras": [
+                  "此按鈕會開啟付款連結。您將在 Stripe 或 PayPal 頁面上付款。"
+                ],
+                "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-collect",
+              "data": {
+                "paras": [
+                  "或在取件時付款。"
+                ],
+                "onlyWith": "order.pay_collect"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "or-invoice",
+              "data": {
+                "paras": [
+                  "或憑我們隨貨寄出的發票付款。"
+                ],
+                "onlyWith": "order.pay_invoice"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "追蹤您的訂單",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "此連結僅供您本人使用，請勿轉寄。",
+                  "或複製此連結： {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\n您收到這封郵件，是因為您下了訂單 {{order.number}}。"
         }
       }
     }
