@@ -92,6 +92,18 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
       const patch = async (ref: string, id: unknown, values: Row, from?: string) => ok(await staff.patch(`/api/v1/data/${connectionId}/${table(ref)}/${String(id)}`, { values, ...(from === undefined ? {} : { from }) }));
       /** The outbox row of one kind about one row of the link. */
       const message = (kind: string, link: string, id: unknown) => async () => (await rows("messages")).find((m) => m["kind"] === kind && String(m[link]) === String(id));
+      /**
+       * The "proof approved" e-mail of a proof: about its order (so it may follow the order's payments), one for each
+       * approval, in turn. The proof's is the order's approvals so far, counted, in the order they were queued.
+       */
+      const approval = (proofId: unknown) => async () => {
+        const proof = (await rows("proofs")).find((p) => String(p["id"]) === String(proofId));
+        if (proof === undefined) return undefined;
+        const order = String(proof["order_id"]);
+        const approved = (await rows("proofs")).filter((p) => String(p["order_id"]) === order && p["state"] === "approved").length;
+        const mails = (await rows("messages")).filter((m) => m["kind"] === "proof-approved" && String(m["order_id"]) === order).sort((a, b) => Number(a["id"]) - Number(b["id"]));
+        return mails[approved - 1];
+      };
       const productOf = (code: string) => catalogue.products.find((p) => p.code === code)!;
       const optionOf = (code: string, kind: string, option: string) => catalogue.options.find((o) => String(o.productId) === String(productOf(code).id) && o.kind === kind && o.code === option)!.id;
       const cards = (qty: number): BasketLine => {
@@ -346,13 +358,13 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
         expect(await door.openShared(two.link!.token)).toBe("opened");
         const first = await sendProof(jobs.find((j) => Number(j["qty"]) === 400)!);
         await door.answerProof("link", first["id"] as number, { state: "approved" });
-        const one = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-approved", to: SHOPPER.email, known: { "order.number": String(two.order["number"]) }, row: message("proof-approved", "proof_id", first["id"]) });
+        const one = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-approved", to: SHOPPER.email, known: { "order.number": String(two.order["number"]) }, row: approval(first["id"]) });
         expect(one.mail.text).toContain("400 × Business cards");
         expect(one.mail.text).not.toContain("Flyers");
         const second = await sendProof(jobs.find((j) => Number(j["qty"]) === 800)!);
         expect(await door.openShared(two.link!.token)).toBe("opened");
         await door.answerProof("link", second["id"] as number, { state: "approved" });
-        await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-approved", to: SHOPPER.email, row: message("proof-approved", "proof_id", second["id"]) });
+        await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-approved", to: SHOPPER.email, row: approval(second["id"]) });
         const approvals = async () => (await sinkMail(server.sink)).filter((m) => m.to.includes(SHOPPER.email) && m.subject.includes(String(two.order["number"])) && m.subject.includes("printing") && m.text.includes("800 × Flyers") && m.text.includes("400 × Business cards"));
         await until(async () => ((await approvals()).length === 1 ? true : undefined), "the second job's approval in the sink");
       }, 240_000);
@@ -395,7 +407,7 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
         // The yes, the same day: the approval mail says the day the customer was told.
         await door.answerProof("link", third["id"] as number, { state: "approved" });
         expect([await changesOf(), ...(await readyBy())]).toEqual([2, ...Array(4).fill("2026-08-12")]);
-        const approved = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-approved", to: who.email, known: { "order.number": number }, row: message("proof-approved", "proof_id", third["id"]) });
+        const approved = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-approved", to: who.email, known: { "order.number": number }, row: approval(third["id"]) });
         expect(approved.mail.text, approved.mail.text).toMatch(/Ready by: Wednesday,? (12 August|August 12),? 2026/);
         // Erasing the customer empties the words they asked in, never the days their changes added.
         ok(await staff.post("/api/v1/privacy/erase/preview", { address: who.email }));
@@ -438,7 +450,7 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
         const second = await sendProof(run.job);
         await run.answer(second, { state: "approved" });
         expect(await run.readyBy()).toEqual(["2026-08-11", "2026-08-11"]);
-        const approved = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-approved", to: run.who.email, known: { "order.number": String(run.order.order["number"]) }, row: message("proof-approved", "proof_id", second["id"]) });
+        const approved = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "proof-approved", to: run.who.email, known: { "order.number": String(run.order.order["number"]) }, row: approval(second["id"]) });
         expect(approved.mail.text, approved.mail.text).toMatch(/Ready by: Tuesday,? (11 August|August 11),? 2026/);
       }, 240_000);
 
