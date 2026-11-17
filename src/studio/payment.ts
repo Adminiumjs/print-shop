@@ -54,6 +54,10 @@ export interface RefundLine {
   /** Epoch ms, when Adminium said; null when only the payment's own total says it. */
   at: number | null;
   done: boolean;
+  /** Who asked for it in Adminium, and why (its reason, or the words typed), when Adminium tells this person. */
+  by: string | null;
+  reason: string | null;
+  note: string | null;
 }
 
 export type PaymentLine = PaidLine | RefundLine;
@@ -105,9 +109,9 @@ export function orderPayment(data: WorksData, order: Row, facts: PaymentsFacts |
     });
     const refunds = (held?.refunds ?? []).filter((r) => r.state !== "failed" && r.state !== "cancelled");
     if (refunds.length > 0) {
-      for (const refund of refunds) lines.push({ kind: "refund", key: `r${refund.id}`, amount: money(refund.amount), at: refund.createdAt, done: refund.state === "succeeded" });
+      for (const refund of refunds) lines.push({ kind: "refund", key: `r${refund.id}`, amount: money(refund.amount), at: refund.createdAt, done: refund.state === "succeeded", by: refund.by, reason: refund.reason, note: refund.note });
     } else if (money(row["refunded"]) > 0) {
-      lines.push({ kind: "refund", key: `r${String(row.id)}`, amount: money(row["refunded"]), at: null, done: true });
+      lines.push({ kind: "refund", key: `r${String(row.id)}`, amount: money(row["refunded"]), at: null, done: true, by: null, reason: null, note: null });
     }
   }
   const total = money(order["total"]);

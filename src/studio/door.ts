@@ -126,7 +126,8 @@ export interface PanelPayment {
   /** The online payment behind it: what its row's reference holds. */
   attemptId: string | null;
   refundable: string;
-  refunds: { id: string; amount: string; state: string; createdAt: number }[];
+  /** Each refund; who asked for it and why, told to someone who may see payments or refund this one (null otherwise, and for one no person asked). */
+  refunds: { id: string; amount: string; state: string; createdAt: number; by: string | null; reason: string | null; note: string | null }[];
 }
 
 /** What Adminium's payment panel says of an order: who may do what, and its online payments. */

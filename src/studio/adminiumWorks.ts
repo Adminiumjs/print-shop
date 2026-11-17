@@ -96,7 +96,7 @@ export function panelOf(data: Record<string, unknown> | null): PaymentPanel | nu
     payments: list(data["payments"]).map((one) => ({
       attemptId: text(one["attemptId"]),
       refundable: String(one["refundable"] ?? "0"),
-      refunds: list(one["refunds"]).map((r) => ({ id: String(r["id"]), amount: String(r["amount"] ?? "0"), state: String(r["state"] ?? ""), createdAt: Number(r["createdAt"] ?? 0) })),
+      refunds: list(one["refunds"]).map((r) => ({ id: String(r["id"]), amount: String(r["amount"] ?? "0"), state: String(r["state"] ?? ""), createdAt: Number(r["createdAt"] ?? 0), by: text(r["by"]), reason: text(r["reason"]), note: text(r["note"]) })),
     })),
   };
 }

@@ -86,7 +86,7 @@ describe("the works' payments, through Adminium's own payment routes", () => {
     const { t, sent } = transport();
     (t as { mutate: unknown }).mutate = async (path: string, method: string, body?: unknown) => {
       sent.push({ method, path, body });
-      return { data: { payable: { kind: "profile", connectionId: "conn-1", tableName: "main.printing_orders", rowKey: "4126" }, due: "0", mayChange: true, mayRefund: true, waiting: [], payments: [{ attemptId: "pat_1", refundable: "120.00", refunds: [{ id: "r1", amount: "12.00", state: "succeeded", createdAt: 5 }] }] } };
+      return { data: { payable: { kind: "profile", connectionId: "conn-1", tableName: "main.printing_orders", rowKey: "4126" }, due: "0", mayChange: true, mayRefund: true, waiting: [], payments: [{ attemptId: "pat_1", refundable: "120.00", refunds: [{ id: "r1", amount: "12.00", state: "succeeded", createdAt: 5, by: "Rosa Marlow", reason: "requested_by_customer", note: "Flyers trimmed short" }, { id: "r2", amount: "1.00", state: "succeeded", createdAt: 6 }] }] } };
     };
     const panel = await new AdminiumWorks(withTable(t), paying).payments()!.state({ id: 4126 });
     expect(sent).toEqual([{ method: "POST", path: "/api/v1/payments/panel", body: { connectionId: "conn-1", table: "main.printing_orders", recordId: "4126" } }]);
@@ -96,7 +96,17 @@ describe("the works' payments, through Adminium's own payment routes", () => {
       mayChange: true,
       mayRefund: true,
       waiting: false,
-      payments: [{ attemptId: "pat_1", refundable: "120.00", refunds: [{ id: "r1", amount: "12.00", state: "succeeded", createdAt: 5 }] }],
+      payments: [
+        {
+          attemptId: "pat_1",
+          refundable: "120.00",
+          refunds: [
+            { id: "r1", amount: "12.00", state: "succeeded", createdAt: 5, by: "Rosa Marlow", reason: "requested_by_customer", note: "Flyers trimmed short" },
+            // A reader Adminium tells nothing of who and why reads none.
+            { id: "r2", amount: "1.00", state: "succeeded", createdAt: 6, by: null, reason: null, note: null },
+          ],
+        },
+      ],
     });
   });
 

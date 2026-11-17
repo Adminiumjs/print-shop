@@ -25,7 +25,7 @@ import { reload, useData, useEnv, useRun } from "../env.tsx";
 import { byId, jobById, orderOf, refOf } from "../facts.ts";
 import { useFmt } from "../format.ts";
 import { KitPart } from "../kit.tsx";
-import { orderPayment, type HandWay, type OrderPayment, type PaidLine } from "../payment.ts";
+import { orderPayment, type HandWay, type OrderPayment, type PaidLine, type RefundLine } from "../payment.ts";
 import { toast, useWorks } from "../store.ts";
 import { Mono, Typed } from "../ui.tsx";
 import { isApiError, num, text, type Row } from "../wire.ts";
@@ -39,6 +39,14 @@ const WAY_KEY: Record<HandWay, MessageKey> = {
   "bank-transfer": "works.pay.way.bank-transfer",
   cheque: "works.pay.way.cheque",
   other: "works.pay.way.other",
+};
+
+/** A refund's reason, as Adminium names the ones it offers. */
+const REASON_KEY: Record<string, MessageKey> = {
+  requested_by_customer: "works.pay.reason.requested_by_customer",
+  duplicate: "works.pay.reason.duplicate",
+  fraudulent: "works.pay.reason.fraudulent",
+  other: "works.pay.reason.other",
 };
 
 /**
@@ -164,7 +172,7 @@ export function PaymentCard({ order, payment, panel }: { order: Row; payment: Or
               <li key={line.key} className="wk-pay-row wk-pay-row--refund">
                 <span className="wk-pay-label">{line.done ? t("works.pay.refunded") : t("works.pay.refundAsked")}</span>
                 <Mono className="wk-pay-amount">−{fmt.money(line.amount)}</Mono>
-                <span className="wk-pay-meta">{line.at === null ? "" : fmt.moment(new Date(line.at).toISOString())}</span>
+                <span className="wk-pay-meta">{refundMeta(line)}</span>
               </li>
             ),
           )}
@@ -185,6 +193,14 @@ export function PaymentCard({ order, payment, panel }: { order: Row; payment: Or
       )}
     </section>
   );
+
+  /** When, and, when Adminium tells this person, by whom and why: the words typed, else the reason picked. */
+  function refundMeta(line: RefundLine): string {
+    const day = line.at === null ? "" : fmt.moment(new Date(line.at).toISOString());
+    const why = line.note ?? (line.reason === null ? null : t(REASON_KEY[line.reason] ?? "works.pay.reason.other"));
+    if (line.by === null) return why === null ? day : [day, why].filter((part) => part !== "").join(" · ");
+    return t(why === null ? "works.pay.refundBy" : "works.pay.refundByWhy", { day, name: line.by, why: why ?? "" });
+  }
 
   function meta(line: PaidLine): string {
     const day = fmt.moment(line.at);

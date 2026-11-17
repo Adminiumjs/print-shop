@@ -227,19 +227,29 @@ describe("a payment taken by hand, and a refund", () => {
   });
 
   it("lists a refund under its payment, and calls an order wholly given back Refunded", async () => {
-    const door = paying(paidOnline("30.00"), ["owner"], ON, { payments: [{ attemptId: "pat_1", refundable: "0", refunds: [{ id: "r1", amount: "30.00", state: "succeeded", createdAt: Date.parse("2026-08-05T09:00:00Z") }] }] });
+    const door = paying(paidOnline("30.00"), ["owner"], ON, { payments: [{ attemptId: "pat_1", refundable: "0", refunds: [{ id: "r1", amount: "30.00", state: "succeeded", createdAt: Date.parse("2026-08-05T09:00:00Z"), by: "Rosa Marlow", reason: "other", note: null }] }] });
     await mount(door, "ticket", ticket);
     await settle();
     expect(document.querySelector('[data-testid="pay-chip"]')?.textContent).toBe("Refunded");
     const card = document.querySelector('[data-testid="ticket-payment"]')!;
     expect(card.textContent).toContain("Refunded");
     expect(card.textContent).toContain("−£30.00");
+    // Who gave it back and why, as Adminium tells the owner: the reason picked when no words were typed.
+    expect(card.textContent).toContain("Wed, Aug 5 · by Rosa Marlow · Other");
     expect(button("Refund")).toBeUndefined();
   });
 
-  it("calls a part given back by what went back", async () => {
-    await mount(paying(paidOnline("12.00")), "ticket", ticket);
+  it("calls a part given back by what went back, and says why in the words typed", async () => {
+    await mount(paying(paidOnline("12.00"), ["owner"], ON, { payments: [{ attemptId: "pat_1", refundable: "18.00", refunds: [{ id: "r2", amount: "12.00", state: "succeeded", createdAt: Date.parse("2026-08-05T09:00:00Z"), by: "Rosa Marlow", reason: "requested_by_customer", note: "Flyers trimmed short" }] }] }), "ticket", ticket);
     expect(document.querySelector('[data-testid="pay-chip"]')?.textContent).toBe("Refunded £12.00");
+    expect(document.querySelector('[data-testid="ticket-payment"]')?.textContent).toContain("Wed, Aug 5 · by Rosa Marlow · Flyers trimmed short");
+  });
+
+  it("says no person for a refund Adminium names none for (one made in the service's own dashboard)", async () => {
+    await mount(paying(paidOnline("12.00"), ["owner"], ON, { payments: [{ attemptId: "pat_1", refundable: "18.00", refunds: [{ id: "r3", amount: "12.00", state: "succeeded", createdAt: Date.parse("2026-08-05T09:00:00Z"), by: null, reason: null, note: null }] }] }), "ticket", ticket);
+    const card = document.querySelector('[data-testid="ticket-payment"]')!.textContent ?? "";
+    expect(card).toContain("Refunded");
+    expect(card).not.toContain(" by ");
   });
 });
 
