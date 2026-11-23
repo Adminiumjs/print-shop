@@ -1,0 +1,1176 @@
+{
+  "format": "adminium.sample/1",
+  "app": "printing",
+  "weekAnchor": "wed",
+  "tables": [
+    {
+      "ref": "settings",
+      "onlyIfEmpty": true,
+      "rows": [
+        {
+          "@label": "settings",
+          "works_name": "Marlow Press",
+          "address": "3 Market Square, Marlow SL7 1AA",
+          "phone": "01628 482 190",
+          "email": "hello@marlowpress.example",
+          "hours": "Mon–Fri, 8:00–17:00",
+          "about": "A print works on the market square: business cards and flyers on the sheet press, banners and canvas off the roll, and a person who checks every file.",
+          "ref_prefix": "MP-",
+          "first_order_number": 4127,
+          "quote_prefix": "MQ-",
+          "first_quote_number": 2042,
+          "tax_rate": 20,
+          "setup": 18,
+          "print_single": 0.85,
+          "print_double": 1.2,
+          "standard_days": 3,
+          "express_days": 1,
+          "express_percent": 35,
+          "proof_post_price": 12,
+          "proof_post_days": 2,
+          "change_days": 1,
+          "sheet_width_mm": 320,
+          "sheet_height_mm": 450,
+          "large_format_minimum": 35,
+          "tube_max_mm": 1500,
+          "sheet_packing_kg": 0.2,
+          "roll_packing_kg": 0.3,
+          "frame_grams": 900,
+          "artwork_max_mb": 100,
+          "min_dpi": 150,
+          "taking_orders": true,
+          "sample_packs": true
+        }
+      ]
+    },
+    {
+      "ref": "materials",
+      "rows": [
+        {
+          "@label": "material:silk350",
+          "code": "silk350",
+          "name": "350gsm silk board",
+          "short_name": "350gsm silk board",
+          "spec": "350gsm · silk coated",
+          "kind": "sheet",
+          "coated": true,
+          "gsm": 350,
+          "rate": 0.42,
+          "roll_width_mm": null,
+          "active": true,
+          "position": 1
+        },
+        {
+          "@label": "material:uncoated300",
+          "code": "uncoated300",
+          "name": "300gsm uncoated board",
+          "short_name": "300gsm uncoated",
+          "spec": "300gsm · uncoated",
+          "kind": "sheet",
+          "coated": false,
+          "gsm": 300,
+          "rate": 0.38,
+          "roll_width_mm": null,
+          "active": true,
+          "position": 2
+        },
+        {
+          "@label": "material:silk170",
+          "code": "silk170",
+          "name": "170gsm silk",
+          "short_name": "170gsm silk",
+          "spec": "170gsm · silk coated",
+          "kind": "sheet",
+          "coated": true,
+          "gsm": 170,
+          "rate": 0.14,
+          "roll_width_mm": null,
+          "active": true,
+          "position": 3
+        },
+        {
+          "@label": "material:silk130",
+          "code": "silk130",
+          "name": "130gsm silk",
+          "short_name": "130gsm silk",
+          "spec": "130gsm · silk coated",
+          "kind": "sheet",
+          "coated": true,
+          "gsm": 130,
+          "rate": 0.11,
+          "roll_width_mm": null,
+          "active": true,
+          "position": 4
+        },
+        {
+          "@label": "material:pvc510",
+          "code": "pvc510",
+          "name": "510gsm PVC banner",
+          "short_name": "510gsm PVC",
+          "spec": "510gsm · PVC",
+          "kind": "roll",
+          "coated": false,
+          "gsm": 510,
+          "rate": 28,
+          "roll_width_mm": 1370,
+          "active": true,
+          "position": 5
+        },
+        {
+          "@label": "material:mesh270",
+          "code": "mesh270",
+          "name": "270gsm mesh banner",
+          "short_name": "270gsm mesh",
+          "spec": "270gsm · mesh, wind-through",
+          "kind": "roll",
+          "coated": false,
+          "gsm": 270,
+          "rate": 32,
+          "roll_width_mm": 1370,
+          "active": true,
+          "position": 6
+        },
+        {
+          "@label": "material:canvas380",
+          "code": "canvas380",
+          "name": "380gsm cotton canvas",
+          "short_name": "380gsm canvas",
+          "spec": "380gsm · cotton canvas",
+          "kind": "roll",
+          "coated": false,
+          "gsm": 380,
+          "rate": 46,
+          "roll_width_mm": 1120,
+          "active": true,
+          "position": 7
+        },
+        {
+          "@label": "material:vinyl",
+          "code": "vinyl",
+          "name": "Self-adhesive vinyl",
+          "short_name": "self-adhesive vinyl",
+          "spec": "self-adhesive · matt vinyl",
+          "kind": "roll",
+          "coated": false,
+          "gsm": 300,
+          "rate": 34,
+          "roll_width_mm": 1370,
+          "active": true,
+          "position": 8
+        }
+      ]
+    },
+    {
+      "ref": "sizes",
+      "rows": [
+        {
+          "@label": "size:bcard",
+          "code": "bcard",
+          "name": "Business card",
+          "width_mm": 85,
+          "height_mm": 55,
+          "up": 21,
+          "up_upright": 21,
+          "up_rotated": 18,
+          "direct": false,
+          "active": true,
+          "position": 1
+        },
+        {
+          "@label": "size:a6",
+          "code": "a6",
+          "name": "A6",
+          "width_mm": 105,
+          "height_mm": 148,
+          "up": 8,
+          "up_upright": 8,
+          "up_rotated": 6,
+          "direct": false,
+          "active": true,
+          "position": 2
+        },
+        {
+          "@label": "size:a5",
+          "code": "a5",
+          "name": "A5",
+          "width_mm": 148,
+          "height_mm": 210,
+          "up": 4,
+          "up_upright": 4,
+          "up_rotated": 3,
+          "direct": false,
+          "active": true,
+          "position": 3
+        },
+        {
+          "@label": "size:a4",
+          "code": "a4",
+          "name": "A4",
+          "width_mm": 210,
+          "height_mm": 297,
+          "up": 2,
+          "up_upright": 1,
+          "up_rotated": 2,
+          "direct": false,
+          "active": true,
+          "position": 4
+        },
+        {
+          "@label": "size:a3",
+          "code": "a3",
+          "name": "A3",
+          "width_mm": 297,
+          "height_mm": 420,
+          "up": 1,
+          "up_upright": 1,
+          "up_rotated": 1,
+          "direct": false,
+          "active": true,
+          "position": 5
+        },
+        {
+          "@label": "size:dl",
+          "code": "dl",
+          "name": "DL",
+          "width_mm": 210,
+          "height_mm": 99,
+          "up": 6,
+          "up_upright": 4,
+          "up_rotated": 6,
+          "direct": false,
+          "active": true,
+          "position": 6
+        },
+        {
+          "@label": "size:usletter",
+          "code": "usletter",
+          "name": "US Letter",
+          "width_mm": 216,
+          "height_mm": 279,
+          "up": 2,
+          "up_upright": 1,
+          "up_rotated": 2,
+          "direct": false,
+          "active": true,
+          "position": 7
+        },
+        {
+          "@label": "size:dlenv",
+          "code": "dlenv",
+          "name": "DL envelope",
+          "width_mm": 220,
+          "height_mm": 110,
+          "up": 4,
+          "up_upright": 4,
+          "up_rotated": 4,
+          "direct": true,
+          "active": true,
+          "position": 8
+        },
+        {
+          "@label": "size:c5",
+          "code": "c5",
+          "name": "C5 envelope",
+          "width_mm": 229,
+          "height_mm": 162,
+          "up": 4,
+          "up_upright": 4,
+          "up_rotated": 4,
+          "direct": true,
+          "active": true,
+          "position": 9
+        },
+        {
+          "@label": "size:sq95",
+          "code": "sq95",
+          "name": "Square 95mm",
+          "width_mm": 95,
+          "height_mm": 95,
+          "up": 12,
+          "up_upright": 12,
+          "up_rotated": 12,
+          "direct": false,
+          "active": true,
+          "position": 10
+        }
+      ]
+    },
+    {
+      "ref": "finishes",
+      "rows": [
+        {
+          "@label": "finish:lam-one",
+          "code": "lam-one",
+          "name": "Lamination, one side",
+          "group": "lamination",
+          "basis": "sheet",
+          "price": 0.55,
+          "count": 1,
+          "active": true,
+          "position": 1
+        },
+        {
+          "@label": "finish:lam-both",
+          "code": "lam-both",
+          "name": "Lamination, both sides",
+          "group": "lamination",
+          "basis": "sheet",
+          "price": 0.95,
+          "count": 1,
+          "active": true,
+          "position": 2
+        },
+        {
+          "@label": "finish:lam-soft",
+          "code": "lam-soft",
+          "name": "Soft-touch lamination",
+          "group": "lamination",
+          "basis": "sheet",
+          "price": 1.2,
+          "count": 1,
+          "active": true,
+          "position": 3
+        },
+        {
+          "@label": "finish:spot-uv",
+          "code": "spot-uv",
+          "name": "Spot UV",
+          "group": "spot_uv",
+          "basis": "sheet",
+          "price": 2.4,
+          "count": 1,
+          "active": true,
+          "position": 4
+        },
+        {
+          "@label": "finish:corners",
+          "code": "corners",
+          "name": "Round corners",
+          "group": "corners",
+          "basis": "per_250",
+          "price": 6,
+          "count": 1,
+          "active": true,
+          "position": 5
+        },
+        {
+          "@label": "finish:plain",
+          "code": "plain",
+          "name": "Plain edges",
+          "group": "edges",
+          "basis": "none",
+          "price": 0,
+          "count": 1,
+          "active": true,
+          "position": 6
+        },
+        {
+          "@label": "finish:hemmed",
+          "code": "hemmed",
+          "name": "Hemmed & eyeletted",
+          "group": "edges",
+          "basis": "metre",
+          "price": 6,
+          "count": 1,
+          "active": true,
+          "position": 7
+        },
+        {
+          "@label": "finish:pockets",
+          "code": "pockets",
+          "name": "Pole pockets",
+          "group": "edges",
+          "basis": "piece",
+          "price": 9,
+          "count": 2,
+          "active": true,
+          "position": 8
+        },
+        {
+          "@label": "finish:rolled",
+          "code": "rolled",
+          "name": "Rolled",
+          "group": "canvas",
+          "basis": "none",
+          "price": 0,
+          "count": 1,
+          "active": true,
+          "position": 9
+        },
+        {
+          "@label": "finish:stretched",
+          "code": "stretched",
+          "name": "Stretched on a 38mm frame",
+          "group": "canvas",
+          "basis": "m2",
+          "price": 22,
+          "count": 1,
+          "active": true,
+          "position": 10
+        }
+      ]
+    },
+    {
+      "ref": "breaks",
+      "rows": [
+        {
+          "@label": "break:1000",
+          "min_qty": 1000,
+          "multiplier": 0.58,
+          "next_id": null
+        },
+        {
+          "@label": "break:500",
+          "min_qty": 500,
+          "multiplier": 0.66,
+          "next_id": {
+            "@ref": "break:1000"
+          }
+        },
+        {
+          "@label": "break:250",
+          "min_qty": 250,
+          "multiplier": 0.74,
+          "next_id": {
+            "@ref": "break:500"
+          }
+        },
+        {
+          "@label": "break:100",
+          "min_qty": 100,
+          "multiplier": 0.84,
+          "next_id": {
+            "@ref": "break:250"
+          }
+        },
+        {
+          "@label": "break:50",
+          "min_qty": 50,
+          "multiplier": 0.92,
+          "next_id": {
+            "@ref": "break:100"
+          }
+        },
+        {
+          "@label": "break:25",
+          "min_qty": 25,
+          "multiplier": 1,
+          "next_id": {
+            "@ref": "break:50"
+          }
+        }
+      ]
+    },
+    {
+      "ref": "packaging",
+      "rows": [
+        {
+          "@label": "packaging:bundled",
+          "code": "bundled",
+          "name": "Bundled in 50s",
+          "basis": "included",
+          "price": 0,
+          "product_kind": "sheet",
+          "active": true,
+          "position": 1
+        },
+        {
+          "@label": "packaging:shrink",
+          "code": "shrink",
+          "name": "Shrink-wrapped",
+          "basis": "unit",
+          "price": 0.04,
+          "product_kind": "sheet",
+          "active": true,
+          "position": 2
+        },
+        {
+          "@label": "packaging:boxed",
+          "code": "boxed",
+          "name": "Boxed",
+          "basis": "per_500",
+          "price": 4.5,
+          "product_kind": "sheet",
+          "active": true,
+          "position": 3
+        }
+      ]
+    },
+    {
+      "ref": "delivery_bands",
+      "rows": [
+        {
+          "code": "light",
+          "name": "Up to 2kg",
+          "tube": 0,
+          "min_kg": 0,
+          "max_kg": 2,
+          "price": 6.5,
+          "position": 1
+        },
+        {
+          "code": "mid",
+          "name": "Up to 10kg",
+          "tube": 0,
+          "min_kg": 2.01,
+          "max_kg": 10,
+          "price": 9.8,
+          "position": 2
+        },
+        {
+          "code": "heavy",
+          "name": "Up to 30kg",
+          "tube": 0,
+          "min_kg": 10.01,
+          "max_kg": 30,
+          "price": 16.4,
+          "position": 3
+        },
+        {
+          "code": "tube",
+          "name": "Rolled tube, up to 1.5m",
+          "tube": 1,
+          "min_kg": 0,
+          "max_kg": 30,
+          "price": 14,
+          "position": 4
+        }
+      ]
+    },
+    {
+      "ref": "option_rules",
+      "rows": [
+        {
+          "finish_group": "lamination",
+          "test": "uncoated",
+          "gsm": null,
+          "reason": "Lamination isn't offered on an uncoated stock — lamination needs a coated stock.",
+          "active": true,
+          "position": 1
+        },
+        {
+          "finish_group": "lamination",
+          "test": "roll",
+          "gsm": null,
+          "reason": "Lamination isn't offered on large-format media.",
+          "active": true,
+          "position": 2
+        },
+        {
+          "finish_group": "spot_uv",
+          "test": "no_lamination",
+          "gsm": null,
+          "reason": "Spot UV needs a laminated surface — add a lamination first.",
+          "active": true,
+          "position": 3
+        },
+        {
+          "finish_group": "corners",
+          "test": "over_gsm",
+          "gsm": 350,
+          "reason": "Round corners aren't offered above 350gsm.",
+          "active": true,
+          "position": 4
+        }
+      ]
+    },
+    {
+      "ref": "machines",
+      "rows": [
+        {
+          "code": "press",
+          "name": "Sheet press",
+          "kind": "press",
+          "detail": "SRA3, 320 × 450 mm sheets, both sides",
+          "active": true,
+          "position": 1
+        },
+        {
+          "code": "wide",
+          "name": "Wide-format printer",
+          "kind": "wide",
+          "detail": "1370 mm roll",
+          "active": true,
+          "position": 2
+        },
+        {
+          "code": "laminator",
+          "name": "Laminator",
+          "kind": "finishing",
+          "detail": "SRA3, gloss, matt and soft-touch",
+          "active": true,
+          "position": 3
+        }
+      ]
+    },
+    {
+      "ref": "closures",
+      "rows": [
+        {
+          "from_date": "2026-08-31",
+          "to_date": "2026-08-31",
+          "reason": "Summer bank holiday",
+          "active": true
+        },
+        {
+          "from_date": "2026-12-25",
+          "to_date": "2026-12-25",
+          "reason": "Christmas Day",
+          "active": true
+        },
+        {
+          "from_date": "2026-12-28",
+          "to_date": "2026-12-28",
+          "reason": "Boxing Day, observed",
+          "active": true
+        }
+      ]
+    },
+    {
+      "ref": "customers",
+      "rows": [
+        {
+          "@label": "customer:thelittlegallery",
+          "email": "hello@thelittlegallery.example",
+          "name": "The Little Gallery",
+          "language": "en-US",
+          "may_email": false,
+          "created_at": {
+            "@day": -18,
+            "@time": "10:00",
+            "@week": true
+          }
+        },
+        {
+          "@label": "customer:tworiverscycles",
+          "email": "hello@tworiverscycles.example",
+          "name": "Two Rivers Cycles",
+          "language": "en-US",
+          "may_email": false,
+          "created_at": {
+            "@day": -14,
+            "@time": "10:00",
+            "@week": true
+          }
+        },
+        {
+          "@label": "customer:harbourbakery",
+          "email": "hello@harbourbakery.example",
+          "name": "Harbour Bakery",
+          "language": "en-US",
+          "may_email": false,
+          "created_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          }
+        },
+        {
+          "@label": "customer:fenwickandsons",
+          "email": "hello@fenwickandsons.example",
+          "name": "Fenwick & Sons",
+          "language": "en-US",
+          "may_email": false,
+          "created_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          }
+        },
+        {
+          "@label": "customer:brambleyoga",
+          "email": "hello@brambleyoga.example",
+          "name": "Bramble Yoga",
+          "language": "en-US",
+          "may_email": false,
+          "created_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          }
+        },
+        {
+          "@label": "customer:ostaraflowers",
+          "email": "hello@ostaraflowers.example",
+          "name": "Ostara Flowers",
+          "language": "en-US",
+          "may_email": false,
+          "created_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          }
+        },
+        {
+          "@label": "customer:kestreljoinery",
+          "email": "hello@kestreljoinery.example",
+          "name": "Kestrel Joinery",
+          "language": "en-US",
+          "may_email": false,
+          "created_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          }
+        },
+        {
+          "@label": "customer:marshlanedental",
+          "email": "hello@marshlanedental.example",
+          "name": "Marsh Lane Dental",
+          "language": "en-US",
+          "may_email": false,
+          "created_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          }
+        },
+        {
+          "@label": "customer:cobleandco",
+          "email": "hello@cobleandco.example",
+          "name": "Coble & Co",
+          "language": "en-US",
+          "may_email": false,
+          "created_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          }
+        },
+        {
+          "@label": "customer:woldcricketclub",
+          "email": "hello@woldcricketclub.example",
+          "name": "Wold Cricket Club",
+          "language": "en-US",
+          "may_email": false,
+          "created_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          }
+        }
+      ]
+    },
+    {
+      "ref": "orders",
+      "rows": [
+        {
+          "@label": "order:MP-4126",
+          "number_seq": null,
+          "number": "MP-4126",
+          "status": "placed",
+          "name": "Harbour Bakery",
+          "email": "hello@harbourbakery.example",
+          "address_line1": "12 Quay Street",
+          "town": "Marlow",
+          "postcode": "SL7 1BT",
+          "language": "en-US",
+          "customer_id": {
+            "@ref": "customer:harbourbakery"
+          },
+          "delivery_method": "deliver",
+          "placed_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          },
+          "ready_at": null,
+          "may_email": false
+        },
+        {
+          "@label": "order:MP-4125",
+          "number_seq": null,
+          "number": "MP-4125",
+          "status": "placed",
+          "name": "Fenwick & Sons",
+          "email": "hello@fenwickandsons.example",
+          "address_line1": "4 West Street",
+          "town": "Marlow",
+          "postcode": "SL7 9ZZ",
+          "language": "en-US",
+          "customer_id": {
+            "@ref": "customer:fenwickandsons"
+          },
+          "delivery_method": "deliver",
+          "placed_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          },
+          "ready_at": null,
+          "may_email": false
+        },
+        {
+          "@label": "order:MP-4124",
+          "number_seq": null,
+          "number": "MP-4124",
+          "status": "placed",
+          "name": "Bramble Yoga",
+          "email": "hello@brambleyoga.example",
+          "address_line1": "The Old Chapel, Dean Street",
+          "town": "Marlow",
+          "postcode": "SL7 9ZZ",
+          "language": "en-US",
+          "customer_id": {
+            "@ref": "customer:brambleyoga"
+          },
+          "delivery_method": "deliver",
+          "placed_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          },
+          "ready_at": null,
+          "may_email": false
+        },
+        {
+          "@label": "order:MP-4123",
+          "number_seq": null,
+          "number": "MP-4123",
+          "status": "placed",
+          "name": "Two Rivers Cycles",
+          "email": "hello@tworiverscycles.example",
+          "address_line1": "8 Station Road",
+          "town": "Bourne End",
+          "postcode": "SL8 9ZZ",
+          "language": "en-US",
+          "customer_id": {
+            "@ref": "customer:tworiverscycles"
+          },
+          "delivery_method": "deliver",
+          "placed_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          },
+          "ready_at": null,
+          "may_email": false
+        },
+        {
+          "@label": "order:MP-4122",
+          "number_seq": null,
+          "number": "MP-4122",
+          "status": "placed",
+          "name": "Ostara Flowers",
+          "email": "hello@ostaraflowers.example",
+          "address_line1": "21 Spittal Street",
+          "town": "Marlow",
+          "postcode": "SL7 9ZZ",
+          "language": "en-US",
+          "customer_id": {
+            "@ref": "customer:ostaraflowers"
+          },
+          "delivery_method": "deliver",
+          "placed_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          },
+          "ready_at": null,
+          "may_email": false
+        },
+        {
+          "@label": "order:MP-4121",
+          "number_seq": null,
+          "number": "MP-4121",
+          "status": "placed",
+          "name": "Kestrel Joinery",
+          "email": "hello@kestreljoinery.example",
+          "address_line1": "Unit 3, Globe Park",
+          "town": "Marlow",
+          "postcode": "SL7 9ZZ",
+          "language": "en-US",
+          "customer_id": {
+            "@ref": "customer:kestreljoinery"
+          },
+          "delivery_method": "deliver",
+          "placed_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          },
+          "ready_at": null,
+          "may_email": false
+        },
+        {
+          "@label": "order:MP-4120",
+          "number_seq": null,
+          "number": "MP-4120",
+          "status": "placed",
+          "name": "The Little Gallery",
+          "email": "hello@thelittlegallery.example",
+          "address_line1": "2 Market Square",
+          "town": "Henley-on-Thames",
+          "postcode": "RG9 9ZZ",
+          "language": "en-US",
+          "customer_id": {
+            "@ref": "customer:thelittlegallery"
+          },
+          "delivery_method": "deliver",
+          "placed_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          },
+          "ready_at": null,
+          "may_email": false
+        },
+        {
+          "@label": "order:MP-4119",
+          "number_seq": null,
+          "number": "MP-4119",
+          "status": "ready",
+          "name": "Marsh Lane Dental",
+          "email": "hello@marshlanedental.example",
+          "address_line1": "17 Marsh Lane",
+          "town": "Maidenhead",
+          "postcode": "SL6 9ZZ",
+          "language": "en-US",
+          "customer_id": {
+            "@ref": "customer:marshlanedental"
+          },
+          "delivery_method": "deliver",
+          "placed_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          },
+          "ready_at": {
+            "@day": -1,
+            "@time": "16:00",
+            "@week": true
+          },
+          "may_email": false
+        },
+        {
+          "@label": "order:MP-4118",
+          "number_seq": null,
+          "number": "MP-4118",
+          "status": "placed",
+          "name": "Coble & Co",
+          "email": "hello@cobleandco.example",
+          "address_line1": "5 Chapel Street",
+          "town": "Marlow",
+          "postcode": "SL7 9ZZ",
+          "language": "en-US",
+          "customer_id": {
+            "@ref": "customer:cobleandco"
+          },
+          "delivery_method": "deliver",
+          "placed_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          },
+          "ready_at": null,
+          "may_email": false
+        },
+        {
+          "@label": "order:MP-4117",
+          "number_seq": null,
+          "number": "MP-4117",
+          "status": "placed",
+          "name": "Wold Cricket Club",
+          "email": "hello@woldcricketclub.example",
+          "address_line1": "The Pavilion, Pound Lane",
+          "town": "Marlow",
+          "postcode": "SL7 9ZZ",
+          "language": "en-US",
+          "customer_id": {
+            "@ref": "customer:woldcricketclub"
+          },
+          "delivery_method": "deliver",
+          "placed_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          },
+          "ready_at": null,
+          "may_email": false
+        },
+        {
+          "@label": "order:MP-4116",
+          "number_seq": null,
+          "number": "MP-4116",
+          "status": "placed",
+          "name": "Harbour Bakery",
+          "email": "hello@harbourbakery.example",
+          "address_line1": "12 Quay Street",
+          "town": "Marlow",
+          "postcode": "SL7 1BT",
+          "language": "en-US",
+          "customer_id": {
+            "@ref": "customer:harbourbakery"
+          },
+          "delivery_method": "deliver",
+          "placed_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          },
+          "ready_at": null,
+          "may_email": false
+        },
+        {
+          "@label": "order:MP-4115",
+          "number_seq": null,
+          "number": "MP-4115",
+          "status": "ready",
+          "name": "Fenwick & Sons",
+          "email": "hello@fenwickandsons.example",
+          "address_line1": null,
+          "town": null,
+          "postcode": null,
+          "language": "en-US",
+          "customer_id": {
+            "@ref": "customer:fenwickandsons"
+          },
+          "delivery_method": "collect",
+          "placed_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          },
+          "ready_at": {
+            "@day": -1,
+            "@time": "16:00",
+            "@week": true
+          },
+          "may_email": false
+        },
+        {
+          "@label": "order:MP-4114",
+          "number_seq": null,
+          "number": "MP-4114",
+          "status": "placed",
+          "name": "Bramble Yoga",
+          "email": "hello@brambleyoga.example",
+          "address_line1": "The Old Chapel, Dean Street",
+          "town": "Marlow",
+          "postcode": "SL7 9ZZ",
+          "language": "en-US",
+          "customer_id": {
+            "@ref": "customer:brambleyoga"
+          },
+          "delivery_method": "deliver",
+          "placed_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          },
+          "ready_at": null,
+          "may_email": false
+        },
+        {
+          "@label": "order:MP-4113",
+          "number_seq": null,
+          "number": "MP-4113",
+          "status": "placed",
+          "name": "Harbour Bakery",
+          "email": "hello@harbourbakery.example",
+          "address_line1": "12 Quay Street",
+          "town": "Marlow",
+          "postcode": "SL7 1BT",
+          "language": "en-US",
+          "customer_id": {
+            "@ref": "customer:harbourbakery"
+          },
+          "delivery_method": "deliver",
+          "placed_at": {
+            "@day": -5,
+            "@time": "10:00",
+            "@week": true
+          },
+          "ready_at": null,
+          "may_email": false
+        },
+        {
+          "@label": "order:MP-4112",
+          "number_seq": null,
+          "number": "MP-4112",
+          "status": "placed",
+          "name": "Harbour Bakery",
+          "email": "hello@harbourbakery.example",
+          "address_line1": "12 Quay Street",
+          "town": "Marlow",
+          "postcode": "SL7 1BT",
+          "language": "en-US",
+          "customer_id": {
+            "@ref": "customer:harbourbakery"
+          },
+          "delivery_method": "deliver",
+          "placed_at": {
+            "@day": -2,
+            "@time": "10:00",
+            "@week": true
+          },
+          "ready_at": null,
+          "may_email": false
+        }
+      ]
+    },
+    {
+      "ref": "saved_quotes",
+      "rows": [
+        {
+          "@label": "quote:MQ-2041",
+          "number_seq": null,
+          "number": "MQ-2041",
+          "name": "Two Rivers Cycles",
+          "email": "hello@tworiverscycles.example",
+          "language": "en-US",
+          "customer_id": {
+            "@ref": "customer:tworiverscycles"
+          },
+          "delivery_method": "deliver",
+          "created_at": {
+            "@day": -14,
+            "@time": "15:00",
+            "@week": true
+          }
+        },
+        {
+          "@label": "quote:MQ-2037",
+          "number_seq": null,
+          "number": "MQ-2037",
+          "name": "The Little Gallery",
+          "email": "hello@thelittlegallery.example",
+          "language": "en-US",
+          "customer_id": {
+            "@ref": "customer:thelittlegallery"
+          },
+          "delivery_method": "deliver",
+          "created_at": {
+            "@day": -18,
+            "@time": "15:00",
+            "@week": true
+          }
+        }
+      ]
+    },
+    {
+      "ref": "sample_requests",
+      "rows": [
+        {
+          "status": "posted",
+          "name": "Harbour Bakery",
+          "email": "hello@harbourbakery.example",
+          "address_line1": "12 Quay Street",
+          "town": "Marlow",
+          "postcode": "SL7 1BT",
+          "language": "en-US",
+          "created_at": {
+            "@day": -12,
+            "@time": "12:00",
+            "@week": true
+          },
+          "posted_at": {
+            "@day": -9,
+            "@time": "16:00",
+            "@week": true
+          }
+        }
+      ]
+    }
+  ]
+}

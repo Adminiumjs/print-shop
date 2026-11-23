@@ -48,6 +48,8 @@ const FROM = "0.2.5";
 /** The released 0.2.5's manifest, kept beside this test, held to its tag where there is one. */
 const FROM_FILE = join(REPO, "src", "contract", "released", `printing-${FROM}.manifest.json`);
 const FROM_MANIFEST = readFileSync(FROM_FILE, "utf8");
+/** The sample files 0.2.5 shipped: today's have columns it never had. */
+const FROM_SEEDS = join(REPO, "src", "contract", "released", "seeds-0.2.5");
 const tagged = (() => {
   try {
     return execFileSync("git", ["-C", REPO, "show", `v${FROM}:manifest.json`], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], maxBuffer: 64 * 1024 * 1024 });
@@ -86,7 +88,7 @@ describe.skipIf(why !== null)(`a works on ${FROM}, updated to take payments${why
       const table = (ref: string) => encodeURIComponent(tables[ref] ?? `printing_${ref}`);
       const rows = async (ref: string): Promise<Row[]> => ok(await staff.get<{ data: Row[] }>(`/api/v1/data/${connectionId}/${table(ref)}?limit=200`)).data;
       const install = async (manifest: string) => {
-        const app = appBundle({ manifest });
+        const app = appBundle({ manifest, ...(manifest === FROM_MANIFEST ? { seeds: FROM_SEEDS } : {}) });
         const staged = await staff.post(`/api/v1/apps/upload?expectedSha512=${encodeURIComponent(app.integrity)}`, app.buffer);
         if (![200, 201].includes(staged.status)) throw new Error(`upload: ${JSON.stringify(staged.body).slice(0, 600)}`);
         return app;

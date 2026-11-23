@@ -186,8 +186,10 @@ describe.skipIf(why !== null)(`a works on ${FROM} updated, its proofs as they we
         expect(asked.body.error.details.reason).toBe("ROLE_TABLES_WIDER");
         expect(asked.body.error.details.roleTables.map((w) => [w.role, w.table, w.wider.actions])).toEqual([
           ["owner", "settings", ["update"]],
+          ["owner", "shipments", ["read"]],
           ["prepress", "settings", ["read"]],
           ["press", "settings", ["read"]],
+          ["counter", "shipments", ["read"]],
         ]);
         const reply = await staff.post<{ from: string; to: string }>("/api/v1/apps/printing/update", { planChecksum: plan.checksum, publicAccess: true, publicWider: true, roleTables: true, roleGrants: true });
         expect(reply.status, JSON.stringify(reply.body).slice(0, 1500)).toBe(200);
