@@ -285,16 +285,16 @@ describe.skipIf(why !== null)(`a works on ${FROM}, updated to take payments${why
             const mine = await mailOf(placed.order["id"], ON);
             await new Promise((resolve) => setTimeout(resolve, 3_000));
             expect(count(await mailOf(placed.order["id"], ON))).toEqual({ "order-received-online": 1, "proof-approved-online": 1, "delivery-quote-accepted": 1, "order-received": 0, "proof-approved": 0 });
-            // A rehearsal's mail is addressed to the person rehearsing, never the address the order carries. Every one of
-            // these carries the order's own link, a code Adminium sends only to the address of the person it belongs
-            // to: so it is tried, and not sent, with that reason (the outbox's own rule for a code, whoever rehearses).
+            // A rehearsal's mail goes to the person rehearsing, never the address the order carries. Its own row's link
+            // goes with it: the order is their rehearsal, so the code is theirs (Adminium 0.3.63 and later).
             for (const m of mine.filter((one) => ON.includes(String(one["kind"])))) {
-              expect([m["kind"], m["status"], m["to_address"]], String(m["error"] ?? "")).toEqual([m["kind"], "failed", ADMIN.email]);
-              expect(String(m["error"]), String(m["kind"])).toContain("{{order.link_token}} is a code, and goes only to the address on file of the person it belongs to");
+              expect([m["kind"], m["status"], m["to_address"]], String(m["error"] ?? "")).toEqual([m["kind"], "sent", ADMIN.email]);
             }
-            // Nothing of it reached anybody: neither the person rehearsing nor the customer the order names.
+            // Nothing of it reached the customer the order names.
             const number = String(placed.order["number"]);
-            expect((await sinkMail(server.sink)).filter((m) => m.subject.includes(number))).toEqual([]);
+            const reached = (await sinkMail(server.sink)).filter((m) => m.subject.includes(number));
+            expect(reached.length).toBeGreaterThan(0);
+            expect(reached.filter((m) => JSON.stringify(m).includes(SHOPPER.email))).toEqual([]);
           } finally {
             ok(await staff.put("/api/v1/payments/rehearsal", { on: false }));
           }
