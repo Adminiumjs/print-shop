@@ -22,7 +22,7 @@ import { CUSTOMISER } from "./postings.ts";
 export const ADD_ONS_RANGE = "^1.0.26";
 
 /** The first add-ons release with the Shippo carrier. */
-const SHIPPO_RANGE = "^1.0.33";
+const SHIPPO_RANGE = "^1.0.35";
 
 export const ADD_ONS = {
   requires: [{ key: CUSTOMISER, range: ADD_ONS_RANGE, reason: l("Customers fill in a ready-made design, or start from blank, with their own words and logo.") }],
@@ -35,7 +35,6 @@ export const ADD_ONS = {
   ],
   features: [
     { id: "tracking", label: l("Tracking numbers"), requires: ["shipping-shippo"] },
-    { id: "tracking-labels", label: l("Tracking numbers"), requires: ["shipping-shippo"] },
     { id: "stock", label: l("Stock through Inventory"), requires: ["inventory"] },
     { id: "invoices", label: l("Invoices"), requires: ["invoices"] },
     { id: "holiday-closures", label: l("Public holidays as closures"), requires: ["holiday-calendars"] },

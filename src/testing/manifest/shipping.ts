@@ -73,6 +73,20 @@ export const shippingOrderSchema = z
     tracking: refSchema.optional(),
     /** Where the name of the company moving the parcel is written. */
     carrier: refSchema.optional(),
+    /**
+     * An app that takes returns: which table, the column naming the order, its
+     * status, and the states a return label may be bought in. Without this
+     * block the engine sells no return label for this order.
+     */
+    returns: z
+      .object({
+        table: refSchema,
+        order: refSchema,
+        status: refSchema,
+        approved: z.array(z.string().min(1).max(64)).min(1).max(8),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
@@ -112,6 +126,14 @@ export function shippingIssues<C extends { ref: string; type: string }>(m: { shi
       column(ref, ADDRESS_TYPES, at('address', 'lines', l));
       if (lines.indexOf(ref) !== l) out.push({ path: at('address', 'lines', l), message: `"${ref}" is named twice` });
     });
+    if (order.returns !== undefined) {
+      const { table, order: link, status } = order.returns;
+      if (index.table(table) === undefined) out.push({ path: at('returns', 'table'), message: `"${table}" is not a table of this app` });
+      else {
+        if (index.column(table, link) === undefined) out.push({ path: at('returns', 'order'), message: `"${table}" has no column "${link}"` });
+        if (index.column(table, status) === undefined) out.push({ path: at('returns', 'status'), message: `"${table}" has no column "${status}"` });
+      }
+    }
   });
   return out;
 }

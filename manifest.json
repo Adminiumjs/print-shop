@@ -3,7 +3,7 @@
   "manifestVersion": 1,
   "key": "printing",
   "name": "Print Shop",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "publisher": {
     "id": "adminium",
     "name": "Adminium",
@@ -148,7 +148,7 @@
       },
       {
         "key": "shipping-shippo",
-        "range": "^1.0.33",
+        "range": "^1.0.35",
         "reason": {
           "en-US": "Buy shipping labels on your own Shippo account, and keep each tracking number with its order.",
           "de-DE": "Versandetiketten über Ihr eigenes Shippo-Konto kaufen und jede Sendungsnummer bei der Bestellung behalten.",
@@ -207,22 +207,6 @@
     "features": [
       {
         "id": "tracking",
-        "label": {
-          "en-US": "Tracking numbers",
-          "de-DE": "Sendungsnummern",
-          "fr-FR": "Numéros de suivi",
-          "da-DK": "Sporingsnumre",
-          "cs-CZ": "Sledovací čísla",
-          "ar-EG": "أرقام التتبع",
-          "zh-CN": "追踪号",
-          "zh-TW": "追蹤號碼"
-        },
-        "requires": [
-          "shipping-shippo"
-        ]
-      },
-      {
-        "id": "tracking-labels",
         "label": {
           "en-US": "Tracking numbers",
           "de-DE": "Sendungsnummern",
