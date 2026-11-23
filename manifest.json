@@ -136,14 +136,14 @@
         "key": "shipping-dhl",
         "range": "^1.0.26",
         "reason": {
-          "en-US": "Book DHL for a delivery, print its label, and send the customer a tracking number.",
-          "de-DE": "DHL für eine Lieferung buchen, das Etikett drucken und der Kundschaft eine Sendungsnummer schicken.",
-          "fr-FR": "Réserver DHL pour une livraison, imprimer son étiquette et envoyer au client un numéro de suivi.",
-          "da-DK": "Book DHL til en levering, udskriv dens etiket, og send kunden et sporingsnummer.",
-          "cs-CZ": "Objednat DHL k zásilce, vytisknout její štítek a poslat zákazníkovi sledovací číslo.",
-          "ar-EG": "احجز DHL لتوصيلة، واطبع ملصقها، وأرسل للزبون رقم التتبع.",
-          "zh-CN": "为配送预约 DHL、打印面单，并把追踪号发给顾客。",
-          "zh-TW": "為配送預約 DHL、列印託運標籤，並把追蹤號碼傳給顧客。"
+          "en-US": "Try DHL's dispatch flow (a demo carrier this release).",
+          "de-DE": "Den DHL-Versandablauf ausprobieren (in dieser Version ein Demo-Versanddienstleister).",
+          "fr-FR": "Essayer le parcours d’expédition DHL (transporteur de démonstration dans cette version).",
+          "da-DK": "Prøv DHL’s forsendelsesforløb (et demo-fragtfirma i denne udgave).",
+          "cs-CZ": "Vyzkoušet postup odesílání DHL (v této verzi ukázkový dopravce).",
+          "ar-EG": "جرّب مسار شحن DHL (شركة شحن تجريبية في هذا الإصدار).",
+          "zh-CN": "试用 DHL 发货流程（本版本为演示承运商）。",
+          "zh-TW": "試用 DHL 出貨流程（本版本為示範貨運公司）。"
         }
       },
       {
@@ -218,7 +218,7 @@
           "zh-TW": "追蹤號碼"
         },
         "requires": [
-          "shipping-dhl"
+          "shipping-shippo"
         ]
       },
       {

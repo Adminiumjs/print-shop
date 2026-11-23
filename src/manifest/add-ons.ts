@@ -27,14 +27,14 @@ const SHIPPO_RANGE = "^1.0.33";
 export const ADD_ONS = {
   requires: [{ key: CUSTOMISER, range: ADD_ONS_RANGE, reason: l("Customers fill in a ready-made design, or start from blank, with their own words and logo.") }],
   suggests: [
-    { key: "shipping-dhl", range: ADD_ONS_RANGE, reason: l("Book DHL for a delivery, print its label, and send the customer a tracking number.") },
+    { key: "shipping-dhl", range: ADD_ONS_RANGE, reason: l("Try DHL's dispatch flow (a demo carrier this release).") },
     { key: "shipping-shippo", range: SHIPPO_RANGE, reason: l("Buy shipping labels on your own Shippo account, and keep each tracking number with its order.") },
     { key: "inventory", range: ADD_ONS_RANGE, reason: l("Keep the sheet stocks and rolls in stock, with what each job takes and spoils.") },
     { key: "invoices", range: ADD_ONS_RANGE, checked: true, reason: l("Send an invoice with each delivery, and print one at the counter.") },
     { key: "holiday-calendars", range: ADD_ONS_RANGE, reason: l("Close the works for public holidays in a tap.") },
   ],
   features: [
-    { id: "tracking", label: l("Tracking numbers"), requires: ["shipping-dhl"] },
+    { id: "tracking", label: l("Tracking numbers"), requires: ["shipping-shippo"] },
     { id: "tracking-labels", label: l("Tracking numbers"), requires: ["shipping-shippo"] },
     { id: "stock", label: l("Stock through Inventory"), requires: ["inventory"] },
     { id: "invoices", label: l("Invoices"), requires: ["invoices"] },
