@@ -638,6 +638,7 @@ function buildTransport(opts: SessionPortOptions): SessionTransport {
       path: string,
       method: "POST" | "PUT" | "PATCH" | "DELETE",
       body?: unknown,
+      headers?: Record<string, string>,
     ): Promise<T> {
       if (csrfToken === null) {
         // Not a fallback: a tokenless write answers CSRF_FAILED, which reads
@@ -651,6 +652,7 @@ function buildTransport(opts: SessionPortOptions): SessionTransport {
       return call<T>(path, {
         method,
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+        ...(headers === undefined ? {} : { headers }),
       });
     },
   };
@@ -675,7 +677,7 @@ export interface SessionTransport {
    * token does not exist before then, and a tokenless write fails with a
    * `CSRF_FAILED` that looks like a permissions problem.
    */
-  mutate: <T>(path: string, method: "POST" | "PUT" | "PATCH" | "DELETE", body?: unknown) => Promise<T>;
+  mutate: <T>(path: string, method: "POST" | "PUT" | "PATCH" | "DELETE", body?: unknown, headers?: Record<string, string>) => Promise<T>;
   /**
    * A `GET` of a dashboard route through the same session, for the reads a
    * `SnapshotPort` has no method for — a booking table's free times, one

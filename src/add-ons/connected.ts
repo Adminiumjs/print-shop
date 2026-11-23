@@ -91,6 +91,7 @@
  * disagrees is dropped with a problem rather than registered.
  */
 
+import { connectPaidLabel } from './paid-label.tsx';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as JsxRuntime from 'react/jsx-runtime';
@@ -701,6 +702,7 @@ export async function loadConnectedAddOns(options: ConnectedOptions): Promise<Co
         problems.push({ key: dto.key, code: 'NO_ENGINE_CLIENT', detail: cause instanceof Error ? cause.message : String(cause) });
       }
     }
+    connectPaidLabel(module, addOn.key);
     addOns.push(addOn);
   }
 

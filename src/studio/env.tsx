@@ -9,6 +9,7 @@
  * reader's words, and the rows are read again too, so the screen shows what
  * is true now.
  */
+import { isPaidLabelStopped } from '../add-ons/paid-label.tsx';
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 
 import type { WorksData, WorksDoor } from "./door.ts";
@@ -90,6 +91,7 @@ export function useRun(): { busy: boolean; run: (work: (door: WorksDoor, data: W
         if (typeof said === "string") toast(said, "pos");
         return true;
       } catch (error) {
+        if (isPaidLabelStopped(error)) return false;
         if (error instanceof HeldByProof) toast(t(error.lock === "waiting" ? "works.lock.waiting" : "works.lock.unapproved", { ref: error.ref }), "warn");
         // Adminium held the job in prepress: its proof is not approved (the move's `requires`).
         else if (isApiError(error) && error.code === "STATE_MOVE_REFUSED" && error.params["from"] === "prepress" && error.params["to"] === "printing" && error.params["named"] === undefined) toast(t("works.lock.held"), "warn");

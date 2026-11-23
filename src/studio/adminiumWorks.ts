@@ -19,6 +19,7 @@
  * wall time with no zone, and 0 or 1); every row is read back here as the
  * screens expect it, an ISO instant and a boolean.
  */
+import { movePaidLabel, paidLabelHeaders } from "../add-ons/paid-label.tsx";
 import { deviceNow } from "./clock.ts";
 import { withInstall, type StaffConfig } from "./transport/staffConnection.ts";
 import { SessionPortError, type SessionTransport } from "./transport/sessionSource.ts";
@@ -200,9 +201,9 @@ export class AdminiumWorks implements WorksDoor {
   private async create(table: Table, values: Record<string, unknown>): Promise<Row> {
     return this.row(table, (await this.t.mutate<{ data: Row }>(await this.path(this.real(table)), "POST", { values })).data);
   }
-  private async change(table: Table, id: Id, values: Record<string, unknown>, from?: string): Promise<Row> {
+  private async change(table: Table, id: Id, values: Record<string, unknown>, from?: string, keep: readonly string[] = []): Promise<Row> {
     const body = from === undefined ? { values } : { values, from };
-    return this.row(table, (await this.t.mutate<{ data: Row }>(await this.path(this.real(table), `/${encodeURIComponent(String(id))}`), "PATCH", body)).data);
+    return this.row(table, (await this.t.mutate<{ data: Row }>(await this.path(this.real(table), `/${encodeURIComponent(String(id))}`), "PATCH", body, paidLabelHeaders(keep))).data);
   }
 
   // ── who, and the works ────────────────────────────────────────────────────
@@ -504,7 +505,7 @@ export class AdminiumWorks implements WorksDoor {
   }
 
   moveOrder(order: Row, to: string, values: Record<string, unknown> = {}): Promise<Row> {
-    return this.run(() => this.change("orders", order.id, { status: to, ...values }, String(order["status"])));
+    return movePaidLabel({ table: "orders", id: String(order.id) }, (keep) => this.run(() => this.change("orders", order.id, { status: to, ...values }, String(order["status"]), keep)));
   }
 
   updateSettings(settings: Row, values: Record<string, unknown>): Promise<Row> {
