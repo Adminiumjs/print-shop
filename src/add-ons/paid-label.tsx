@@ -38,7 +38,9 @@ export function movePaidLabel<T>(source: { table: string; id: string }, attempt:
 
 /** For a move with other work before it: the question comes first, so that work never happens on an order that stays put. */
 export function askPaidLabelFirst(source: { table: string; id: string }, attempt: Attempt<unknown>): Promise<{ keep: readonly string[]; moved: boolean }> {
-  return kit?.clearPaidLabel === undefined ? Promise.resolve({ keep: [], moved: false }) : kit.clearPaidLabel(source, attempt);
+  if (kit?.clearPaidLabel !== undefined) return kit.clearPaidLabel(source, attempt);
+  // No way to ask: the move goes first, so a refusal stops it before any other work is done.
+  return attempt([]).then(() => ({ keep: [], moved: true }));
 }
 
 /** The person went back from the question: nothing moved, and there is nothing to report. */
@@ -70,7 +72,10 @@ export function PaidLabelSlot() {
   const Host = current.PaidLabelHost;
   return (
     <Contained>
-      <Host />
+      {/* Above this app's sheets and below its toasts: the question often opens from a sheet. */}
+      <div className='wk-paid-layer'>
+        <Host />
+      </div>
     </Contained>
   );
 }

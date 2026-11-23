@@ -353,6 +353,7 @@
   gap: 10px;
   border-block-end: 1px solid var(--border);
 }
+.wk-paid-layer { position: relative; z-index: 70; }
 .wk-toasts {
   position: fixed;
   inset-block-end: 16px;
