@@ -109,3 +109,11 @@ describe("the carrier's sender", () => {
     await expect(send("https://elsewhere.test/api/v1/apps/printing/shipping/access", { method: "GET", headers: {} })).rejects.toThrow();
   });
 });
+
+describe("what a customer can read of a label", () => {
+  it("is only what was told at hand-over: never the label's own columns", async () => {
+    const { ORDER_SELECT } = await import("../manifest/public.ts");
+    expect(ORDER_SELECT).toEqual(expect.arrayContaining(["tracking", "carrier"]));
+    for (const column of ["label_tracking", "label_carrier", "number_told_at"]) expect(ORDER_SELECT).not.toContain(column);
+  });
+});

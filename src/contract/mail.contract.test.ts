@@ -12,8 +12,8 @@
  * under the subject the installed template gives it (`mail.ts`):
  *
  *   order received (with the order's own link, its jobs, its money), proof
- *   ready, proof approved, ready to collect, on its way (with DHL's tracking
- *   number, and with the works' own courier), quote saved (with the quote's
+ *   ready, proof approved, ready to collect, on its way (with the carrier and
+ *   tracking number it was handed over with, and with the works' own courier), quote saved (with the quote's
  *   own link), sample pack posted, the delivery quote of an order over the
  *   delivery bands (and its order-received e-mail saying the delivery is to
  *   quote), and the works' two copies: a change asked, and a new order whose
@@ -231,11 +231,12 @@ describe.skipIf(why !== null)(`every e-mail, sent by a built Adminium${why === n
       it("sends on its way: with DHL's tracking number and its link, and with the works' own courier", async () => {
         const dhl = await place([cards(250)], "deliver");
         await finish(dhl.order);
-        await patch("orders", dhl.order["id"], { tracking: "00340012345678901234" });
+        await patch("orders", dhl.order["id"], { tracking: "00340012345678901234", carrier: "Evri" });
         await patch("orders", dhl.order["id"], { status: "dispatched" }, "ready");
         const tracked = await delivered({ sink: server.sink, manifest: MANIFEST, kind: "order-dispatched", to: SHOPPER.email, known: { "order.number": String(dhl.order["number"]) }, row: message("order-dispatched", "order_id", dhl.order["id"]) });
         expect(tracked.mail.text).toContain("Tracking number: 00340012345678901234");
-        expect(tracked.mail.text).toContain("tracking-id=00340012345678901234");
+        expect(tracked.mail.text).toContain("Sent with: Evri");
+        expect(tracked.mail.text).not.toMatch(/dhl/i);
 
         const courier = await place([cards(100)], "deliver");
         await finish(courier.order);
