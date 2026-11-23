@@ -773,6 +773,8 @@ export interface RecordActionsPayload extends SlotPayload {
    * handle says so on screen and does the readable half of its job.
    */
   patchRecord?: (patch: Record<string, unknown>) => void;
+  /** The order this record belongs to, for an action that ships against it: a return label. */
+  order?: { table: string; id: string };
 }
 
 /**
