@@ -58,6 +58,7 @@ export const ORDER_SELECT = [
   "collected_at",
   "dispatched_at",
   "tracking",
+  "carrier",
   "cancelled_at",
   "link_expires",
   // What was paid and is still to pay, and whether it can be paid now: never a payment's own row.

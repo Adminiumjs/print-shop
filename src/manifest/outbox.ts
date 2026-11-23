@@ -11,8 +11,9 @@
  *   proof-approved      the proof is approved, the job is on the press, and
  *                       the day it will be ready;
  *   order-ready         ready to collect at the works;
- *   order-dispatched    on its way: the carrier, and the tracking number when
- *                       DHL carried it;
+ *   order-dispatched    on its way: the carrier and tracking number the
+ *                       works handed it over with;
+ *   order-new-number    the parcel's new tracking number, when staff say so;
  *   quote-saved         the saved quote and its link;
  *   sample-pack-sent    the sample pack is in the post;
  *   delivery-quote      an order over the delivery bands: the price the works
@@ -40,6 +41,7 @@ export const KINDS = [
   "proof-approved",
   "order-ready",
   "order-dispatched",
+  "order-new-number",
   "quote-saved",
   "sample-pack-sent",
   "delivery-quote",
@@ -61,6 +63,7 @@ export const KIND_NAMES: Record<Kind, string> = {
   "proof-approved": "Proof approved",
   "order-ready": "Ready to collect",
   "order-dispatched": "Dispatched",
+  "order-new-number": "New tracking number",
   "quote-saved": "Quote saved",
   "sample-pack-sent": "Sample pack sent",
   "delivery-quote": "Delivery quote",
@@ -118,6 +121,8 @@ export const OUTBOX = {
     { kind: "proof-approved-online", link: "order_id", onChange: { table: "proofs", via: "order_id", column: "state", to: "approved" }, repeat: true, payments: "on" },
     { kind: "order-ready", link: "order_id", onChange: { table: "orders", column: "status", to: "ready", where: { column: "delivery_method", eq: "collect" } } },
     { kind: "order-dispatched", link: "order_id", onChange: { table: "orders", column: "status", to: "dispatched" } },
+    // Sent only when staff press "Tell the customer": a carrier's new number never mails anyone by itself.
+    { kind: "order-new-number", link: "order_id", onChange: { table: "orders", columns: ["number_told_at"], changed: true, where: { column: "number_told_at", isNull: false } }, repeat: true },
     { kind: "quote-saved", link: "quote_id", onCreate: { table: "saved_quotes" }, recipient: { column: "email", name: "name", language: "language" } },
     { kind: "sample-pack-sent", link: "sample_id", onChange: { table: "sample_requests", column: "status", to: "posted" }, recipient: { column: "email", name: "name", language: "language" } },
     { kind: "delivery-quote", link: "order_id", onChange: { table: "orders", column: "delivery_quote_state", to: "sent" } },

@@ -181,8 +181,11 @@ const refundOnSchema = z
           .object({
             from: z.array(refundState).min(1).max(16).optional(),
             to: refundState,
-            /** The customer's own move, Adminium's timed move, or staff who hold the refund right. Anyone else leaves "Refund owed". */
-            by: z.array(z.enum(['customer', 'system', 'refund-right'])).min(1).max(3),
+            /**
+             * The customer's own move, Adminium's timed move, staff who hold the refund right, or `staff`: any
+             * signed-in person's own move at the studio, refund right or not. Anyone else leaves "Refund owed".
+             */
+            by: z.array(z.enum(['customer', 'system', 'refund-right', 'staff'])).min(1).max(4),
           })
           .strict(),
       )
@@ -191,7 +194,15 @@ const refundOnSchema = z
     /** "Refund free cancellations automatically": a yes/no column of the app's settings row, read at the move. */
     switch: settingRefSchema.optional(),
     /** Only while the moment in `column` is at least the settings row's `hours` ahead (a clinic's late-cancel window). */
-    before: z.object({ column: refSchema, hours: settingRefSchema }).strict().optional(),
+    before: z
+      .object({
+        column: refSchema,
+        hours: settingRefSchema,
+        /** Whose moves the window holds to (a customer's: a cancel by the studio is refunded whenever it is made). Absent: everyone's. */
+        binds: z.array(z.enum(['customer', 'system', 'staff'])).min(1).max(3).optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 

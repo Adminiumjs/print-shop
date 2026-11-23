@@ -55,6 +55,7 @@ import {
   type TableIndex,
 } from './refs.ts';
 import { FORMS_BECAME_TABLE_MAX } from './forms.ts';
+import { compareSemver } from './semver.ts';
 import { momentIssues, momentOffsetSchema, plainMomentSchema, wallTimeSchema, type Moment } from './refs.ts';
 import { conditionIssues, linkedConditionSchema, reachedOnlyByUndo, stateConditionSchema, type StateMove } from './states.ts';
 
@@ -81,6 +82,41 @@ export const FORMS_KEY = 'forms';
  * left out: forms send their own.
  */
 export const FORMS_ENTRY_WORDS = ['table', 'methods', 'key', 'writable', 'writableValues', 'defaults', 'requires', 'agrees', 'anonymous', 'requireSetting', 'module', 'source'] as const;
+
+/**
+ * The reserved key name of the entries that open a table to a CHAT's
+ * question left outside hours: a visitor who leaves one with an e-mail adds
+ * a new row of the table, through this entry's `writable` columns, `defaults`
+ * and `anonymous` limits. As with `forms`, no browser key of this name is
+ * ever made and the public API never serves such an entry: the chat door
+ * alone reads it. A table may carry both a `forms` and a `chat` entry.
+ */
+export const CHAT_KEY = 'chat';
+
+/** What a chat entry may say: a forms entry's words, but a chat's row has no form, so no form's "Source". */
+export const CHAT_ENTRY_WORDS = FORMS_ENTRY_WORDS.filter((word): word is Exclude<(typeof FORMS_ENTRY_WORDS)[number], 'source'> => word !== 'source');
+
+/** The reserved keys whose entries a door of Adminium's own writes through, and the public API never serves. */
+export const DOOR_KEYS: readonly string[] = [FORMS_KEY, CHAT_KEY];
+
+/**
+ * The release that reserved `chat`. A manifest whose floor
+ * (`compatibility.minAdminiumVersion`) is older was written when `chat` was
+ * an ordinary key name: it keeps that meaning, so an app that named a key
+ * `chat` before still validates and its entries are still served.
+ */
+export const CHAT_KEY_FLOOR = '0.3.64';
+
+/** Whether a manifest's `chat` is the reserved key: its floor is {@link CHAT_KEY_FLOOR} or later. */
+export function chatKeyReserved(m: { compatibility?: { minAdminiumVersion?: string | undefined } | undefined }): boolean {
+  const floor = m.compatibility?.minAdminiumVersion;
+  return floor !== undefined && compareSemver(floor, CHAT_KEY_FLOOR) >= 0;
+}
+
+/** The reserved door keys of one manifest: `forms` always, `chat` from its floor on. */
+export function doorKeysOf(m: { compatibility?: { minAdminiumVersion?: string | undefined } | undefined }): readonly string[] {
+  return chatKeyReserved(m) ? DOOR_KEYS : [FORMS_KEY];
+}
 
 /** The longest a plain-text value may be unless its column says longer: a name. */
 export const PLAIN_TEXT_MAX = 80;
@@ -114,6 +150,44 @@ export const plainTextRef = (entry: PlainTextColumnRef): string => (typeof entry
 export const plainTextMax = (entry: PlainTextColumnRef): number => (typeof entry === 'string' ? PLAIN_TEXT_MAX : (entry.max ?? PLAIN_TEXT_MAX));
 
 const keyNameSchema = z.string().regex(/^[a-z][a-z0-9-]{0,31}$/, 'a key name is kebab-case');
+
+/**
+ * What a shopper may ask of a column of a list anyone reads: equal to, one
+ * of (at most {@link SHOPPER_IN_MOST} values), and at least, at most, more or
+ * less than. Never a pattern of their own (`like`), never "or": a shopper's
+ * filter only narrows what the entry shows, one condition on top of another.
+ */
+export const SHOPPER_OPS = ['eq', 'in', 'gte', 'lte', 'gt', 'lt'] as const;
+export type ShopperOp = (typeof SHOPPER_OPS)[number];
+/** The operators a column takes when the entry names none. */
+export const SHOPPER_DEFAULT_OPS: readonly ShopperOp[] = ['eq', 'in', 'gte', 'lte'];
+/** The most values one `in` of a shopper's filter carries. */
+export const SHOPPER_IN_MOST = 50;
+/** The most columns a list anyone reads may be filtered, searched and ordered by. */
+export const SHOPPER_FILTERABLE_MOST = 8;
+export const SHOPPER_SEARCHABLE_MOST = 4;
+export const SHOPPER_ORDERABLE_MOST = 5;
+/** The fewest characters a search asks for, and how many searches a minute one visitor makes. */
+export const SHOPPER_SEARCH_MIN = 2;
+export const SHOPPER_SEARCHES_A_MINUTE = 30;
+/** How far a list ordered by the shopper pages by offset: past it, by cursor. */
+export const SHOPPER_OFFSET_MOST = 1_000;
+/** How far a list anyone reads counts its rows before it says "1,000 or more". */
+export const SHOPPER_COUNT_MOST = 1_000;
+/** The longest page an entry of a file not made on an Adminium serves. */
+export const SHOPPER_PAGE_MOST = 100;
+
+/** A column a shopper may filter by: its ref (the default operators), or its ref with its own. */
+const shopperFilterSchema = z.union([
+  refSchema,
+  z.object({ column: refSchema, ops: z.array(z.enum(SHOPPER_OPS)).min(1).max(SHOPPER_OPS.length) }).strict(),
+]);
+export type ShopperFilter = z.infer<typeof shopperFilterSchema>;
+
+/** The column a shopper's filter names. */
+export const shopperFilterColumn = (filter: ShopperFilter): string => (typeof filter === 'string' ? filter : filter.column);
+/** The operators a shopper's filter takes on its column. */
+export const shopperFilterOps = (filter: ShopperFilter): readonly ShopperOp[] => (typeof filter === 'string' ? SHOPPER_DEFAULT_OPS : filter.ops);
 
 const valueFilterSchema = z
   .object({
@@ -522,7 +596,7 @@ const withholdSchema = z
  * stamps. `links`: it also stops the person's rows' own links (each gets a
  * new code, which closes every session its old one opened) — an app's choice.
  */
-const forgetSchema = z.object({ columns: z.array(refSchema).min(1).max(16), stamp: refSchema.optional(), links: z.literal(true).optional() }).strict();
+const forgetSchema = z.object({ columns: z.array(refSchema).min(1).max(16), stamp: refSchema.optional(), links: z.literal(true).optional(), copies: z.literal(true).optional() }).strict();
 
 /**
  * "Make a new link" for a signed-in person's row: its own link (`column`)
@@ -566,6 +640,31 @@ export const publicAccessSchema = z
     select: z.array(refSchema).optional(),
     writable: z.array(refSchema).optional(),
     filters: z.array(z.union([valueFilterSchema, relativeFilterSchema])).optional(),
+    /**
+     * A list anyone reads (a catalogue): the columns a shopper may filter it
+     * by, each with the operators it takes (`eq`, `in`, `gte`, `lte` when
+     * none are named). Every filter is ANDed after the entry's own `filters`,
+     * so a shopper's only narrows what the entry shows.
+     */
+    filterable: z.array(shopperFilterSchema).min(1).max(SHOPPER_FILTERABLE_MOST).optional(),
+    /** Text columns a shopper's search looks in: a part of the text, any case, from two characters. */
+    searchable: z.array(refSchema).min(1).max(SHOPPER_SEARCHABLE_MOST).optional(),
+    /** Columns a shopper may order the list by, each never empty; the key always breaks a tie. */
+    orderable: z.array(refSchema).min(1).max(SHOPPER_ORDERABLE_MOST).optional(),
+    /**
+     * Filters through another list anyone reads on the same key, whose rows
+     * point at this one (a product's variants): `entry` is that list's table,
+     * `on` its link to this table, `columns` what may be asked of its rows.
+     * Every condition sent through it must hold on ONE of those rows, as that
+     * list shows them (its own filters included): a product is found by
+     * "Slate and M" only when one variant it has is both.
+     */
+    via: z
+      .object({ entry: refSchema, on: refSchema, columns: z.array(shopperFilterSchema).min(1).max(4) })
+      .strict()
+      .optional(),
+    /** The first page of a list anyone reads says how many rows it holds, counted to a thousand. */
+    count: z.literal(true).optional(),
     /** Values the server writes, whatever the browser sends (`status: confirmed`). */
     defaults: z.record(refSchema, z.union([z.string(), z.number(), z.boolean()])).optional(),
     /** How a person proves who they are on this key (see {@link claimSchema}). */
@@ -602,6 +701,20 @@ export const publicAccessSchema = z
      * browser cannot choose it), and a change never moves it.
      */
     appColumn: refSchema.optional(),
+    /**
+     * On an add-on's read: only the rows this address column holds the address
+     * of the person signed in on the app's key, the one they proved by reading
+     * mail. A row an add-on keeps for a person (a pack, a gift card) names them
+     * by address, never by a key of the app's table, so `claimedBy` cannot.
+     */
+    heldBy: z
+      .object({
+        address: refSchema,
+        /** A date column: until that day the row is not shown yet (a gift card dated for a birthday). */
+        from: refSchema.optional(),
+      })
+      .strict()
+      .optional(),
     /** On a signed-in person's rows: "Make a new link" for a row's own link. */
     newLink: newLinkSchema.optional(),
     /**
@@ -880,6 +993,7 @@ export const publicKeysSchema = z
   .refine((keys) => !(FORMS_KEY in keys), {
     message: '"forms" is the name of the entries forms write through, and no browser key: name the key otherwise',
   });
+// `chat` is refused as a browser key's name from its floor on (`publicAccessIssues`), where the manifest's floor is known.
 export type PublicKey = z.infer<typeof publicKeySchema>;
 
 interface PublicAccessContext {
@@ -907,6 +1021,8 @@ interface PublicAccessContext {
   /** The table's limits, as it declares them (absent: the caller does not say). */
   capacityOf?: (table: string) => Capacity | undefined;
   publicKeys: Readonly<Record<string, PublicKey>> | undefined;
+  /** Whether `chat` is the reserved key ({@link chatKeyReserved}); absent: it is. */
+  chatReserved?: boolean | undefined;
   roles: readonly {
     key: string;
     screensOnly?: boolean | undefined;
@@ -1065,6 +1181,41 @@ function formsEntryIssues(entry: PublicAccess, i: number, entries: readonly Publ
 }
 
 /**
+ * A chat entry's own rules, those of a forms entry: it creates (POST) and
+ * nothing else, under anonymous limits, with the columns a left question may
+ * fill named; one per table, its table short enough for a conversation to
+ * keep whole; and no entry on any key lets anyone read the rows strangers
+ * add through it. A chat's row has no form, so it names no source.
+ */
+function chatEntryIssues(entry: PublicAccess, i: number, entries: readonly PublicAccess[], appKey: string | undefined): ReferenceIssue[] {
+  const out: ReferenceIssue[] = [];
+  const at = (...rest: (string | number)[]) => ['publicAccess', i, ...rest];
+  // Each conversation keeps the row it became by its table's stored name: it must fit a conversations table, whole.
+  const stored = appKey === undefined ? 0 : appKey.length + 1 + entry.table.length;
+  if (stored > FORMS_BECAME_TABLE_MAX) {
+    out.push({ path: at('table'), message: `a chat names the row it became by "<app>:<table>", at most ${String(FORMS_BECAME_TABLE_MAX)} characters: "${appKey ?? ''}:${entry.table}" is ${String(stored)}` });
+  }
+  const allowed: readonly string[] = CHAT_ENTRY_WORDS;
+  for (const word of Object.keys(entry)) {
+    if (!allowed.includes(word)) out.push({ path: at(word), message: `a chat entry only lets a left question add a row: "${word}" is not said on it` });
+  }
+  if (entry.methods.length !== 1 || entry.methods[0] !== 'POST') out.push({ path: at('methods'), message: 'a chat entry adds a row and does nothing else: its methods are ["POST"]' });
+  if (entry.anonymous === undefined) out.push({ path: at('anonymous'), message: 'a question is left by strangers: a chat entry says its anonymous limits' });
+  if ((entry.writable ?? []).length === 0) out.push({ path: at('writable'), message: 'a chat entry names the columns a left question may fill (writable)' });
+  if (entries.findIndex((other) => other.key === CHAT_KEY && other.table === entry.table) !== i) {
+    out.push({ path: at('table'), message: `"${entry.table}" is opened to chat by another entry already: one chat entry per table` });
+  }
+  const reader = entries.findIndex((other) => other !== entry && other.table === entry.table && readByAnyone(other));
+  if (reader !== -1) {
+    out.push({
+      path: at('table'),
+      message: `strangers add rows to "${entry.table}" through chat, and entry ${String(reader)} lets anyone read its rows: everyone could read the questions people left`,
+    });
+  }
+  return out;
+}
+
+/**
  * An entry held to the app whose key serves it (`appColumn`): a text column
  * of its table, never one a browser writes or a value the entry sets, and
  * only on an entry that rides each app's own key (no key of the add-on's,
@@ -1088,13 +1239,181 @@ function appColumnIssues(entries: readonly PublicAccess[], index: TableIndex): R
   return out;
 }
 
+/**
+ * A read of the rows a signed-in person holds (`heldBy`): a plain read at
+ * `verified`, listing what it shows, on the app's key, by a column that keeps
+ * an address in one spelling. Anything else could show one person another's.
+ */
+function heldByIssues(entries: readonly PublicAccess[], index: TableIndex): ReferenceIssue[] {
+  const out: ReferenceIssue[] = [];
+  entries.forEach((entry, i) => {
+    if (entry.heldBy === undefined) return;
+    const at = ['publicAccess', i, 'heldBy'];
+    const found = index.column(entry.table, entry.heldBy.address) as { type?: string; rules?: { normalize?: unknown } } | undefined;
+    if (found === undefined) out.push({ path: at, message: `"${entry.table}" has no column "${entry.heldBy.address}"` });
+    else if (found.type !== 'text' || found.rules?.normalize !== 'email') out.push({ path: at, message: `"${entry.table}.${entry.heldBy.address}" does not keep an address in one spelling (a text column with normalize "email")` });
+    if (entry.heldBy.from !== undefined && index.column(entry.table, entry.heldBy.from)?.type !== 'date') out.push({ path: at, message: `"${entry.table}.${entry.heldBy.from}" is not a date column` });
+    if (entry.methods.length !== 1 || entry.methods[0] !== 'GET') out.push({ path: at, message: 'the rows a person holds are read, never written, through this entry' });
+    if (entry.level !== 'verified') out.push({ path: at, message: 'the rows a person holds are read at level "verified"' });
+    if (entry.select === undefined) out.push({ path: at, message: 'a read of the rows a person holds lists what it shows' });
+    if (entry.claim !== undefined || entry.claimedBy !== undefined || entry.visibleWith !== undefined || entry.unlockBy !== undefined) out.push({ path: at, message: 'an entry is read by the address a session proved, or by a claim, never both' });
+    if ((entry.key ?? CUSTOMER_KEY) !== CUSTOMER_KEY) out.push({ path: at, message: `an entry on "${String(entry.key)}" has no signed-in customer` });
+  });
+  return out;
+}
+
+/** Whether an entry declares any of a shopper's lists: filters, search, order, a filter through another list, a count. */
+export function shopperLists(entry: PublicAccess): boolean {
+  return entry.filterable !== undefined || entry.searchable !== undefined || entry.orderable !== undefined || entry.via !== undefined || entry.count !== undefined;
+}
+
+/** The columns an entry shows: its `select`, else every column but a code Adminium makes and a secret (as the server reads it). */
+function shownColumns(entry: PublicAccess, index: TableIndex): readonly string[] {
+  if (entry.select !== undefined) return entry.select;
+  return (index.table(entry.table)?.columns ?? [])
+    .filter((column) => (column as { rules?: Record<string, unknown> }).rules?.['code'] === undefined && (column as { rules?: Record<string, unknown> }).rules?.['secret'] !== true)
+    .map((column) => column.ref);
+}
+
+/**
+ * A SHOPPER'S LISTS: which entries may say them, and of which columns.
+ *
+ * "Does a row match" is a read of the column it asks about, one question at a
+ * time. So the lists are said only of a list anyone reads — GET alone, no
+ * sign-in, no code that opens it, nothing withheld from some readers — of a
+ * table that is no person's, and only of columns the list shows that are no
+ * code, secret, personal data, file or JSON, nor the app an add-on's row is
+ * for. A search reads text; an order is by a column that is never empty, so
+ * the three engines put the rows in one order and a cursor never stops at a
+ * gap. A filter through another list is the same rule twice, and its link
+ * points at this table.
+ */
+function shopperListIssues(entries: readonly PublicAccess[], ctx: PublicAccessContext): ReferenceIssue[] {
+  const out: ReferenceIssue[] = [];
+  const { index } = ctx;
+  // A person's table: one a key signs people in on, finds them by, or claims rows for.
+  const people = new Set<string>();
+  for (const entry of entries) {
+    if (entry.claim !== undefined && !('by' in entry.claim)) people.add(entry.table);
+    if (entry.identity !== undefined) people.add(entry.identity.table);
+    if (entry.claimedBy !== undefined) people.add(entry.claimedBy.table);
+  }
+  const anyoneReads = (entry: PublicAccess): string | null => {
+    if (!readByAnyone(entry)) return 'a list anyone reads, with no sign-in';
+    if (entry.methods.length !== 1) return 'a list that only reads (GET alone)';
+    if (entry.unlockBy !== undefined) return 'a list no code opens';
+    if (entry.withhold !== undefined) return 'a list that shows every reader the same columns';
+    if (people.has(entry.table)) return `a list of no person's rows, and "${entry.table}" holds people`;
+    return null;
+  };
+  const why = (entry: PublicAccess, column: string): string | null => {
+    const found = index.column(entry.table, column) as (ColumnShape & { rules?: Record<string, unknown> }) | undefined;
+    if (found === undefined) return `"${entry.table}" has no column "${column}"`;
+    if (!shownColumns(entry, index).includes(column)) return `"${column}" is not shown by the entry (its select), so nothing may be asked of it`;
+    if (found.rules?.['code'] !== undefined || shareCodeColumns(entries, entry.table).includes(column)) return `"${column}" is a code: a shopper's list may not ask about it`;
+    if (found.rules?.['secret'] === true) return `"${column}" is a secret`;
+    if (found.type === 'file' || found.type === 'json') return `"${column}" holds ${found.type === 'file' ? 'a file' : 'JSON'}, which no list asks about`;
+    const table = index.table(entry.table);
+    if (table !== undefined && personalColumn(table as never, column) !== null) return `"${column}" is personal data: a shopper's list may not ask about it`;
+    if (entry.appColumn === column) return `"${column}" holds the app the row is for, which Adminium alone fills`;
+    return null;
+  };
+  entries.forEach((entry, i) => {
+    if (!shopperLists(entry)) return;
+    const at = (...rest: Path): Path => ['publicAccess', i, ...rest];
+    const notAnyone = anyoneReads(entry);
+    if (notAnyone !== null) {
+      for (const key of ['filterable', 'searchable', 'orderable', 'via', 'count'] as const) {
+        if (entry[key] !== undefined) out.push({ path: at(key), message: `a shopper's ${key} is said only of ${notAnyone}` });
+      }
+      return;
+    }
+    const seen = new Set<string>();
+    (entry.filterable ?? []).forEach((filter, f) => {
+      const column = shopperFilterColumn(filter);
+      if (seen.has(column)) out.push({ path: at('filterable', f), message: `"${column}" is listed twice` });
+      seen.add(column);
+      const wrong = why(entry, column);
+      if (wrong !== null) out.push({ path: at('filterable', f), message: wrong });
+      const ops = shopperFilterOps(filter);
+      if (new Set(ops).size !== ops.length) out.push({ path: at('filterable', f, 'ops'), message: 'an operator is listed once' });
+    });
+    (entry.searchable ?? []).forEach((column, c) => {
+      const wrong = why(entry, column);
+      if (wrong !== null) out.push({ path: at('searchable', c), message: wrong });
+      else if (index.column(entry.table, column)?.type !== 'text') out.push({ path: at('searchable', c), message: `"${column}" is searched as text: a text column` });
+      if ((entry.searchable ?? []).indexOf(column) !== c) out.push({ path: at('searchable', c), message: `"${column}" is listed twice` });
+    });
+    (entry.orderable ?? []).forEach((column, c) => {
+      const wrong = why(entry, column);
+      const found = index.column(entry.table, column);
+      if (wrong !== null) out.push({ path: at('orderable', c), message: wrong });
+      else if (found?.nullable === true && found.role !== 'pk') {
+        out.push({ path: at('orderable', c), message: `"${column}" may be empty, and an empty value sorts first on one engine and last on another: order by a column that is never empty` });
+      }
+      if ((entry.orderable ?? []).indexOf(column) !== c) out.push({ path: at('orderable', c), message: `"${column}" is listed twice` });
+    });
+    const via = entry.via;
+    if (via !== undefined) {
+      const key = entry.key ?? CUSTOMER_KEY;
+      // A stock-words entry on the same table answers words, never rows: it is no list to filter through (the server skips it too).
+      const lists = entries.filter((other) => other.table === via.entry && (other.key ?? CUSTOMER_KEY) === key && other.methods.includes('GET') && other.kind !== 'availability');
+      const through = lists[0];
+      if (via.entry === entry.table) out.push({ path: at('via', 'entry'), message: 'a filter through another list names another table' });
+      else if (lists.length !== 1 || through === undefined) {
+        out.push({ path: at('via', 'entry'), message: `a filter through "${via.entry}" names the one entry that reads it on the "${key}" key, and there ${lists.length === 0 ? 'is none' : `are ${String(lists.length)}`}` });
+      } else {
+        const notThrough = anyoneReads(through);
+        if (notThrough !== null) out.push({ path: at('via', 'entry'), message: `a filter through "${via.entry}" reads rows as that list shows them, so it is ${notThrough}` });
+        else if (shopperLists(through) && through.via !== undefined) out.push({ path: at('via', 'entry'), message: `"${via.entry}" filters through another list itself: one step only` });
+        const link = index.column(via.entry, via.on);
+        if (link === undefined) out.push({ path: at('via', 'on'), message: `"${via.entry}" has no column "${via.on}"` });
+        else if (link.type !== 'fk' || link.references !== entry.table) out.push({ path: at('via', 'on'), message: `"${via.entry}.${via.on}" is not a link to "${entry.table}"` });
+        else if (!shownColumns(through, index).includes(via.on)) out.push({ path: at('via', 'on'), message: `"${via.on}" joins "${via.entry}" to this list: the "${via.entry}" list shows it, or a filter through it would say what it hides` });
+        const named = new Set<string>();
+        via.columns.forEach((filter, f) => {
+          const column = shopperFilterColumn(filter);
+          if (named.has(column)) out.push({ path: at('via', 'columns', f), message: `"${column}" is listed twice` });
+          named.add(column);
+          const wrong = why(through, column);
+          if (wrong !== null) out.push({ path: at('via', 'columns', f), message: wrong });
+        });
+      }
+    }
+  });
+  // An entry's own pages, from a file not made on an Adminium too: a page of at most a hundred, ordered by a column never empty.
+  if (ctx.local !== true) {
+    entries.forEach((entry, i) => {
+      const pages = entry.pagination;
+      if (pages === undefined) return;
+      const at = (...rest: Path): Path => ['publicAccess', i, 'pagination', ...rest];
+      if (pages.maxLimit > SHOPPER_PAGE_MOST) out.push({ path: at('maxLimit'), message: `a page holds at most ${String(SHOPPER_PAGE_MOST)} rows` });
+      const ordered = pages.order;
+      if (ordered === undefined) return;
+      const column = ordered.slice(0, ordered.lastIndexOf('.'));
+      const found = index.column(entry.table, column);
+      if (found !== undefined && found.nullable === true && found.role !== 'pk') {
+        out.push({ path: at('order'), message: `"${column}" may be empty, and an empty value sorts first on one engine and last on another: order by a column that is never empty` });
+      }
+      if (found !== undefined && !shownColumns(entry, index).includes(column)) out.push({ path: at('order'), message: `"${column}" is not shown by the entry, and an order says what a column holds` });
+    });
+  }
+  return out;
+}
+
 /** Everything in `publicAccess` and `publicKeys` that names something undeclared, or breaks a rule. */
 export function publicAccessIssues(entries: readonly PublicAccess[], ctx: PublicAccessContext): ReferenceIssue[] {
   const out: ReferenceIssue[] = [];
   const { index } = ctx;
   const has = index.has;
   out.push(...appColumnIssues(entries, index));
+  out.push(...heldByIssues(entries, index));
+  out.push(...shopperListIssues(entries, ctx));
 
+  const doorKeys = ctx.chatReserved === false ? [FORMS_KEY] : DOOR_KEYS;
+  if (doorKeys.includes(CHAT_KEY) && ctx.publicKeys?.[CHAT_KEY] !== undefined) {
+    out.push({ path: ['publicKeys', CHAT_KEY], message: '"chat" is the name of the entries a chat\'s left questions write through, and no browser key: name the key otherwise' });
+  }
   for (const [name, key] of Object.entries(ctx.publicKeys ?? {})) {
     const at = ['publicKeys', name];
     // The app's own key, named only for its peak: nothing more to check.
@@ -1212,10 +1531,13 @@ export function publicAccessIssues(entries: readonly PublicAccess[], ctx: Public
     }
     const column = (ref: string) => index.column(entry.table, ref);
     const key = entry.key ?? CUSTOMER_KEY;
-    if (key !== CUSTOMER_KEY && key !== FORMS_KEY && ctx.publicKeys?.[key] === undefined) {
-      out.push({ path: at('key'), message: `"${key}" is not one of the app's publicKeys` });
+    if (key !== CUSTOMER_KEY && !doorKeys.includes(key) && ctx.publicKeys?.[key] === undefined) {
+      // Under an older floor `chat` is a key like any other: say so, for whoever meant a chat's left questions.
+      const chat = key === CHAT_KEY ? ` (a chat's left questions are opened under "chat" from Adminium ${CHAT_KEY_FLOOR}: set compatibility.minAdminiumVersion to it or later)` : '';
+      out.push({ path: at('key'), message: `"${key}" is not one of the app's publicKeys${chat}` });
     }
     if (key === FORMS_KEY) out.push(...formsEntryIssues(entry, i, entries, ctx.appKey, index));
+    else if (key === CHAT_KEY && doorKeys.includes(CHAT_KEY)) out.push(...chatEntryIssues(entry, i, entries, ctx.appKey));
     else if (entry.source !== undefined) out.push({ path: at('source'), message: 'a source is said only on a forms entry (key "forms"): the column a form\'s fixed "Source" value goes into' });
 
     for (const list of ['select', 'writable'] as const) {
@@ -1226,8 +1548,8 @@ export function publicAccessIssues(entries: readonly PublicAccess[], ctx: Public
     // An entry anyone may call (no claim, no parent, no session asked) shows no personal data: the install refuses it too.
     const sessionOnly = entry.level !== undefined && entry.claim === undefined && entry.claimedBy === undefined && entry.visibleWith === undefined;
     const anyone = entry.claim === undefined && entry.visibleWith === undefined && (entry.claimedBy === undefined || entry.claimedBy.optional === true) && !sessionOnly;
-    // An availability entry shows no row, whatever it names; nor does a forms entry, which answers nobody with the row.
-    if (anyone && entry.kind !== 'availability' && key !== FORMS_KEY) {
+    // An availability entry shows no row, whatever it names; nor does a forms or a chat entry, which answers nobody with the row.
+    if (anyone && entry.kind !== 'availability' && !doorKeys.includes(key)) {
       // No select shows every column but a code Adminium makes and a secret, as the install reads it.
       const shown =
         entry.select ??
@@ -1281,7 +1603,8 @@ export function publicAccessIssues(entries: readonly PublicAccess[], ctx: Public
       if (ctx.local !== true) out.push({ path: at('methods'), message: `${method} is read only from a file made on an Adminium (publisher "local")` });
       else if (!claimed) out.push({ path: at('methods'), message: `${method} is allowed only with a claim` });
     }
-    for (const field of ['path', 'pagination', 'rateLimit', 'response'] as const) {
+    // Pages are any file's to say from 0.3.68 on (a page of at most a hundred, checked with the shopper's lists).
+    for (const field of ['path', 'rateLimit', 'response'] as const) {
       if (entry[field] !== undefined && ctx.local !== true) out.push({ path: at(field), message: `"${field}" is read only from a file made on an Adminium (publisher "local")` });
     }
     // An app's own key is granted every entry, and an app's pages read rows wrapped in `data`.

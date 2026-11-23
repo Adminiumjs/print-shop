@@ -408,6 +408,7 @@ export function sampleBundle(): SampleBundle {
             address_line1: delivered ? address.line1 : null,
             town: delivered ? address.town : null,
             postcode: delivered ? address.postcode : null,
+            country: delivered ? "GB" : null,
             language: "en-US",
             customer_id: { "@ref": customerLabel(j.customer) },
             delivery_method: delivered ? "deliver" : "collect",

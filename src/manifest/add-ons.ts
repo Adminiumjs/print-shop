@@ -21,16 +21,21 @@ import { CUSTOMISER } from "./postings.ts";
 /** The add-ons' release whose Customiser lets the owner's role change its settings and keeps each shop to its own rows. */
 export const ADD_ONS_RANGE = "^1.0.26";
 
+/** The first add-ons release with the Shippo carrier. */
+const SHIPPO_RANGE = "^1.0.33";
+
 export const ADD_ONS = {
   requires: [{ key: CUSTOMISER, range: ADD_ONS_RANGE, reason: l("Customers fill in a ready-made design, or start from blank, with their own words and logo.") }],
   suggests: [
     { key: "shipping-dhl", range: ADD_ONS_RANGE, reason: l("Book DHL for a delivery, print its label, and send the customer a tracking number.") },
+    { key: "shipping-shippo", range: SHIPPO_RANGE, reason: l("Buy shipping labels on your own Shippo account, and keep each tracking number with its order.") },
     { key: "inventory", range: ADD_ONS_RANGE, reason: l("Keep the sheet stocks and rolls in stock, with what each job takes and spoils.") },
     { key: "invoices", range: ADD_ONS_RANGE, checked: true, reason: l("Send an invoice with each delivery, and print one at the counter.") },
     { key: "holiday-calendars", range: ADD_ONS_RANGE, reason: l("Close the works for public holidays in a tap.") },
   ],
   features: [
     { id: "tracking", label: l("Tracking numbers"), requires: ["shipping-dhl"] },
+    { id: "tracking-labels", label: l("Tracking numbers"), requires: ["shipping-shippo"] },
     { id: "stock", label: l("Stock through Inventory"), requires: ["inventory"] },
     { id: "invoices", label: l("Invoices"), requires: ["invoices"] },
     { id: "holiday-closures", label: l("Public holidays as closures"), requires: ["holiday-calendars"] },

@@ -77,6 +77,13 @@ export const appGrantsSchema = z
     creatable: z.array(refSchema).min(1).max(200).optional(),
     /** Columns no app's grant reaches, whatever else is listed. */
     never: z.array(refSchema).min(1).max(200).optional(),
+    /**
+     * A text column holding the key of the app a row is for (`app`): an
+     * app's role reaches only the rows of its own app, whatever it is given,
+     * and a row it adds is its app's. The add-on's table is shared by every
+     * app it is attached to; without this, an app's role reaches all of them.
+     */
+    appColumn: refSchema.optional(),
   })
   .strict();
 export type AppGrants = z.infer<typeof appGrantsSchema>;
@@ -156,6 +163,14 @@ export function appGrantsIssues(tables: readonly AppGrantTableShape[], ledgers: 
       return;
     }
     if (grants.actions.includes('read_pii') && !grants.actions.includes('read')) out.push({ path: at('actions'), message: '"read_pii" shows the personal columns of what a role reads: allow "read" too' });
+    if (grants.appColumn !== undefined) {
+      const held = table.columns.find((column) => column.ref === grants.appColumn);
+      if (held === undefined) out.push({ path: at('appColumn'), message: `"${table.ref}" has no column "${grants.appColumn}"` });
+      else if (held.type !== 'text') out.push({ path: at('appColumn'), message: `"${table.ref}.${grants.appColumn}" holds an app's key: a text column` });
+      if ((grants.writable ?? []).includes(grants.appColumn) || (grants.creatable ?? []).includes(grants.appColumn)) {
+        out.push({ path: at('appColumn'), message: `"${grants.appColumn}" holds the app a row is for, which Adminium fills: no app's role writes it` });
+      }
+    }
     if (ledgerWrites(ledgers, table.ref)) {
       // The ledger's record: rows may be added and the add-on's own columns changed, never a row removed nor what the posting copied.
       grants.actions.forEach((action, a) => {

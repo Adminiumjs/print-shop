@@ -44,7 +44,7 @@ export const CONTRACT_REGISTRY = [
     version: 1,
     summary:
       'One delivery company: rates, booking, tracking, labels. Implemented so the second one is a copy.',
-    implementations: 1,
+    implementations: 2,
   },
   {
     id: 'product-personalizer',
@@ -149,6 +149,36 @@ export const CONTRACT_REGISTRY = [
     version: 1,
     summary:
       'A card reader at the counter: pair it in two steps, put an amount on it, read where the charge stands (the tip apart), take it off, refund, and read disputes by polling. Answers are data; a charge is never given up blind.',
+    implementations: 2,
+  },
+  {
+    /**
+     * Where companies, and the people at them, are found: a business
+     * register, a company search service, a service that knows a company's
+     * addresses. One package holds several sources (`addOn.sources`) and
+     * provides this once; the engine calls it per source, with that source's
+     * key and a client narrowed to that source's hosts. The engine writes
+     * every row; the source only answers. Its implementer is the Lead finder
+     * add-on, and it is loaded only from a package Adminium can vouch for.
+     */
+    id: 'lead-source',
+    version: 1,
+    summary:
+      'One place that knows companies or the people at them: check the owner\'s key, find companies by activity and place, fill in one company by number or name, pick facts from a page the engine read, find the people at a domain. Answers are data, parsed by the engine; a refusal is never thrown.',
+    implementations: 1,
+  },
+  {
+    /**
+     * One calendar service, for one person's connected account. The engine
+     * runs the sign-in, the tokens, the timers and the push route, and writes
+     * every row; a provider is handed a client that adds the token and only
+     * talks. Its implementers are the Google Calendar and Outlook Calendar
+     * add-ons, loaded only from a package Adminium can vouch for.
+     */
+    id: 'calendar-provider',
+    version: 1,
+    summary:
+      'One calendar service: name the account and its calendars, keep one calendar of events Adminium writes, read when the person is busy (times only, never what an event is called), and watch for changes. Answers are data; a refusal is never thrown.',
     implementations: 2,
   },
 ] as const satisfies readonly ContractDefinition[];

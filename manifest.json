@@ -18,7 +18,7 @@
     "commerce"
   ],
   "compatibility": {
-    "minAdminiumVersion": "0.3.62",
+    "minAdminiumVersion": "0.3.72",
     "engines": [
       "sqlite",
       "postgres",
@@ -147,6 +147,20 @@
         }
       },
       {
+        "key": "shipping-shippo",
+        "range": "^1.0.33",
+        "reason": {
+          "en-US": "Buy shipping labels on your own Shippo account, and keep each tracking number with its order.",
+          "de-DE": "Versandetiketten über Ihr eigenes Shippo-Konto kaufen und jede Sendungsnummer bei der Bestellung behalten.",
+          "fr-FR": "Acheter des étiquettes d’expédition sur votre propre compte Shippo et garder chaque numéro de suivi avec sa commande.",
+          "da-DK": "Køb forsendelsesetiketter på din egen Shippo-konto, og behold hvert sporingsnummer på ordren.",
+          "cs-CZ": "Kupujte přepravní štítky na vlastním účtu Shippo a mějte každé sledovací číslo u zakázky.",
+          "ar-EG": "اشترِ ملصقات الشحن من حسابك الخاص على Shippo، واحتفظ بكل رقم تتبّع مع طلبه.",
+          "zh-CN": "用您自己的 Shippo 账户购买运单，并把每个物流单号保存在订单上。",
+          "zh-TW": "用您自己的 Shippo 帳戶購買運單，並把每個物流單號保存在訂單上。"
+        }
+      },
+      {
         "key": "inventory",
         "range": "^1.0.26",
         "reason": {
@@ -208,6 +222,22 @@
         ]
       },
       {
+        "id": "tracking-labels",
+        "label": {
+          "en-US": "Tracking numbers",
+          "de-DE": "Sendungsnummern",
+          "fr-FR": "Numéros de suivi",
+          "da-DK": "Sporingsnumre",
+          "cs-CZ": "Sledovací čísla",
+          "ar-EG": "أرقام التتبع",
+          "zh-CN": "追踪号",
+          "zh-TW": "追蹤號碼"
+        },
+        "requires": [
+          "shipping-shippo"
+        ]
+      },
+      {
         "id": "stock",
         "label": {
           "en-US": "Stock through Inventory",
@@ -254,6 +284,26 @@
         "requires": [
           "holiday-calendars"
         ]
+      }
+    ]
+  },
+  "shipping": {
+    "orders": [
+      {
+        "table": "orders",
+        "reference": "number",
+        "address": {
+          "name": "name",
+          "lines": [
+            "address_line1",
+            "address_line2"
+          ],
+          "city": "town",
+          "postcode": "postcode",
+          "country": "country"
+        },
+        "tracking": "label_tracking",
+        "carrier": "label_carrier"
       }
     ]
   },
@@ -504,6 +554,25 @@
               "zh-TW": "營業時間"
             },
             "nullable": true
+          },
+          {
+            "ref": "home_country",
+            "type": "text",
+            "maxLength": 2,
+            "label": {
+              "en-US": "Works' country",
+              "de-DE": "Land der Druckerei",
+              "fr-FR": "Pays de l’atelier",
+              "da-DK": "Trykkeriets land",
+              "cs-CZ": "Země tiskárny",
+              "ar-EG": "بلد المطبعة",
+              "zh-CN": "印刷厂所在国家/地区",
+              "zh-TW": "印刷廠所在國家/地區"
+            },
+            "nullable": true,
+            "rules": {
+              "personal": false
+            }
           },
           {
             "ref": "about",
@@ -4079,7 +4148,11 @@
             ],
             "except": [
               "link_stopped",
-              "tracking"
+              "tracking",
+              "carrier",
+              "label_tracking",
+              "label_carrier",
+              "number_told_at"
             ]
           }
         },
@@ -4372,6 +4445,30 @@
                 "in": [
                   "deliver"
                 ]
+              }
+            }
+          },
+          {
+            "ref": "country",
+            "type": "text",
+            "maxLength": 2,
+            "label": {
+              "en-US": "Country",
+              "de-DE": "Land",
+              "fr-FR": "Pays",
+              "da-DK": "Land",
+              "cs-CZ": "Země",
+              "ar-EG": "البلد",
+              "zh-CN": "国家/地区",
+              "zh-TW": "國家/地區"
+            },
+            "nullable": true,
+            "rules": {
+              "default": {
+                "from": {
+                  "table": "settings",
+                  "column": "home_country"
+                }
               }
             }
           },
@@ -6094,6 +6191,69 @@
               "ar-EG": "رقم التتبع",
               "zh-CN": "追踪号",
               "zh-TW": "追蹤號碼"
+            },
+            "nullable": true
+          },
+          {
+            "ref": "carrier",
+            "type": "text",
+            "maxLength": 80,
+            "label": {
+              "en-US": "Carrier",
+              "de-DE": "Versanddienst",
+              "fr-FR": "Transporteur",
+              "da-DK": "Fragtfirma",
+              "cs-CZ": "Dopravce",
+              "ar-EG": "شركة الشحن",
+              "zh-CN": "承运商",
+              "zh-TW": "貨運商"
+            },
+            "nullable": true
+          },
+          {
+            "ref": "label_tracking",
+            "type": "text",
+            "maxLength": 64,
+            "label": {
+              "en-US": "Label's tracking number",
+              "de-DE": "Sendungsnummer auf dem Etikett",
+              "fr-FR": "Numéro de suivi sur l’étiquette",
+              "da-DK": "Sporingsnummer på etiketten",
+              "cs-CZ": "Sledovací číslo na štítku",
+              "ar-EG": "رقم التتبّع على الملصق",
+              "zh-CN": "运单上的物流单号",
+              "zh-TW": "運單上的物流單號"
+            },
+            "nullable": true
+          },
+          {
+            "ref": "label_carrier",
+            "type": "text",
+            "maxLength": 80,
+            "label": {
+              "en-US": "Label's carrier",
+              "de-DE": "Versanddienst auf dem Etikett",
+              "fr-FR": "Transporteur sur l’étiquette",
+              "da-DK": "Fragtfirma på etiketten",
+              "cs-CZ": "Dopravce na štítku",
+              "ar-EG": "شركة الشحن على الملصق",
+              "zh-CN": "运单上的承运商",
+              "zh-TW": "運單上的貨運商"
+            },
+            "nullable": true
+          },
+          {
+            "ref": "number_told_at",
+            "type": "timestamptz",
+            "label": {
+              "en-US": "Told of a new number",
+              "de-DE": "Über neue Nummer informiert",
+              "fr-FR": "Informé du nouveau numéro",
+              "da-DK": "Besked om nyt nummer",
+              "cs-CZ": "Informováno o novém čísle",
+              "ar-EG": "أُبلغ بالرقم الجديد",
+              "zh-CN": "已告知新单号",
+              "zh-TW": "已告知新單號"
             },
             "nullable": true
           },
@@ -17807,6 +17967,7 @@
               "proof-approved",
               "order-ready",
               "order-dispatched",
+              "order-new-number",
               "quote-saved",
               "sample-pack-sent",
               "delivery-quote",
@@ -17878,6 +18039,16 @@
                     "ar-EG": "تم الشحن",
                     "zh-CN": "已发货",
                     "zh-TW": "已出貨"
+                  },
+                  "order-new-number": {
+                    "en-US": "New tracking number",
+                    "de-DE": "Neue Sendungsnummer",
+                    "fr-FR": "Nouveau numéro de suivi",
+                    "da-DK": "Nyt sporingsnummer",
+                    "cs-CZ": "Nové sledovací číslo",
+                    "ar-EG": "رقم تتبّع جديد",
+                    "zh-CN": "新的物流单号",
+                    "zh-TW": "新的物流單號"
                   },
                   "quote-saved": {
                     "en-US": "Quote saved",
@@ -18562,7 +18733,16 @@
                   "column": "handed_over_by"
                 },
                 {
+                  "column": "carrier"
+                },
+                {
                   "column": "tracking"
+                },
+                {
+                  "column": "label_carrier"
+                },
+                {
+                  "column": "label_tracking"
                 },
                 {
                   "column": "cancelled_at",
@@ -20642,6 +20822,9 @@
         "page:@customiser:view",
         "addOn:holiday-calendars:settings",
         "privacy:@:people",
+        "shipping:@:book",
+        "shipping:@:cancel",
+        "shipping:@:customs",
         "payments:@:refund",
         "page:@customiser-line:view",
         "page:@customiser-product:view"
@@ -20690,6 +20873,7 @@
             "address_line2",
             "town",
             "postcode",
+            "country",
             "language",
             "customer_id",
             "delivery_method",
@@ -20698,6 +20882,10 @@
             "delivery_quote",
             "delivery_quote_state",
             "tracking",
+            "carrier",
+            "label_tracking",
+            "label_carrier",
+            "number_told_at",
             "cancel_reason",
             "link_stopped"
           ],
@@ -20709,6 +20897,7 @@
             "address_line2",
             "town",
             "postcode",
+            "country",
             "language",
             "customer_id",
             "delivery_method",
@@ -20717,6 +20906,10 @@
             "delivery_quote",
             "delivery_quote_state",
             "tracking",
+            "carrier",
+            "label_tracking",
+            "label_carrier",
+            "number_told_at",
             "cancel_reason",
             "link_stopped"
           ]
@@ -21567,6 +21760,13 @@
           ]
         },
         {
+          "addOn": "shipping-shippo",
+          "table": "shipments",
+          "actions": [
+            "read"
+          ]
+        },
+        {
           "addOn": "holiday-calendars",
           "table": "holidays",
           "actions": [
@@ -22168,13 +22368,17 @@
         "table:@sample_requests:update",
         "page:@printing-orders:view",
         "page:@printing-jobs:view",
-        "page:@printing-samples:view"
+        "page:@printing-samples:view",
+        "shipping:@:book"
       ],
       "limits": {
         "orders": {
           "writable": [
             "status",
             "tracking",
+            "carrier",
+            "number_told_at",
+            "country",
             "dhl_service",
             "delivery_quote",
             "delivery_quote_state"
@@ -22259,6 +22463,13 @@
           "actions": [
             "read"
           ]
+        },
+        {
+          "addOn": "shipping-shippo",
+          "table": "shipments",
+          "actions": [
+            "read"
+          ]
         }
       ]
     }
@@ -22333,6 +22544,7 @@
         "collected_at",
         "dispatched_at",
         "tracking",
+        "carrier",
         "cancelled_at",
         "link_expires",
         "paid_in",
@@ -22939,6 +23151,7 @@
         "collected_at",
         "dispatched_at",
         "tracking",
+        "carrier",
         "cancelled_at",
         "link_expires",
         "paid_in",
@@ -23462,6 +23675,7 @@
         "collected_at",
         "dispatched_at",
         "tracking",
+        "carrier",
         "cancelled_at",
         "link_expires",
         "paid_in",
@@ -23842,6 +24056,7 @@
       "proof-approved": "printing-proof-approved",
       "order-ready": "printing-order-ready",
       "order-dispatched": "printing-order-dispatched",
+      "order-new-number": "printing-order-new-number",
       "quote-saved": "printing-quote-saved",
       "sample-pack-sent": "printing-sample-pack-sent",
       "delivery-quote": "printing-delivery-quote",
@@ -23857,6 +24072,7 @@
       "proof-approved": "service",
       "order-ready": "service",
       "order-dispatched": "service",
+      "order-new-number": "service",
       "quote-saved": "service",
       "sample-pack-sent": "service",
       "delivery-quote": "service",
@@ -23952,6 +24168,22 @@
           "column": "status",
           "to": "dispatched"
         }
+      },
+      {
+        "kind": "order-new-number",
+        "link": "order_id",
+        "onChange": {
+          "table": "orders",
+          "columns": [
+            "number_told_at"
+          ],
+          "changed": true,
+          "where": {
+            "column": "number_told_at",
+            "isNull": false
+          }
+        },
+        "repeat": true
       },
       {
         "kind": "quote-saved",
@@ -27965,6 +28197,7 @@
       "vars": [
         "appName",
         "manage_url",
+        "order.carrier",
         "order.due.money",
         "order.link_token",
         "order.number",
@@ -28031,8 +28264,17 @@
                 "lines": [
                   {
                     "label": "Sent with",
-                    "amount": "DHL"
-                  },
+                    "amount": "{{order.carrier}}"
+                  }
+                ],
+                "onlyWith": "order.carrier"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "tracking",
+              "data": {
+                "lines": [
                   {
                     "label": "Tracking number",
                     "amount": "{{order.tracking}}"
@@ -28056,15 +28298,6 @@
                   }
                 ],
                 "onlyWithout": "order.tracking"
-              }
-            },
-            {
-              "block": "email.button",
-              "id": "track",
-              "data": {
-                "label": "Track it",
-                "url": "https://www.dhl.com/gb-en/home/tracking/tracking-parcel.html?submit=1&tracking-id={{order.tracking}}",
-                "onlyWith": "order.tracking"
               }
             },
             {
@@ -28170,8 +28403,17 @@
                 "lines": [
                   {
                     "label": "Versand mit",
-                    "amount": "DHL"
-                  },
+                    "amount": "{{order.carrier}}"
+                  }
+                ],
+                "onlyWith": "order.carrier"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "tracking",
+              "data": {
+                "lines": [
                   {
                     "label": "Sendungsnummer",
                     "amount": "{{order.tracking}}"
@@ -28195,15 +28437,6 @@
                   }
                 ],
                 "onlyWithout": "order.tracking"
-              }
-            },
-            {
-              "block": "email.button",
-              "id": "track",
-              "data": {
-                "label": "Sendung verfolgen",
-                "url": "https://www.dhl.com/gb-en/home/tracking/tracking-parcel.html?submit=1&tracking-id={{order.tracking}}",
-                "onlyWith": "order.tracking"
               }
             },
             {
@@ -28309,8 +28542,17 @@
                 "lines": [
                   {
                     "label": "Expédié par",
-                    "amount": "DHL"
-                  },
+                    "amount": "{{order.carrier}}"
+                  }
+                ],
+                "onlyWith": "order.carrier"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "tracking",
+              "data": {
+                "lines": [
                   {
                     "label": "Numéro de suivi",
                     "amount": "{{order.tracking}}"
@@ -28334,15 +28576,6 @@
                   }
                 ],
                 "onlyWithout": "order.tracking"
-              }
-            },
-            {
-              "block": "email.button",
-              "id": "track",
-              "data": {
-                "label": "Suivre le colis",
-                "url": "https://www.dhl.com/gb-en/home/tracking/tracking-parcel.html?submit=1&tracking-id={{order.tracking}}",
-                "onlyWith": "order.tracking"
               }
             },
             {
@@ -28448,8 +28681,17 @@
                 "lines": [
                   {
                     "label": "Sendt med",
-                    "amount": "DHL"
-                  },
+                    "amount": "{{order.carrier}}"
+                  }
+                ],
+                "onlyWith": "order.carrier"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "tracking",
+              "data": {
+                "lines": [
                   {
                     "label": "Sporingsnummer",
                     "amount": "{{order.tracking}}"
@@ -28473,15 +28715,6 @@
                   }
                 ],
                 "onlyWithout": "order.tracking"
-              }
-            },
-            {
-              "block": "email.button",
-              "id": "track",
-              "data": {
-                "label": "Spor pakken",
-                "url": "https://www.dhl.com/gb-en/home/tracking/tracking-parcel.html?submit=1&tracking-id={{order.tracking}}",
-                "onlyWith": "order.tracking"
               }
             },
             {
@@ -28587,8 +28820,17 @@
                 "lines": [
                   {
                     "label": "Odesláno přes",
-                    "amount": "DHL"
-                  },
+                    "amount": "{{order.carrier}}"
+                  }
+                ],
+                "onlyWith": "order.carrier"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "tracking",
+              "data": {
+                "lines": [
                   {
                     "label": "Sledovací číslo",
                     "amount": "{{order.tracking}}"
@@ -28612,15 +28854,6 @@
                   }
                 ],
                 "onlyWithout": "order.tracking"
-              }
-            },
-            {
-              "block": "email.button",
-              "id": "track",
-              "data": {
-                "label": "Sledovat zásilku",
-                "url": "https://www.dhl.com/gb-en/home/tracking/tracking-parcel.html?submit=1&tracking-id={{order.tracking}}",
-                "onlyWith": "order.tracking"
               }
             },
             {
@@ -28726,8 +28959,17 @@
                 "lines": [
                   {
                     "label": "أُرسل عبر",
-                    "amount": "DHL"
-                  },
+                    "amount": "{{order.carrier}}"
+                  }
+                ],
+                "onlyWith": "order.carrier"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "tracking",
+              "data": {
+                "lines": [
                   {
                     "label": "رقم التتبع",
                     "amount": "{{order.tracking}}"
@@ -28751,15 +28993,6 @@
                   }
                 ],
                 "onlyWithout": "order.tracking"
-              }
-            },
-            {
-              "block": "email.button",
-              "id": "track",
-              "data": {
-                "label": "تتبّع الشحنة",
-                "url": "https://www.dhl.com/gb-en/home/tracking/tracking-parcel.html?submit=1&tracking-id={{order.tracking}}",
-                "onlyWith": "order.tracking"
               }
             },
             {
@@ -28865,8 +29098,17 @@
                 "lines": [
                   {
                     "label": "承运方",
-                    "amount": "DHL"
-                  },
+                    "amount": "{{order.carrier}}"
+                  }
+                ],
+                "onlyWith": "order.carrier"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "tracking",
+              "data": {
+                "lines": [
                   {
                     "label": "追踪号",
                     "amount": "{{order.tracking}}"
@@ -28890,15 +29132,6 @@
                   }
                 ],
                 "onlyWithout": "order.tracking"
-              }
-            },
-            {
-              "block": "email.button",
-              "id": "track",
-              "data": {
-                "label": "查看物流",
-                "url": "https://www.dhl.com/gb-en/home/tracking/tracking-parcel.html?submit=1&tracking-id={{order.tracking}}",
-                "onlyWith": "order.tracking"
               }
             },
             {
@@ -29004,8 +29237,17 @@
                 "lines": [
                   {
                     "label": "承運方",
-                    "amount": "DHL"
-                  },
+                    "amount": "{{order.carrier}}"
+                  }
+                ],
+                "onlyWith": "order.carrier"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "tracking",
+              "data": {
+                "lines": [
                   {
                     "label": "追蹤號碼",
                     "amount": "{{order.tracking}}"
@@ -29029,15 +29271,6 @@
                   }
                 ],
                 "onlyWithout": "order.tracking"
-              }
-            },
-            {
-              "block": "email.button",
-              "id": "track",
-              "data": {
-                "label": "查詢貨件",
-                "url": "https://www.dhl.com/gb-en/home/tracking/tracking-parcel.html?submit=1&tracking-id={{order.tracking}}",
-                "onlyWith": "order.tracking"
               }
             },
             {
@@ -29066,6 +29299,617 @@
                   "此按鈕會開啟付款連結。您將在 Stripe 或 PayPal 頁面上付款。"
                 ],
                 "onlyWith": "pay_url"
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "追蹤您的訂單",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "此連結僅供您本人使用，請勿轉寄。",
+                  "或複製此連結： {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\n您收到這封郵件，是因為您下了訂單 {{order.number}}。"
+        }
+      }
+    },
+    {
+      "key": "printing-order-new-number",
+      "name": {
+        "en-US": "New tracking number",
+        "de-DE": "Neue Sendungsnummer",
+        "fr-FR": "Nouveau numéro de suivi",
+        "da-DK": "Nyt sporingsnummer",
+        "cs-CZ": "Nové sledovací číslo",
+        "ar-EG": "رقم تتبّع جديد",
+        "zh-CN": "新的物流单号",
+        "zh-TW": "新的物流單號"
+      },
+      "vars": [
+        "appName",
+        "manage_url",
+        "order.carrier",
+        "order.link_token",
+        "order.number",
+        "order.tracking",
+        "practice.address",
+        "practice.email",
+        "practice.hours",
+        "practice.phone"
+      ],
+      "locales": {
+        "en-US": {
+          "subject": "{{order.number}} has a new tracking number",
+          "preheader": "Use this number to follow your parcel.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "New number"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "Your parcel has a new tracking number"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "carrier",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Sent with",
+                    "amount": "{{order.carrier}}"
+                  }
+                ],
+                "onlyWith": "order.carrier"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "tracking",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Tracking number",
+                    "amount": "{{order.tracking}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body",
+              "data": {
+                "paras": [
+                  "The old number no longer applies."
+                ]
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "Follow your order",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "This link is just for you — don't forward it.",
+                  "Or copy this link: {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nYou're getting this e-mail because of your order {{order.number}}."
+        },
+        "de-DE": {
+          "subject": "{{order.number}} hat eine neue Sendungsnummer",
+          "preheader": "Mit dieser Nummer können Sie Ihr Paket verfolgen.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "Neue Nummer"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "Ihr Paket hat eine neue Sendungsnummer"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "carrier",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Versand mit",
+                    "amount": "{{order.carrier}}"
+                  }
+                ],
+                "onlyWith": "order.carrier"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "tracking",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Sendungsnummer",
+                    "amount": "{{order.tracking}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body",
+              "data": {
+                "paras": [
+                  "Die alte Nummer gilt nicht mehr."
+                ]
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "Ihre Bestellung verfolgen",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "Dieser Link ist nur für Sie — bitte nicht weiterleiten.",
+                  "Oder kopieren Sie diesen Link: {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nSie erhalten diese E-Mail wegen Ihrer Bestellung {{order.number}}."
+        },
+        "fr-FR": {
+          "subject": "{{order.number}} a un nouveau numéro de suivi",
+          "preheader": "Utilisez ce numéro pour suivre votre colis.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "Nouveau numéro"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "Votre colis a un nouveau numéro de suivi"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "carrier",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Expédié par",
+                    "amount": "{{order.carrier}}"
+                  }
+                ],
+                "onlyWith": "order.carrier"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "tracking",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Numéro de suivi",
+                    "amount": "{{order.tracking}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body",
+              "data": {
+                "paras": [
+                  "L’ancien numéro n’est plus valable."
+                ]
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "Suivre votre commande",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "Ce lien est personnel — merci de ne pas le transférer.",
+                  "Ou copiez ce lien : {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nVous recevez cet e-mail au sujet de votre commande {{order.number}}."
+        },
+        "da-DK": {
+          "subject": "{{order.number}} har fået et nyt sporingsnummer",
+          "preheader": "Brug dette nummer til at følge din pakke.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "Nyt nummer"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "Din pakke har fået et nyt sporingsnummer"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "carrier",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Sendt med",
+                    "amount": "{{order.carrier}}"
+                  }
+                ],
+                "onlyWith": "order.carrier"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "tracking",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Sporingsnummer",
+                    "amount": "{{order.tracking}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body",
+              "data": {
+                "paras": [
+                  "Det gamle nummer gælder ikke længere."
+                ]
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "Følg din ordre",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "Linket er kun til dig — send det ikke videre.",
+                  "Eller kopier dette link: {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nDu får denne e-mail på grund af din ordre {{order.number}}."
+        },
+        "cs-CZ": {
+          "subject": "{{order.number}} má nové sledovací číslo",
+          "preheader": "Podle tohoto čísla můžete zásilku sledovat.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "Nové číslo"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "Vaše zásilka má nové sledovací číslo"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "carrier",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Odesláno přes",
+                    "amount": "{{order.carrier}}"
+                  }
+                ],
+                "onlyWith": "order.carrier"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "tracking",
+              "data": {
+                "lines": [
+                  {
+                    "label": "Sledovací číslo",
+                    "amount": "{{order.tracking}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body",
+              "data": {
+                "paras": [
+                  "Staré číslo už neplatí."
+                ]
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "Sledovat zakázku",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "Tento odkaz je určen jen vám — nepřeposílejte ho.",
+                  "Nebo zkopírujte tento odkaz: {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nTento e-mail dostáváte kvůli své objednávce {{order.number}}."
+        },
+        "ar-EG": {
+          "subject": "للطلب {{order.number}} رقم تتبّع جديد",
+          "preheader": "استخدم هذا الرقم لمتابعة طردك.",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "رقم جديد"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "لطردك رقم تتبّع جديد"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "carrier",
+              "data": {
+                "lines": [
+                  {
+                    "label": "أُرسل عبر",
+                    "amount": "{{order.carrier}}"
+                  }
+                ],
+                "onlyWith": "order.carrier"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "tracking",
+              "data": {
+                "lines": [
+                  {
+                    "label": "رقم التتبع",
+                    "amount": "{{order.tracking}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body",
+              "data": {
+                "paras": [
+                  "لم يعد الرقم القديم صالحًا."
+                ]
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "تتبّع طلبك",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "هذا الرابط لك وحدك — لا تُعِد توجيهه.",
+                  "أو انسخ هذا الرابط: {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\nتصلك هذه الرسالة بسبب طلبك {{order.number}}."
+        },
+        "zh-CN": {
+          "subject": "{{order.number}} 有新的物流单号",
+          "preheader": "请用此单号查看包裹。",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "新单号"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "您的包裹有新的物流单号"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "carrier",
+              "data": {
+                "lines": [
+                  {
+                    "label": "承运方",
+                    "amount": "{{order.carrier}}"
+                  }
+                ],
+                "onlyWith": "order.carrier"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "tracking",
+              "data": {
+                "lines": [
+                  {
+                    "label": "追踪号",
+                    "amount": "{{order.tracking}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body",
+              "data": {
+                "paras": [
+                  "旧单号已不再有效。"
+                ]
+              }
+            },
+            {
+              "block": "email.button",
+              "id": "follow",
+              "data": {
+                "label": "跟踪您的订单",
+                "url": "{{manage_url}}#{{order.link_token}}"
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "own",
+              "data": {
+                "paras": [
+                  "此链接仅供您本人使用，请勿转发。",
+                  "或复制此链接： {{manage_url}}#{{order.link_token}}"
+                ]
+              }
+            }
+          ],
+          "footer": "{{appName}} · {{practice.address}}\n{{practice.phone}} · {{practice.email}}\n{{practice.hours}}\n您收到这封邮件，是因为您下了订单 {{order.number}}。"
+        },
+        "zh-TW": {
+          "subject": "{{order.number}} 有新的物流單號",
+          "preheader": "請用此單號查看包裹。",
+          "blocks": [
+            {
+              "block": "email.legal",
+              "id": "eyebrow",
+              "data": {
+                "text": "新單號"
+              }
+            },
+            {
+              "block": "email.heading",
+              "id": "heading",
+              "data": {
+                "text": "您的包裹有新的物流單號"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "carrier",
+              "data": {
+                "lines": [
+                  {
+                    "label": "承運方",
+                    "amount": "{{order.carrier}}"
+                  }
+                ],
+                "onlyWith": "order.carrier"
+              }
+            },
+            {
+              "block": "email.tax-breakdown",
+              "id": "tracking",
+              "data": {
+                "lines": [
+                  {
+                    "label": "追蹤號碼",
+                    "amount": "{{order.tracking}}"
+                  }
+                ]
+              }
+            },
+            {
+              "block": "email.text",
+              "id": "body",
+              "data": {
+                "paras": [
+                  "舊單號已不再有效。"
+                ]
               }
             },
             {

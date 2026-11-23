@@ -538,9 +538,13 @@ export function belongsIssues<C extends ColumnShape>(tables: readonly BelongsTab
     const found = index.column(table, via);
     return found?.type === 'fk' ? found.references : undefined;
   };
+  // A calendar's busy times, kept by Adminium for a booking rule: their rows are nobody's to read, so they name no one.
+  const keptBusy = new Set(
+    tables.flatMap((table) => ((table as { booking?: { busy?: readonly { table: string; engine?: unknown }[] } }).booking?.busy ?? []).filter((source) => source.engine !== undefined).map((source) => source.table)),
+  );
   tables.forEach((table, t) => {
     const here = ['requiredSchema', 'tables', t];
-    if (table.private === true && table.belongs === undefined) out.push({ path: [...here, 'private'], message: 'a private table says whose its rows are: give it "belongs"' });
+    if (table.private === true && table.belongs === undefined && !keptBusy.has(table.ref)) out.push({ path: [...here, 'private'], message: 'a private table says whose its rows are: give it "belongs"' });
     (table.belongs ?? []).forEach((way, w) => {
       const at = [...here, 'belongs', w];
       if ('column' in way) {

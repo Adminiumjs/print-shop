@@ -707,6 +707,8 @@ export const TABLES: Table[] = [
       text("phone", 32, "Phone", { ...opt, rules: { personal: false, validation: { format: "phone" } } }),
       text("email", 254, "Works e-mail", { ...opt, rules: { personal: false, validation: { format: "email" } } }),
       text("hours", 80, "Opening hours", opt),
+      // The country the works delivers inside, as a two-letter code: what a new order's country starts as. Never guessed.
+      text("home_country", 2, "Works' country", { ...opt, rules: { personal: false } }),
       text("about", 400, "About the works", opt),
       // The order and quote numbers: their prefixes and the first number of each series.
       text("ref_prefix", 8, "Order number prefix", { default: "MP-" }),
@@ -1001,7 +1003,7 @@ export const TABLES: Table[] = [
         placed: [{ to: "ready", requires: { where: [{ column: "jobs_on_floor", eq: 0 }] } }, "cancelled"],
         ready: ["collected", "dispatched", "placed"],
       },
-      lock: { when: ["collected", "dispatched", "cancelled"], except: ["link_stopped", "tracking"] },
+      lock: { when: ["collected", "dispatched", "cancelled"], except: ["link_stopped", "tracking", "carrier", "label_tracking", "label_carrier", "number_told_at"] },
     },
     columns: [
       id,
@@ -1020,6 +1022,8 @@ export const TABLES: Table[] = [
       text("address_line2", 120, "Address, second line", opt),
       text("town", 80, "Town", { ...opt, rules: { requiredWhen: { column: "delivery_method", in: ["deliver"] } } }),
       text("postcode", 16, "Postcode", { ...opt, rules: { requiredWhen: { column: "delivery_method", in: ["deliver"] } } }),
+      // A two-letter code, from the works' own country when the order is made; an older order has none until the works says.
+      text("country", 2, "Country", { ...opt, rules: { default: { from: setting("home_country") } } }),
       language("language"),
       fk("customer_id", "customers", "Customer", opt),
       ...basketMoney("jobs", "order_id", DELIVERY, "cancelled_at"),
@@ -1069,8 +1073,14 @@ export const TABLES: Table[] = [
       at("collected_at", "Collected", { ...opt, rules: stamp("now", onState("status", "collected")) }),
       at("dispatched_at", "Dispatched", { ...opt, rules: stamp("now", onState("status", "dispatched")) }),
       text("handed_over_by", 80, "Handed over by", { ...opt, rules: stamp("user-name", onState("status", "collected", "dispatched")) }),
-      // A tracking number comes only through DHL.
+      // What the customer was told, written when the order is handed over: their page and e-mails read these two.
       text("tracking", 64, "Tracking number", opt),
+      text("carrier", 80, "Carrier", opt),
+      // What a bought label says, written by Adminium: the works' own until the order is handed over.
+      text("label_tracking", 64, "Label's tracking number", opt),
+      text("label_carrier", 80, "Label's carrier", opt),
+      // Staff told the customer of a parcel's new number: stamping it sends the short e-mail.
+      at("number_told_at", "Told of a new number", opt),
       at("cancelled_at", "Cancelled", { ...opt, rules: stamp("now", onState("status", "cancelled")) }),
       text("cancel_reason", 160, "Why it was cancelled", opt),
       // The order's own link, e-mailed to the customer: no staff screen reads or copies it.

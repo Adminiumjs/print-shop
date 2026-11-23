@@ -70,7 +70,6 @@ export type EmailWords = Record<Kind, Words> & {
   open: string;
   /** On its way: who carries it, its tracking number, its weight. */
   sentWith: string;
-  dhl: string;
   ourCourier: string;
   tracking: string;
   trackIt: string;
@@ -121,7 +120,6 @@ export const EMAIL_EN: EmailWords = {
   where: "Where",
   open: "Open",
   sentWith: "Sent with",
-  dhl: "DHL",
   ourCourier: "Our courier",
   tracking: "Tracking number",
   trackIt: "Track it",
@@ -187,6 +185,15 @@ export const EMAIL_EN: EmailWords = {
     eyebrow: "On its way",
     heading: "Your order is on its way",
     paras: ["The invoice comes with your delivery."],
+    button: "Follow your order",
+  },
+  "order-new-number": {
+    name: "New tracking number",
+    subject: "{{order.number}} has a new tracking number",
+    preheader: "Use this number to follow your parcel.",
+    eyebrow: "New number",
+    heading: "Your parcel has a new tracking number",
+    paras: ["The old number no longer applies."],
     button: "Follow your order",
   },
   "quote-saved": {
@@ -280,8 +287,6 @@ const button = (id: string, label: string, url: string, extra: Record<string, un
 const ORDER_URL = "{{manage_url}}#{{order.link_token}}";
 /** The saved quote's own page, opened by its link code. */
 const QUOTE_URL = "{{booking_url}}#{{quote.link_token}}";
-/** DHL's own tracking page for the order's tracking number. */
-const TRACK_URL = "https://www.dhl.com/gb-en/home/tracking/tracking-parcel.html?submit=1&tracking-id={{order.tracking}}";
 
 /**
  * A job as one line: how many of which product, its size and stock and
@@ -449,14 +454,8 @@ function body(kind: Kind, w: EmailWords): Block[] {
       return [
         ...head,
         jobs(false),
-        facts(
-          "carrier",
-          [
-            [w.sentWith, w.dhl],
-            [w.tracking, "{{order.tracking}}"],
-          ],
-          { onlyWith: "order.tracking" },
-        ),
+        facts("carrier", [[w.sentWith, "{{order.carrier}}"]], { onlyWith: "order.carrier" }),
+        facts("tracking", [[w.tracking, "{{order.tracking}}"]], { onlyWith: "order.tracking" }),
         facts(
           "courier",
           [
@@ -465,10 +464,17 @@ function body(kind: Kind, w: EmailWords): Block[] {
           ],
           { onlyWithout: "order.tracking" },
         ),
-        button("track", w.trackIt, TRACK_URL, { onlyWith: "order.tracking" }),
         ...paras,
         // Delivered with its invoice, and payable online until it is paid.
         ...pay(w),
+        ...follow(own.button!),
+      ];
+    case "order-new-number":
+      return [
+        ...head,
+        facts("carrier", [[w.sentWith, "{{order.carrier}}"]], { onlyWith: "order.carrier" }),
+        facts("tracking", [[w.tracking, "{{order.tracking}}"]]),
+        ...paras,
         ...follow(own.button!),
       ];
     case "quote-saved":

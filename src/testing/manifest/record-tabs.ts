@@ -45,6 +45,24 @@ const pickSchema = z.object({ table: ref, label: ref }).strict();
 /** A button in the tab's head that makes a row of another own table for the same record ("Use stock"). */
 const tabActionSchema = z.object({ id: kebab, label: i18nMessageSchema, labels: wordsByLanguageSchema.optional(), child: z.object({ table: ref, form: z.array(ref).min(1).max(RECORD_TAB_COLUMNS_MAX) }).strict() }).strict();
 
+/**
+ * A date column the tab says only "yes" or "no" of: whether it holds a date,
+ * in the add-on's words, never the date. For a column whose value means
+ * something only as being there. The server does not send the date to the tab.
+ */
+const presenceSchema = z
+  .object({
+    column: ref,
+    yes: i18nMessageSchema,
+    yesLabels: wordsByLanguageSchema.optional(),
+    no: i18nMessageSchema,
+    noLabels: wordsByLanguageSchema.optional(),
+  })
+  .strict();
+
+/** The column types a tab can say "there or not" of. */
+const PRESENCE_TYPES: readonly string[] = ['date', 'timestamptz'];
+
 export const recordTabSchema = z
   .object({
     id: kebab,
@@ -61,6 +79,8 @@ export const recordTabSchema = z
      */
     on: z.union([z.literal('linked'), z.array(z.string().min(1).max(128)).min(1).max(24)]),
     columns: z.array(ref).min(1).max(RECORD_TAB_COLUMNS_MAX),
+    /** Date columns among `columns` shown only as there or not (from Adminium 0.3.71). */
+    presence: z.array(presenceSchema).min(1).max(RECORD_TAB_COLUMNS_MAX).optional(),
     /** The columns a reader who may change the rows edits in place. */
     edit: z.array(ref).min(1).max(RECORD_TAB_COLUMNS_MAX).optional(),
     /** A row is added by picking a row of another own table (an item, or an item or a kit). */
@@ -136,6 +156,19 @@ export function recordTabIssues(m: { tabs: readonly RecordTab[]; tables: readonl
     tab.columns.forEach((name, c) => {
       if (column(table, name) === undefined) out.push({ path: at('columns', c), message: `"${tab.table}" has no column "${name}"` });
     });
+    const present = new Set<string>();
+    (tab.presence ?? []).forEach((one, p) => {
+      const path = at('presence', p, 'column');
+      const found = column(table, one.column);
+      if (present.has(one.column)) out.push({ path, message: `"${one.column}" is named twice` });
+      present.add(one.column);
+      if (!shown.has(one.column)) out.push({ path, message: `"${one.column}" is shown as there or not: list it in "columns" too` });
+      else if (found !== undefined && !PRESENCE_TYPES.includes(found.type)) out.push({ path, message: `"${tab.table}.${one.column}" is a ${found.type}: only a date or time column is shown as there or not` });
+    });
+    // A write's reply carries the row, date and all, and a form would ask for the date: such a tab only lists.
+    if (tab.presence !== undefined && (tab.edit !== undefined || tab.form !== undefined || tab.add !== undefined || tab.remove !== undefined || tab.actions !== undefined)) {
+      out.push({ path: at('presence'), message: 'a tab that shows a date as there or not only lists rows: it has no edit, form, add, remove or actions' });
+    }
     (tab.edit ?? []).forEach((name, e) => {
       if (!shown.has(name)) out.push({ path: at('edit', e), message: `"${name}" is edited where it is shown: list it in "columns" too` });
       else if (matched.has(name)) out.push({ path: at('edit', e), message: `"${name}" says which record the row belongs to: nobody edits it` });

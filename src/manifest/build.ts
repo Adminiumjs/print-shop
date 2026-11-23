@@ -57,9 +57,27 @@ export const VERSION = "0.2.5";
  * finished, or the pay page's time run out). 0.3.62 sends an e-mail only
  * while the works takes payments online, or only while it does not
  * (`producers[].payments`), and tells the job ticket who gave money back and
- * why.
+ * why. 0.3.72 reads `shipping` below, so a real carrier can be asked about an
+ * order, and a role's `shipping:@:*` rights on its labels.
  */
-export const MIN_ADMINIUM = "0.3.62";
+export const MIN_ADMINIUM = "0.3.72";
+
+/**
+ * Where a carrier reads an order. The number and carrier of a bought label go
+ * to the works' own two columns: `tracking` and `carrier` are what the customer
+ * was told, written only when the order is handed over.
+ */
+export const SHIPPING = {
+  orders: [
+    {
+      table: "orders",
+      reference: "number",
+      address: { name: "name", lines: ["address_line1", "address_line2"], city: "town", postcode: "postcode", country: "country" },
+      tracking: "label_tracking",
+      carrier: "label_carrier",
+    },
+  ],
+};
 
 /**
  * The release that reads two more things this app says: a role's grant of
@@ -137,6 +155,7 @@ export function buildManifest(options: { floor?: string } = {}): Record<string, 
     ],
     settings: SETTINGS,
     addOns: ADD_ONS,
+    shipping: SHIPPING,
     documents: DOCUMENTS,
     navGroups: NAV_GROUPS,
     requiredSchema: { prefixed: true, tables: TABLES },

@@ -237,6 +237,16 @@ export function withoutModules<T>(manifest: T, gone: readonly string[]): T {
     if (kept.length === 0) delete out['navLinks'];
     else out['navLinks'] = kept;
   }
+  // A website's screen keeps its place; only the choice read from a table or link column that is not made goes.
+  for (const frontend of list(out['frontends'])) {
+    if (!isDoc(frontend) || !isDoc(frontend['embed'])) continue;
+    for (const screen of list(frontend['embed']['paths'])) {
+      if (!isDoc(screen) || !isDoc(screen['choose'])) continue;
+      const { table, value, label } = screen['choose'];
+      const lost = lostColumns.get(String(table));
+      if (goneTables.has(String(table)) || lost?.has(String(value)) === true || lost?.has(String(label)) === true) delete screen['choose'];
+    }
+  }
   for (const frontend of list(out['frontends'])) {
     if (!isDoc(frontend) || !isDoc(frontend['records'])) continue;
     for (const ref of Object.keys(frontend['records'])) if (goneTables.has(ref)) delete frontend['records'][ref];

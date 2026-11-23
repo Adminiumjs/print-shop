@@ -67,11 +67,15 @@ export const INSTANCE_SYSTEM_EMAIL_KEYS = [
   'booking-confirmation',
   'sign-in-code',
   'email-changed',
+  'email-change-confirm',
   'sign-in-link',
   'details-deleted',
   'payment-link',
   'payment-receipt',
   'sign-up-confirm',
+  'chat-reply',
+  'connect-link',
+  'account-connected',
 ] as const;
 
 /**

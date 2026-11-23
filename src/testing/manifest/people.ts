@@ -63,7 +63,10 @@
  *    as existing customers. `{column, carryFrom: {table, column}}` also names
  *    the mark of the row a person is made from (a claimed enquiry's), copied
  *    in the save that makes them;
- *  - `carry`: what an app update carries over once (see `carrySchema`).
+ *  - `carry`: what an app update carries over once (see `carrySchema`);
+ *  - `lead` (a `companies` entry only): where a found company's details go —
+ *    its number, website, phone, address, activity, about, and the staff
+ *    member who owns it — each a column of the table (see `leadSchema`).
  *
  * The consent column is not the outbox's `recipient.optIn`: that is a switch
  * for service mail (a reminder), and the two may differ.
@@ -110,6 +113,12 @@ export const publicConsentSchema = z
   .object({
     column: refSchema,
     purpose: z.enum(CONSENT_PURPOSES),
+    /**
+     * What a ticked box says. `yes` (the default): "Email me about new shows". `no`: "Don't send me a review
+     * request", which records the person's "no" for the purpose. A no is safe to take from a stranger, where a
+     * yes is not: it can only stop mail, and the person may switch it back on where they are signed in.
+     */
+    means: z.enum(['yes', 'no']).optional(),
     wording: z
       .object({
         version: z.number().int().min(1).max(9999),
@@ -154,6 +163,46 @@ const carrySchema = z.union([
   z.object({ consent: z.object({ from: refSchema, via: refSchema, column: refSchema, latest: refSchema }).strict() }).strict(),
 ]);
 export type PeopleCarry = z.infer<typeof carrySchema>;
+
+/**
+ * Where a company's details go, on a `companies` entry: the columns a found
+ * company is added with, or a company is filled in with. Every key is
+ * optional; each names a text column with a width (a value is cut to it),
+ * `country` one exactly 2 wide (ISO 3166-1 alpha-2 only), and `owner` a
+ * column that holds a staff member (`rules.staff`), set to whoever adds it.
+ */
+export const leadSchema = z
+  .object({
+    number: refSchema.optional(),
+    website: refSchema.optional(),
+    phone: refSchema.optional(),
+    address: z
+      .object({
+        lines: refSchema.optional(),
+        town: refSchema.optional(),
+        region: refSchema.optional(),
+        postalCode: refSchema.optional(),
+        country: refSchema.optional(),
+      })
+      .strict()
+      .optional(),
+    activity: refSchema.optional(),
+    about: refSchema.optional(),
+    owner: refSchema.optional(),
+  })
+  .strict();
+export type PeopleLead = z.infer<typeof leadSchema>;
+
+/** The text columns a lead names, each with where it is written in the entry. */
+export function leadTextColumns(lead: PeopleLead): { column: string; path: string[] }[] {
+  const out: { column: string; path: string[] }[] = [];
+  for (const key of ['number', 'website', 'phone', 'activity', 'about'] as const) if (lead[key] !== undefined) out.push({ column: lead[key], path: [key] });
+  for (const key of ['lines', 'town', 'region', 'postalCode', 'country'] as const) {
+    const column = lead.address?.[key];
+    if (column !== undefined) out.push({ column, path: ['address', key] });
+  }
+  return out;
+}
 
 /** An app's link column, as `table.column`. */
 export const LINK_PATH = /^([a-z][a-z0-9_]*)\.([a-z][a-z0-9_]*)$/;
@@ -210,9 +259,11 @@ export const peopleEntrySchema = z
     customer: refSchema.optional(),
     optOutMark: z.union([refSchema, optOutMarkSchema]).optional(),
     carry: z.array(carrySchema).min(1).max(PEOPLE_CARRY_MAX).optional(),
+    lead: leadSchema.optional(),
   })
   .strict()
-  .refine((entry) => entry.kind !== 'people' || entry.email !== undefined, { message: 'a people table names the column that holds the address ("email")', path: ['email'] });
+  .refine((entry) => entry.kind !== 'people' || entry.email !== undefined, { message: 'a people table names the column that holds the address ("email")', path: ['email'] })
+  .refine((entry) => entry.kind === 'companies' || entry.lead === undefined, { message: 'a company\'s details ("lead") are said on a companies entry, not on a table of people', path: ['lead'] });
 export type PeopleEntry = z.infer<typeof peopleEntrySchema>;
 
 /** The opt-out mark's column, however the entry writes it. */
@@ -232,7 +283,8 @@ interface PeopleColumn {
   ref: string;
   type: string;
   references?: string | undefined;
-  rules?: { stamp?: { strict?: true | undefined } | undefined; addOnLink?: { addOn: string; table: string } | undefined } | undefined;
+  maxLength?: number | undefined;
+  rules?: { stamp?: { strict?: true | undefined } | undefined; addOnLink?: { addOn: string; table: string } | undefined; staff?: true | undefined } | undefined;
 }
 
 const NUMBERS = ['int', 'bigint', 'decimal', 'money', 'float'];
@@ -385,6 +437,34 @@ export function peopleIssues<C extends PeopleColumn>(
       }
     });
 
+    // A company's details: text with a width each (a found value is cut to it), a country of exactly 2, an owner who is staff.
+    if (entry.lead !== undefined) {
+      const mapped = new Map<string, string>();
+      const once = (column: string, path: (string | number)[], what: string) => {
+        const other = mapped.get(column);
+        if (other !== undefined) out.push({ path, message: `"${entry.table}.${column}" holds the ${other} already: each detail goes in a column of its own` });
+        mapped.set(column, what);
+      };
+      for (const { column, path } of leadTextColumns(entry.lead)) {
+        const here = at('lead', ...path);
+        const what = path.join('.');
+        once(column, here, what);
+        const found = col(entry.table, column, ['text'], here, 'a text column');
+        if (found === undefined || found.type !== 'text') continue;
+        if (what === 'address.country') {
+          if (found.maxLength !== 2) out.push({ path: here, message: `"${entry.table}.${column}" holds a country as its two-letter code (ISO 3166-1 alpha-2): make it exactly 2 wide (maxLength 2)` });
+        } else if (found.maxLength === undefined) {
+          out.push({ path: here, message: `"${entry.table}.${column}" takes what a source found, cut to its width: give it a maxLength` });
+        }
+      }
+      if (entry.lead.owner !== undefined) {
+        const here = at('lead', 'owner');
+        once(entry.lead.owner, here, 'owner');
+        const owner = col(entry.table, entry.lead.owner, ['text'], here, 'a column that holds a staff member');
+        if (owner?.type === 'text' && owner.rules?.staff !== true) out.push({ path: here, message: `"${entry.table}.${entry.lead.owner}" is set to the staff member who adds a company: make it a column that holds a staff member (rules.staff)` });
+      }
+    }
+
     // The same table's address, said three times, is one address.
     const recipient = m.outbox?.recipient;
     if (recipient !== undefined && recipient.table === entry.table && entry.email !== recipient.email) {
@@ -424,6 +504,10 @@ export function publicConsentIssues<C extends PeopleColumn>(
     else if (column.type !== 'bool') out.push({ path: at('column'), message: `"${entry.table}.${consent.column}" is not a bool (a tick)` });
     else if (!(entry.writable ?? []).includes(consent.column)) out.push({ path: at('column'), message: `"${entry.table}.${consent.column}" is not writable through this entry, so no tick reaches it` });
     const person = entry.identity?.table ?? entry.claimedBy?.table ?? entry.table;
+    // A box that says no is not the yes column that mirrors the purpose: ticked, that column would read yes.
+    if (consent.means === 'no' && entry.table === person && (m.people ?? []).some((declared) => declared.table === person && declared.consent?.column === consent.column)) {
+      out.push({ path: at('column'), message: `"${entry.table}.${consent.column}" says yes to "${consent.purpose}" for this person, so it cannot also be a box that says no: give the box a column of its own` });
+    }
     if (!(m.people ?? []).some((declared) => declared.table === person && declared.kind === 'people')) {
       out.push({ path: at(), message: `a tick is kept for a person: "${person}" is not one of the app's people tables (people), and the entry finds no other (identity, claimedBy)` });
     }

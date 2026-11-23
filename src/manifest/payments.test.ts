@@ -119,8 +119,10 @@ describe("an order paid online", () => {
     expect(column("payments", "card_last4")).toMatchObject({ type: "text", maxLength: 4 });
   });
 
-  it("ships at 0.3.62, whose e-mails follow payments, and an older Adminium refuses it", () => {
-    const at = (floor: string) => validateManifest({ ...manifest, compatibility: { ...(manifest["compatibility"] as Json), minAdminiumVersion: floor } });
+  it("reads at 0.3.62 once shipping is left out, whose e-mails follow payments, and an older Adminium refuses it", () => {
+    const { shipping: _shipping, ...before } = manifest as Json;
+    const unrighted = (before["roles"] as { permissions: string[] }[]).map((r) => ({ ...r, permissions: r.permissions.filter((p) => !p.startsWith("shipping:@:")) }));
+    const at = (floor: string) => validateManifest({ ...before, roles: unrighted, compatibility: { ...(before["compatibility"] as Json), minAdminiumVersion: floor } });
     expect(at("0.3.62").ok).toBe(true);
     expect(at("0.3.61").ok).toBe(false);
     expect(at("0.3.59").ok).toBe(false);

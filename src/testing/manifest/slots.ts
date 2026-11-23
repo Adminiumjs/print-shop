@@ -228,16 +228,15 @@ export const SLOT_REGISTRY = [
      * and who is reading changes what the HOST mounts, not what the slot is.
      * `nav.add-on.routes` is `both` for the same reason.
      *
-     * ── THE ONE THING A READER SHOULD HOLD AGAINST IT ───────────────────────
+     * ── ITS FILLS, AND THE ONE HOST ADMINIUM IS ───────────────────────────
      *
-     * It ships in wave 6 with NO FILL. Its first consumer is `docs-paperwork`,
-     * which is wave 5 and unbuilt, and the wave-6 add-on that could have
-     * filled it honestly turned out not to need it: `holiday-calendars`'
-     * working-day counts are derived live from the merged calendar, so a
-     * "recompute this request" action would have been an invented reason to
-     * touch the slot rather than a thing an operator wants. Inventing one to
-     * make this entry look filled is precisely the dishonesty the registry is
-     * closed to prevent, so it is not filled, and this comment says so.
+     * It shipped with no fill; add-ons fill it for apps' own screens since
+     * (a document for the record, a prepaid return label). Adminium's own
+     * generated record page mounts it too, for a fill that names the kind of
+     * declared table it acts on (`on`, `record-actions.ts`): a button in the
+     * fill's words beside "Edit", on a table an app declares as that kind,
+     * opening the fill in a side sheet. A fill that names no kind is for
+     * apps' screens alone and is never drawn there.
      */
     id: 'record.actions',
     surface: 'both',

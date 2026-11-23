@@ -446,6 +446,21 @@ export const outboxSchema = z
      */
     surveyLinks: z.array(z.string().min(1).max(40)).min(1).max(8).optional(),
     /**
+     * The kinds whose template may print `{{reviewLink}}`: a link that reviews
+     * one row and does nothing else, made when the mail goes, for the address
+     * that row's person holds. `link` is the outbox link naming the reviewed
+     * row, and `page` the path of the app's customer side that opens it (the
+     * token rides in the fragment). From Adminium 0.3.71.
+     */
+    reviewLinks: z
+      .object({
+        kinds: z.array(z.string().min(1).max(40)).min(1).max(8),
+        link: z.string().min(1).max(40),
+        page: z.string().max(200).regex(/^\/(?:[A-Za-z0-9._~-]+\/?)*$/, 'a path on the app\'s customer side, such as "/review": no query, no fragment'),
+      })
+      .strict()
+      .optional(),
+    /**
      * At most {@link OUTBOX_PRODUCERS_MAX}, as many as an app has templates:
      * a sanity bound, not a cost — each producer is one more check on a
      * write of its table and, for a reminder, one bounded query a minute.
@@ -557,6 +572,13 @@ export const emailTemplateSchema = z
       })
       .strict()
       .optional(),
+    /**
+     * The calendar entry the email carries: of the booking an outbox link
+     * names (its table has `table.booking.calendar`). An invitation while the
+     * booking still takes its time, a cancellation once it does not. From
+     * Adminium 0.3.71.
+     */
+    calendar: z.object({ link: z.string().min(1).max(40) }).strict().optional(),
     /** A `template` an outbox or a rule sends (the default), or a `campaign` the owner sends to an audience. */
     kind: z.enum(['template', 'campaign']).optional(),
     /** What the mail is for: `transactional` (the default), `lifecycle` or `marketing`. */
@@ -658,6 +680,13 @@ export function outboxIssues(
   (m.emailTemplates ?? []).forEach((template, i) => {
     if (template.attach !== undefined && m.outbox?.links?.[template.attach.link] === undefined) {
       out.push({ path: ['emailTemplates', i, 'attach', 'link'], message: `"${template.attach.link}" is not one of the outbox's links` });
+    }
+    if (template.calendar !== undefined) {
+      const column = m.outbox?.links?.[template.calendar.link];
+      const target = column === undefined || m.outbox === undefined ? undefined : index.column(m.outbox.table, column)?.references;
+      const booked = (m as { requiredSchema?: { tables?: readonly { ref: string; booking?: { calendar?: unknown } }[] } }).requiredSchema?.tables?.find((table) => table.ref === target)?.booking?.calendar;
+      if (column === undefined) out.push({ path: ['emailTemplates', i, 'calendar', 'link'], message: `"${template.calendar.link}" is not one of the outbox's links` });
+      else if (booked === undefined) out.push({ path: ['emailTemplates', i, 'calendar', 'link'], message: `"${template.calendar.link}" does not name a booking with a calendar word (table.booking.calendar)` });
     }
     // A block sent only with the document: marked `true`, and only where the document may be left out.
     for (const [locale, content] of Object.entries(template.locales)) {
@@ -891,6 +920,7 @@ export function outboxIssues(
     if (box.kinds[value] === undefined) out.push({ path: at('purposes', value), message: `"${value}" is not one of the outbox's kinds` });
   }
   out.push(...surveyLinkIssues(m, box, at));
+  out.push(...reviewLinkIssues(m, box, index, at));
 
   const unlisted = (table: string, column: string) => unlistedColumn(m, table, column);
   (box.producers ?? []).forEach((producer, p) => {
@@ -1515,6 +1545,35 @@ export function rowFormsOf(column: Parameters<typeof clockShaped>[0] & { rules?:
 
 /** The name a template prints a survey's link under (`outbox.surveyLinks`). */
 export const SURVEY_LINK_VARIABLE = 'survey_link';
+
+/** The name a template prints a review's link under (`outbox.reviewLinks`). */
+export const REVIEW_LINK_VARIABLE = 'reviewLink';
+
+/** The name a template prints the stop link of a service mail sent for a consent purpose under (`outbox.purposes`). */
+export const STOP_LINK_VARIABLE = 'stopLink';
+
+/** A review's link is sent for one reviewed row: its link names a table with the `review` word, and each kind is the outbox's. */
+function reviewLinkIssues(m: { kind?: string | undefined }, box: Outbox, index: TableIndex, at: (...rest: (string | number)[]) => (string | number)[]): ReferenceIssue[] {
+  const out: ReferenceIssue[] = [];
+  const block = box.reviewLinks;
+  if (block === undefined) return out;
+  if (m.kind === 'add-on') out.push({ path: at('reviewLinks'), message: "a review's link is an app's: an add-on's own tables carry no review word" });
+  const seen = new Set<string>();
+  block.kinds.forEach((kind, k) => {
+    if (seen.has(kind)) out.push({ path: at('reviewLinks', 'kinds', k), message: `"${kind}" is named twice` });
+    seen.add(kind);
+    if (box.kinds[kind] === undefined) out.push({ path: at('reviewLinks', 'kinds', k), message: `"${kind}" is not one of the outbox's kinds` });
+  });
+  const column = box.links?.[block.link];
+  if (column === undefined) {
+    out.push({ path: at('reviewLinks', 'link'), message: `"${block.link}" is not one of the outbox's links` });
+    return out;
+  }
+  const target = index.column(box.table, column)?.references;
+  const reviewed = (m as { requiredSchema?: { tables?: readonly { ref: string; review?: unknown }[] } }).requiredSchema?.tables?.find((table) => table.ref === target)?.review;
+  if (reviewed === undefined) out.push({ path: at('reviewLinks', 'link'), message: `"${block.link}" does not name a table whose rows are reviewed (the table's review word)` });
+  return out;
+}
 
 /**
  * A survey's link is sent only to the invitation it was made for: the kinds

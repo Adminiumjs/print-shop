@@ -11,6 +11,7 @@
           "@label": "settings",
           "works_name": "Marlow Press",
           "address": "3 Market Square, Marlow SL7 1AA",
+          "home_country": "GB",
           "phone": "01628 482 190",
           "email": "hello@marlowpress.example",
           "hours": "Mon–Fri, 8:00–17:00",
@@ -764,6 +765,7 @@
           "address_line1": "12 Quay Street",
           "town": "Marlow",
           "postcode": "SL7 1BT",
+          "country": "GB",
           "language": "en-US",
           "customer_id": {
             "@ref": "customer:harbourbakery"
@@ -787,6 +789,7 @@
           "address_line1": "4 West Street",
           "town": "Marlow",
           "postcode": "SL7 9ZZ",
+          "country": "GB",
           "language": "en-US",
           "customer_id": {
             "@ref": "customer:fenwickandsons"
@@ -810,6 +813,7 @@
           "address_line1": "The Old Chapel, Dean Street",
           "town": "Marlow",
           "postcode": "SL7 9ZZ",
+          "country": "GB",
           "language": "en-US",
           "customer_id": {
             "@ref": "customer:brambleyoga"
@@ -833,6 +837,7 @@
           "address_line1": "8 Station Road",
           "town": "Bourne End",
           "postcode": "SL8 9ZZ",
+          "country": "GB",
           "language": "en-US",
           "customer_id": {
             "@ref": "customer:tworiverscycles"
@@ -856,6 +861,7 @@
           "address_line1": "21 Spittal Street",
           "town": "Marlow",
           "postcode": "SL7 9ZZ",
+          "country": "GB",
           "language": "en-US",
           "customer_id": {
             "@ref": "customer:ostaraflowers"
@@ -879,6 +885,7 @@
           "address_line1": "Unit 3, Globe Park",
           "town": "Marlow",
           "postcode": "SL7 9ZZ",
+          "country": "GB",
           "language": "en-US",
           "customer_id": {
             "@ref": "customer:kestreljoinery"
@@ -902,6 +909,7 @@
           "address_line1": "2 Market Square",
           "town": "Henley-on-Thames",
           "postcode": "RG9 9ZZ",
+          "country": "GB",
           "language": "en-US",
           "customer_id": {
             "@ref": "customer:thelittlegallery"
@@ -925,6 +933,7 @@
           "address_line1": "17 Marsh Lane",
           "town": "Maidenhead",
           "postcode": "SL6 9ZZ",
+          "country": "GB",
           "language": "en-US",
           "customer_id": {
             "@ref": "customer:marshlanedental"
@@ -952,6 +961,7 @@
           "address_line1": "5 Chapel Street",
           "town": "Marlow",
           "postcode": "SL7 9ZZ",
+          "country": "GB",
           "language": "en-US",
           "customer_id": {
             "@ref": "customer:cobleandco"
@@ -975,6 +985,7 @@
           "address_line1": "The Pavilion, Pound Lane",
           "town": "Marlow",
           "postcode": "SL7 9ZZ",
+          "country": "GB",
           "language": "en-US",
           "customer_id": {
             "@ref": "customer:woldcricketclub"
@@ -998,6 +1009,7 @@
           "address_line1": "12 Quay Street",
           "town": "Marlow",
           "postcode": "SL7 1BT",
+          "country": "GB",
           "language": "en-US",
           "customer_id": {
             "@ref": "customer:harbourbakery"
@@ -1021,6 +1033,7 @@
           "address_line1": null,
           "town": null,
           "postcode": null,
+          "country": null,
           "language": "en-US",
           "customer_id": {
             "@ref": "customer:fenwickandsons"
@@ -1048,6 +1061,7 @@
           "address_line1": "The Old Chapel, Dean Street",
           "town": "Marlow",
           "postcode": "SL7 9ZZ",
+          "country": "GB",
           "language": "en-US",
           "customer_id": {
             "@ref": "customer:brambleyoga"
@@ -1071,6 +1085,7 @@
           "address_line1": "12 Quay Street",
           "town": "Marlow",
           "postcode": "SL7 1BT",
+          "country": "GB",
           "language": "en-US",
           "customer_id": {
             "@ref": "customer:harbourbakery"
@@ -1094,6 +1109,7 @@
           "address_line1": "12 Quay Street",
           "town": "Marlow",
           "postcode": "SL7 1BT",
+          "country": "GB",
           "language": "en-US",
           "customer_id": {
             "@ref": "customer:harbourbakery"

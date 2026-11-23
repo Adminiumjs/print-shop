@@ -152,7 +152,15 @@ export const adjusterSchema = z
       .object({ table: refSchema, column: refSchema, where: z.array(whereSchema).max(3).optional(), reserved: z.array(z.string().regex(/^[A-Z]{2,4}$/, 'two to four capital letters')).min(1).max(8).optional() })
       .strict(),
     /** Vouchers and packs: found by the typed text with its prefix cut. */
-    vouchers: z.object({ table: refSchema, column: refSchema, prefixes: z.array(z.string().regex(/^[A-Z]{2,4}-$/, 'a prefix such as VC-')).min(1).max(4) }).strict(),
+    vouchers: z
+      .object({
+        table: refSchema,
+        column: refSchema,
+        prefixes: z.array(z.string().regex(/^[A-Z]{2,4}-$/, 'a prefix such as VC-')).min(1).max(4),
+        /** The column naming a voucher's holder: a row that has one may be named `held:<key>`, and the add-on then holds it to the proved customer. */
+        held: refSchema.optional(),
+      })
+      .strict(),
     /** The rows Adminium rewrites with what was applied, by the source row and line. */
     applied: z
       .object({

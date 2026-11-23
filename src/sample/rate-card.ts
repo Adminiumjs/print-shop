@@ -16,6 +16,7 @@ export const SETTINGS = {
   "@label": "settings",
   works_name: "Marlow Press",
   address: "3 Market Square, Marlow SL7 1AA",
+  home_country: "GB",
   phone: "01628 482 190",
   email: "hello@marlowpress.example",
   hours: "Mon–Fri, 8:00–17:00",

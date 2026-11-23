@@ -76,6 +76,26 @@ const operand = z.union([
 const fieldLeft = z.object({ field: refSchema }).strict();
 const leaf = z.object({ left: fieldLeft, op: z.enum(AUTOMATION_CONDITION_OPS), right: operand.optional() }).strict();
 const countLeft = z.object({ count: z.object({ table: refSchema, matchColumn: refSchema, equalsField: refSchema, where: leaf.optional() }).strict() }).strict();
+/**
+ * An add-on's words about a row the record links to: `words` names them
+ * (`<add-on key>:<words id>`, as a public entry's `words` does), `of` the
+ * record's link to the row they are asked about. Compared with `is` or
+ * `is_not` and one of `in`, `low`, `out`. Asked only in a rule's own
+ * condition and branch steps (see {@link WORDS_STATES}).
+ */
+const wordsLeft = z
+  .object({ words: z.string().regex(/^[a-z][a-z0-9-]{1,79}:[a-z][a-z0-9-]{0,39}$/, '<add-on key>:<words id>'), of: refSchema })
+  .strict();
+
+/**
+ * What a rule may ask of an add-on's words. `in`: the add-on counts the row
+ * and one whole unit or more is left ("low" with one or more left counts as
+ * in). `low`: it says low. `out`: it counts the row and none is left. The
+ * add-on off for the app, not answering, the record linked to nothing, or a
+ * row the add-on does not count: the condition is false, `is_not` too.
+ */
+export const WORDS_STATES = ['in', 'low', 'out'] as const;
+const WORDS_OPS: readonly ConditionOp[] = ['is', 'is_not'];
 
 /** An operator takes the operand its kind needs: none, an amount with a unit, or a plain value. */
 function operandIssue(op: ConditionOp, right: unknown): string | null {
@@ -89,11 +109,15 @@ function operandIssue(op: ConditionOp, right: unknown): string | null {
 }
 
 export const manifestConditionSchema = z
-  .object({ left: z.union([fieldLeft, countLeft]), op: z.enum(AUTOMATION_CONDITION_OPS), right: operand.optional() })
+  .object({ left: z.union([fieldLeft, countLeft, wordsLeft]), op: z.enum(AUTOMATION_CONDITION_OPS), right: operand.optional() })
   .strict()
   .superRefine((condition, ctx) => {
     const issue = operandIssue(condition.op, condition.right);
     if (issue !== null) ctx.addIssue({ code: 'custom', path: ['right'], message: issue });
+    if ('words' in condition.left) {
+      if (!WORDS_OPS.includes(condition.op)) ctx.addIssue({ code: 'custom', path: ['op'], message: `an add-on's words are compared with is or is_not, not ${condition.op}` });
+      if (!(WORDS_STATES as readonly unknown[]).includes(condition.right)) ctx.addIssue({ code: 'custom', path: ['right'], message: `an add-on's words are ${WORDS_STATES.join(', ')}` });
+    }
     if ('count' in condition.left) {
       if (!COUNT_OPS.includes(condition.op)) ctx.addIssue({ code: 'custom', path: ['op'], message: `${condition.op} cannot compare a count` });
       const nested = condition.left.count.where;
@@ -501,6 +525,8 @@ export function automationIssues(m: {
   decided?: (table: string) => ReadonlySet<string>;
   /** An add-on's own steps, when the manifest is one that gives any: a rule of its own that names one is checked against them. */
   steps?: { addOn: string; steps: readonly { key: string; inputs: readonly { key: string; required?: boolean | undefined }[] }[] } | undefined;
+  /** The add-ons whose words a rule may ask: the ones the manifest names, and itself when it is one. Absent: not checked. */
+  addOns?: ReadonlySet<string> | undefined;
 }): ReferenceIssue[] {
   const out: ReferenceIssue[] = [];
   const tables = new Map(m.tables.map((table) => [table.ref, table]));
@@ -544,8 +570,19 @@ export function automationIssues(m: {
       const found = column(held, right.setting.column, [...at, 'column']);
       if (found !== undefined && !['int', 'bigint'].includes(found.type)) out.push({ path: [...at, 'column'], message: `"${right.setting.table}.${right.setting.column}" is not a whole-number column: it holds an amount of ${right.unit}` });
     };
-    const conditionIssues = (of: AutomationTableShape | undefined, condition: ManifestCondition, path: (string | number)[], inScan: boolean, settingsOk = false) => {
+    const conditionIssues = (of: AutomationTableShape | undefined, condition: ManifestCondition, path: (string | number)[], inScan: boolean, settingsOk = false, wordsOk = false) => {
       settingIssues(condition, path, settingsOk);
+      if ('words' in condition.left) {
+        const asked = condition.left;
+        // A trigger's or a scan's condition is judged before a run exists, many rows at a time: an add-on is asked in a step.
+        if (!wordsOk) out.push({ path: [...path, 'left'], message: "an add-on's words are asked in a rule's condition or branch step, never in a trigger's when or the rows a rule visits by the clock" });
+        const addOn = asked.words.slice(0, asked.words.indexOf(':'));
+        if (m.addOns !== undefined && !m.addOns.has(addOn)) out.push({ path: [...path, 'left', 'words'], message: `"${addOn}" is not an add-on this manifest names: add it to addOns.requires or addOns.suggests` });
+        const link = column(of, asked.of, [...path, 'left', 'of']);
+        if (link !== undefined && link.references === undefined) out.push({ path: [...path, 'left', 'of'], message: `"${of?.ref ?? ''}.${asked.of}" is not a link: the words are asked about the row a link of the record names` });
+        if (of === undefined && rule.trigger.kind === 'schedule' && rule.trigger.forEach === undefined) out.push({ path: [...path, 'left'], message: 'this rule runs for no record, so it has no link to ask about' });
+        return;
+      }
       if ('count' in condition.left) {
         // A scan's filter is one query over the scanned table: it cannot count another table's rows.
         if (inScan) out.push({ path: [...path, 'left'], message: 'a rule that runs by the clock cannot filter the rows it visits by a count: keep the count in a column of the row (a rollup), and compare that' });
@@ -738,7 +775,7 @@ export function automationIssues(m: {
       (node, path) => {
         tokens(node.title, [...path, 'title']);
         tokens(node.sub, [...path, 'sub']);
-        if (node.kind === 'condition' || node.kind === 'branch') conditionIssues(record, node.condition, [...path, 'condition'], false, true);
+        if (node.kind === 'condition' || node.kind === 'branch') conditionIssues(record, node.condition, [...path, 'condition'], false, true, true);
         if (node.kind !== 'action') return;
         const action = node.action;
         const here = (...rest: (string | number)[]) => [...path, 'action', ...rest];

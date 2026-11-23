@@ -211,8 +211,11 @@ const STOCK_READS = [
   { addOn: "inventory", table: "links", actions: ["read"] },
   { addOn: "inventory", table: "stock_points", actions: ["read"] },
 ];
-/** What the owner and the counter read of DHL, when it is on: the collections it booked. */
-const SHIPMENT_READS = [{ addOn: "shipping-dhl", table: "shipments", actions: ["read"] }];
+/** What the owner and the counter read of a delivery company, when one is on: the labels it holds. */
+const SHIPMENT_READS = [
+  { addOn: "shipping-dhl", table: "shipments", actions: ["read"] },
+  { addOn: "shipping-shippo", table: "shipments", actions: ["read"] },
+];
 /** What the owner reads of Holiday calendars, when it is on: the public holidays, each to add as a closure. */
 const HOLIDAY_READS = [{ addOn: HOLIDAYS, table: "holidays", actions: ["read"] }];
 
@@ -237,6 +240,10 @@ export const ROLES = [
       `addOn:${HOLIDAYS}:settings`,
       // A customer's data found, handed to them and erased, on the dashboard's privacy page.
       "privacy:@:people",
+      // This app's own labels: buying, asking for a refund, and declaring customs. An install asks before granting each.
+      "shipping:@:book",
+      "shipping:@:cancel",
+      "shipping:@:customs",
       // A payment taken online given back, in full or in part: this app's payments only.
       "payments:@:refund",
     ],
@@ -316,11 +323,13 @@ export const ROLES = [
       view("printing-orders"),
       view("printing-jobs"),
       view("printing-samples"),
+      // Buying a label for an order it hands over, inside the owner's limits.
+      "shipping:@:book",
     ],
     limits: {
       // Ready, then handed over; a delivery over the bands priced and its quote sent (fixed once the customer accepts it).
       orders: {
-        writable: ["status", "tracking", "dhl_service", "delivery_quote", "delivery_quote_state"],
+        writable: ["status", "tracking", "carrier", "number_told_at", "country", "dhl_service", "delivery_quote", "delivery_quote_state"],
         writableValues: { status: ["ready", "collected", "dispatched"], delivery_quote_state: ["to_quote", "sent"] },
       },
       jobs: { writable: ["stage"], writableValues: { stage: ["collected", "dispatched"] }, writableFrom: { stage: ["ready"] } },
