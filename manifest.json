@@ -24644,7 +24644,8 @@
           "table": "orders",
           "column": "phone",
           "holds": "details",
-          "via": "customer_id"
+          "via": "customer_id",
+          "evenIfKept": true
         },
         {
           "table": "saved_quotes",

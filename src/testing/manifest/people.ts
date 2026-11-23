@@ -229,6 +229,12 @@ const copySchema = z
     holds: z.enum(COPY_HOLDS),
     via: z.string().min(1).max(129).optional(),
     from: z.array(refSchema).min(1).max(2).optional(),
+    /**
+     * Erased with the person even on a table the law keeps: a detail the record
+     * of the sale does not need, held only to carry out the order (a phone
+     * number for the carrier). The rest of a kept row stays as it was.
+     */
+    evenIfKept: z.literal(true).optional(),
   })
   .strict()
   .superRefine((copy, ctx) => {

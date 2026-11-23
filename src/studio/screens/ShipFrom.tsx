@@ -10,8 +10,8 @@ import { countriesPanelOf, customsPanelOf } from "../../add-ons/connected.ts";
 import type { EngineCarrier } from "../../add-ons/vendor/host/engine-carrier.ts";
 import { useData, useEnv, useRun } from "../env.tsx";
 import { worksAddress } from "../outbound.ts";
-import { carrierClient, chooseCarrier, COUNTRIES, countryName, readShipping, saveShipFrom, ShippingRefused, type ShipFromValues, type ShippingStatus } from "../shipping.ts";
-import { toast } from "../store.ts";
+import { carrierClient, chooseCarrier, COUNTRIES, countryName, readShipping, shippingReady, saveShipFrom, ShippingRefused, type ShipFromValues, type ShippingStatus } from "../shipping.ts";
+import { toast, useWorks } from "../store.ts";
 import { text } from "../wire.ts";
 import { useI18n, useT, type MessageKey } from "../../i18n/index.tsx";
 
@@ -57,7 +57,12 @@ export function ShipFromScreen() {
   const Customs = facts.carrier === null ? null : (customsPanelOf(facts.carrier.key) as CustomsPanel | null);
   const prices = useMemo<CountryPriceStore>(() => ({ read: () => door.countryPrices(), save: (country, amount) => door.saveCountryPrice(country, amount), remove: (country) => door.removeCountryPrice(country) }), [door]);
 
+  // On a page opened at this address the add-ons are still loading: asking now would read as "not yours".
+  const registry = useWorks((s) => s.registry);
+  const ready = shippingReady() || registry !== null;
+
   useEffect(() => {
+    if (!ready) return undefined;
     let live = true;
     readShipping().then(
       (read) => {
@@ -87,7 +92,7 @@ export function ShipFromScreen() {
     };
     // Read once for the screen: a reload of the works' rows must not overwrite what is being typed.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [ready]);
 
   if (refused) {
     return (

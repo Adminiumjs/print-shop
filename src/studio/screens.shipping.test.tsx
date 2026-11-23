@@ -4,6 +4,7 @@
  * record: what is filled in, what holds the order back, and the one press that
  * tells a customer of a new number.
  */
+import { createRegistry } from "../add-ons/host.ts";
 import { describe, expect, it, vi } from "vitest";
 
 import { applyAddOnSettings, type AddOn } from "../add-ons/host.ts";
@@ -125,8 +126,14 @@ describe("leaving demo mode", () => {
 describe("Ship from", () => {
   it("says plainly who may change it when Adminium does not answer this person", async () => {
     held.client = null;
-    await mount(door(), "shipfrom");
+    await mount(door(), "shipfrom", { registry: createRegistry([]) });
     await settle();
     expect(text()).toContain("Only someone who manages shipping");
+  });
+
+  it("waits for the add-ons on a page opened at its address, and never calls that a refusal", async () => {
+    await mount(door(), "shipfrom");
+    await settle();
+    expect(text()).not.toContain("Only someone who manages shipping");
   });
 });

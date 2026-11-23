@@ -112,6 +112,9 @@ async function ask(method: "GET" | "PUT", path: string, body?: unknown): Promise
   return parsed.data;
 }
 
+/** Whether this page can reach the shipping routes yet: false until the add-ons have loaded. */
+export const shippingReady = (): boolean => shippingSetup() !== null;
+
 export const readShipping = () => ask("GET", "");
 export const saveShipFrom = (values: ShipFromValues) => ask("PUT", "/ship-from", values);
 export const chooseCarrier = (carrier: string) => ask("PUT", "/active-carrier", { carrier });

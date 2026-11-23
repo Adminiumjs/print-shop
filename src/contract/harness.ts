@@ -96,7 +96,7 @@ export interface Bundle {
   integrity: string;
 }
 
-const bundle = (files: Record<string, Buffer>): Bundle => {
+export const bundle = (files: Record<string, Buffer>): Bundle => {
   const buffer = tarball(files);
   return { buffer, integrity: `sha512-${createHash("sha512").update(buffer).digest("base64")}` };
 };
@@ -231,7 +231,7 @@ export async function boot(engine: Engine, port: number, now: number, options: B
     ...process.env,
     // An add-on packed from a checkout has no catalogue to vouch for its bytes:
     // a developer's server runs it by name. Ignored in production.
-    ADMINIUM_ADD_ON_DEV_TRUST: "customiser,holiday-calendars,shipping-dhl",
+    ADMINIUM_ADD_ON_DEV_TRUST: "customiser,holiday-calendars,shipping-dhl,shipping-shippo",
     E2E_ENGINE: engine,
     E2E_PORT: String(port),
     E2E_SMTP_PORT: String(port + 1),

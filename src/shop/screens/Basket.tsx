@@ -309,7 +309,11 @@ function NotServed({ onBack }: { onBack: () => void }) {
   const catalogue = useShop((s) => s.catalogue)!;
   const works = catalogue.works;
   const heading = useRef<HTMLHeadingElement>(null);
-  useEffect(() => heading.current?.focus(), []);
+  // The page got shorter under a reader who had scrolled down to the address: start them at its heading.
+  useEffect(() => {
+    window.scrollTo?.(0, 0);
+    heading.current?.focus({ preventScroll: true });
+  }, []);
   const names = [...(works.homeCountry === null ? [] : [works.homeCountry]), ...catalogue.countries.map((c) => c.code).filter((c) => c !== works.homeCountry)].map((c) => countryName(c, locale));
   return (
     <section className="mp-screen mp-notserved" aria-labelledby="mp-notserved-title">

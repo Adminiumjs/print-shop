@@ -413,6 +413,8 @@ export const INSTALL_FLOOR_WORD_NAMES = [
   'provides.lead-source',
   'addOn.leads',
   'people.lead',
+  // A person's copy on a kept table that is not part of the record, erased with them all the same.
+  'people.copyEvenIfKept',
   // A record action Adminium's own record page shows on a kind of declared table (a companies table's "Fill in details").
   'addOn.slots.on',
   // Where an app's orders keep what a carrier needs: without it, the engine calls no real carrier for the app.
@@ -744,6 +746,7 @@ export const WORD_FLOORS: Readonly<Partial<Record<ManifestWordName, string>>> = 
   'provides.lead-source': '0.3.66',
   'addOn.leads': '0.3.66',
   'people.lead': '0.3.66',
+  'people.copyEvenIfKept': '0.3.74',
   'addOn.slots.on': '0.3.66',
   'shipping': '0.3.72',
   // A release before refuses the key.
@@ -942,6 +945,7 @@ export function installFloorWords(document: unknown): ManifestWord[] {
         if (isDoc(copy) && copy['addOn'] !== undefined) out.push({ word: 'people.addOnCopies', path: `people.${String(e)}.copies.${String(c)}.addOn` });
         if (isDoc(copy) && copy['holds'] === 'details') out.push({ word: 'people.copyDetails', path: `people.${String(e)}.copies.${String(c)}.holds` });
         if (isDoc(copy) && copy['from'] !== undefined) out.push({ word: 'people.addOnCopyFrom', path: `people.${String(e)}.copies.${String(c)}.from` });
+        if (isDoc(copy) && copy['evenIfKept'] !== undefined) out.push({ word: 'people.copyEvenIfKept', path: `people.${String(e)}.copies.${String(c)}.evenIfKept` });
       });
       if (isDoc(entry) && entry['lead'] !== undefined) out.push({ word: 'people.lead', path: `people.${String(e)}.lead` });
     });

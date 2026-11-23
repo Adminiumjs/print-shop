@@ -417,11 +417,24 @@ export function abroadCountry(s: Pick<ShopState, "catalogue" | "delivery" | "des
   return s.catalogue?.countries.find((c) => c.code === s.destination) ?? null;
 }
 
+/**
+ * A number for pricing only. Adminium asks for a phone on an order going
+ * abroad, a dry run saves nothing, and the customer has not been asked yet.
+ * Placing the order sends what they typed, and is refused without it.
+ */
+const PRICING_PHONE = "+0 00000";
+
 /** What the order says of where it goes: the listed country's row, which Adminium prices it by, and nothing for the works' own. */
 function destinationValues(s: Pick<ShopState, "catalogue" | "delivery" | "destination">): Row {
   const country = abroadCountry(s);
   return country === null ? {} : { delivery_country_id: country.id };
 }
+
+/** The same, for a dry run. */
+const pricedDestination = (s: Pick<ShopState, "catalogue" | "delivery" | "destination">): Row => {
+  const values = destinationValues(s);
+  return Object.keys(values).length === 0 ? values : { ...values, phone: PRICING_PHONE };
+};
 
 /** The customer's own values, only those typed, trimmed; an address only for a delivery, a phone only for one going abroad. */
 export function detailValues(details: Details, delivery: Delivery, abroad = false): Row {
@@ -528,7 +541,7 @@ export function requoteProduct(): void {
     set({ jobQuote: null });
     return;
   }
-  const values = { delivery_method: s.delivery, ...destinationValues(s), language: language() };
+  const values = { delivery_method: s.delivery, ...pricedDestination(s), language: language() };
   const jobBody: OrderBody = { values, children: { jobs: [jobNode(line)] } };
   const jobKey = JSON.stringify(jobBody);
   const steps = stepsOf(catalogue, product);
@@ -579,7 +592,7 @@ export function requoteBasket(): void {
     set({ basketQuote: null });
     return;
   }
-  const body = orderBody({ delivery_method: s.delivery, ...destinationValues(s), language: language() }, s.basket);
+  const body = orderBody({ delivery_method: s.delivery, ...pricedDestination(s), language: language() }, s.basket);
   const key = JSON.stringify(body);
   if (s.basketQuote?.key === key && s.basketQuote.state !== "failed") return;
   set({ basketQuote: { key, state: "busy", figures: s.basketQuote?.figures ?? null } });
