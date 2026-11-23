@@ -4,7 +4,7 @@
  * "New number: tell the customer", which a person presses.
  */
 import { useState } from "react";
-import { Download, Megaphone, RefreshCw } from "lucide-react";
+import { Download, Megaphone, RefreshCw, Undo2 } from "lucide-react";
 
 import { tellNewNumber } from "../actions.ts";
 import { useEnv, useRun } from "../env.tsx";
@@ -146,8 +146,13 @@ function Parcel({ booking, order, client, reread }: { booking: EngineBooking; or
 
 export function ShipmentCard({ order, client, read }: { order: Row; client: EngineCarrier | null; read: BookingsRead }) {
   const t = useT();
+  const { door } = useEnv();
+  const { busy, run } = useRun();
   const shown = read.bookings.filter((b) => b.state === "booked" || b.state === "unknown" || b.state === "calling" || b.state === "reserved");
   if (client === null || shown.length === 0) return null;
+  // A ready order holding a label nobody has handed over can still go back, and Adminium asks what happens to the label.
+  const mayMoveBack = order["status"] === "ready" && door.who().roles.includes("owner") && shown.some((b) => b.state === "booked" && !b.test);
+  const printing = t("works.stage.printing");
   return (
     <section className="wk-panel" aria-labelledby="wk-shipment-title">
       <h2 className="wk-panel-head wk-panel-head--small" id="wk-shipment-title">
@@ -156,6 +161,25 @@ export function ShipmentCard({ order, client, read }: { order: Row; client: Engi
       {shown.map((b) => (
         <Parcel key={b.id} booking={b} order={order} client={client} reread={read.reread} />
       ))}
+      {mayMoveBack && (
+        <div className="wk-action-row">
+          <button
+            type="button"
+            className="wk-btn wk-btn--small"
+            disabled={busy}
+            onClick={() =>
+              void run(async (d) => {
+                await d.moveOrder(order, "placed");
+                read.reread();
+                return t("works.card.movedBack", { status: printing });
+              })
+            }
+          >
+            <Undo2 size={14} aria-hidden="true" />
+            {t("works.card.moveBack", { status: printing })}
+          </button>
+        </div>
+      )}
     </section>
   );
 }
