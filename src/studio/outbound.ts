@@ -40,13 +40,17 @@ export function countryOf(currency: string): string {
 }
 
 export function outboundOrder(data: WorksData, order: Row, currency: string): OutboundOrder {
-  const country = countryOf(currency);
+  const home = text(data.settings?.["home_country"]);
+  // The engine reads a real parcel's address from the row and never from here. This is what a demo carrier draws.
+  const from = home ?? countryOf(currency);
+  const country = text(order["country"]) ?? from;
   const line1 = text(order["address_line1"]);
   const total = num(order["total"]);
   // The order's own weight, as Adminium adds it up and the delivery band reads it: the one number the carrier is sent.
   const weight = num(order["weight_kg"]);
   return {
     ref: text(order["number"]) ?? String(order.id),
+    source: { table: "orders", id: String(order.id) },
     recipient: { name: text(order["name"]) ?? "", key: String(order["customer_id"] ?? order.id) },
     items: jobsOf(data, order)
       .filter((j) => j["stage"] !== "cancelled")
@@ -60,7 +64,7 @@ export function outboundOrder(data: WorksData, order: Row, currency: string): Ou
           ...(kg === null ? {} : { unitWeightGrams: Math.round(kg * 1000) }),
         };
       }),
-    origin: worksAddress(data.settings, country),
+    origin: worksAddress(data.settings, from),
     ...(line1 === null
       ? {}
       : {

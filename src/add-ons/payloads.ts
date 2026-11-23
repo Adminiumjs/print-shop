@@ -247,6 +247,8 @@ export interface LineOrder {
  */
 export interface OutboundOrder {
   ref: string;
+  /** The row this order is: a real carrier's address and lines are read from it, never from this payload. */
+  source?: { table: string; id: string };
   recipient: Party;
   items: readonly SlotItem[];
   /** Where the shop sends from. Every shop has one. */

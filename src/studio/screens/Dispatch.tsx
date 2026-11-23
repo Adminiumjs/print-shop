@@ -17,13 +17,15 @@ import { dispatchOrder } from "../actions.ts";
 import { useData, useEnv, useRun } from "../env.tsx";
 import { byId, dispatchQueue, familyOf, jobsOf, productOf, readyToGo } from "../facts.ts";
 import { dispatchPayload } from "../outbound.ts";
+import { carrierClient, COUNTRIES, countryName, handOverOf, useOrderBookings, type HandOver } from "../shipping.ts";
+import { ShipmentCard } from "./ShipmentCard.tsx";
 import { mayManageAddOns } from "../roles.ts";
 import { go, useWorks } from "../store.ts";
 import { FamilyTile, Mono, Typed } from "../ui.tsx";
 import { same, text, type Row } from "../wire.ts";
 import { drewSomething } from "../../add-ons/slotContent.ts";
 import type { PayloadFor } from "../../add-ons/payloads.ts";
-import { useT } from "../../i18n/index.tsx";
+import { useI18n, useT } from "../../i18n/index.tsx";
 
 /** What an order's jobs are, for a heading: their products, in order. */
 export function productsOf(data: ReturnType<typeof useData>, order: Row): string {
@@ -77,6 +79,47 @@ export function DispatchScreen() {
   return <Dispatch order={order} />;
 }
 
+/** An order made before orders kept a country: a person says where it goes, and nothing guesses. */
+function AskCountry({ order }: { order: Row }) {
+  const t = useT();
+  const { locale } = useI18n();
+  const data = useData();
+  const { door } = useEnv();
+  const { busy, run } = useRun();
+  const [country, setCountry] = useState(text(data.settings?.["home_country"]) ?? "");
+  if (text(order["country"]) !== null || !door.who().can("orders", "update")) return null;
+  const save = () =>
+    run(async (d) => {
+      await d.updateOrder(order, { country });
+      return t("works.country.saved");
+    });
+  return (
+    <div className="wk-panel">
+      <label className="wk-field wk-dispatch-country">
+        <span className="wk-field-label">{t("works.country.ask")}</span>
+        <select className="wk-input" value={country} onChange={(e) => setCountry(e.target.value)}>
+          <option value="">—</option>
+          {COUNTRIES.map((code) => (
+            <option key={code} value={code}>
+              {countryName(code, locale)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button type="button" className="wk-btn" disabled={busy || country === ""} onClick={() => void save()}>
+        {t("works.country.save")}
+      </button>
+    </div>
+  );
+}
+
+/** Why the order cannot be handed over yet, in the words of what is holding it. */
+const HELD: Partial<Record<HandOver["kind"], "works.handOver.testLabel" | "works.handOver.unsettled" | "works.handOver.unread">> = {
+  test: "works.handOver.testLabel",
+  unsettled: "works.handOver.unsettled",
+  unread: "works.handOver.unread",
+};
+
 function Dispatch({ order }: { order: Row }) {
   const t = useT();
   const data = useData();
@@ -87,14 +130,25 @@ function Dispatch({ order }: { order: Row }) {
   const first = jobsOf(data, order)[0];
   const ref = text(order["number"]) ?? "";
   const booked = data.shipments.find((s) => text(s["order_reference"]) === ref && s["status"] !== "refused" && s["status"] !== "cancelled");
-  const [tracking, setTracking] = useState(text(order["tracking"]) ?? text(booked?.["tracking"]) ?? "");
+  const client = carrierClient(carrier);
+  const read = useOrderBookings(client, order.id);
+  const state: HandOver = read.state === "failed" || read.state === "loading" ? { kind: "unread" } : handOverOf(read.bookings, order);
+  const fromLabel = state.kind === "label";
+  const held = HELD[state.kind];
+  const [typed, setTyped] = useState(text(order["tracking"]) ?? text(booked?.["tracking"]) ?? "");
+  const tracking = state.kind === "label" ? (state.tracking ?? "") : typed;
   const queue = dispatchQueue(data).filter((o) => !same(o.id, order.id));
   const dispatched = order["status"] === "dispatched";
 
   const handOver = () =>
     run(async (d, fresh) => {
       const now = byId(fresh.orders, order.id) ?? order;
-      await dispatchOrder(d, fresh, now, { tracking: tracking.trim() === "" ? null : tracking.trim(), service: text(booked?.["service"]) });
+      await dispatchOrder(d, fresh, now, {
+        tracking: tracking.trim() === "" ? null : tracking.trim(),
+        // The stored service is the demo's own code: a real label's service stays on its booking.
+        service: state.kind === "label" ? null : text(booked?.["service"]),
+        carrier: state.kind === "label" ? state.carrier : null,
+      });
       return t("works.ticket.dispatchedToast", { ref });
     });
 
@@ -128,21 +182,33 @@ function Dispatch({ order }: { order: Row }) {
       </p>
       <div className="wk-dispatch-grid">
         <div className="wk-dispatch-main">
+          {!dispatched && <AskCountry order={order} />}
           {!dispatched && <DispatchFill order={order} />}
+          <ShipmentCard order={order} client={client} read={read} />
           <div className="wk-panel">
             <h2 className="wk-panel-head wk-panel-head--plain">{t("works.dispatch.handOver")}</h2>
             {dispatched ? (
               <div className="wk-done">{text(order["tracking"]) === null ? t("works.actions.dispatchedDone") : t("works.actions.dispatchedTracking", { tracking: text(order["tracking"]) ?? "" })}</div>
             ) : (
               <>
-                <p className="wk-sheet-lede">{t("works.dispatch.handOverLede")}</p>
+                <p className="wk-sheet-lede">{t("works.handOver.tells")}</p>
                 <label className="wk-field wk-dispatch-field">
                   <span className="wk-field-label">{t("works.dispatch.tracking")}</span>
-                  <input className="wk-input wk-mono" value={tracking} onChange={(e) => setTracking(e.target.value)} />
+                  <input className="wk-input wk-mono" value={tracking} readOnly={fromLabel} aria-describedby={fromLabel ? "wk-from-label" : undefined} onChange={(e) => setTyped(e.target.value)} />
+                  {fromLabel && (
+                    <span className="wk-field-hint" id="wk-from-label">
+                      {t("works.handOver.fromLabel")}
+                    </span>
+                  )}
                 </label>
-                <button type="button" className="wk-action wk-action--pos" disabled={busy || !door.who().can("orders", "update")} onClick={() => void handOver()}>
+                {held !== undefined && (read.state !== "loading" || state.kind !== "unread") && (
+                  <p className="wk-muted" role="status">
+                    {t(held)}
+                  </p>
+                )}
+                <button type="button" className="wk-action wk-action--pos" disabled={busy || held !== undefined || !door.who().can("orders", "update")} onClick={() => void handOver()}>
                   <Truck size={16} aria-hidden="true" />
-                  {t("works.actions.dispatched")}
+                  {t("works.actions.handedOver")}
                 </button>
               </>
             )}

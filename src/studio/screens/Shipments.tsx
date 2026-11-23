@@ -6,13 +6,17 @@
  * the carrier refused offers the dispatch page again. Shown only while a
  * delivery company is on.
  */
-import { Download, RefreshCw } from "lucide-react";
+import { useEffect, useState, type ComponentType } from "react";
+import { Download, MapPin, RefreshCw } from "lucide-react";
 
 import { useData, useEnv } from "../env.tsx";
 import { fileSrc } from "../facts.ts";
 import { useFmt } from "../format.ts";
 import { mayManageAddOns } from "../roles.ts";
-import { go } from "../store.ts";
+import { carrierClient } from "../shipping.ts";
+import { go, toast } from "../store.ts";
+import { openParcelsRefreshOf } from "../../add-ons/connected.ts";
+import type { EngineCarrier } from "../../add-ons/vendor/host/engine-carrier.ts";
 import { Mono, Typed } from "../ui.tsx";
 import { text } from "../wire.ts";
 import { useT, type MessageKey } from "../../i18n/index.tsx";
@@ -26,12 +30,47 @@ const STATUS: Record<string, MessageKey> = {
   refused: "works.shipments.refused",
 };
 
+/** The carrier's own "Refresh open parcels" where its bundle shares it, or the same press with the works' words. */
+function RefreshOpen({ carrierKey, client, hasOpen, nowMs, onDone }: { carrierKey: string; client: EngineCarrier; hasOpen: boolean; nowMs: number; onDone: () => void }) {
+  const t = useT();
+  const [working, setWorking] = useState(false);
+  const Shared = openParcelsRefreshOf(carrierKey) as ComponentType<{ nowMs?: number; hasOpenParcels?: boolean; onRefreshed?: () => void }> | null;
+  if (Shared !== null) return <Shared nowMs={nowMs} hasOpenParcels={hasOpen} onRefreshed={onDone} />;
+  const press = () => {
+    setWorking(true);
+    client
+      .refreshOpenParcels()
+      .then(onDone, () => toast(t("works.refused", { why: t("works.shipments.refreshOpen") }), "danger"))
+      .finally(() => setWorking(false));
+  };
+  return (
+    <button type="button" className="wk-btn wk-btn--small" disabled={working || !hasOpen} onClick={press}>
+      <RefreshCw size={14} aria-hidden="true" />
+      {t("works.shipments.refreshOpen")}
+    </button>
+  );
+}
+
 export function ShipmentsScreen() {
   const t = useT();
   const fmt = useFmt();
   const data = useData();
   const { door } = useEnv();
   const carrier = door.facts().carrier;
+  const client = carrierClient(carrier);
+  const [testMode, setTestMode] = useState(false);
+  const [attention, setAttention] = useState<{ reference: string; id: string }[]>([]);
+  const [round, setRound] = useState(0);
+  useEffect(() => {
+    if (client === null) return;
+    let live = true;
+    client.access().then((a) => { if (live) setTestMode(a.mode === "test"); }, () => undefined);
+    client.attention().then(
+      (a) => { if (live) setAttention(a.items.filter((i) => !i.orderGone).map((i) => ({ reference: i.reference, id: i.source.id }))); },
+      () => { if (live) setAttention([]); },
+    );
+    return () => { live = false; };
+  }, [client, round]);
 
   return (
     <section className="wk-screen wk-shipments" aria-labelledby="wk-shipments-title">
@@ -46,6 +85,26 @@ export function ShipmentsScreen() {
           </button>
         )}
       </p>
+      <div className="wk-action-row">
+        {door.who().can("settings", "update") && (
+          <button type="button" className="wk-btn wk-btn--small" onClick={() => go("shipfrom")}>
+            <MapPin size={14} aria-hidden="true" />
+            {t("works.shipFrom.title")}
+          </button>
+        )}
+        {client !== null && carrier !== null && <RefreshOpen carrierKey={carrier.key} client={client} hasOpen={data.shipments.length > 0} nowMs={door.now()} onDone={() => setRound((n) => n + 1)} />}
+      </div>
+      {testMode && <p className="wk-muted" role="status">{t("works.shipments.sample")}</p>}
+      {attention.length > 0 && (
+        <div className="wk-panel">
+          <h2 className="wk-panel-head wk-panel-head--small">{t("works.card.problem")}</h2>
+          {attention.map((item) => (
+            <button key={`${item.id}-${item.reference}`} type="button" className="wk-queue-item" onClick={() => go("dispatch", { orderId: item.id })}>
+              <Mono className="wk-queue-ref">{item.reference}</Mono>
+            </button>
+          ))}
+        </div>
+      )}
       {data.shipments.length === 0 ? (
         <div className="wk-empty">
           <div className="wk-empty-title">{t("works.shipments.empty")}</div>
@@ -70,7 +129,7 @@ export function ShipmentsScreen() {
                     <span className="wk-cell-strong">
                       <Typed>{text(order?.["name"]) ?? ""}</Typed>
                     </span>
-                    <span className={`wk-ship-status wk-ship-status--${status}`}>{t(STATUS[status] ?? "works.shipments.booked")}</span>
+                    <span className={`wk-ship-status wk-ship-status--${status}`}>{t(status === "booked" ? (order?.["status"] === "dispatched" ? "works.actions.handedOver" : "works.card.labelReady") : (STATUS[status] ?? "works.shipments.booked"))}</span>
                   </div>
                   <div className="wk-ship-service">{bad && order !== undefined ? t("works.shipments.goingTo", { town: text(order["town"]) ?? "", postcode: text(order["postcode"]) ?? "" }) : (text(s["service"]) ?? "")}</div>
                 </div>

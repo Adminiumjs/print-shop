@@ -25,6 +25,7 @@ import { JobsScreen } from "./screens/Jobs.tsx";
 import { MaterialsScreen } from "./screens/Materials.tsx";
 import { PricesScreen } from "./screens/Prices.tsx";
 import { DispatchScreen } from "./screens/Dispatch.tsx";
+import { ShipFromScreen } from "./screens/ShipFrom.tsx";
 import { ShipmentsScreen } from "./screens/Shipments.tsx";
 import { ActivityScreen, AddOnScreen, AddOnsScreen } from "./screens/AddOns.tsx";
 import { Overlays } from "./screens/Overlays.tsx";
@@ -381,6 +382,8 @@ function Screen({ view, reach }: { view: View; reach: string[] }) {
       return <DispatchScreen />;
     case "shipments":
       return <ShipmentsScreen />;
+    case "shipfrom":
+      return <ShipFromScreen />;
     case "addons":
       return <AddOnsScreen />;
     case "addon":

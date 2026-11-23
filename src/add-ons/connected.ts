@@ -432,6 +432,13 @@ const carrierRefresh = new Map<string, unknown>();
 
 /** The engine client of a carrier this page loaded; null when its bundle was built before real carriers. */
 export const engineClientOf = (key: string): EngineCarrier | null => carrierClients.get(key) ?? null;
+/** A reply from this app's shipping set-up routes. */
+export type ShippingReply = { status: number; text(): Promise<string> };
+let setupSend: ((method: 'GET' | 'PUT', path: string, body?: unknown) => Promise<ShippingReply>) | null = null;
+
+/** Reads or saves this app's Ship from and carrier: null until the add-ons have loaded in a hosted build. */
+export const shippingSetup = () => setupSend;
+
 /** The carrier bundle's own "Refresh open parcels", when it exports one. */
 export const openParcelsRefreshOf = (key: string): unknown => carrierRefresh.get(key) ?? null;
 
@@ -455,6 +462,14 @@ export async function loadConnectedAddOns(options: ConnectedOptions): Promise<Co
    * two namespaces.
    */
   installRuntime();
+
+  const send = engineSend(request, origin, options.csrfToken ?? (() => null));
+  setupSend = (method, path, body) =>
+    send(`/api/v1/apps/${encodeURIComponent(appKey)}/shipping${path}`, {
+      method: method as 'POST',
+      headers: { accept: 'application/json', ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
 
   const problems: ConnectedProblem[] = [];
   let listed: readonly unknown[];
@@ -678,7 +693,6 @@ export async function loadConnectedAddOns(options: ConnectedOptions): Promise<Co
     // export and stays as it was, so it can never reach a carrier from here.
     if (typeof module.connectEngineCarrier === 'function') {
       try {
-        const send = engineSend(request, origin, options.csrfToken ?? (() => null));
         const client = createEngineCarrier({ send, appKey, addOnKey: addOn.key });
         (module.connectEngineCarrier as (client: unknown) => void)(client);
         carrierClients.set(addOn.key, client);

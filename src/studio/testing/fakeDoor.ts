@@ -117,6 +117,11 @@ export class FakeDoor implements WorksDoor {
     return this.update(this.data.orders, order.id, { status: to, ...values });
   }
 
+  async updateSettings(settings: Row, values: Record<string, unknown>): Promise<Row> {
+    this.record("updateSettings", { id: settings.id, values });
+    return { ...settings, ...values };
+  }
+
   async updateOrder(order: Row, values: Record<string, unknown>): Promise<Row> {
     this.record("updateOrder", { id: order.id, values });
     return this.update(this.data.orders, order.id, values);

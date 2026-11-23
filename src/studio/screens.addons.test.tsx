@@ -72,6 +72,7 @@ const INSTALLED: InstalledAddOn[] = [
 const CATALOG: CatalogEntry[] = [
   { key: "customiser", name: "Customiser", state: "installed", tagline: "Designs a customer fills in, checked and kept.", categories: ["artwork"], monogram: "CU", connectKind: "none" },
   { key: CARRIER.key, name: CARRIER.name, state: "installed", tagline: "Book a parcel collection and print its label.", categories: ["delivery"], monogram: "DHL", connectKind: "api-key" },
+  { key: "shipping-shippo", name: "Shipping labels", state: "available", tagline: "Buy labels on your own account.", categories: ["delivery"], monogram: "SL", connectKind: "api-key" },
   { key: "inventory", name: "Inventory", state: "installed", tagline: "Stock by place and by batch.", categories: ["data"], monogram: "IN", connectKind: "none" },
   { key: "invoices", name: "Invoices & Receipts", state: "available", tagline: "An invoice with each order.", categories: ["data"], monogram: "IR", connectKind: "none" },
 ];
@@ -108,7 +109,7 @@ describe("the dispatch page", () => {
     await mount(door, "dispatch", { orderId: 4119, registry: createRegistry([carrierAddOn]) });
     const field = document.querySelector<HTMLInputElement>(".wk-dispatch-field input")!;
     expect(field.value).toBe("00 3400 1234 5678 9012");
-    await click(button("Mark dispatched"));
+    await click(button("Handed over"));
     expect(door.of("moveJob")).toEqual([{ id: 6, from: "ready", to: "dispatched", values: {} }]);
     expect(door.of("moveOrder")).toEqual([{ id: 4119, from: "ready", to: "dispatched", values: { tracking: "00 3400 1234 5678 9012", dhl_service: "DHL · Standard" } }]);
     expect(toasts()).toEqual(["MP-4119 is on its way."]);
@@ -137,7 +138,7 @@ describe("shipments", () => {
   it("lists what the delivery company booked, its label, and a refused one to try again", async () => {
     await mount(shipping(), "shipments");
     const rows = [...document.querySelectorAll(".wk-ship")].map((r) => r.textContent);
-    expect(rows[0]).toContain("MP-4119Marsh Lane DentalBooked");
+    expect(rows[0]).toContain("MP-4119Marsh Lane DentalLabel ready");
     expect(rows[0]).toContain("00 3400 1234 5678 9012");
     expect(rows[1]).toContain("Refused");
     expect(rows[1]).toContain("Going to Henley, RG9 1AA");
@@ -162,8 +163,8 @@ describe("the add-ons shelf", () => {
     const connected = [...document.querySelectorAll(".wk-addon-row-name")].map((n) => n.firstChild?.textContent);
     const available = [...document.querySelectorAll(".wk-addon-card-name")].map((n) => n.textContent);
     expect(connected).toEqual(["Customiser", "DHL Shipping"]);
-    expect(available).toEqual(["Inventory", "Invoices & Receipts", "holiday-calendars"]);
-    expect([...document.querySelectorAll(".wk-cat")].map((c) => c.textContent)).toEqual(["All5", "Artwork1", "Delivery1", "Records2"]);
+    expect(available).toEqual(["Shipping labels", "Inventory", "Invoices & Receipts", "holiday-calendars"]);
+    expect([...document.querySelectorAll(".wk-cat")].map((c) => c.textContent)).toEqual(["All6", "Artwork1", "Delivery2", "Records2"]);
     await sweep("the shelf");
     await click([...document.querySelectorAll(".wk-cat")].find((c) => c.textContent === "Records2"));
     expect([...document.querySelectorAll(".wk-addon-card-name")].map((n) => n.textContent)).toEqual(["Inventory", "Invoices & Receipts"]);

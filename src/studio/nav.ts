@@ -30,6 +30,7 @@ export const WORKS_NAV = [
 export const WORKS_PLACES = [
   { id: "ticket", path: "job", view: "ticket", side: "staff", icon: "clipboard-list", labelKey: "works.ticket.title" },
   { id: "dispatch", path: "dispatch", view: "dispatch", side: "staff", icon: "truck", labelKey: "works.dispatch.title" },
+  { id: "shipfrom", path: "shipments/ship-from", view: "shipfrom", side: "staff", icon: "map-pin", labelKey: "works.shipFrom.title" },
   { id: "addon", path: "add-on", view: "addon", side: "staff", icon: "puzzle", labelKey: "works.addOn.title" },
   { id: "activity", path: "add-ons/activity", view: "activity", side: "staff", icon: "history", labelKey: "works.activity.title" },
 ] as const satisfies readonly WorksNavEntry[];
@@ -37,6 +38,7 @@ export const WORKS_PLACES = [
 /** The sidebar item a screen lights: a ticket under Today, an add-on's page under Add-ons. */
 export function navOf(view: View): string {
   if (view === "ticket" || view === "dispatch") return "today";
+  if (view === "shipfrom") return "shipments";
   if (view === "addon" || view === "activity") return "addons";
   return view;
 }

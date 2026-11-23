@@ -47,6 +47,8 @@ import { num, same, text, type Id, type Row } from "../wire.ts";
 import { STAGE_LABEL, targetsFor } from "./Today.tsx";
 import { PaymentCard, PaymentChip, useOrderPayment, usePanel } from "./Payment.tsx";
 import { BLEED_MM } from "../../shop/checks.ts";
+import { carrierClient, useOrderBookings } from "../shipping.ts";
+import { ShipmentCard } from "./ShipmentCard.tsx";
 import { useT, type MessageKey } from "../../i18n/index.tsx";
 
 /** The finishes a job takes, by the option it names: a finish that costs nothing (plain edges, rolled) says nothing. */
@@ -361,6 +363,14 @@ function Shelf({ job }: { job: Row }) {
   );
 }
 
+/** The order's Shipment card on its ticket, whatever its status. */
+function TicketShipment({ order }: { order: Row }) {
+  const { door } = useEnv();
+  const client = carrierClient(door.facts().carrier);
+  const read = useOrderBookings(client, order.id);
+  return <ShipmentCard order={order} client={client} read={read} />;
+}
+
 function Actions({ job, order }: { job: Row; order: Row | undefined }) {
   const t = useT();
   const fmt = useFmt();
@@ -536,6 +546,7 @@ function Actions({ job, order }: { job: Row; order: Row | undefined }) {
         )}
         {stage === "ready" && !moves.includes("collected") && !moves.includes("dispatched") && <span className="wk-muted">{t("works.actions.counter")}</span>}
       </div>
+      {deliver && order !== undefined && <TicketShipment order={order} />}
     </div>
   );
 }

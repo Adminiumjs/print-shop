@@ -134,6 +134,10 @@ export class DemoWorks implements WorksDoor {
     return this.move("orders", "status", order, to, values);
   }
 
+  async updateSettings(settings: Row, values: Record<string, unknown>): Promise<Row> {
+    return { ...settings, ...values };
+  }
+
   async updateOrder(order: Row, values: Record<string, unknown>): Promise<Row> {
     return this.change("orders", order.id, values);
   }

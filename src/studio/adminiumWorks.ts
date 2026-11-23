@@ -472,9 +472,20 @@ export class AdminiumWorks implements WorksDoor {
   private async findCarrier(on: ReadonlySet<string>): Promise<{ key: string; name: string } | null> {
     try {
       const got = await this.t.get<{ addOns: Record<string, unknown>[] }>("/api/v1/add-ons");
-      const found = got.addOns.find(
+      const carriers = got.addOns.filter(
         (a) => on.has(String(a["key"])) && (Array.isArray(a["provides"]) ? (a["provides"] as Record<string, unknown>[]) : []).some((p) => p["contract"] === CARRIER_CONTRACT),
       );
+      if (carriers.length === 0) return null;
+      // The carrier this app chose, as Adminium says: never whichever the list happens to name first.
+      let active: string | null = carriers.length === 1 ? String(carriers[0]!["key"]) : null;
+      try {
+        const access = await this.t.get<{ data?: { carrier: string | null } }>(`/api/v1/apps/${APP_KEY}/shipping/access`);
+        const said = access.data?.carrier;
+        if (said !== undefined) active = said;
+      } catch (error) {
+        if (!closed(error)) throw error;
+      }
+      const found = carriers.find((a) => String(a["key"]) === active);
       return found === undefined ? null : { key: String(found["key"]), name: text(found["name"]) ?? String(found["key"]) };
     } catch (error) {
       if (closed(error)) return null;
@@ -494,6 +505,10 @@ export class AdminiumWorks implements WorksDoor {
 
   moveOrder(order: Row, to: string, values: Record<string, unknown> = {}): Promise<Row> {
     return this.run(() => this.change("orders", order.id, { status: to, ...values }, String(order["status"])));
+  }
+
+  updateSettings(settings: Row, values: Record<string, unknown>): Promise<Row> {
+    return this.run(() => this.change("settings", settings.id, values));
   }
 
   updateOrder(order: Row, values: Record<string, unknown>): Promise<Row> {

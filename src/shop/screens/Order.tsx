@@ -633,7 +633,10 @@ function Dispatch() {
     dispatched: t("after.dispatch.sent", { date: day.full(typeof order["dispatched_at"] === "string" ? order["dispatched_at"] : null) }),
     cancelled: t("after.dispatch.cancelled"),
   };
-  const tracking = typeof order["tracking"] === "string" && order["tracking"] !== "" ? order["tracking"] : null;
+  // Told only once the order is handed over: a bought label says nothing to the customer before that.
+  const handedOver = order["status"] === "dispatched";
+  const tracking = handedOver && typeof order["tracking"] === "string" && order["tracking"] !== "" ? order["tracking"] : null;
+  const carrier = typeof order["carrier"] === "string" && order["carrier"] !== "" ? order["carrier"] : null;
   const collecting = leaving === "collect" || leaving === "collected";
   return (
     <div className="mp-card">
@@ -645,7 +648,7 @@ function Dispatch() {
           {tracking !== null && (
             <>
               {" "}
-              <span className="ma-muted">{t("after.dispatch.tracking", { tracking })}</span>
+              <span className="ma-muted">{carrier === null ? t("after.dispatch.tracking", { tracking }) : t("after.dispatch.trackingWith", { carrier, tracking })}</span>
             </>
           )}
         </span>

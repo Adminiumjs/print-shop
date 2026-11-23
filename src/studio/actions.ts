@@ -100,14 +100,20 @@ export async function collectJob(door: WorksDoor, data: WorksData, job: Row, who
  * the carrier's tracking number and the service it went by. The order is
  * made ready first when it was not yet.
  */
-export async function dispatchOrder(door: WorksDoor, data: WorksData, order: Row, input: { tracking: string | null; service: string | null }): Promise<Row> {
+export async function dispatchOrder(door: WorksDoor, data: WorksData, order: Row, input: { tracking: string | null; service: string | null; carrier?: string | null }): Promise<Row> {
   for (const job of jobsOf(data, order)) if (job["stage"] === "ready") await door.moveJob(job, "dispatched");
   let at = order;
   if (at["status"] === "placed") at = await door.moveOrder(at, "ready");
   const values: Record<string, unknown> = {};
   if (input.tracking !== null) values["tracking"] = input.tracking;
   if (input.service !== null) values["dhl_service"] = input.service;
+  if (input.carrier !== null && input.carrier !== undefined) values["carrier"] = input.carrier;
   return door.moveOrder(at, "dispatched", values);
+}
+
+/** The customer told of a parcel's new number: the stamp is what sends the short e-mail. */
+export function tellNewNumber(door: WorksDoor, order: Row, tracking: string, at: number): Promise<Row> {
+  return door.updateOrder(order, { tracking, number_told_at: new Date(at).toISOString() });
 }
 
 /**
