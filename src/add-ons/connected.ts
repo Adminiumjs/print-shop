@@ -99,6 +99,7 @@ import type { AddOn } from './host.ts';
 import { registerAddOnMessages } from '../i18n/messages/index.ts';
 import { installAddOnRuntime, type AddOnRuntime } from './vendor/host/runtime/index.ts';
 import { withInstall } from '../studio/transport/staffConnection.ts';
+import { createEngineCarrier, type EngineCarrier, type EngineSend } from './vendor/host/engine-carrier.ts';
 
 /** The panels' host API, once a screen has asked for one: kept, so a later install never takes it away. */
 let panelHost: unknown;
@@ -177,6 +178,7 @@ export interface ConnectedProblem {
     | 'NO_REGISTER'
     | 'KEY_MISMATCH'
     | 'NO_DISCLAIMER'
+    | 'NO_ENGINE_CLIENT'
     | 'MALFORMED';
   detail: string;
 }
@@ -372,6 +374,8 @@ export interface ConnectedOptions {
    * narrowed to when its attachments do not say which install they join.
    */
   allowed?: ReadonlySet<string>;
+  /** The signed-in person's CSRF token, read when a write is sent to the shipping routes. */
+  csrfToken?: () => string | null;
   /**
    * Injected for the suite. The default is the reason this file is declared in
    * `sources.test.ts`; see the header.
@@ -390,7 +394,46 @@ export interface ConnectedOptions {
  */
 interface BundleModule {
   register?: unknown;
+  connectEngineCarrier?: unknown;
+  OpenParcelsRefresh?: unknown;
 }
+
+const ENGINE_SHIPPING_PATH = /^\/api\/v1\/apps\/[^/]+\/shipping(?:\/|$)/;
+
+/**
+ * THE ONE WAY A CARRIER'S SCREENS REACH ADMINIUM. The kit's client names no
+ * sender, so this file, already the declared one, is its `send`: this origin
+ * and this app's shipping routes only, with the session cookie, the install
+ * header (`request` carries it) and the CSRF token on a write. A redirect is
+ * refused rather than followed, and nothing is retried: a purchase is asked
+ * for once. `blob` is how a label file is read.
+ */
+export function engineSend(request: typeof fetch, origin: string, csrfToken: () => string | null): EngineSend {
+  return async (path, init) => {
+    const target = new URL(path, origin);
+    if (target.origin !== new URL(origin).origin || !ENGINE_SHIPPING_PATH.test(target.pathname)) {
+      throw new Error("not one of this app's shipping routes");
+    }
+    const token = init.method === 'GET' ? null : csrfToken();
+    const res = await request(target.toString(), {
+      method: init.method,
+      credentials: 'same-origin',
+      redirect: 'error',
+      headers: { ...init.headers, ...(token === null ? {} : { 'x-adminium-csrf': token }) },
+      ...(init.body === undefined ? {} : { body: init.body }),
+    });
+    return { status: res.status, text: () => res.text(), blob: () => res.blob() };
+  };
+}
+
+/** Each carrier's client and the parts its bundle shares with the works' own screens, by add-on key. */
+const carrierClients = new Map<string, EngineCarrier>();
+const carrierRefresh = new Map<string, unknown>();
+
+/** The engine client of a carrier this page loaded; null when its bundle was built before real carriers. */
+export const engineClientOf = (key: string): EngineCarrier | null => carrierClients.get(key) ?? null;
+/** The carrier bundle's own "Refresh open parcels", when it exports one. */
+export const openParcelsRefreshOf = (key: string): unknown => carrierRefresh.get(key) ?? null;
 
 /**
  * Fetch the list, load what this host hosts, and hand back registered add-ons.
@@ -630,6 +673,19 @@ export async function loadConnectedAddOns(options: ConnectedOptions): Promise<Co
        */
       problems.push(refusal);
       continue;
+    }
+    // A carrier built on the shared kit takes this app's client for its shipping routes. An older bundle has no such
+    // export and stays as it was, so it can never reach a carrier from here.
+    if (typeof module.connectEngineCarrier === 'function') {
+      try {
+        const send = engineSend(request, origin, options.csrfToken ?? (() => null));
+        const client = createEngineCarrier({ send, appKey, addOnKey: addOn.key });
+        (module.connectEngineCarrier as (client: unknown) => void)(client);
+        carrierClients.set(addOn.key, client);
+        if (typeof module.OpenParcelsRefresh === 'function') carrierRefresh.set(addOn.key, module.OpenParcelsRefresh);
+      } catch (cause) {
+        problems.push({ key: dto.key, code: 'NO_ENGINE_CLIENT', detail: cause instanceof Error ? cause.message : String(cause) });
+      }
     }
     addOns.push(addOn);
   }

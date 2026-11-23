@@ -17,7 +17,7 @@ import "../styles/tokens.css";
 import "../styles/base.css";
 import "./works.css";
 
-import { createRegistry } from "../add-ons/host.ts";
+import { applyAddOnSettings, createRegistry } from "../add-ons/host.ts";
 import { loadConnectedAddOns } from "../add-ons/connected.ts";
 import { I18nProvider, useI18n } from "../i18n/index.tsx";
 import { resolveLocale } from "../i18n/locales.ts";
@@ -115,6 +115,8 @@ export async function bootWorks(mount: HTMLElement): Promise<void> {
   await reload(door);
   // DHL's dispatch flow, from the add-on Adminium has for this app: a broken add-on leaves its slot empty, never the works.
   // Only this install's: the config's add-ons are those attached to it, switched on and installed.
-  const loaded = await loadConnectedAddOns({ appKey: APP_KEY, origin: window.location.origin, installId: cfg.installId, allowed: new Set(Object.keys(cfg.addOns)) });
+  const loaded = await loadConnectedAddOns({ appKey: APP_KEY, origin: window.location.origin, installId: cfg.installId, allowed: new Set(Object.keys(cfg.addOns)), csrfToken: () => cfg.csrfToken });
+  // Each add-on told its saved settings before it draws: a carrier's demo switch is the shop's, never the default.
+  applyAddOnSettings(loaded.addOns, door.facts().addOnSettings);
   useWorks.setState({ registry: createRegistry(loaded.addOns) });
 }

@@ -190,8 +190,19 @@ export interface PostalAddress {
   lines: readonly string[];
   city: string;
   postcode: string;
+  /**
+   * The state, province or region, where the country has them (`OR`, `NSW`):
+   * printed after the city. Display text, never checked; OPTIONAL, because most
+   * countries' addresses have none and a host that keeps none passes nothing.
+   */
+  region?: string;
   /** ISO 3166-1 alpha-2. */
   country: string;
+  /** A business at this address, when there is one. */
+  company?: string;
+  /** Plain text, as the host holds it. Sent to a carrier only when the carrier needs it. */
+  phone?: string;
+  email?: string;
 }
 
 /**
@@ -342,6 +353,13 @@ export interface LineOrder {
  */
 export interface OutboundOrder {
   ref: string;
+  /**
+   * THE ROW THIS ORDER IS, for a real carrier (plan 79, D2). The engine reads the
+   * address, the lines and the value from this row itself, so nothing a screen
+   * holds can change what is bought. Optional because a host still on the demo
+   * has no use for it; without it, the real booking flow says the app needs updating.
+   */
+  source?: { table: string; id: string };
   recipient: Party;
   items: readonly SlotItem[];
   /** Where the shop sends from. Every shop has one. */
@@ -359,6 +377,13 @@ export interface OutboundOrder {
    * are one number; absent, the add-on works one out from the items.
    */
   parcelWeightGrams?: number;
+  /**
+   * WHAT THE CUSTOMER PAID FOR, in carrier-neutral terms (plan 79, D13 and R1).
+   * `label` is already translated. A service that may miss `maxDays`, is not
+   * tracked when this is, or states no speed asks for a deliberate confirm.
+   * Absent when the shop's orders keep no delivery promise.
+   */
+  deliveryPromise?: { label: string; maxDays?: number; tracked?: boolean };
 }
 
 // ── the eleven payloads ─────────────────────────────────────────────────────
@@ -499,6 +524,35 @@ export interface DispatchPayload extends SlotPayload {
    * picks as it always did. A whole `DeliveryChoice` fits here too.
    */
   chosen?: Pick<DeliveryChoice, 'addOn' | 'code'> | null;
+  /**
+   * THE BOOKING, HANDED BACK TO THE HOST.
+   *
+   * Called when a collection is booked for this order, and again when the
+   * panel opens on an order whose booking the add-on can find, so a host that
+   * came back to the order still hears of it. Whether a booking can be found
+   * again is the add-on's: DHL's demo carrier finds its own for the life of
+   * the page, and nothing more, so a host never relies on the second call. Before this a host could only draw the
+   * fill and give its staff a text box to retype the number into.
+   *
+   * `demo` says the number came from a stand-in carrier and belongs to no
+   * parcel. A host never stores or mails such a number as the order's
+   * tracking: it shows it, marked as the demo, and its staff type the real one.
+   * A host keeps a real number WITH the order's next move (shipped) in one
+   * write; a booking with no move leaves the order where it was.
+   *
+   * OPTIONAL: a host whose staff type the number passes nothing.
+   */
+  onBooked?: (booking: DispatchBooking) => void;
+}
+
+/** What a dispatch fill hands back once a collection is booked (`DispatchPayload.onBooked`). */
+export interface DispatchBooking {
+  /** The carrier's tracking number. */
+  tracking: string;
+  /** The service booked, in the carrier's words (`DHL Express Worldwide`). */
+  service: string;
+  /** Booked with a stand-in carrier: no parcel has this number. */
+  demo: boolean;
 }
 
 /** `settings.add-on.panel` — one add-on's own form inside the manage drawer. */

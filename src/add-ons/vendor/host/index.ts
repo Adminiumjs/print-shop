@@ -50,6 +50,7 @@ export type {
   CatalogueSample,
   CheckoutPayload,
   Dimensions,
+  DispatchBooking,
   DispatchPayload,
   HostProduct,
   LineOrder,

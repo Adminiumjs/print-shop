@@ -59,11 +59,11 @@ TARGETS=(host)
 # built add-on reads React from a global the host publishes, under a key the
 # contract names). `testing/` is not here and must not be.
 FILES_host=(
-  index.ts host.ts payloads.ts slots.ts delivery.ts
+  index.ts host.ts payloads.ts slots.ts delivery.ts engine-carrier.ts
   contracts/index.ts contracts/common.ts
   contracts/artwork-source.ts contracts/shipping-carrier.ts
   contracts/product-personalizer.ts contracts/document-render.ts
-  contracts/payment-provider.ts contracts/payment-money.ts
+  contracts/payment-provider.ts contracts/payment-money.ts contracts/card-terminal.ts
   runtime/index.ts
 )
 
