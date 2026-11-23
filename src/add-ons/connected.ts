@@ -397,6 +397,8 @@ interface BundleModule {
   register?: unknown;
   connectEngineCarrier?: unknown;
   OpenParcelsRefresh?: unknown;
+  CountriesPanel?: unknown;
+  CustomsDefaultsPanel?: unknown;
 }
 
 const ENGINE_SHIPPING_PATH = /^\/api\/v1\/apps\/[^/]+\/shipping(?:\/|$)/;
@@ -430,6 +432,8 @@ export function engineSend(request: typeof fetch, origin: string, csrfToken: () 
 /** Each carrier's client and the parts its bundle shares with the works' own screens, by add-on key. */
 const carrierClients = new Map<string, EngineCarrier>();
 const carrierRefresh = new Map<string, unknown>();
+const carrierCountries = new Map<string, unknown>();
+const carrierCustoms = new Map<string, unknown>();
 
 /** The engine client of a carrier this page loaded; null when its bundle was built before real carriers. */
 export const engineClientOf = (key: string): EngineCarrier | null => carrierClients.get(key) ?? null;
@@ -442,6 +446,10 @@ export const shippingSetup = () => setupSend;
 
 /** The carrier bundle's own "Refresh open parcels", when it exports one. */
 export const openParcelsRefreshOf = (key: string): unknown => carrierRefresh.get(key) ?? null;
+
+/** The carrier bundle's "Countries we deliver to" and "Customs defaults", when it exports them. */
+export const countriesPanelOf = (key: string): unknown => carrierCountries.get(key) ?? null;
+export const customsPanelOf = (key: string): unknown => carrierCustoms.get(key) ?? null;
 
 /**
  * Fetch the list, load what this host hosts, and hand back registered add-ons.
@@ -698,6 +706,8 @@ export async function loadConnectedAddOns(options: ConnectedOptions): Promise<Co
         (module.connectEngineCarrier as (client: unknown) => void)(client);
         carrierClients.set(addOn.key, client);
         if (typeof module.OpenParcelsRefresh === 'function') carrierRefresh.set(addOn.key, module.OpenParcelsRefresh);
+        if (typeof module.CountriesPanel === 'function') carrierCountries.set(addOn.key, module.CountriesPanel);
+        if (typeof module.CustomsDefaultsPanel === 'function') carrierCustoms.set(addOn.key, module.CustomsDefaultsPanel);
       } catch (cause) {
         problems.push({ key: dto.key, code: 'NO_ENGINE_CLIENT', detail: cause instanceof Error ? cause.message : String(cause) });
       }

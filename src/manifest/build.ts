@@ -58,9 +58,11 @@ export const VERSION = "0.2.6";
  * while the works takes payments online, or only while it does not
  * (`producers[].payments`), and tells the job ticket who gave money back and
  * why. 0.3.72 reads `shipping` below, so a real carrier can be asked about an
- * order, and a role's `shipping:@:*` rights on its labels.
+ * order, and a role's `shipping:@:*` rights on its labels. 0.3.74 reads where
+ * an order's goods are (`shipping.orders[].customs`), for a parcel going
+ * abroad, and leaves a cancelled job off the declaration.
  */
-export const MIN_ADMINIUM = "0.3.72";
+export const MIN_ADMINIUM = "0.3.74";
 
 /**
  * Where a carrier reads an order. The number and carrier of a bought label go
@@ -72,9 +74,24 @@ export const SHIPPING = {
     {
       table: "orders",
       reference: "number",
-      address: { name: "name", lines: ["address_line1", "address_line2"], city: "town", postcode: "postcode", country: "country" },
+      address: { name: "name", lines: ["address_line1", "address_line2"], city: "town", postcode: "postcode", country: "country", phone: "phone" },
       tracking: "label_tracking",
       carrier: "label_carrier",
+      // An order's goods are its jobs. A saved quote's lines are a price kept for later, and never in a parcel.
+      customs: {
+        lines: {
+          table: "jobs",
+          order: "order_id",
+          quantity: "qty",
+          // The job's whole price, tax and delivery aside: `each` is rounded to the penny and would misstate a long run.
+          lineTotal: "price",
+          description: "product_name",
+          unitWeight: "piece_grams",
+          weightUnit: "g",
+          product: { column: "product_id", table: "products", sku: "code" },
+          unlessSet: "cancelled_at",
+        },
+      },
     },
   ],
 };

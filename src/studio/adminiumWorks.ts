@@ -516,6 +516,28 @@ export class AdminiumWorks implements WorksDoor {
     return this.run(() => this.change("orders", order.id, values));
   }
 
+  countryPrices(): Promise<Readonly<Record<string, string>>> {
+    return this.run(async () => {
+      const rows = await this.list("delivery_countries");
+      return Object.fromEntries(rows.filter((row) => row["active"] === true || row["active"] === 1).map((row) => [String(row["code"]), String(row["price"])]));
+    });
+  }
+
+  saveCountryPrice(country: string, amount: string): Promise<void> {
+    return this.run(async () => {
+      const row = (await this.list("delivery_countries")).find((one) => one["code"] === country);
+      if (row === undefined) await this.create("delivery_countries", { code: country, price: amount, active: true });
+      else await this.change("delivery_countries", row.id, { price: amount, active: true });
+    });
+  }
+
+  removeCountryPrice(country: string): Promise<void> {
+    return this.run(async () => {
+      const row = (await this.list("delivery_countries")).find((one) => one["code"] === country);
+      if (row !== undefined) await this.change("delivery_countries", row.id, { active: false });
+    });
+  }
+
   /** What the files route answers for the proofs' `file` column: the value the row stores. */
   private async storeFile(file: ProofFile): Promise<string> {
     const conn = await this.conn();

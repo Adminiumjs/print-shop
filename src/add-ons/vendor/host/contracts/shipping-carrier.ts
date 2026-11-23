@@ -130,6 +130,22 @@ export interface CustomsItem {
   manufacturerCode?: string;
 }
 
+/** The kinds of exporter tax number a declaration can state. An IOSS number has its own field. */
+export const CUSTOMS_TAX_ID_TYPES = ['EIN', 'VAT', 'ARN'] as const;
+export type CustomsTaxIdType = (typeof CUSTOMS_TAX_ID_TYPES)[number];
+
+/** A US export filing exemption. It is a legal statement, so it is only ever sent when a shop chose it. */
+export const CUSTOMS_FILING_CODES = ['NOEEI_30_37_a', 'NOEEI_30_37_h', 'NOEEI_30_37_f', 'NOEEI_30_36'] as const;
+export type CustomsFilingCode = (typeof CUSTOMS_FILING_CODES)[number];
+
+/** The shop's own export numbers. Each is optional, and is stated only when the shop entered it. */
+export interface CustomsExporter {
+  eori?: string;
+  /** Only on a parcel into the EU whose VAT was collected at checkout. */
+  ioss?: string;
+  taxId?: { type: CustomsTaxIdType; number: string };
+}
+
 export interface CustomsDeclaration {
   contents: CustomsContents;
   /** The named person who declares the values are true. */
@@ -138,6 +154,8 @@ export interface CustomsDeclaration {
   certified: true;
   nonDelivery: 'return' | 'abandon';
   items: CustomsItem[];
+  exporter?: CustomsExporter;
+  filingCode?: CustomsFilingCode;
 }
 
 export interface QuoteOptions {

@@ -4,11 +4,13 @@
  * never by a role's name. A half-filled address saves: a missing field stops a
  * quote, not a save. The works' country is also what a new order starts from.
  */
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentType, type FormEvent, type KeyboardEvent } from "react";
 
+import { countriesPanelOf, customsPanelOf } from "../../add-ons/connected.ts";
+import type { EngineCarrier } from "../../add-ons/vendor/host/engine-carrier.ts";
 import { useData, useEnv, useRun } from "../env.tsx";
 import { worksAddress } from "../outbound.ts";
-import { chooseCarrier, COUNTRIES, countryName, readShipping, saveShipFrom, ShippingRefused, type ShipFromValues, type ShippingStatus } from "../shipping.ts";
+import { carrierClient, chooseCarrier, COUNTRIES, countryName, readShipping, saveShipFrom, ShippingRefused, type ShipFromValues, type ShippingStatus } from "../shipping.ts";
 import { toast } from "../store.ts";
 import { text } from "../wire.ts";
 import { useI18n, useT, type MessageKey } from "../../i18n/index.tsx";
@@ -24,6 +26,19 @@ const FIELDS: { field: Field; label: MessageKey; type?: string; auto: string }[]
   { field: "email", label: "works.shipFrom.email", type: "email", auto: "email" },
 ];
 
+/** Where the kit's Countries panel reads and writes each country's price: the works' own table, through its door. */
+interface CountryPriceStore {
+  read(): Promise<Readonly<Record<string, string>>>;
+  save(country: string, amount: string): Promise<void>;
+  remove(country: string): Promise<void>;
+}
+type CountriesPanel = ComponentType<{ client: EngineCarrier; prices: CountryPriceStore; currency: string; onOpenCustoms?: () => void }>;
+type CustomsPanel = ComponentType<{ client: EngineCarrier; currency: string }>;
+
+const TABS = ["from", "countries", "customs"] as const;
+type Tab = (typeof TABS)[number];
+const TAB_WORDS: Record<Tab, MessageKey> = { from: "works.shipFrom.tabFrom", countries: "works.shipFrom.tabCountries", customs: "works.shipFrom.tabCustoms" };
+
 export function ShipFromScreen() {
   const t = useT();
   const { locale } = useI18n();
@@ -34,6 +49,13 @@ export function ShipFromScreen() {
   const [refused, setRefused] = useState(false);
   const [form, setForm] = useState<Record<Field, string> | null>(null);
   const [pick, setPick] = useState("");
+  const [tab, setTab] = useState<Tab>("from");
+  const tabRefs = useRef<Partial<Record<Tab, HTMLButtonElement | null>>>({});
+  const facts = door.facts();
+  const client = carrierClient(facts.carrier);
+  const Countries = facts.carrier === null ? null : (countriesPanelOf(facts.carrier.key) as CountriesPanel | null);
+  const Customs = facts.carrier === null ? null : (customsPanelOf(facts.carrier.key) as CustomsPanel | null);
+  const prices = useMemo<CountryPriceStore>(() => ({ read: () => door.countryPrices(), save: (country, amount) => door.saveCountryPrice(country, amount), remove: (country) => door.removeCountryPrice(country) }), [door]);
 
   useEffect(() => {
     let live = true;
@@ -107,13 +129,64 @@ export function ShipFromScreen() {
     );
   };
 
+  const openTab = (next: Tab) => {
+    setTab(next);
+    tabRefs.current[next]?.focus();
+  };
+  const onTabKey = (event: KeyboardEvent<HTMLButtonElement>) => {
+    const at = TABS.indexOf(tab);
+    const rtl = getComputedStyle(event.currentTarget).direction === "rtl";
+    const forward = rtl ? "ArrowLeft" : "ArrowRight";
+    const back = rtl ? "ArrowRight" : "ArrowLeft";
+    const to = event.key === forward ? TABS[(at + 1) % TABS.length] : event.key === back ? TABS[(at + TABS.length - 1) % TABS.length] : event.key === "Home" ? TABS[0] : event.key === "End" ? TABS[TABS.length - 1] : undefined;
+    if (to === undefined) return;
+    event.preventDefault();
+    openTab(to);
+  };
+
   return (
-    <section className="wk-screen wk-narrow" aria-labelledby="wk-shipfrom-title">
+    <section className={`wk-screen ${tab === "from" ? "wk-narrow" : "wk-shipping-wide"}`} aria-labelledby="wk-shipfrom-title">
       <h1 className="wk-h1" id="wk-shipfrom-title">
         {t("works.shipFrom.title")}
       </h1>
       <p className="wk-lede">{t("works.shipFrom.lede")}</p>
 
+      <div role="tablist" aria-label={t("works.shipFrom.tabs")} className="wk-tabs">
+        {TABS.map((one) => (
+          <button
+            key={one}
+            ref={(el) => {
+              tabRefs.current[one] = el;
+            }}
+            type="button"
+            role="tab"
+            id={`wk-shipping-tab-${one}`}
+            aria-selected={tab === one}
+            aria-controls={`wk-shipping-panel-${one}`}
+            tabIndex={tab === one ? 0 : -1}
+            className="wk-tab"
+            onClick={() => setTab(one)}
+            onKeyDown={onTabKey}
+          >
+            {t(TAB_WORDS[one])}
+          </button>
+        ))}
+      </div>
+
+      {tab !== "from" && (
+        <div role="tabpanel" id={`wk-shipping-panel-${tab}`} aria-labelledby={`wk-shipping-tab-${tab}`} className="wk-tabpanel">
+          {client === null || Countries === null || Customs === null ? (
+            <p className="wk-panel wk-muted">{t("works.shipFrom.abroadOff")}</p>
+          ) : tab === "countries" ? (
+            <Countries client={client} prices={prices} currency={facts.currency} onOpenCustoms={() => openTab("customs")} />
+          ) : (
+            <Customs client={client} currency={facts.currency} />
+          )}
+        </div>
+      )}
+
+      {tab === "from" && (
+        <div role="tabpanel" id="wk-shipping-panel-from" aria-labelledby="wk-shipping-tab-from" className="wk-tabpanel">
       <div className="wk-panel">
         <h2 className="wk-panel-head wk-panel-head--small">{t("works.shipFrom.carrier")}</h2>
         {status.carriers.length === 0 ? (
@@ -165,6 +238,8 @@ export function ShipFromScreen() {
           {t("works.shipFrom.save")}
         </button>
       </form>
+        </div>
+      )}
     </section>
   );
 }

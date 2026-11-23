@@ -8,6 +8,14 @@
 import type { Translation } from "./labels.ts";
 
 export const WORDS: Record<string, Translation> = {
+  "Country code": { "de-DE": "Ländercode", "fr-FR": "Code pays", "da-DK": "Landekode", "cs-CZ": "Kód země", "ar-EG": "رمز البلد", "zh-CN": "国家代码", "zh-TW": "國家代碼" },
+  "Delivering to": { "de-DE": "Lieferung nach", "fr-FR": "Livraison vers", "da-DK": "Levering til", "cs-CZ": "Doručení do", "ar-EG": "التوصيل إلى", "zh-CN": "配送至", "zh-TW": "配送至" },
+  "Delivery countries": { "de-DE": "Lieferländer", "fr-FR": "Pays de livraison", "da-DK": "Leveringslande", "cs-CZ": "Země doručení", "ar-EG": "بلدان التوصيل", "zh-CN": "配送国家", "zh-TW": "配送國家" },
+  "Delivery country": { "de-DE": "Lieferland", "fr-FR": "Pays de livraison", "da-DK": "Leveringsland", "cs-CZ": "Země doručení", "ar-EG": "بلد التوصيل", "zh-CN": "配送国家", "zh-TW": "配送國家" },
+  "Delivery price": { "de-DE": "Lieferpreis", "fr-FR": "Prix de livraison", "da-DK": "Leveringspris", "cs-CZ": "Cena doručení", "ar-EG": "سعر التوصيل", "zh-CN": "配送价格", "zh-TW": "配送價格" },
+  "Delivery price to that country": { "de-DE": "Lieferpreis in dieses Land", "fr-FR": "Prix de livraison vers ce pays", "da-DK": "Leveringspris til det land", "cs-CZ": "Cena doručení do této země", "ar-EG": "سعر التوصيل إلى ذلك البلد", "zh-CN": "配送到该国的价格", "zh-TW": "配送到該國的價格" },
+  "Going abroad": { "de-DE": "Geht ins Ausland", "fr-FR": "Part à l’étranger", "da-DK": "Sendes til udlandet", "cs-CZ": "Jde do zahraničí", "ar-EG": "يُشحن إلى الخارج", "zh-CN": "寄往国外", "zh-TW": "寄往國外" },
+  "Net weight a piece (g)": { "de-DE": "Nettogewicht je Stück (g)", "fr-FR": "Poids net par pièce (g)", "da-DK": "Nettovægt pr. stk. (g)", "cs-CZ": "Čistá hmotnost za kus (g)", "ar-EG": "الوزن الصافي للقطعة (جم)", "zh-CN": "每件净重（克）", "zh-TW": "每件淨重（克）" },
   "A canvas frame weighs (g)": { "de-DE": "Gewicht eines Keilrahmens (g)", "fr-FR": "Poids d’un châssis de toile (g)", "da-DK": "En lærredsramme vejer (g)", "cs-CZ": "Hmotnost rámu na plátno (g)", "ar-EG": "وزن إطار الكانفاس (غ)", "zh-CN": "画布框重量（克）", "zh-TW": "畫布框重量（公克）" },
   "A change asked adds (working days)": { "de-DE": "Eine gewünschte Änderung verlängert um (Arbeitstage)", "fr-FR": "Une modification demandée ajoute (jours ouvrés)", "da-DK": "En ønsket ændring lægger til (arbejdsdage)", "cs-CZ": "Žádost o změnu přidá (pracovní dny)", "ar-EG": "كل تعديل مطلوب يضيف (أيام عمل)", "zh-CN": "每次修改增加（工作日）", "zh-TW": "每次修改增加（工作天）" },
   "A frame weighs (g)": { "de-DE": "Gewicht eines Rahmens (g)", "fr-FR": "Poids d’un châssis (g)", "da-DK": "En ramme vejer (g)", "cs-CZ": "Hmotnost rámu (g)", "ar-EG": "وزن الإطار (غ)", "zh-CN": "画框重量（克）", "zh-TW": "畫框重量（公克）" },

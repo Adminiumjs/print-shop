@@ -238,6 +238,8 @@ export const SETTINGS_SELECT = [
   "hours",
   "about",
   "tax_rate",
+  // The works' own country: the checkout names it beside the countries listed.
+  "home_country",
   "setup",
   "standard_days",
   "express_days",
@@ -290,6 +292,7 @@ export const PUBLIC_ACCESS = [
   { table: "breaks", methods: ["GET"], select: ["id", "min_qty", "multiplier"] },
   { table: "packaging", methods: ["GET"], select: ["id", "code", "name", "basis", "price", "product_kind", "position"], filters: [{ column: "active", op: "eq", value: true }] },
   { table: "delivery_bands", methods: ["GET"], select: ["id", "code", "name", "tube", "min_kg", "max_kg", "price", "position"] },
+  { table: "delivery_countries", methods: ["GET"], select: ["id", "code", "price"], filters: [{ column: "active", op: "eq", value: true }] },
   { table: "option_rules", methods: ["GET"], select: ["id", "finish_group", "test", "gsm", "reason", "position"], filters: [{ column: "active", op: "eq", value: true }] },
   {
     table: "closures",
@@ -309,7 +312,7 @@ export const PUBLIC_ACCESS = [
     humanCheck: true,
     level: "verified",
     select: PLACED_SELECT,
-    writable: ["name", "email", "address_line1", "address_line2", "town", "postcode", "language", "delivery_method", "client_key", "may_email"],
+    writable: ["name", "email", "address_line1", "address_line2", "town", "postcode", "delivery_country_id", "phone", "language", "delivery_method", "client_key", "may_email"],
     requires: ["name", "email", "delivery_method"],
     requireSetting: [{ table: "settings", column: "taking_orders" }],
     claimedBy: { table: "customers", column: "customer_id", optional: true },
@@ -435,6 +438,7 @@ export const PUBLIC_REFS = {
   breaks: "printing_breaks",
   packaging: "printing_packaging",
   deliveryBands: "printing_delivery_bands",
+  deliveryCountries: "printing_delivery_countries",
   optionRules: "printing_option_rules",
   closures: "printing_closures",
   settings: "printing_settings",

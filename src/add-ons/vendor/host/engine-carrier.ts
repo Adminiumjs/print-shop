@@ -42,10 +42,12 @@
 
 import {
   CARRIER_REFUSALS,
+  CUSTOMS_TAX_ID_TYPES,
   CarrierError,
   HANDOVER_KINDS,
   type CarrierOutcome,
   type CarrierRefusal,
+  type CustomsTaxIdType,
   type HandoverKind,
   type ShipmentDocumentKind,
   type ShipmentPurpose,
@@ -54,7 +56,7 @@ import {
 // ── what the app hands in ───────────────────────────────────────────────────
 
 export interface EngineRequest {
-  method: 'GET' | 'POST';
+  method: 'GET' | 'POST' | 'PUT';
   headers: Record<string, string>;
   body?: string;
 }
@@ -98,6 +100,10 @@ export interface EngineAccess {
   mayBook: boolean;
   mayCancel: boolean;
   mayCustoms: boolean;
+  /** May send a parcel abroad and see what it declares. False from an engine older than customs. */
+  mayShipAbroad: boolean;
+  /** The shop has listed a country abroad. While false, nothing about customs is drawn or asked for. */
+  shipsAbroad: boolean;
   pricesHidden: boolean;
   booking: 'open' | 'no-limit' | 'daily-limit' | 'no-right';
   usedToday?: number;
@@ -150,6 +156,8 @@ export interface EngineLabel {
   sizeGot: string | null;
   sizeDiffers: boolean;
   customsInvoice: boolean;
+  /** The carrier made a customs invoice and it has not been stored yet: a person retries. */
+  customsInvoiceOwed: boolean;
 }
 
 export type EngineTrackStatus = 'UNKNOWN' | 'PRE_TRANSIT' | 'TRANSIT' | 'FAILURE' | 'RETURNED' | 'DELIVERED';
@@ -276,6 +284,103 @@ export interface EngineQuoteRequest {
   parcelNumber?: number;
   /** The approved return a return label is for. The engine works out its place. */
   returnId?: string;
+  /** A parcel going abroad: a person's tick, and the corrections they made. Values stay the order's. */
+  customs?: EngineCustomsTick;
+}
+
+export interface EngineCustomsEdit {
+  line: string;
+  description?: string;
+  hsCode?: string;
+  manufacturerCode?: string;
+}
+
+export interface EngineCustomsTick {
+  certified: true;
+  lines?: EngineCustomsEdit[];
+}
+
+/** One line of an order's customs form. Quantity, value and origin are the order's, and read-only. */
+export interface EngineCustomsLine {
+  line: string;
+  description: string | null;
+  quantity: number | null;
+  unitValue: string | null;
+  originCountry: string;
+  hsCode?: string;
+  skuCode?: string;
+  manufacturerCode?: string;
+}
+
+export const ENGINE_CUSTOMS_FAULTS = ['lines', 'description', 'quantity', 'unitValue', 'currency', 'originCountry', 'weight'] as const;
+export type EngineCustomsFault = (typeof ENGINE_CUSTOMS_FAULTS)[number];
+export const ENGINE_CUSTOMS_WARNINGS = ['hsCode', 'skuCode', 'manufacturerCode'] as const;
+export type EngineCustomsWarning = (typeof ENGINE_CUSTOMS_WARNINGS)[number];
+
+export type EngineCustomsForm =
+  | { abroad: false }
+  | { abroad: true; offered: false; to: string }
+  | {
+      abroad: true;
+      offered: true;
+      ownCountry: string;
+      to: string;
+      /** The official code list for the shop's country, where the engine knows one. */
+      codeListUrl: string | null;
+      /** Null when the person named no longer holds the customs right. */
+      signer: string | null;
+      currency: string | null;
+      lines: EngineCustomsLine[];
+      faults: { line?: string; field: EngineCustomsFault }[];
+      warnings: { line: string; field: EngineCustomsWarning }[];
+    };
+
+export interface EngineCustomsProduct {
+  sku: string;
+  hsCode?: string;
+  originCountry?: string;
+  manufacturerCode?: string;
+}
+
+/** The shop's export numbers. Blank removes one, and leaving the whole field out keeps them. */
+export interface EngineExporter {
+  eori?: string;
+  ioss?: string;
+  taxId?: { type: CustomsTaxIdType; number: string };
+}
+
+/** A shop's countries and customs defaults, for someone who manages shipping. */
+export interface EngineInternational {
+  /** The shop's own country, once Ship from has one. */
+  ownCountry: string | null;
+  /** The official code list for that country, where the engine knows one. */
+  codeListUrl: string | null;
+  /** True once a country is listed and the app says where an order's goods are. */
+  shipsAbroad: boolean;
+  /** Nothing saved yet. */
+  settings: {
+    countries: string[];
+    currency: string;
+    originCountry: string;
+    description?: string;
+    hsCode?: string;
+    signerId: string;
+    /** Null when the person named no longer holds the customs right. */
+    signerName: string | null;
+    products: EngineCustomsProduct[];
+    exporter?: EngineExporter;
+  } | null;
+}
+
+export interface EngineInternationalBody {
+  countries: string[];
+  currency: string;
+  originCountry: string;
+  description?: string;
+  hsCode?: string;
+  signerId?: string;
+  products?: EngineCustomsProduct[];
+  exporter?: EngineExporter;
 }
 
 export interface EngineBookingsQuery {
@@ -320,6 +425,13 @@ export interface EngineCarrier {
   refreshOpenParcels(): Promise<EngineRefreshOpen>;
   /** The labels that need a person. Reads what is stored: no carrier is asked. */
   attention(): Promise<EngineAttention>;
+  /** One order's customs form, filled in from the order. Needs the right to send it abroad. */
+  customsForm(source: { table: string; id: string }): Promise<EngineCustomsForm>;
+  /** The shop's countries and customs defaults. For someone who manages shipping. */
+  international(): Promise<EngineInternational>;
+  saveInternational(body: EngineInternationalBody): Promise<EngineInternational>;
+  /** Who may be named on a declaration: only people holding the customs right. */
+  customsSigners(): Promise<{ id: string; name: string }[]>;
 }
 
 // ── failures ────────────────────────────────────────────────────────────────
@@ -340,6 +452,8 @@ export class EngineCarrierError extends CarrierError {
   readonly booking?: EngineBooking;
   /** The engine's own word for why, such as `over-limit` or `daily-limit`. */
   readonly refusalDetail?: string;
+  /** Which fields stopped it, when the engine names them: `phone`, `weight` and the like. */
+  readonly refusalFields?: readonly string[];
 
   constructor(opts: {
     code: string;
@@ -351,6 +465,7 @@ export class EngineCarrierError extends CarrierError {
     retryAfterSeconds?: number;
     booking?: EngineBooking;
     refusalDetail?: string;
+    refusalFields?: readonly string[];
   }) {
     super({
       code: opts.code,
@@ -363,6 +478,7 @@ export class EngineCarrierError extends CarrierError {
     if (opts.retryAfterSeconds !== undefined) this.retryAfterSeconds = opts.retryAfterSeconds;
     if (opts.booking !== undefined) this.booking = opts.booking;
     if (opts.refusalDetail !== undefined) this.refusalDetail = opts.refusalDetail;
+    if (opts.refusalFields !== undefined) this.refusalFields = opts.refusalFields;
   }
 }
 
@@ -399,6 +515,14 @@ const REFUSED_BEFORE_BUYING: ReadonlySet<string> = new Set([
   'ADDRESS_INCOMPLETE',
   'COUNTRY_NOT_RECORDED',
   'OUTSIDE_OWN_COUNTRY',
+  'COUNTRY_NOT_OFFERED',
+  'CUSTOMS_NOT_DECLARED',
+  'CUSTOMS_NOT_CONFIRMED',
+  'CUSTOMS_NOT_NEEDED',
+  'CUSTOMS_INCOMPLETE',
+  'CUSTOMS_ONE_PARCEL',
+  'CUSTOMS_SIGNER',
+  'ORDER_CANCELLED',
   'OWNER_BOOKS',
   'QUOTE_EXPIRED',
   'QUOTE_STALE',
@@ -411,6 +535,13 @@ const REASON_OF_CODE: Readonly<Record<string, CarrierRefusal>> = {
   ADDRESS_INCOMPLETE: 'address',
   COUNTRY_NOT_RECORDED: 'address',
   OUTSIDE_OWN_COUNTRY: 'address',
+  COUNTRY_NOT_OFFERED: 'address',
+  CUSTOMS_NOT_DECLARED: 'customs',
+  CUSTOMS_NOT_CONFIRMED: 'customs',
+  CUSTOMS_NOT_NEEDED: 'customs',
+  CUSTOMS_INCOMPLETE: 'customs',
+  CUSTOMS_ONE_PARCEL: 'customs',
+  CUSTOMS_SIGNER: 'customs',
   CARRIER_NO_CREDENTIAL: 'credentials',
   CARRIER_NOT_CHECKED: 'credentials',
   QUOTE_EXPIRED: 'rate-expired',
@@ -507,6 +638,7 @@ function readLabel(read: Reader, value: unknown): EngineLabel {
     sizeGot: read.orNull(raw, 'sizeGot', read.text),
     sizeDiffers: read.flag(raw, 'sizeDiffers'),
     customsInvoice: read.flag(raw, 'customsInvoice'),
+    customsInvoiceOwed: read.maybe(raw, 'customsInvoiceOwed', read.flag) ?? false,
   };
 }
 
@@ -643,10 +775,102 @@ function readAccess(read: Reader, value: unknown, addOnKey: string): EngineAcces
     mayBook: read.flag(raw, 'mayBook'),
     mayCancel: read.flag(raw, 'mayCancel'),
     mayCustoms: read.flag(raw, 'mayCustoms'),
+    mayShipAbroad: read.maybe(raw, 'mayShipAbroad', read.flag) ?? false,
+    shipsAbroad: read.maybe(raw, 'shipsAbroad', read.flag) ?? false,
     pricesHidden: read.flag(raw, 'pricesHidden'),
     booking: read.oneOf(raw, 'booking', BOOKING_ROOM),
     ...optional('usedToday', read.maybe(raw, 'usedToday', read.number)),
     ...optional('dailyLabels', read.maybe(raw, 'dailyLabels', read.number)),
+  };
+}
+
+/** A link to open in a new tab: https only, whatever the reply held. */
+function readCodeList(read: Reader, raw: Fields): string | null {
+  const url = read.maybe(raw, 'codeListUrl', (from, key) => read.orNull(from, key, read.text)) ?? null;
+  return url !== null && url.startsWith('https://') ? url : null;
+}
+
+function readCustomsLine(read: Reader, value: unknown): EngineCustomsLine {
+  const raw = read.object(value);
+  return {
+    line: read.text(raw, 'line'),
+    description: read.orNull(raw, 'description', read.text),
+    quantity: read.orNull(raw, 'quantity', read.number),
+    unitValue: read.orNull(raw, 'unitValue', read.text),
+    originCountry: read.text(raw, 'originCountry'),
+    ...optional('hsCode', read.maybe(raw, 'hsCode', read.text)),
+    ...optional('skuCode', read.maybe(raw, 'skuCode', read.text)),
+    ...optional('manufacturerCode', read.maybe(raw, 'manufacturerCode', read.text)),
+  };
+}
+
+function readCustomsForm(read: Reader, value: unknown): EngineCustomsForm {
+  const raw = read.object(value);
+  if (!read.flag(raw, 'abroad')) return { abroad: false };
+  if (!read.flag(raw, 'offered')) return { abroad: true, offered: false, to: read.text(raw, 'to') };
+  return {
+    abroad: true,
+    offered: true,
+    ownCountry: read.text(raw, 'ownCountry'),
+    to: read.text(raw, 'to'),
+    codeListUrl: readCodeList(read, raw),
+    signer: read.orNull(raw, 'signer', read.text),
+    currency: read.orNull(raw, 'currency', read.text),
+    lines: read.list(raw.lines).map((line) => readCustomsLine(read, line)),
+    faults: read.list(raw.problems).map((item) => {
+      const fault = read.object(item);
+      return { ...optional('line', read.maybe(fault, 'line', read.text)), field: read.oneOf(fault, 'field', ENGINE_CUSTOMS_FAULTS) };
+    }),
+    warnings: read.list(raw.warnings).map((item) => {
+      const warning = read.object(item);
+      return { line: read.text(warning, 'line'), field: read.oneOf(warning, 'field', ENGINE_CUSTOMS_WARNINGS) };
+    }),
+  };
+}
+
+function readCustomsProduct(read: Reader, value: unknown): EngineCustomsProduct {
+  const raw = read.object(value);
+  return {
+    sku: read.text(raw, 'sku'),
+    ...optional('hsCode', read.maybe(raw, 'hsCode', read.text)),
+    ...optional('originCountry', read.maybe(raw, 'originCountry', read.text)),
+    ...optional('manufacturerCode', read.maybe(raw, 'manufacturerCode', read.text)),
+  };
+}
+
+function readExporter(read: Reader, value: unknown): EngineExporter {
+  const raw = read.object(value);
+  const tax = raw.taxId === undefined ? undefined : read.object(raw.taxId);
+  return {
+    ...optional('eori', read.maybe(raw, 'eori', read.text)),
+    ...optional('ioss', read.maybe(raw, 'ioss', read.text)),
+    ...(tax === undefined ? {} : { taxId: { type: read.oneOf(tax, 'type', CUSTOMS_TAX_ID_TYPES), number: read.text(tax, 'number') } }),
+  };
+}
+
+/** Field by field from the shop's status: its keys and limits never reach a screen through this. */
+function readInternational(read: Reader, value: unknown): EngineInternational {
+  const raw = read.object(value);
+  const shipFrom = raw.shipFrom === null || raw.shipFrom === undefined ? null : read.object(raw.shipFrom);
+  const customs = raw.customs === null || raw.customs === undefined ? null : read.object(raw.customs);
+  return {
+    ownCountry: shipFrom === null ? null : (read.maybe(shipFrom, 'country', read.text) ?? null),
+    codeListUrl: readCodeList(read, raw),
+    shipsAbroad: read.flag(raw, 'international'),
+    settings:
+      customs === null
+        ? null
+        : {
+            countries: read.list(customs.countries).map((one) => read.text({ one }, 'one')),
+            currency: read.text(customs, 'currency'),
+            originCountry: read.text(customs, 'originCountry'),
+            ...optional('description', read.maybe(customs, 'description', read.text)),
+            ...optional('hsCode', read.maybe(customs, 'hsCode', read.text)),
+            signerId: read.text(customs, 'signerId'),
+            signerName: read.orNull(customs, 'signerName', read.text),
+            products: read.list(customs.products).map((one) => readCustomsProduct(read, one)),
+            ...(customs.exporter === undefined ? {} : { exporter: readExporter(read, customs.exporter) }),
+          },
   };
 }
 
@@ -677,6 +901,10 @@ function refusalFrom(status: number, body: unknown, buying: boolean): EngineCarr
   const carrierReason = (CARRIER_REFUSALS as readonly unknown[]).includes(said) ? (said as CarrierRefusal) : undefined;
   const reason = carrierReason ?? (code === null ? undefined : REASON_OF_CODE[code]);
   const after = details?.retryAfterSeconds;
+  const named = [
+    ...(Array.isArray(details?.fields) ? details.fields : []),
+    ...(Array.isArray(details?.problems) ? details.problems.map((one) => fieldsOf(one)?.field) : []),
+  ].filter((one): one is string => typeof one === 'string');
 
   return new EngineCarrierError({
     code: code ?? ENGINE_BAD_ANSWER,
@@ -688,6 +916,7 @@ function refusalFrom(status: number, body: unknown, buying: boolean): EngineCarr
     ...optional('retryAfterSeconds', typeof after === 'number' && Number.isFinite(after) ? after : undefined),
     ...optional('booking', booking),
     ...optional('refusalDetail', typeof said === 'string' && carrierReason === undefined ? scrubCredentials(said) : undefined),
+    ...optional('refusalFields', named.length === 0 ? undefined : named),
   });
 }
 
@@ -698,7 +927,7 @@ export function createEngineCarrier(options: EngineCarrierOptions): EngineCarrie
   const base = `/api/v1/apps/${encodeURIComponent(appKey)}/shipping`;
 
   /** One request, one answer. A transport's own error is dropped: it can quote the request it failed on. */
-  async function ask(method: 'GET' | 'POST', path: string, body: unknown, buying: boolean): Promise<unknown> {
+  async function ask(method: EngineRequest['method'], path: string, body: unknown, buying: boolean): Promise<unknown> {
     const noAnswer = () =>
       new EngineCarrierError({
         code: ENGINE_NO_ANSWER,
@@ -754,6 +983,23 @@ export function createEngineCarrier(options: EngineCarrierOptions): EngineCarrie
         ...optional('purpose', request.purpose),
         ...optional('returnId', request.returnId),
         ...optional('parcelNumber', request.parcelNumber),
+        ...(request.customs === undefined
+          ? {}
+          : {
+              customs: {
+                certified: true as const,
+                ...(request.customs.lines === undefined
+                  ? {}
+                  : {
+                      lines: request.customs.lines.map((one) => ({
+                        line: one.line,
+                        ...optional('description', one.description),
+                        ...optional('hsCode', one.hsCode),
+                        ...optional('manufacturerCode', one.manufacturerCode),
+                      })),
+                    }),
+              },
+            }),
       };
       const quote = readQuote(reader(false), await ask('POST', '/quotes', body, false));
       if (quote.carrier !== addOnKey) {
@@ -878,6 +1124,55 @@ export function createEngineCarrier(options: EngineCarrierOptions): EngineCarrie
         items: read.list(raw.items).map((item) => readAttentionItem(read, item)),
         more: read.flag(raw, 'more'),
       };
+    },
+
+    async customsForm(source) {
+      const params = new URLSearchParams({ table: source.table, id: source.id });
+      return readCustomsForm(reader(false), await ask('GET', `/customs?${params.toString()}`, undefined, false));
+    },
+
+    async international() {
+      return readInternational(reader(false), await ask('GET', '', undefined, false));
+    },
+
+    async saveInternational(body) {
+      const sent = {
+        countries: body.countries,
+        currency: body.currency,
+        originCountry: body.originCountry,
+        ...optional('description', body.description),
+        ...optional('hsCode', body.hsCode),
+        ...optional('signerId', body.signerId),
+        ...(body.products === undefined
+          ? {}
+          : {
+              products: body.products.map((one) => ({
+                sku: one.sku,
+                ...optional('hsCode', one.hsCode),
+                ...optional('originCountry', one.originCountry),
+                ...optional('manufacturerCode', one.manufacturerCode),
+              })),
+            }),
+        ...(body.exporter === undefined
+          ? {}
+          : {
+              exporter: {
+                ...optional('eori', body.exporter.eori),
+                ...optional('ioss', body.exporter.ioss),
+                ...(body.exporter.taxId === undefined ? {} : { taxId: { type: body.exporter.taxId.type, number: body.exporter.taxId.number } }),
+              },
+            }),
+      };
+      return readInternational(reader(false), await ask('PUT', '/international', sent, false));
+    },
+
+    async customsSigners() {
+      const read = reader(false);
+      const raw = read.object(await ask('GET', '/customs/signers', undefined, false));
+      return read.list(raw.signers).map((one) => {
+        const signer = read.object(one);
+        return { id: read.text(signer, 'id'), name: read.text(signer, 'name') };
+      });
     },
   };
 }

@@ -18,7 +18,7 @@
     "commerce"
   ],
   "compatibility": {
-    "minAdminiumVersion": "0.3.72",
+    "minAdminiumVersion": "0.3.74",
     "engines": [
       "sqlite",
       "postgres",
@@ -284,10 +284,28 @@
           ],
           "city": "town",
           "postcode": "postcode",
-          "country": "country"
+          "country": "country",
+          "phone": "phone"
         },
         "tracking": "label_tracking",
-        "carrier": "label_carrier"
+        "carrier": "label_carrier",
+        "customs": {
+          "lines": {
+            "table": "jobs",
+            "order": "order_id",
+            "quantity": "qty",
+            "lineTotal": "price",
+            "description": "product_name",
+            "unitWeight": "piece_grams",
+            "weightUnit": "g",
+            "product": {
+              "column": "product_id",
+              "table": "products",
+              "sku": "code"
+            },
+            "unlessSet": "cancelled_at"
+          }
+        }
       }
     ]
   },
@@ -2344,6 +2362,91 @@
               "zh-TW": "排序"
             },
             "nullable": true
+          }
+        ]
+      },
+      {
+        "ref": "delivery_countries",
+        "label": {
+          "en-US": "Delivery country",
+          "de-DE": "Lieferland",
+          "fr-FR": "Pays de livraison",
+          "da-DK": "Leveringsland",
+          "cs-CZ": "Země doručení",
+          "ar-EG": "بلد التوصيل",
+          "zh-CN": "配送国家",
+          "zh-TW": "配送國家"
+        },
+        "labelPlural": {
+          "en-US": "Delivery countries",
+          "de-DE": "Lieferländer",
+          "fr-FR": "Pays de livraison",
+          "da-DK": "Leveringslande",
+          "cs-CZ": "Země doručení",
+          "ar-EG": "بلدان التوصيل",
+          "zh-CN": "配送国家",
+          "zh-TW": "配送國家"
+        },
+        "keyField": "code",
+        "columns": [
+          {
+            "ref": "id",
+            "type": "int",
+            "role": "pk"
+          },
+          {
+            "ref": "code",
+            "type": "text",
+            "maxLength": 2,
+            "label": {
+              "en-US": "Country code",
+              "de-DE": "Ländercode",
+              "fr-FR": "Code pays",
+              "da-DK": "Landekode",
+              "cs-CZ": "Kód země",
+              "ar-EG": "رمز البلد",
+              "zh-CN": "国家代码",
+              "zh-TW": "國家代碼"
+            },
+            "unique": true,
+            "rules": {
+              "personal": false
+            }
+          },
+          {
+            "ref": "price",
+            "type": "decimal",
+            "scale": "currency",
+            "label": {
+              "en-US": "Delivery price",
+              "de-DE": "Lieferpreis",
+              "fr-FR": "Prix de livraison",
+              "da-DK": "Leveringspris",
+              "cs-CZ": "Cena doručení",
+              "ar-EG": "سعر التوصيل",
+              "zh-CN": "配送价格",
+              "zh-TW": "配送價格"
+            },
+            "rules": {
+              "validation": {
+                "min": 0.01
+              }
+            }
+          },
+          {
+            "ref": "active",
+            "type": "bool",
+            "default": true,
+            "label": {
+              "en-US": "Offered",
+              "de-DE": "Angeboten",
+              "fr-FR": "Proposé",
+              "da-DK": "Tilbydes",
+              "cs-CZ": "Nabízí se",
+              "ar-EG": "معروض",
+              "zh-CN": "提供中",
+              "zh-TW": "提供中"
+            }
           }
         ]
       },
@@ -4448,11 +4551,130 @@
             },
             "nullable": true,
             "rules": {
+              "copy": {
+                "via": "delivery_country_id",
+                "from": "code",
+                "mode": "default"
+              },
               "default": {
                 "from": {
                   "table": "settings",
                   "column": "home_country"
                 }
+              }
+            }
+          },
+          {
+            "ref": "delivery_country_id",
+            "type": "fk",
+            "references": "delivery_countries",
+            "label": {
+              "en-US": "Delivering to",
+              "de-DE": "Lieferung nach",
+              "fr-FR": "Livraison vers",
+              "da-DK": "Levering til",
+              "cs-CZ": "Doručení do",
+              "ar-EG": "التوصيل إلى",
+              "zh-CN": "配送至",
+              "zh-TW": "配送至"
+            },
+            "nullable": true,
+            "rules": {
+              "linkable": {
+                "where": [
+                  {
+                    "column": "active",
+                    "eq": true
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "ref": "country_price",
+            "type": "decimal",
+            "scale": "currency",
+            "nullable": true,
+            "label": {
+              "en-US": "Delivery price to that country",
+              "de-DE": "Lieferpreis in dieses Land",
+              "fr-FR": "Prix de livraison vers ce pays",
+              "da-DK": "Leveringspris til det land",
+              "cs-CZ": "Cena doručení do této země",
+              "ar-EG": "سعر التوصيل إلى ذلك البلد",
+              "zh-CN": "配送到该国的价格",
+              "zh-TW": "配送到該國的價格"
+            },
+            "rules": {
+              "copy": {
+                "via": "delivery_country_id",
+                "from": "price",
+                "mode": "always"
+              }
+            }
+          },
+          {
+            "ref": "abroad",
+            "type": "int",
+            "nullable": true,
+            "label": {
+              "en-US": "Going abroad",
+              "de-DE": "Geht ins Ausland",
+              "fr-FR": "Part à l’étranger",
+              "da-DK": "Sendes til udlandet",
+              "cs-CZ": "Jde do zahraničí",
+              "ar-EG": "يُشحن إلى الخارج",
+              "zh-CN": "寄往国外",
+              "zh-TW": "寄往國外"
+            },
+            "rules": {
+              "formula": {
+                "if": [
+                  {
+                    "isNull": "delivery_country_id"
+                  },
+                  0,
+                  {
+                    "if": [
+                      {
+                        "eq": [
+                          "delivery_method",
+                          "deliver"
+                        ]
+                      },
+                      1,
+                      0
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "ref": "phone",
+            "type": "text",
+            "maxLength": 32,
+            "label": {
+              "en-US": "Phone",
+              "de-DE": "Telefon",
+              "fr-FR": "Téléphone",
+              "da-DK": "Telefon",
+              "cs-CZ": "Telefon",
+              "ar-EG": "الهاتف",
+              "zh-CN": "电话",
+              "zh-TW": "電話"
+            },
+            "nullable": true,
+            "rules": {
+              "personal": true,
+              "validation": {
+                "format": "phone"
+              },
+              "requiredWhen": {
+                "column": "abroad",
+                "in": [
+                  1
+                ]
               }
             }
           },
@@ -4905,8 +5127,13 @@
                       },
                       {
                         "coalesce": [
-                          "band_price",
-                          0
+                          "country_price",
+                          {
+                            "coalesce": [
+                              "band_price",
+                              0
+                            ]
+                          }
                         ]
                       }
                     ]
@@ -10328,6 +10555,83 @@
                 ]
               }
             }
+          },
+          {
+            "ref": "piece_grams",
+            "type": "decimal",
+            "nullable": true,
+            "label": {
+              "en-US": "Net weight a piece (g)",
+              "de-DE": "Nettogewicht je Stück (g)",
+              "fr-FR": "Poids net par pièce (g)",
+              "da-DK": "Nettovægt pr. stk. (g)",
+              "cs-CZ": "Čistá hmotnost za kus (g)",
+              "ar-EG": "الوزن الصافي للقطعة (جم)",
+              "zh-CN": "每件净重（克）",
+              "zh-TW": "每件淨重（克）"
+            },
+            "rules": {
+              "formula": {
+                "floor": [
+                  {
+                    "if": [
+                      {
+                        "eq": [
+                          "product_kind",
+                          "sheet"
+                        ]
+                      },
+                      {
+                        "div": [
+                          {
+                            "mul": [
+                              "piece_mm2",
+                              "gsm"
+                            ]
+                          },
+                          1000000
+                        ]
+                      },
+                      {
+                        "add": [
+                          {
+                            "div": [
+                              {
+                                "mul": [
+                                  "width_mm",
+                                  "height_mm",
+                                  "gsm"
+                                ]
+                              },
+                              1000000
+                            ]
+                          },
+                          {
+                            "if": [
+                              {
+                                "eq": [
+                                  "framed",
+                                  true
+                                ]
+                              },
+                              {
+                                "coalesce": [
+                                  "frame_grams",
+                                  0
+                                ]
+                              },
+                              0
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  4
+                ]
+              }
+            },
+            "scale": 4
           },
           {
             "ref": "design_code",
@@ -18543,6 +18847,13 @@
                   "column": "postcode"
                 },
                 {
+                  "column": "country"
+                },
+                {
+                  "column": "phone",
+                  "control": "phone"
+                },
+                {
                   "column": "language"
                 }
               ]
@@ -20687,6 +20998,10 @@
         "table:@delivery_bands:create",
         "table:@delivery_bands:update",
         "table:@delivery_bands:delete",
+        "table:@delivery_countries:read",
+        "table:@delivery_countries:create",
+        "table:@delivery_countries:update",
+        "table:@delivery_countries:delete",
         "table:@products:read",
         "table:@products:create",
         "table:@products:update",
@@ -20858,6 +21173,7 @@
             "town",
             "postcode",
             "country",
+            "phone",
             "language",
             "customer_id",
             "delivery_method",
@@ -20882,6 +21198,7 @@
             "town",
             "postcode",
             "country",
+            "phone",
             "language",
             "customer_id",
             "delivery_method",
@@ -22363,6 +22680,7 @@
             "carrier",
             "number_told_at",
             "country",
+            "phone",
             "dhl_service",
             "delivery_quote",
             "delivery_quote_state"
@@ -23028,6 +23346,24 @@
       ]
     },
     {
+      "table": "delivery_countries",
+      "methods": [
+        "GET"
+      ],
+      "select": [
+        "id",
+        "code",
+        "price"
+      ],
+      "filters": [
+        {
+          "column": "active",
+          "op": "eq",
+          "value": true
+        }
+      ]
+    },
+    {
       "table": "option_rules",
       "methods": [
         "GET"
@@ -23087,6 +23423,7 @@
         "hours",
         "about",
         "tax_rate",
+        "home_country",
         "setup",
         "standard_days",
         "express_days",
@@ -23152,6 +23489,8 @@
         "address_line2",
         "town",
         "postcode",
+        "delivery_country_id",
+        "phone",
         "language",
         "delivery_method",
         "client_key",
@@ -24298,6 +24637,12 @@
         {
           "table": "orders",
           "column": "postcode",
+          "holds": "details",
+          "via": "customer_id"
+        },
+        {
+          "table": "orders",
+          "column": "phone",
           "holds": "details",
           "via": "customer_id"
         },

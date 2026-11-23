@@ -19,6 +19,7 @@ export const SHOP_REFS = {
   breaks: ["breaks", ""],
   packaging: ["packaging", ""],
   deliveryBands: ["delivery_bands", ""],
+  deliveryCountries: ["delivery_countries", ""],
   optionRules: ["option_rules", ""],
   settings: ["settings", ""],
   placeOrder: ["orders", "_verified_2"],

@@ -174,12 +174,13 @@ const CUSTOMISER_SETUP = [
 /** The rules by which Adminium decides a column: nobody writes one, whatever their role. */
 export const DECIDING_RULES = ["rollup", "formula", "copy", "band", "stamp", "sequence", "format", "code", "lookup"] as const;
 
-/** Columns Adminium decides. */
+/** Columns Adminium decides. A copy that only fills a blank (`mode: "default"`) leaves the column a person's to change. */
 const decided = (ref: string): Set<string> =>
   new Set(
     TABLES.find((t) => t.ref === ref)!
       .columns.filter((c) => {
         const rules = c.rules ?? {};
+        if ((rules["copy"] as { mode?: string } | undefined)?.mode === "default") return false;
         return c.ref === "id" || DECIDING_RULES.some((rule) => rules[rule] !== undefined);
       })
       .map((c) => c.ref),
@@ -189,8 +190,8 @@ const typed = (ref: string, ...leaveOut: string[]): string[] =>
     .columns.map((c) => c.ref)
     .filter((c) => !decided(ref).has(c) && !leaveOut.includes(c));
 
-/** What only the customer gives, on their own order or quote: the tick for the works' news, the link, the retry key. */
-export const CUSTOMERS_OWN = ["may_email", "link_token", "client_key"];
+/** What only the customer gives, on their own order or quote: the tick for the works' news, the link, the retry key, the country they chose at its price. */
+export const CUSTOMERS_OWN = ["may_email", "link_token", "client_key", "delivery_country_id"];
 
 /**
  * What Adminium alone fills of a payment: an online one's reference, service,
@@ -327,9 +328,10 @@ export const ROLES = [
       "shipping:@:book",
     ],
     limits: {
-      // Ready, then handed over; a delivery over the bands priced and its quote sent (fixed once the customer accepts it).
+      // Ready, then handed over; a delivery over the bands priced and its quote sent (fixed once the customer accepts it);
+      // a customer's phone number corrected for a parcel going abroad.
       orders: {
-        writable: ["status", "tracking", "carrier", "number_told_at", "country", "dhl_service", "delivery_quote", "delivery_quote_state"],
+        writable: ["status", "tracking", "carrier", "number_told_at", "country", "phone", "dhl_service", "delivery_quote", "delivery_quote_state"],
         writableValues: { status: ["ready", "collected", "dispatched"], delivery_quote_state: ["to_quote", "sent"] },
       },
       jobs: { writable: ["stage"], writableValues: { stage: ["collected", "dispatched"] }, writableFrom: { stage: ["ready"] } },

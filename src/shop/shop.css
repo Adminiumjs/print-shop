@@ -1871,6 +1871,84 @@
   font-size: 11.5px;
   color: var(--fg-subtle);
 }
+.mp-country {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  min-inline-size: 0;
+}
+.mp-country-missing {
+  align-self: flex-start;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  min-block-size: 32px;
+  color: var(--accent);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.mp-country-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--info-soft);
+  font-size: 13px;
+}
+.mp-country-note svg {
+  flex: 0 0 auto;
+  margin-block-start: 2px;
+  color: var(--info);
+}
+.mp-notserved {
+  max-inline-size: 620px;
+  margin-inline: auto;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.mp-notserved p {
+  margin: 0;
+}
+.mp-notserved-icon {
+  inline-size: 40px;
+  block-size: 40px;
+  border-radius: 11px;
+  background: var(--surface-3);
+  color: var(--fg-muted);
+  display: grid;
+  place-items: center;
+}
+.mp-notserved-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+.mp-notserved-served {
+  color: var(--fg-muted);
+}
+.mp-notserved-mail {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
 .mp-consent {
   margin-block-start: 13px;
   display: flex;

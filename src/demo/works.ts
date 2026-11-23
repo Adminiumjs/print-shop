@@ -138,6 +138,17 @@ export class DemoWorks implements WorksDoor {
     return { ...settings, ...values };
   }
 
+  /** The demo sells at home: no country is ever listed, and these screens are not reached from it. */
+  countryPrices(): Promise<Readonly<Record<string, string>>> {
+    return Promise.resolve({});
+  }
+  saveCountryPrice(): Promise<void> {
+    return Promise.resolve();
+  }
+  removeCountryPrice(): Promise<void> {
+    return Promise.resolve();
+  }
+
   async updateOrder(order: Row, values: Record<string, unknown>): Promise<Row> {
     return this.change("orders", order.id, values);
   }

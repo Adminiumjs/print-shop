@@ -72,6 +72,7 @@ export const PEOPLE = [
       { table: "orders", column: "address_line2", holds: "details", via: "customer_id" },
       { table: "orders", column: "town", holds: "details", via: "customer_id" },
       { table: "orders", column: "postcode", holds: "details", via: "customer_id" },
+      { table: "orders", column: "phone", holds: "details", via: "customer_id" },
       { table: "saved_quotes", column: "name", holds: "name", via: "customer_id" },
       { table: "saved_quotes", column: "email", holds: "email", via: "customer_id" },
       // A sample pack is nobody's account: found by the address it holds.

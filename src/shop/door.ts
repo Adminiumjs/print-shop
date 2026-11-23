@@ -180,6 +180,7 @@ const rule = (row: Row): Rule => ({ id: row["id"] as Id, group: String(row["fini
 function works(row: Row): Works {
   return {
     name: String(row["works_name"] ?? ""),
+    homeCountry: text(row["home_country"]),
     address: text(row["address"]),
     phone: text(row["phone"]),
     email: text(row["email"]),
@@ -213,6 +214,8 @@ export interface CatalogueRows {
   bands: Row[];
   rules: Row[];
   settings: Row[];
+  /** The countries listed beyond the works' own. */
+  countries?: Row[];
 }
 
 /** The catalogue the pages read, from its rows: the same reading whoever answers them. */
@@ -227,6 +230,7 @@ export function catalogueFrom(rows: CatalogueRows, photo: (row: Row) => string |
     packaging: rows.packaging.map(packaging),
     bands: rows.bands.map(band),
     rules: rows.rules.map(rule),
+    countries: (rows.countries ?? []).map((row) => ({ id: row["id"] as Id, code: String(row["code"] ?? ""), price: String(row["price"] ?? "") })).filter((c) => /^[A-Z]{2}$/.test(c.code) && c.price !== ""),
     works: works(rows.settings[0] ?? {}),
   };
 }
@@ -297,9 +301,11 @@ export class AdminiumShop implements ShopPort {
       const [products, options, materials, sizes, finishes, breaks, packs, bands, rules, settings] = await Promise.all(
         [r.products, r.options, r.materials, r.sizes, r.finishes, r.breaks, r.packaging, r.deliveryBands, r.optionRules, r.settings].map((ref) => this.list(ref)),
       );
+      // Unreadable, the works delivers at home as it always did: a shop never fails to open over its list of countries.
+      const countries = await this.list(r.deliveryCountries).catch((): Row[] => []);
       const config = await this.clientConfig();
       const photo = (row: Row) => pictureUrl(this.served.baseUrl, config, r.products, String(row["id"]), "photo", row["photo"]);
-      return catalogueFrom({ products: products!, options: options!, materials: materials!, sizes: sizes!, finishes: finishes!, breaks: breaks!, packaging: packs!, bands: bands!, rules: rules!, settings: settings! }, photo);
+      return catalogueFrom({ products: products!, options: options!, materials: materials!, sizes: sizes!, finishes: finishes!, breaks: breaks!, packaging: packs!, bands: bands!, rules: rules!, settings: settings!, countries }, photo);
     });
   }
 

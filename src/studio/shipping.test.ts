@@ -30,7 +30,7 @@ const booking = (over: Partial<EngineBooking> = {}): EngineBooking => ({
   checkedAt: null,
   releaseAfter: null,
   applied: true,
-  label: { state: "ready", size: "a6", sizeGot: "a6", sizeDiffers: false, customsInvoice: false },
+  label: { state: "ready", size: "a6", sizeGot: "a6", sizeDiffers: false, customsInvoice: false, customsInvoiceOwed: false },
   ...over,
 });
 const order = { id: 7, number: "MP-7", status: "ready" };

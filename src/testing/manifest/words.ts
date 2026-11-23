@@ -417,6 +417,8 @@ export const INSTALL_FLOOR_WORD_NAMES = [
   'addOn.slots.on',
   // Where an app's orders keep what a carrier needs: without it, the engine calls no real carrier for the app.
   'shipping',
+  // Where an order's goods are, for a parcel that leaves the shop's country.
+  'shipping.customs',
   // An add-on whose people each connect their own outside account, and the app's table those people are rows of.
   'addOn.connect.accounts',
   'table.connectedAccounts',
@@ -744,6 +746,8 @@ export const WORD_FLOORS: Readonly<Partial<Record<ManifestWordName, string>>> = 
   'people.lead': '0.3.66',
   'addOn.slots.on': '0.3.66',
   'shipping': '0.3.72',
+  // A release before refuses the key.
+  'shipping.customs': '0.3.74',
   'addOn.connect.accounts': '0.3.71',
   'table.connectedAccounts': '0.3.71',
   'roles.accounts': '0.3.71',
@@ -942,6 +946,11 @@ export function installFloorWords(document: unknown): ManifestWord[] {
       if (isDoc(entry) && entry['lead'] !== undefined) out.push({ word: 'people.lead', path: `people.${String(e)}.lead` });
     });
     if (document['shipping'] !== undefined) out.push({ word: 'shipping', path: 'shipping' });
+    if (isDoc(document['shipping'])) {
+      list(document['shipping']['orders']).forEach((order, o) => {
+        if (isDoc(order) && order['customs'] !== undefined) out.push({ word: 'shipping.customs', path: `shipping.orders.${String(o)}.customs` });
+      });
+    }
   }
 
   // An agreement on a text's length, on an entry or on its child rows (two levels).

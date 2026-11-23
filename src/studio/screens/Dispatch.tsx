@@ -113,6 +113,49 @@ function AskCountry({ order }: { order: Row }) {
   );
 }
 
+/** The shape Adminium holds a phone column to. */
+const PHONE = /^\+?\(?[0-9][0-9\s().-]{4,}$/;
+
+/**
+ * A parcel going abroad needs the customer's phone for the carrier. It is asked
+ * at checkout; here staff add one an order lacks or correct one the carrier
+ * would refuse, for those whose role changes the order and reads its details.
+ */
+function AskPhone({ order }: { order: Row }) {
+  const t = useT();
+  const data = useData();
+  const { door } = useEnv();
+  const { busy, run } = useRun();
+  const held = text(order["phone"]) ?? "";
+  const [phone, setPhone] = useState(held);
+  const who = door.who();
+  const home = text(data.settings?.["home_country"]);
+  const country = text(order["country"]);
+  const mayFix = who.can("orders", "update") && (who.roles.length === 0 || who.roles.includes("owner") || who.roles.includes("counter"));
+  if (country === null || home === null || country === home || !mayFix) return null;
+  const typed = phone.trim();
+  const bad = typed !== "" && (!PHONE.test(typed) || typed.length > 32);
+  const save = () =>
+    run(async (d) => {
+      await d.updateOrder(order, { phone: typed });
+      return t("works.phone.saved");
+    });
+  return (
+    <div className="wk-panel">
+      <label className="wk-field wk-dispatch-country">
+        <span className="wk-field-label">{t("works.phone.label")}</span>
+        <input className="wk-input wk-mono" type="tel" autoComplete="off" value={phone} aria-invalid={bad} aria-describedby="wk-phone-why" onChange={(e) => setPhone(e.target.value)} />
+        <span className="wk-field-hint" id="wk-phone-why" role={bad ? "alert" : undefined}>
+          {t(bad ? "works.phone.bad" : "works.phone.why")}
+        </span>
+      </label>
+      <button type="button" className="wk-btn" disabled={busy || typed === "" || bad || typed === held} onClick={() => void save()}>
+        {t("works.phone.save")}
+      </button>
+    </div>
+  );
+}
+
 /** Why the order cannot be handed over yet, in the words of what is holding it. */
 const HELD: Partial<Record<HandOver["kind"], "works.handOver.testLabel" | "works.handOver.unsettled" | "works.handOver.unread">> = {
   test: "works.handOver.testLabel",
@@ -183,6 +226,7 @@ function Dispatch({ order }: { order: Row }) {
       <div className="wk-dispatch-grid">
         <div className="wk-dispatch-main">
           {!dispatched && <AskCountry order={order} />}
+          {!dispatched && <AskPhone order={order} />}
           {!dispatched && <DispatchFill order={order} />}
           <ShipmentCard order={order} client={client} read={read} />
           <div className="wk-panel">

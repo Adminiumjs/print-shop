@@ -26,7 +26,7 @@ import { firstChoice, jobValues, optionById, optionsOf, settle, sidesOf, sizePro
 import { freshClientKey } from "./door.ts";
 import { loadOffer } from "./pay.ts";
 import type { Elsewhere } from "./route.ts";
-import { isShopError, type ArtworkValues, type Catalogue, type Figures, type Id, type JobNode, type OrderBody, type Placed, type Product, type Refused, type Row, type ShopConfig, type ShopPort, type StoredChecks, type Uploaded } from "./port.ts";
+import { isShopError, type ArtworkValues, type Catalogue, type DeliveryCountry, type Figures, type Id, type JobNode, type OrderBody, type Placed, type Product, type Refused, type Row, type ShopConfig, type ShopPort, type StoredChecks, type Uploaded } from "./port.ts";
 
 export type ShopView = "products" | "product" | "design" | "blank" | "artwork" | "basket" | "confirmed" | "missing" | Elsewhere;
 
@@ -67,11 +67,13 @@ export interface Details {
   line2: string;
   town: string;
   postcode: string;
+  /** For the carrier, on a parcel going abroad. */
+  phone: string;
   news: boolean;
 }
 
-export type Field = "name" | "email" | "line1" | "town" | "postcode";
-export const FIELDS: readonly Field[] = ["name", "email", "line1", "town", "postcode"];
+export type Field = "name" | "email" | "line1" | "town" | "postcode" | "phone";
+export const FIELDS: readonly Field[] = ["name", "email", "line1", "town", "postcode", "phone"];
 
 export type ShopMessage =
   | "shop.checkout.err.name"
@@ -80,6 +82,8 @@ export type ShopMessage =
   | "shop.checkout.err.line1"
   | "shop.checkout.err.town"
   | "shop.checkout.err.postcode"
+  | "shop.checkout.err.phone"
+  | "shop.checkout.err.phoneShape"
   | "shop.checkout.err.refused"
   | "shop.artwork.refused.kind"
   | "shop.artwork.refused.big"
@@ -143,11 +147,15 @@ export interface ShopState {
   artFiles: ArtFile[];
   basketQuote: Quoted | null;
   delivery: Delivery;
+  /** The country listed beyond the works' own that the customer chose, by its code; null is the works' own. */
+  destination: string | null;
   details: Details;
   tried: boolean;
   refusedFields: FieldErrors;
   refusedLine: { index: number; reason: string | null; raw: unknown } | null;
   failure: "unreachable" | "closed" | "refused" | null;
+  /** A country taken off the works' list while it was chosen: said once, until the customer chooses again. */
+  countryGone: string | null;
   checking: boolean;
   /** The total the basket showed, which the save is held to. */
   shownTotal: string | null;
@@ -187,10 +195,10 @@ function writeSlot(slot: string, value: unknown): void {
   }
 }
 
-const NO_DETAILS: Details = { name: "", email: "", line1: "", line2: "", town: "", postcode: "", news: false };
+const NO_DETAILS: Details = { name: "", email: "", line1: "", line2: "", town: "", postcode: "", phone: "", news: false };
 
 function initial(): Omit<ShopState, "port"> {
-  const kept = readSlot<{ lines: BasketLine[]; clientKey: string | null; delivery: Delivery | null }>(BASKET_SLOT, { lines: [], clientKey: null, delivery: null });
+  const kept = readSlot<{ lines: BasketLine[]; clientKey: string | null; delivery: Delivery | null; destination?: string | null }>(BASKET_SLOT, { lines: [], clientKey: null, delivery: null });
   return {
     config: { timezone: "UTC", currency: null },
     catalogue: null,
@@ -209,11 +217,13 @@ function initial(): Omit<ShopState, "port"> {
     artFiles: [],
     basketQuote: null,
     delivery: kept.delivery === "collect" ? "collect" : "deliver",
+    destination: typeof kept.destination === "string" ? kept.destination : null,
     details: NO_DETAILS,
     tried: false,
     refusedFields: {},
     refusedLine: null,
     failure: null,
+    countryGone: null,
     checking: false,
     shownTotal: null,
     priceMoves: null,
@@ -231,7 +241,7 @@ const set = (patch: Partial<ShopState>) => useShop.setState(patch);
 
 function keepBasket(): void {
   const s = get();
-  writeSlot(BASKET_SLOT, { lines: s.basket, clientKey: s.clientKey, delivery: s.delivery });
+  writeSlot(BASKET_SLOT, { lines: s.basket, clientKey: s.clientKey, delivery: s.delivery, destination: s.destination });
 }
 
 const uploads = new Map<string, AbortController>();
@@ -245,7 +255,7 @@ export function resetShop(port: ShopPort | null): void {
   delete pendingProduct.steps;
   for (const controller of uploads.values()) controller.abort();
   uploads.clear();
-  useShop.setState({ port, ...initial(), basket: [], held: [], delivery: "deliver", clientKey: freshClientKey() }, true);
+  useShop.setState({ port, ...initial(), basket: [], held: [], delivery: "deliver", destination: null, clientKey: freshClientKey() }, true);
 }
 
 // ── reading the catalogue ─────────────────────────────────────────────────
@@ -270,7 +280,10 @@ export async function loadShop(): Promise<void> {
   set({ loading: "loading" });
   try {
     const [config, catalogue] = await Promise.all([port.config(), port.catalogue()]);
-    set({ config, catalogue, loading: "ok" });
+    // A country chosen on an earlier visit and no longer listed is not kept: the checkout says where it now goes.
+    const chosen = get().destination;
+    const stillListed = chosen === null || catalogue.countries.some((c) => c.code === chosen);
+    set({ config, catalogue, loading: "ok", ...(stillListed ? {} : { destination: null, countryGone: chosen }) });
     // Whether the works takes payments online now: asked once, and the pages read as before until it says so.
     void loadOffer(port.after());
     const view = get().view;
@@ -398,8 +411,20 @@ export function orderBody(values: Row, lines: readonly BasketLine[], withArtwork
   return { values, children: { jobs: lines.map((line) => jobNode(line, undefined, withArtwork)) } };
 }
 
-/** The customer's own values, only those typed, trimmed; an address only for a delivery. */
-export function detailValues(details: Details, delivery: Delivery): Row {
+/** The listed country this order goes to; null for the works' own, and for an order collected. */
+export function abroadCountry(s: Pick<ShopState, "catalogue" | "delivery" | "destination">): DeliveryCountry | null {
+  if (s.delivery !== "deliver" || s.destination === null) return null;
+  return s.catalogue?.countries.find((c) => c.code === s.destination) ?? null;
+}
+
+/** What the order says of where it goes: the listed country's row, which Adminium prices it by, and nothing for the works' own. */
+function destinationValues(s: Pick<ShopState, "catalogue" | "delivery" | "destination">): Row {
+  const country = abroadCountry(s);
+  return country === null ? {} : { delivery_country_id: country.id };
+}
+
+/** The customer's own values, only those typed, trimmed; an address only for a delivery, a phone only for one going abroad. */
+export function detailValues(details: Details, delivery: Delivery, abroad = false): Row {
   const out: Row = {};
   const put = (column: string, value: string) => {
     if (value.trim() !== "") out[column] = value.trim();
@@ -411,6 +436,7 @@ export function detailValues(details: Details, delivery: Delivery): Row {
     put("address_line2", details.line2);
     put("town", details.town);
     put("postcode", details.postcode);
+    if (abroad) put("phone", details.phone);
   }
   out["may_email"] = details.news;
   return out;
@@ -502,7 +528,7 @@ export function requoteProduct(): void {
     set({ jobQuote: null });
     return;
   }
-  const values = { delivery_method: s.delivery, language: language() };
+  const values = { delivery_method: s.delivery, ...destinationValues(s), language: language() };
   const jobBody: OrderBody = { values, children: { jobs: [jobNode(line)] } };
   const jobKey = JSON.stringify(jobBody);
   const steps = stepsOf(catalogue, product);
@@ -553,7 +579,7 @@ export function requoteBasket(): void {
     set({ basketQuote: null });
     return;
   }
-  const body = orderBody({ delivery_method: s.delivery, language: language() }, s.basket);
+  const body = orderBody({ delivery_method: s.delivery, ...destinationValues(s), language: language() }, s.basket);
   const key = JSON.stringify(body);
   if (s.basketQuote?.key === key && s.basketQuote.state !== "failed") return;
   set({ basketQuote: { key, state: "busy", figures: s.basketQuote?.figures ?? null } });
@@ -692,6 +718,16 @@ export function chooseDelivery(delivery: Delivery): void {
   if (withProduct(get().view)) requoteProduct();
 }
 
+/** The country the order goes to: one the works listed, or null for the works' own. Priced again at once. */
+export function chooseCountry(code: string | null): void {
+  const refused = { ...get().refusedFields };
+  delete refused.phone;
+  set({ destination: code, countryGone: null, refusedFields: refused, failure: null });
+  keepBasket();
+  requoteBasket();
+  if (withProduct(get().view)) requoteProduct();
+}
+
 // ── the artwork ───────────────────────────────────────────────────────────
 
 let fileSeq = 0;
@@ -794,9 +830,11 @@ export function continueArtwork(): void {
 // ── the checkout ──────────────────────────────────────────────────────────
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** The shape Adminium holds a phone column to, said here first so the customer hears it beside the field. */
+const PHONE = /^\+?\(?[0-9][0-9\s().-]{4,}$/;
 
 /** What the page itself can say of the form before anything is sent. */
-export function formErrors(details: Details, delivery: Delivery): FieldErrors {
+export function formErrors(details: Details, delivery: Delivery, abroad = false): FieldErrors {
   const e: FieldErrors = {};
   if (details.name.trim() === "") e.name = "shop.checkout.err.name";
   if (details.email.trim() === "") e.email = "shop.checkout.err.email";
@@ -805,6 +843,10 @@ export function formErrors(details: Details, delivery: Delivery): FieldErrors {
     if (details.line1.trim() === "") e.line1 = "shop.checkout.err.line1";
     if (details.town.trim() === "") e.town = "shop.checkout.err.town";
     if (details.postcode.trim() === "") e.postcode = "shop.checkout.err.postcode";
+    if (abroad) {
+      if (details.phone.trim() === "") e.phone = "shop.checkout.err.phone";
+      else if (!PHONE.test(details.phone.trim()) || details.phone.trim().length > 32) e.phone = "shop.checkout.err.phoneShape";
+    }
   }
   return e;
 }
@@ -816,10 +858,21 @@ export function setDetails(patch: Partial<Details>): void {
 }
 
 /** The column Adminium names, as the field it is typed into. */
-const FIELD_OF: Record<string, Field> = { name: "name", email: "email", address_line1: "line1", town: "town", postcode: "postcode" };
+const FIELD_OF: Record<string, Field> = { name: "name", email: "email", address_line1: "line1", town: "town", postcode: "postcode", phone: "phone" };
 
 /** Where a refusal goes: a field of the form, a job of the basket, or the summary. */
 function placeRefusal(refused: Refused): void {
+  // The country came off the works' list after it was chosen: nothing is placed, and the list is read again.
+  if (refused.child === null && refused.column === "delivery_country_id") {
+    set({ destination: null, countryGone: get().destination, failure: null });
+    keepBasket();
+    void get().port?.catalogue().then((catalogue) => {
+      set({ catalogue });
+      requoteBasket();
+    });
+    requoteBasket();
+    return;
+  }
   const field = refused.child === null && refused.column !== null ? FIELD_OF[refused.column] : undefined;
   if (field !== undefined) {
     set({ refusedFields: { ...get().refusedFields, [field]: "shop.checkout.err.refused" }, failure: null });
@@ -844,7 +897,7 @@ function movesBetween(before: Figures | null, after: Figures): PriceMove[] {
 /** The first field with something to fix, for the page to move focus to. */
 export function firstBadField(): Field | null {
   const s = get();
-  const errors = { ...(s.tried ? formErrors(s.details, s.delivery) : {}), ...s.refusedFields };
+  const errors = { ...(s.tried ? formErrors(s.details, s.delivery, abroadCountry(s) !== null) : {}), ...s.refusedFields };
   return FIELDS.find((f) => errors[f] !== undefined) ?? null;
 }
 
@@ -858,10 +911,11 @@ export function firstBadField(): Field | null {
 export async function placeOrder(): Promise<"placed" | "fix" | "moved" | "failed"> {
   const s = get();
   if (s.checking || s.port === null || s.basket.length === 0 || s.catalogue === null || s.shownTotal === null) return "failed";
-  set({ tried: true, refusedLine: null, failure: null });
-  if (Object.keys(formErrors(s.details, s.delivery)).length > 0 || Object.keys(s.refusedFields).length > 0) return "fix";
+  set({ tried: true, refusedLine: null, failure: null, countryGone: null });
+  const abroad = abroadCountry(s) !== null;
+  if (Object.keys(formErrors(s.details, s.delivery, abroad)).length > 0 || Object.keys(s.refusedFields).length > 0) return "fix";
   set({ checking: true });
-  const values = { ...detailValues(s.details, s.delivery), delivery_method: s.delivery, language: language() };
+  const values = { ...detailValues(s.details, s.delivery, abroad), ...destinationValues(s), delivery_method: s.delivery, language: language() };
   try {
     const quoted = await s.port.quote(orderBody(values, s.basket));
     const total = String(quoted.order["total"] ?? "");

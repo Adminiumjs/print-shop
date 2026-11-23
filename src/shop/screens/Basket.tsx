@@ -10,8 +10,8 @@
  * artwork, held to the total shown; a total that moved is refused, nothing
  * is kept, and the new figures are shown before the next press.
  */
-import { CalendarCheck, CircleAlert, PackageOpen, Palette, Paperclip, Pencil, ReceiptText, TrendingUp, TriangleAlert } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { CalendarCheck, CircleAlert, Globe, Info, Mail, PackageOpen, Palette, Paperclip, Pencil, ReceiptText, TrendingUp, TriangleAlert } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 import { useI18n } from "../../i18n/index.tsx";
 import { optionById, optionsOf, sidesOf, trimOf } from "../config.ts";
@@ -20,9 +20,32 @@ import { dayFull, decimal, money } from "../format.ts";
 import { ProductIcon, rich, tintOf } from "../parts.tsx";
 import { usePay } from "../pay.ts";
 import type { Catalogue, Id } from "../port.ts";
-import { chooseDelivery, editLine, editLineDesign, firstBadField, formErrors, goView, openArtwork, placeOrder, productById, removeLine, setDetails, useShop, type BasketLine, type Field } from "../store.ts";
+import { abroadCountry, chooseCountry, chooseDelivery, editLine, editLineDesign, firstBadField, formErrors, goView, openArtwork, placeOrder, productById, removeLine, setDetails, useShop, type BasketLine, type Field } from "../store.ts";
 
 type T = ReturnType<typeof useI18n>["t"];
+
+/** A country's name in the reader's language; its code where the browser has none. */
+function countryName(code: string, locale: string): string {
+  try {
+    return new Intl.DisplayNames([locale], { type: "region" }).of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
+
+/** Names as the reader's language lists them. */
+function listOf(names: readonly string[], locale: string): string {
+  try {
+    return new Intl.ListFormat(locale, { style: "long", type: "conjunction" }).format(names);
+  } catch {
+    return names.join(", ");
+  }
+}
+
+/** Whether the works offers a choice of country: it knows its own, and the owner listed at least one more. */
+function picksCountry(catalogue: Catalogue): boolean {
+  return catalogue.works.homeCountry !== null && catalogue.countries.some((c) => c.code !== catalogue.works.homeCountry);
+}
 
 /** The job's choices as the basket's chips say them. */
 function chipsOf(line: BasketLine, catalogue: Catalogue, t: T, locale: string): string[] {
@@ -149,8 +172,20 @@ function Getting() {
   const band = deliveryOf(order, catalogue.bands);
   const kg = band.weight === null ? null : decimal(band.weight, locale, 1);
   const works = catalogue.works;
+  // Chosen abroad, the delivery is that country's one price, also while the customer looks at collecting instead.
+  const destination = useShop((s) => s.destination);
+  const abroad = destination === null ? null : (catalogue.countries.find((c) => c.code === destination) ?? null);
+  const offered = abroad !== null && !band.toQuote ? abroad.price : band.offered;
   const deliverLabel = band.toQuote ? t("shop.basket.deliver.quote") : t("shop.basket.deliver");
-  const deliverSub = band.toQuote ? t("shop.basket.deliver.quoteSub", { top: decimal(topBand(catalogue.bands) ?? "0", locale), kg: kg ?? "" }) : band.band === null ? "" : kg === null ? band.band.name : t("shop.basket.deliver.sub", { band: band.band.name, kg });
+  const deliverSub = band.toQuote
+    ? t("shop.basket.deliver.quoteSub", { top: decimal(topBand(catalogue.bands) ?? "0", locale), kg: kg ?? "" })
+    : abroad !== null
+      ? t("shop.basket.deliver.abroad", { country: countryName(abroad.code, locale) })
+      : band.band === null
+        ? ""
+        : kg === null
+          ? band.band.name
+          : t("shop.basket.deliver.sub", { band: band.band.name, kg });
   return (
     <section className="mp-card" aria-labelledby="mp-getting-title">
       <h2 id="mp-getting-title" className="mp-card-title">
@@ -163,7 +198,7 @@ function Getting() {
             <span className="mp-radio-label">{deliverLabel}</span>
             {deliverSub !== "" && <span className="mp-radio-sub">{deliverSub}</span>}
           </span>
-          <span className="mp-radio-price">{band.toQuote ? t("shop.toQuote") : band.offered === null ? "" : m(band.offered)}</span>
+          <span className="mp-radio-price">{band.toQuote ? t("shop.toQuote") : offered === null ? "" : m(offered)}</span>
         </button>
         <button type="button" role="radio" aria-checked={delivery === "collect"} className="mp-radio" onClick={() => chooseDelivery("collect")}>
           <span className="mp-radio-ring" aria-hidden="true" />
@@ -184,8 +219,9 @@ function Input({ field, label, auto, type = "text", hint }: { field: Field | "li
   const delivery = useShop((s) => s.delivery);
   const tried = useShop((s) => s.tried);
   const refused = useShop((s) => s.refusedFields);
+  const abroad = useShop((s) => abroadCountry(s) !== null);
   const key = field === "line2" ? null : field;
-  const error = key === null ? undefined : (refused[key] ?? (tried ? formErrors(details, delivery)[key] : undefined));
+  const error = key === null ? undefined : (refused[key] ?? (tried ? formErrors(details, delivery, abroad)[key] : undefined));
   const value = details[field];
   const id = `mp-d-${field}`;
   const described = [error === undefined ? null : `${id}-err`, hint === undefined ? null : `${id}-hint`].filter((x) => x !== null).join(" ");
@@ -217,7 +253,90 @@ function Input({ field, label, auto, type = "text", hint }: { field: Field | "li
   );
 }
 
-function Details() {
+/**
+ * Where it goes: only once the owner has listed a country. The works' own and
+ * each listed one, a way to say yours is not there, and for a parcel leaving
+ * the country the phone the carrier needs and a word about import charges.
+ */
+function CountryChoice({ onNotListed }: { onNotListed: () => void }) {
+  const { t, locale } = useI18n();
+  const catalogue = useShop((s) => s.catalogue)!;
+  const destination = useShop((s) => s.destination);
+  const gone = useShop((s) => s.countryGone);
+  const home = catalogue.works.homeCountry;
+  if (!picksCountry(catalogue) || home === null) return null;
+  const listed = catalogue.countries.filter((c) => c.code !== home).map((c) => ({ code: c.code, name: countryName(c.code, locale) }));
+  listed.sort((a, b) => a.name.localeCompare(b.name, locale));
+  const abroad = destination !== null && listed.some((c) => c.code === destination);
+  return (
+    <div className="mp-country">
+      <label className="mp-field">
+        <span className="mp-field-label">{t("shop.checkout.country")}</span>
+        <select id="mp-d-country" className="mp-input" value={abroad ? destination : home} autoComplete="country" onChange={(e) => chooseCountry(e.target.value === home ? null : e.target.value)}>
+          <option value={home}>{countryName(home, locale)}</option>
+          {listed.map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      {gone !== null && (
+        <p className="mp-line-refusal" role="alert">
+          <CircleAlert size={13} aria-hidden="true" />
+          {t("shop.checkout.countryGone", { country: countryName(gone, locale) })}
+        </p>
+      )}
+      <button type="button" className="mp-country-missing" onClick={onNotListed}>
+        {t("shop.checkout.notListed")}
+      </button>
+      {abroad && (
+        <>
+          <Input field="phone" label={t("shop.checkout.phone")} auto="tel" type="tel" hint={t("shop.checkout.phoneWhy", { country: countryName(home, locale) })} />
+          <p className="mp-country-note">
+            <Info size={15} aria-hidden="true" />
+            <span>{t("shop.checkout.importCharges")}</span>
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** "We don't deliver to your country yet": who it does deliver to, and how to ask. */
+function NotServed({ onBack }: { onBack: () => void }) {
+  const { t, locale } = useI18n();
+  const catalogue = useShop((s) => s.catalogue)!;
+  const works = catalogue.works;
+  const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => heading.current?.focus(), []);
+  const names = [...(works.homeCountry === null ? [] : [works.homeCountry]), ...catalogue.countries.map((c) => c.code).filter((c) => c !== works.homeCountry)].map((c) => countryName(c, locale));
+  return (
+    <section className="mp-screen mp-notserved" aria-labelledby="mp-notserved-title">
+      <span className="mp-notserved-icon">
+        <Globe size={19} aria-hidden="true" />
+      </span>
+      <h1 ref={heading} id="mp-notserved-title" className="mp-notserved-title" tabIndex={-1}>
+        {t("shop.notServed.title")}
+      </h1>
+      <p className="mp-notserved-served">{t("shop.notServed.served", { works: works.name, list: listOf(names, locale) })}</p>
+      <p>{t("shop.notServed.write")}</p>
+      {works.email !== null && (
+        <a className="mp-notserved-mail" href={`mailto:${works.email}`}>
+          <Mail size={15} aria-hidden="true" />
+          {works.email}
+        </a>
+      )}
+      <div>
+        <button type="button" className="mp-button mp-button--accent" onClick={onBack}>
+          {t("shop.notServed.back")}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function Details({ onNotListed }: { onNotListed: () => void }) {
   const { t } = useI18n();
   const delivery = useShop((s) => s.delivery);
   const news = useShop((s) => s.details.news);
@@ -237,6 +356,7 @@ function Details() {
           <Input field="line2" label={t("shop.checkout.line2")} auto="address-line2" />
           <Input field="town" label={t("shop.checkout.town")} auto="address-level2" />
           <Input field="postcode" label={t("shop.checkout.postcode")} auto="postal-code" />
+          <CountryChoice onNotListed={onNotListed} />
         </div>
       )}
       <label className="mp-consent">
@@ -329,10 +449,28 @@ export function BasketScreen() {
   const online = usePay((s) => s.offer?.online === true);
   const payingLine = !online ? t("shop.checkout.payingBody") : delivery === "deliver" ? t("pay.checkout.onDelivery") : t("pay.checkout.on");
   const alert = useRef<HTMLDivElement>(null);
+  const [notServed, setNotServed] = useState(false);
+  const refocus = useRef(false);
   useEffect(() => {
     if (moves !== null) alert.current?.focus();
   }, [moves]);
+  useEffect(() => {
+    if (!notServed && refocus.current) {
+      refocus.current = false;
+      document.getElementById("mp-d-country")?.focus();
+    }
+  }, [notServed]);
   if (catalogue === null) return null;
+  if (notServed) {
+    return (
+      <NotServed
+        onBack={() => {
+          refocus.current = true;
+          setNotServed(false);
+        }}
+      />
+    );
+  }
   return (
     <section className="mp-screen" aria-labelledby="mp-basket-title">
       <h1 id="mp-basket-title" className="mp-h1 mp-h1--basket">
@@ -367,7 +505,7 @@ export function BasketScreen() {
               ))}
             </ul>
             <Getting />
-            <Details />
+            <Details onNotListed={() => setNotServed(true)} />
             <section className="mp-card" aria-labelledby="mp-paying-title">
               <h2 id="mp-paying-title" className="mp-card-title">
                 {t("shop.checkout.paying")}

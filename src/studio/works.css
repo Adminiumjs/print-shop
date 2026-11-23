@@ -397,6 +397,36 @@
 .wk-narrow {
   max-inline-size: 560px;
 }
+.wk-shipping-wide {
+  max-inline-size: 820px;
+}
+.wk-tabs {
+  display: flex;
+  gap: 4px;
+  margin-block-end: 16px;
+  border-block-end: 1px solid var(--border);
+  overflow-x: auto;
+}
+.wk-tab {
+  flex: 0 0 auto;
+  min-block-size: 44px;
+  padding: 10px 14px;
+  border: 0;
+  border-block-end: 2px solid transparent;
+  background: transparent;
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.wk-tab[aria-selected="true"] {
+  color: var(--fg);
+  border-block-end-color: var(--accent);
+}
+.wk-tabpanel {
+  min-inline-size: 0;
+}
 .wk-head {
   display: flex;
   align-items: baseline;

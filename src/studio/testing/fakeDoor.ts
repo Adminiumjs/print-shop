@@ -122,6 +122,23 @@ export class FakeDoor implements WorksDoor {
     return { ...settings, ...values };
   }
 
+  /** The countries listed, by code. */
+  prices: Record<string, string> = {};
+
+  async countryPrices(): Promise<Readonly<Record<string, string>>> {
+    return { ...this.prices };
+  }
+
+  async saveCountryPrice(country: string, amount: string): Promise<void> {
+    this.record("saveCountryPrice", { country, amount });
+    this.prices[country] = amount;
+  }
+
+  async removeCountryPrice(country: string): Promise<void> {
+    this.record("removeCountryPrice", { country });
+    delete this.prices[country];
+  }
+
   async updateOrder(order: Row, values: Record<string, unknown>): Promise<Row> {
     this.record("updateOrder", { id: order.id, values });
     return this.update(this.data.orders, order.id, values);

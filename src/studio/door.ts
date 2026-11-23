@@ -22,6 +22,7 @@ export type Table =
   | "breaks"
   | "packaging"
   | "delivery_bands"
+  | "delivery_countries"
   | "machines"
   | "closures"
   | "customers"
@@ -303,6 +304,12 @@ export interface WorksDoor {
   spoil(input: { job: Row; sheets: number; note: string | null }): Promise<Row>;
   /** A row of the rate card, changed. */
   saveRate(table: Table, row: Row, values: Record<string, unknown>): Promise<Row>;
+  /** The delivery price of each country the owner listed, as exact decimal text. */
+  countryPrices(): Promise<Readonly<Record<string, string>>>;
+  /** A country's delivery price, added or changed. */
+  saveCountryPrice(country: string, amount: string): Promise<void>;
+  /** A country no longer offered: its row stays for the orders it priced. */
+  removeCountryPrice(country: string): Promise<void>;
   /** A public holiday of Holiday calendars added as one of the works' closures: its day and its name, linked to it. */
   addClosure(holiday: Row): Promise<Row>;
 

@@ -347,14 +347,20 @@ const ON_FLOOR = { if: [{ or: [{ eq: ["stage", "prepress"] }, { eq: ["stage", "p
 /** Whether a job may go to press: only once its latest proof is approved. */
 const PROOF_OK = { if: [{ eq: ["proof_state", "approved"] }, 1, 0] };
 
-/** An order's delivery: nothing to collect; the works' quote once the customer accepts it; else the band's price. */
+/**
+ * An order's delivery: nothing to collect; the works' quote once the customer
+ * accepts it; else the price of the country it goes to, when the owner listed
+ * one; else the band's price. Over every band it is still quoted by hand.
+ */
 const DELIVERY = {
   if: [
     { eq: ["delivery_method", "collect"] },
     0,
-    { if: [{ eq: ["delivery_quote_state", "accepted"] }, { coalesce: ["delivery_quote", 0] }, { coalesce: ["band_price", 0] }] },
+    { if: [{ eq: ["delivery_quote_state", "accepted"] }, { coalesce: ["delivery_quote", 0] }, { coalesce: ["country_price", { coalesce: ["band_price", 0] }] }] },
   ],
 };
+/** Delivered to a country the owner listed: the carrier needs the customer's phone number. */
+const GOES_ABROAD = { if: [{ isNull: "delivery_country_id" }, 0, { if: [{ eq: ["delivery_method", "deliver"] }, 1, 0] }] };
 /** A saved quote's delivery: nothing to collect, else the band's price. */
 const QUOTE_DELIVERY = { if: [{ eq: ["delivery_method", "collect"] }, 0, { coalesce: ["band_price", 0] }] };
 /** Delivered, and over every band: the works prices the delivery by hand. */
@@ -465,6 +471,23 @@ const isSheet = { eq: ["product_kind", "sheet"] };
 const isLarge = { eq: ["product_kind", "large"] };
 const zero = (value: unknown) => ({ coalesce: [value, 0] });
 const cents = (expr: unknown) => ({ round: [expr, 2] });
+/**
+ * One finished piece's net weight in grams, without the packing: its paper by
+ * area and weight, and a canvas's frame. Rounded down, so a line's pieces never
+ * add up to more than the parcel they are in.
+ */
+const PIECE_GRAMS = {
+  floor: [
+    {
+      if: [
+        isSheet,
+        { div: [{ mul: ["piece_mm2", "gsm"] }, 1000000] },
+        { add: [{ div: [{ mul: ["width_mm", "height_mm", "gsm"] }, 1000000] }, { if: [{ eq: ["framed", true] }, zero("frame_grams"), 0] }] },
+      ],
+    },
+    4,
+  ],
+};
 /** Rounded up: a run of 250 pieces at 24 a sheet takes 11 sheets. */
 const ceilOf = (a: unknown, b: unknown) => ({ ceil: [{ div: [a, b] }, 0] });
 
@@ -859,6 +882,20 @@ export const TABLES: Table[] = [
     ],
   },
   {
+    // A country the works delivers to beyond its own, with its one delivery price. Taken off the list, a row stays for the
+    // orders it priced and is no longer offered.
+    ref: "delivery_countries",
+    label: l("Delivery country"),
+    labelPlural: l("Delivery countries"),
+    keyField: "code",
+    columns: [
+      id,
+      text("code", 2, "Country code", { unique: true, rules: { personal: false } }),
+      price("price", "Delivery price", { rules: { validation: { min: 0.01 } } }),
+      bool("active", "Offered", true),
+    ],
+  },
+  {
     ref: "products",
     label: l("Product"),
     labelPlural: l("Products"),
@@ -1023,7 +1060,14 @@ export const TABLES: Table[] = [
       text("town", 80, "Town", { ...opt, rules: { requiredWhen: { column: "delivery_method", in: ["deliver"] } } }),
       text("postcode", 16, "Postcode", { ...opt, rules: { requiredWhen: { column: "delivery_method", in: ["deliver"] } } }),
       // A two-letter code, from the works' own country when the order is made; an older order has none until the works says.
-      text("country", 2, "Country", { ...opt, rules: { default: { from: setting("home_country") } } }),
+      // A country the customer chose from the works' list gives the code; otherwise it is the works' own.
+      text("country", 2, "Country", { ...opt, rules: { copy: { via: "delivery_country_id", from: "code", mode: "default" }, default: { from: setting("home_country") } } }),
+      // The country the customer chose, of those the works delivers to beyond its own, and its price as it stood that day.
+      fk("delivery_country_id", "delivery_countries", "Delivering to", { ...opt, rules: { linkable: { where: [{ column: "active", eq: true }] } } }),
+      money("country_price", "Delivery price to that country", always("delivery_country_id", "price")),
+      figure("abroad", "int", "Going abroad", { formula: GOES_ABROAD }),
+      // For the carrier, on a parcel leaving the country: asked at checkout and never shown on the customer's public pages.
+      text("phone", 32, "Phone", { ...opt, rules: { personal: true, validation: { format: "phone" }, requiredWhen: { column: "abroad", in: [1] } } }),
       language("language"),
       fk("customer_id", "customers", "Customer", opt),
       ...basketMoney("jobs", "order_id", DELIVERY, "cancelled_at"),
@@ -1127,6 +1171,8 @@ export const TABLES: Table[] = [
       // picked ("MP-4129/1", the order's first job), as its proofs are named after it ("MP-4129/1 #2").
       text("code", 24, "Job", { ...opt, rules: { formula: { join: ["order_number", "/", "position"] } } }),
       ...configuration(true),
+      // One piece's net weight, for a customs form: the line's own `weight_kg` is the whole run with its packing.
+      figure("piece_grams", "decimal", "Net weight a piece (g)", { formula: PIECE_GRAMS }, 4),
       // A design in the Customiser, found by its code: the customer's browser sends the code, Adminium fills the link.
       text("design_code", 40, "Design code", opt),
       link("design_id", "designs", "Design", { lookup: { from: "design_code", table: { addOn: CUSTOMISER, table: "designs" }, column: "code" } }),

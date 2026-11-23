@@ -124,9 +124,19 @@ export interface Rule {
   reason: string;
 }
 
+/** A country the works delivers to beyond its own, with its one delivery price. */
+export interface DeliveryCountry {
+  id: Id;
+  /** Its two-letter code. */
+  code: string;
+  price: string;
+}
+
 /** The works and the rate card's single figures, as its settings row says them. */
 export interface Works {
   name: string;
+  /** The works' own country, as a two-letter code; null until the works says. */
+  homeCountry: string | null;
   address: string | null;
   phone: string | null;
   email: string | null;
@@ -160,6 +170,8 @@ export interface Catalogue {
   packaging: Packaging[];
   bands: Band[];
   rules: Rule[];
+  /** The countries the owner listed beyond the works' own: none until they add one, and the checkout is then as it always was. */
+  countries: DeliveryCountry[];
   works: Works;
 }
 

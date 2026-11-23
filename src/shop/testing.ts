@@ -93,9 +93,11 @@ export function sampleCatalogue(): Catalogue {
       { id: 3, group: "spot_uv", test: "no_lamination", gsm: null, reason: "Spot UV needs a laminated surface — add a lamination first." },
       { id: 4, group: "corners", test: "over_gsm", gsm: 350, reason: "Round corners aren't offered above 350gsm." },
     ],
+    countries: [],
     works: {
       name: "Marlow Press",
       address: "3 Market Square, Marlow SL7 1AA",
+      homeCountry: "GB",
       phone: "01628 482 190",
       email: "hello@marlowpress.example",
       hours: "Mon–Fri, 8:00–17:00",
