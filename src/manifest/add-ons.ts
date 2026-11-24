@@ -22,7 +22,7 @@ import { CUSTOMISER } from "./postings.ts";
 export const ADD_ONS_RANGE = "^1.0.26";
 
 /** The first add-ons release with the Shippo carrier. */
-const SHIPPO_RANGE = "^1.0.35";
+const SHIPPO_RANGE = "^1.0.36";
 
 export const ADD_ONS = {
   requires: [{ key: CUSTOMISER, range: ADD_ONS_RANGE, reason: l("Customers fill in a ready-made design, or start from blank, with their own words and logo.") }],

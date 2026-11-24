@@ -3,7 +3,7 @@
   "manifestVersion": 1,
   "key": "printing",
   "name": "Print Shop",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "publisher": {
     "id": "adminium",
     "name": "Adminium",
@@ -148,7 +148,7 @@
       },
       {
         "key": "shipping-shippo",
-        "range": "^1.0.35",
+        "range": "^1.0.36",
         "reason": {
           "en-US": "Buy shipping labels on your own Shippo account, and keep each tracking number with its order.",
           "de-DE": "Versandetiketten über Ihr eigenes Shippo-Konto kaufen und jede Sendungsnummer bei der Bestellung behalten.",
