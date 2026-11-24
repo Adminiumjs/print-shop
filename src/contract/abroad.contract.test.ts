@@ -22,9 +22,12 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { firstChoice } from "../shop/config.ts";
 import { AdminiumShop } from "../shop/door.ts";
+import { createPublicClient } from "@adminiumjs/public-client";
+
 import { isShopError, type Catalogue, type Row } from "../shop/port.ts";
 import { orderBody, useShop, type BasketLine } from "../shop/store.ts";
 import { ADD_ONS_REPO, addOnBundle, appBundle, boot, bundle, Caller, ENGINES, missing, missingAddOn, ok, PORTS_PER_ENGINE, until, type Engine, type Server } from "./harness.ts";
+import { sinkMail } from "./mail.ts";
 import { engineAtLeast, MANIFEST_TEXT } from "./release.ts";
 import { ADMIN, emptyDatabase, WEDNESDAY } from "./works.ts";
 
@@ -50,13 +53,15 @@ const CARRIER = `import { appendFileSync } from "node:fs";
 const note = (kind, customs) => { if (process.env.CONTRACT_CARRIER_LOG) appendFileSync(process.env.CONTRACT_CARRIER_LOG, JSON.stringify({ kind, customs: customs ?? null }) + "\\n"); };
 const RATE = { code: "lab-eco", service: "Economy", amount: 9.5, amountDecimal: "9.50", currency: "GBP", estimatedDays: 4, carrier: "Northway", handover: "drop-off", tracked: true, ref: "lab-rate", carrierToken: "tok-nw" };
 const PDF = new TextEncoder().encode("%PDF-1.4 stand-in");
+let bought = 0;
 export function createShippingCarrier() {
   return {
     key: "shipping-shippo",
     quote: async (parcel, from, to, options) => { note("quote", options && options.customs); return [RATE]; },
     book: async (rate, order, details) => {
       note("book", details && details.customs);
-      return { id: "lab-1", tracking: "LAB100001", labelFileId: "lab-file", carrier: "Northway", carrierToken: "tok-nw", rate: RATE, test: false, documents: [{ kind: "label", mediaType: "application/pdf" }, { kind: "customs-invoice", mediaType: "application/pdf" }] };
+      bought += 1;
+      return { id: "lab-" + bought, tracking: "LAB10000" + bought, labelFileId: "lab-file", carrier: "Northway", carrierToken: "tok-nw", rate: RATE, test: false, documents: [{ kind: "label", mediaType: "application/pdf" }, { kind: "customs-invoice", mediaType: "application/pdf" }] };
     },
     recover: async () => ({ outcome: "no-match" }),
     fetchDocument: async (id, kind) => ({ kind, mediaType: "application/pdf", filename: id + ".pdf", bytes: PDF }),
@@ -129,6 +134,8 @@ describe.skipIf(reason !== null)(`a works updated from 0.2.6, then selling abroa
       let onRelease: { id: unknown; total: string; delivery: string };
       let homeBefore: Row;
       let german: Row;
+      let germanBooking = "";
+      const documentOf = (booking: string, kind: "label" | "customs-invoice") => fetch(`${server.base}${shippingApi}/bookings/${booking}/documents/${kind}`, { headers: { cookie: staff.cookies } });
 
       beforeAll(async () => {
         rmSync(log, { force: true });
@@ -282,6 +289,7 @@ describe.skipIf(reason !== null)(`a works updated from 0.2.6, then selling abroa
         const quoted = ok(await staff.post<{ data: { quoteId: string; rates: { rateId: string }[] } }>(`${shippingApi}/quotes`, { source: { table: "orders", id: String(german["id"]) }, parcel, customs: { certified: true } })).data;
         const bought = ok(await staff.post<{ data: { id: string; label: { state: string; customsInvoice: boolean; customsInvoiceOwed: boolean } } }>(`${shippingApi}/bookings`, { quoteId: quoted.quoteId, rateId: quoted.rates[0]!.rateId })).data;
         expect(bought.label).toMatchObject({ state: "ready", customsInvoice: true, customsInvoiceOwed: false });
+        germanBooking = bought.id;
         const invoice = await fetch(`${server.base}${shippingApi}/bookings/${bought.id}/documents/customs-invoice`, { headers: { cookie: staff.cookies } });
         expect(invoice.status).toBe(200);
 
@@ -295,6 +303,39 @@ describe.skipIf(reason !== null)(`a works updated from 0.2.6, then selling abroa
           const after = (await rows("orders")).find((o) => String(o["id"]) === String(german["id"]))!;
           return after["label_tracking"] === "LAB100001" ? true : undefined;
         }, "the label's number on the order", 60_000);
+      }, 180_000);
+
+      it("takes a customer's label and customs invoice when they delete their own details", async () => {
+        const country = (await rows("delivery_countries")).find((c) => c["code"] === "DE")!;
+        const email = "erika@vogel-studio.dev";
+        const placed = await place({ ...SHOPPER, name: "Erika Vogel", email, delivery_method: "deliver", delivery_country_id: country["id"], phone: PHONE }, [lineOf("flyers", 500, "j1")]);
+        const order = placed.order["id"];
+        const job = (await rows("jobs")).find((j) => String(j["order_id"]) === String(order))!;
+        const parcel = { weightKg: Math.max(Number(job["weight_kg"]), 0.1), lengthCm: 30, widthCm: 20, heightCm: 10, contents: "Printed goods" };
+        const quoted = ok(await staff.post<{ data: { quoteId: string; rates: { rateId: string }[] } }>(`${shippingApi}/quotes`, { source: { table: "orders", id: String(order) }, parcel, customs: { certified: true } })).data;
+        const booked = ok(await staff.post<{ data: { id: string } }>(`${shippingApi}/bookings`, { quoteId: quoted.quoteId, rateId: quoted.rates[0]!.rateId })).data;
+        expect((await documentOf(booked.id, "label")).status).toBe(200);
+        expect((await documentOf(booked.id, "customs-invoice")).status).toBe(200);
+
+        // Her own door: the link from her e-mail, then "Delete my details".
+        const customer = createPublicClient({ baseUrl: server.base, publishableKey: served.publishableKey, fetch: originFetch })!;
+        ok(await staff.put("/api/v1/settings/email", { publicOrigin: server.base }));
+        const before = (await sinkMail(server.sink)).length;
+        await customer.requestLink({ email });
+        const mail = await until(async () => (await sinkMail(server.sink)).slice(before).find((m) => m.to.includes(email) && /\b\d{6}\b/.test(m.text)), "her sign-in code", 60_000);
+        expect(await customer.verifyLinkCode({ email, code: /\b(\d{6})\b/.exec(mail.text)![1]! })).toMatchObject({ ok: true });
+        await customer.forgetMe();
+
+        for (const kind of ["label", "customs-invoice"] as const) {
+          const gone = await documentOf(booked.id, kind);
+          expect(gone.status, kind).toBeGreaterThanOrEqual(400);
+          expect(((await gone.json()) as { error?: { code?: string } }).error?.code, kind).toBe("LABEL_GONE");
+        }
+        const kept = (await rows("orders")).find((o) => String(o["id"]) === String(order))!;
+        expect(kept["phone"] ?? null).toBeNull();
+        // Another customer's parcel is not hers to delete.
+        expect((await documentOf(germanBooking, "label")).status).toBe(200);
+        expect((await documentOf(germanBooking, "customs-invoice")).status).toBe(200);
       }, 180_000);
 
       it("erases the customer's phone with the rest of their details", async () => {

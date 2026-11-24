@@ -148,6 +148,9 @@ export class DemoWorks implements WorksDoor {
   removeCountryPrice(): Promise<void> {
     return Promise.resolve();
   }
+  followCountries(): Promise<void> {
+    return Promise.resolve();
+  }
 
   async updateOrder(order: Row, values: Record<string, unknown>): Promise<Row> {
     return this.change("orders", order.id, values);

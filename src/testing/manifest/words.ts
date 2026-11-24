@@ -421,6 +421,9 @@ export const INSTALL_FLOOR_WORD_NAMES = [
   'shipping',
   // Where an order's goods are, for a parcel that leaves the shop's country.
   'shipping.customs',
+  // The values that leave a line out of a declaration, and the order column that stops one while a refund stands.
+  'shipping.customs.lineUnless',
+  'shipping.customs.refunded',
   // An add-on whose people each connect their own outside account, and the app's table those people are rows of.
   'addOn.connect.accounts',
   'table.connectedAccounts',
@@ -751,6 +754,8 @@ export const WORD_FLOORS: Readonly<Partial<Record<ManifestWordName, string>>> = 
   'shipping': '0.3.72',
   // A release before refuses the key.
   'shipping.customs': '0.3.74',
+  'shipping.customs.lineUnless': '0.3.74',
+  'shipping.customs.refunded': '0.3.74',
   'addOn.connect.accounts': '0.3.71',
   'table.connectedAccounts': '0.3.71',
   'roles.accounts': '0.3.71',
@@ -952,7 +957,11 @@ export function installFloorWords(document: unknown): ManifestWord[] {
     if (document['shipping'] !== undefined) out.push({ word: 'shipping', path: 'shipping' });
     if (isDoc(document['shipping'])) {
       list(document['shipping']['orders']).forEach((order, o) => {
-        if (isDoc(order) && order['customs'] !== undefined) out.push({ word: 'shipping.customs', path: `shipping.orders.${String(o)}.customs` });
+        if (!isDoc(order) || order['customs'] === undefined) return;
+        out.push({ word: 'shipping.customs', path: `shipping.orders.${String(o)}.customs` });
+        const customs = order['customs'];
+        if (isDoc(customs) && isDoc(customs['lines']) && customs['lines']['unless'] !== undefined) out.push({ word: 'shipping.customs.lineUnless', path: `shipping.orders.${String(o)}.customs.lines.unless` });
+        if (isDoc(customs) && customs['refunded'] !== undefined) out.push({ word: 'shipping.customs.refunded', path: `shipping.orders.${String(o)}.customs.refunded` });
       });
     }
   }

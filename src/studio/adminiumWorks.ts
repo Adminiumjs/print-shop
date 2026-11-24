@@ -538,6 +538,15 @@ export class AdminiumWorks implements WorksDoor {
     });
   }
 
+  followCountries(listed: readonly string[]): Promise<void> {
+    return this.run(async () => {
+      for (const row of await this.list("delivery_countries")) {
+        const on = listed.includes(String(row["code"]));
+        if ((row["active"] === true || row["active"] === 1) !== on) await this.change("delivery_countries", row.id, { active: on });
+      }
+    });
+  }
+
   /** What the files route answers for the proofs' `file` column: the value the row stores. */
   private async storeFile(file: ProofFile): Promise<string> {
     const conn = await this.conn();

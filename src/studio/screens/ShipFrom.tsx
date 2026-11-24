@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState, type ComponentType, type FormEven
 
 import { countriesPanelOf, customsPanelOf } from "../../add-ons/connected.ts";
 import type { EngineCarrier } from "../../add-ons/vendor/host/engine-carrier.ts";
+import { countryPriceStore, type CountryPriceStore } from "../countryPrices.ts";
 import { useData, useEnv, useRun } from "../env.tsx";
 import { worksAddress } from "../outbound.ts";
 import { carrierClient, chooseCarrier, COUNTRIES, countryName, readShipping, shippingReady, saveShipFrom, ShippingRefused, type ShipFromValues, type ShippingStatus } from "../shipping.ts";
@@ -26,14 +27,8 @@ const FIELDS: { field: Field; label: MessageKey; type?: string; auto: string }[]
   { field: "email", label: "works.shipFrom.email", type: "email", auto: "email" },
 ];
 
-/** Where the kit's Countries panel reads and writes each country's price: the works' own table, through its door. */
-interface CountryPriceStore {
-  read(): Promise<Readonly<Record<string, string>>>;
-  save(country: string, amount: string): Promise<void>;
-  remove(country: string): Promise<void>;
-}
 type CountriesPanel = ComponentType<{ client: EngineCarrier; prices: CountryPriceStore; currency: string; onOpenCustoms?: () => void }>;
-type CustomsPanel = ComponentType<{ client: EngineCarrier; currency: string }>;
+type CustomsPanel = ComponentType<{ client: EngineCarrier }>;
 
 const TABS = ["from", "countries", "customs"] as const;
 type Tab = (typeof TABS)[number];
@@ -55,7 +50,7 @@ export function ShipFromScreen() {
   const client = carrierClient(facts.carrier);
   const Countries = facts.carrier === null ? null : (countriesPanelOf(facts.carrier.key) as CountriesPanel | null);
   const Customs = facts.carrier === null ? null : (customsPanelOf(facts.carrier.key) as CustomsPanel | null);
-  const prices = useMemo<CountryPriceStore>(() => ({ read: () => door.countryPrices(), save: (country, amount) => door.saveCountryPrice(country, amount), remove: (country) => door.removeCountryPrice(country) }), [door]);
+  const prices = useMemo(() => countryPriceStore(door, client), [door, client]);
 
   // On a page opened at this address the add-ons are still loading: asking now would read as "not yours".
   const registry = useWorks((s) => s.registry);
@@ -185,7 +180,7 @@ export function ShipFromScreen() {
           ) : tab === "countries" ? (
             <Countries client={client} prices={prices} currency={facts.currency} onOpenCustoms={() => openTab("customs")} />
           ) : (
-            <Customs client={client} currency={facts.currency} />
+            <Customs client={client} />
           )}
         </div>
       )}

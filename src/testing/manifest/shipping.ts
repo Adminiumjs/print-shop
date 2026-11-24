@@ -96,10 +96,14 @@ const shippingCustomsSchema = z
         product: z.object({ column: refSchema, table: refSchema, sku: refSchema }).strict().optional(),
         /** A column that, once filled, says this line is not in the parcel: a cancelled line is never declared. */
         unlessSet: refSchema.optional(),
+        /** A column whose value says this line is not in the parcel, for an app that keeps a line's state rather than a stamp. An empty value is a line still in it. */
+        unless: z.object({ column: refSchema, in: z.array(z.string().min(1).max(64)).min(1).max(16) }).strict().optional(),
       })
       .strict(),
     /** The order's column holding its currency. Without one, the shop's customs currency is used. */
     currency: refSchema.optional(),
+    /** The order's column holding what was refunded. While it is above zero the declared values are not what the customer paid, so the order cannot be declared. */
+    refunded: refSchema.optional(),
   })
   .strict();
 
@@ -176,8 +180,9 @@ export function shippingIssues<C extends { ref: string; type: string }>(m: { shi
       }
     }
     if (order.customs !== undefined) {
-      const { lines, currency } = order.customs;
+      const { lines, currency, refunded } = order.customs;
       if (currency !== undefined) column(currency, ADDRESS_TYPES, at('customs', 'currency'));
+      if (refunded !== undefined) column(refunded, VALUE_TYPES, at('customs', 'refunded'));
       const onTable = (table: string, ref: string, types: readonly string[] | null, path: (string | number)[]): void => {
         const found = index.column(table, ref);
         if (found === undefined) out.push({ path, message: `"${table}" has no column "${ref}"` });
@@ -197,6 +202,15 @@ export function shippingIssues<C extends { ref: string; type: string }>(m: { shi
         if (lines.unitWeight !== undefined) onTable(lines.table, lines.unitWeight, WEIGHT_TYPES, inLines('unitWeight'));
         if (lines.product !== undefined) onTable(lines.table, lines.product.column, null, inLines('product', 'column'));
         if (lines.unlessSet !== undefined) onTable(lines.table, lines.unlessSet, null, inLines('unlessSet'));
+        if (lines.unless !== undefined) {
+          onTable(lines.table, lines.unless.column, ADDRESS_TYPES, inLines('unless', 'column'));
+          const held = (index.column(lines.table, lines.unless.column) as { enum?: readonly string[] } | undefined)?.enum;
+          if (held !== undefined) {
+            lines.unless.in.forEach((value, v) => {
+              if (!held.includes(value)) out.push({ path: inLines('unless', 'in', v), message: `"${lines.table}.${lines.unless!.column}" can never hold "${value}"` });
+            });
+          }
+        }
       }
       if (lines.product !== undefined) {
         if (index.table(lines.product.table) === undefined) out.push({ path: inLines('product', 'table'), message: `"${lines.product.table}" is not a table of this app` });

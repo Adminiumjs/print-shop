@@ -316,6 +316,8 @@ export const ENGINE_CUSTOMS_FAULTS = ['lines', 'description', 'quantity', 'unitV
 export type EngineCustomsFault = (typeof ENGINE_CUSTOMS_FAULTS)[number];
 export const ENGINE_CUSTOMS_WARNINGS = ['hsCode', 'skuCode', 'manufacturerCode'] as const;
 export type EngineCustomsWarning = (typeof ENGINE_CUSTOMS_WARNINGS)[number];
+export const ENGINE_CUSTOMS_REASONS = ['refunded', 'shop-currency', 'no-line-weight'] as const;
+export type EngineCustomsReason = (typeof ENGINE_CUSTOMS_REASONS)[number];
 
 export type EngineCustomsForm =
   | { abroad: false }
@@ -331,7 +333,7 @@ export type EngineCustomsForm =
       signer: string | null;
       currency: string | null;
       lines: EngineCustomsLine[];
-      faults: { line?: string; field: EngineCustomsFault }[];
+      faults: { line?: string; field: EngineCustomsFault; reason?: EngineCustomsReason }[];
       warnings: { line: string; field: EngineCustomsWarning }[];
     };
 
@@ -359,6 +361,8 @@ export interface EngineInternational {
   ownCountry: string | null;
   /** The official code list for that country, where the engine knows one. */
   codeListUrl: string | null;
+  /** The shop's currency as the engine reads it now. A declaration is made in this and nothing else. */
+  shopCurrency: string | null;
   /** True once a country is listed and the app says where an order's goods are. */
   shipsAbroad: boolean;
   /** Nothing saved yet. */
@@ -827,7 +831,12 @@ function readCustomsForm(read: Reader, value: unknown): EngineCustomsForm {
     lines: read.list(raw.lines).map((line) => readCustomsLine(read, line)),
     faults: read.list(raw.problems).map((item) => {
       const fault = read.object(item);
-      return { ...optional('line', read.maybe(fault, 'line', read.text)), field: read.oneOf(fault, 'field', ENGINE_CUSTOMS_FAULTS) };
+      const why = fault.reason;
+      return {
+        ...optional('line', read.maybe(fault, 'line', read.text)),
+        field: read.oneOf(fault, 'field', ENGINE_CUSTOMS_FAULTS),
+        ...((ENGINE_CUSTOMS_REASONS as readonly unknown[]).includes(why) ? { reason: why as EngineCustomsReason } : {}),
+      };
     }),
     warnings: read.list(raw.warnings).map((item) => {
       const warning = read.object(item);
@@ -864,6 +873,7 @@ function readInternational(read: Reader, value: unknown): EngineInternational {
   return {
     ownCountry: shipFrom === null ? null : (read.maybe(shipFrom, 'country', read.text) ?? null),
     codeListUrl: readCodeList(read, raw),
+    shopCurrency: read.maybe(raw, 'shopCurrency', (from, key) => read.orNull(from, key, read.text)) ?? null,
     shipsAbroad: read.flag(raw, 'international'),
     settings:
       customs === null
@@ -912,7 +922,8 @@ function refusalFrom(status: number, body: unknown, buying: boolean): EngineCarr
   const after = details?.retryAfterSeconds;
   const named = [
     ...(Array.isArray(details?.fields) ? details.fields : []),
-    ...(Array.isArray(details?.problems) ? details.problems.map((one) => fieldsOf(one)?.field) : []),
+    // A reason, where there is one, names the fix: a line with no weight is not a parcel lighter than its goods.
+    ...(Array.isArray(details?.problems) ? details.problems.map((one) => fieldsOf(one)?.reason ?? fieldsOf(one)?.field) : []),
   ].filter((one): one is string => typeof one === 'string');
 
   return new EngineCarrierError({

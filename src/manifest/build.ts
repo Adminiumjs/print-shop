@@ -91,6 +91,8 @@ export const SHIPPING = {
           product: { column: "product_id", table: "products", sku: "code" },
           unlessSet: "cancelled_at",
         },
+        // Refunds sit on the order. While one stands its values are not what the customer paid, so Adminium stops the form.
+        refunded: "refunded",
       },
     },
   ],

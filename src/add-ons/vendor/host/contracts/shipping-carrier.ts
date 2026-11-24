@@ -141,7 +141,7 @@ export type CustomsFilingCode = (typeof CUSTOMS_FILING_CODES)[number];
 /** The shop's own export numbers. Each is optional, and is stated only when the shop entered it. */
 export interface CustomsExporter {
   eori?: string;
-  /** Only on a parcel into the EU whose VAT was collected at checkout. */
+  /** Only on a parcel into the EU, in euros, worth 150 euros or less, whose VAT was collected at checkout. */
   ioss?: string;
   taxId?: { type: CustomsTaxIdType; number: string };
 }

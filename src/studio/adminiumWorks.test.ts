@@ -223,6 +223,17 @@ describe("the writes, as Adminium reads them", () => {
     ]);
   });
 
+  it("puts the countries on sale in step with a list, and writes only what differs", async () => {
+    const rows = { data: [{ id: 1, code: "DE", active: 1 }, { id: 2, code: "FR", active: false }, { id: 3, code: "ES", active: true }, { id: 4, code: "IT", active: 0 }] };
+    const { t, sent } = transport({ "/api/v1/data/conn-1/printing_delivery_countries": rows });
+    const tables = { ...CONFIG.tables, delivery_countries: "printing_delivery_countries" };
+    await new AdminiumWorks(t, { ...CONFIG, tables }).followCountries(["FR", "ES"]);
+    expect(sent.filter((one) => one.method !== "GET")).toEqual([
+      { method: "PATCH", path: "/api/v1/data/conn-1/printing_delivery_countries/1", body: { values: { active: false } } },
+      { method: "PATCH", path: "/api/v1/data/conn-1/printing_delivery_countries/2", body: { values: { active: true } } },
+    ]);
+  });
+
   it("switches an add-on on or off for this app alone", async () => {
     const { t, sent } = transport();
     await new AdminiumWorks(t, CONFIG).setAddOn("inventory", false);

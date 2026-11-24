@@ -139,6 +139,10 @@ export class FakeDoor implements WorksDoor {
     delete this.prices[country];
   }
 
+  async followCountries(listed: readonly string[]): Promise<void> {
+    this.record("followCountries", { listed });
+  }
+
   async updateOrder(order: Row, values: Record<string, unknown>): Promise<Row> {
     this.record("updateOrder", { id: order.id, values });
     return this.update(this.data.orders, order.id, values);

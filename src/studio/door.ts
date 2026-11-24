@@ -310,6 +310,8 @@ export interface WorksDoor {
   saveCountryPrice(country: string, amount: string): Promise<void>;
   /** A country no longer offered: its row stays for the orders it priced. */
   removeCountryPrice(country: string): Promise<void>;
+  /** What is on sale put in step with the countries Adminium has listed. A row is never deleted. */
+  followCountries(listed: readonly string[]): Promise<void>;
   /** A public holiday of Holiday calendars added as one of the works' closures: its day and its name, linked to it. */
   addClosure(holiday: Row): Promise<Row>;
 
