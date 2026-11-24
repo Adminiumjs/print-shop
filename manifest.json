@@ -305,7 +305,8 @@
             },
             "unlessSet": "cancelled_at"
           },
-          "refunded": "refunded"
+          "refunded": "refunded",
+          "placedAt": "placed_at"
         }
       }
     ]

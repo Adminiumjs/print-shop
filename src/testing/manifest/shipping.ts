@@ -60,6 +60,8 @@ const COUNT_TYPES: readonly string[] = ['int', 'bigint'];
 const VALUE_TYPES: readonly string[] = ['decimal', 'money'];
 /** What may hold one unit's weight. */
 const WEIGHT_TYPES: readonly string[] = ['int', 'bigint', 'decimal', 'float'];
+/** A column that holds a moment. */
+const MOMENT_TYPES: readonly string[] = ['timestamptz', 'timestamp', 'datetime'];
 
 const shippingAddressSchema = z
   .object({
@@ -104,6 +106,8 @@ const shippingCustomsSchema = z
     currency: refSchema.optional(),
     /** The order's column holding what was refunded. While it is above zero the declared values are not what the customer paid, so the order cannot be declared. */
     refunded: refSchema.optional(),
+    /** The order's column holding when it was placed. An order with no currency of its own, placed before the shop's currency changed, cannot be declared. */
+    placedAt: refSchema.optional(),
   })
   .strict();
 
@@ -180,9 +184,10 @@ export function shippingIssues<C extends { ref: string; type: string }>(m: { shi
       }
     }
     if (order.customs !== undefined) {
-      const { lines, currency, refunded } = order.customs;
+      const { lines, currency, refunded, placedAt } = order.customs;
       if (currency !== undefined) column(currency, ADDRESS_TYPES, at('customs', 'currency'));
       if (refunded !== undefined) column(refunded, VALUE_TYPES, at('customs', 'refunded'));
+      if (placedAt !== undefined) column(placedAt, MOMENT_TYPES, at('customs', 'placedAt'));
       const onTable = (table: string, ref: string, types: readonly string[] | null, path: (string | number)[]): void => {
         const found = index.column(table, ref);
         if (found === undefined) out.push({ path, message: `"${table}" has no column "${ref}"` });

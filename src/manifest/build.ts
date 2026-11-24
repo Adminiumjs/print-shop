@@ -93,6 +93,8 @@ export const SHIPPING = {
         },
         // Refunds sit on the order. While one stands its values are not what the customer paid, so Adminium stops the form.
         refunded: "refunded",
+        // Once the shop changes currency, an order from before it cannot be declared in the new one.
+        placedAt: "placed_at",
       },
     },
   ],

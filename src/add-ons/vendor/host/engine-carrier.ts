@@ -316,7 +316,7 @@ export const ENGINE_CUSTOMS_FAULTS = ['lines', 'description', 'quantity', 'unitV
 export type EngineCustomsFault = (typeof ENGINE_CUSTOMS_FAULTS)[number];
 export const ENGINE_CUSTOMS_WARNINGS = ['hsCode', 'skuCode', 'manufacturerCode'] as const;
 export type EngineCustomsWarning = (typeof ENGINE_CUSTOMS_WARNINGS)[number];
-export const ENGINE_CUSTOMS_REASONS = ['refunded', 'shop-currency', 'no-line-weight'] as const;
+export const ENGINE_CUSTOMS_REASONS = ['refunded', 'shop-currency', 'order-currency', 'no-line-weight'] as const;
 export type EngineCustomsReason = (typeof ENGINE_CUSTOMS_REASONS)[number];
 
 export type EngineCustomsForm =
